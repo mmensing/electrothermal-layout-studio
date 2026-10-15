@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="500" viewBox="0 0 1120 500" role="img" aria-labelledby="title desc">
+<title id="title">The seven-stage desktop workflow</title>
+<desc id="desc">Define layout, materials, connections and conditions; validate and mesh, run, and inspect results. Refine or change an input and compare retained runs.</desc>
+<rect width="1120" height="500" rx="16" fill="#f4f7fc"/>
+<g font-family="Segoe UI, Arial, sans-serif">
+<text x="28" y="36" fill="#14263e" font-size="23" font-weight="700">From layout to a result you can inspect</text>
+<text x="28" y="61" fill="#425670" font-size="16">One working project, explicit physical inputs, and retained run history.</text>
+<g transform="translate(24,87)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">1</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Layout &amp; region</text>
+<text x="16" y="72" fill="#425670" font-size="17">Choose a cell and</text>
+<text x="16" y="95" fill="#425670" font-size="17">physical simulation domain.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">Import or open an example</text>
+</g>
+<g transform="translate(298,87)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">2</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Layers &amp; materials</text>
+<text x="16" y="72" fill="#425670" font-size="17">Give masks a material,</text>
+<text x="16" y="95" fill="#425670" font-size="17">thickness and physical role.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">Review the stack</text>
+</g>
+<g transform="translate(572,87)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">3</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Contacts &amp; connections</text>
+<text x="16" y="72" fill="#425670" font-size="17">Place ports, interfaces</text>
+<text x="16" y="95" fill="#425670" font-size="17">and passive probes.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">Check the current path</text>
+</g>
+<g transform="translate(846,87)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">4</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Operating conditions</text>
+<text x="16" y="72" fill="#425670" font-size="17">Set drives, heat sources</text>
+<text x="16" y="95" fill="#425670" font-size="17">and thermal reservoirs.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">Choose steady or pulsed</text>
+</g>
+<g transform="translate(161,274)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">5</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Mesh &amp; checks</text>
+<text x="16" y="72" fill="#425670" font-size="17">Validate the setup and</text>
+<text x="16" y="95" fill="#425670" font-size="17">resolve the right features.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">F6 validate · F7 mesh</text>
+</g>
+<g transform="translate(435,274)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">6</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Run</text>
+<text x="16" y="72" fill="#425670" font-size="17">Solve the applied setup</text>
+<text x="16" y="95" fill="#425670" font-size="17">in a cancellable worker.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">F5 run · Shift+F5 cancel</text>
+</g>
+<g transform="translate(709,274)">
+<rect width="250" height="158" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<rect width="250" height="5" rx="2" fill="#0875ed"/>
+<circle cx="25" cy="31" r="15" fill="#0875ed"/>
+<text x="25" y="37" text-anchor="middle" fill="#ffffff" font-size="18" font-weight="700">7</text>
+<text x="47" y="37" fill="#14263e" font-size="16" font-weight="700">Results</text>
+<text x="16" y="72" fill="#425670" font-size="17">Inspect fields, compare</text>
+<text x="16" y="95" fill="#425670" font-size="17">runs and preserve evidence.</text>
+<text x="16" y="136" fill="#075bb5" font-size="14" font-weight="600">Layer · quantity · region · time</text>
+</g>
+<path d="M1080 247 V260 H286 V271" fill="none" stroke="#83a6d3" stroke-width="2"/>
+<path d="M282 266 L286 272 L290 266" fill="none" stroke="#83a6d3" stroke-width="2"/>
+<text x="560" y="471" text-anchor="middle" fill="#425670" font-size="17">Change one input → rerun → compare at the same service and display scale.</text>
+</g></svg>

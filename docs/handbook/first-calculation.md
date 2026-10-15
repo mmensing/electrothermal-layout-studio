@@ -8,13 +8,13 @@ using the [README instructions](../../README.md#start-from-source-on-windows).
 
 ## Open the experiment
 
-```powershell
-.\.venv\Scripts\python.exe -m etlayout gui examples/E1_straight.etl
-```
+Launch the desktop after the one-time installation, then select **File →
+Ready-to-run examples → E1 · Straight conductor**. The project already contains the
+layout, copper material snapshot, physical layer and terminal conditions. No
+scripting or JSON editing is needed.
 
-Alternatively, launch the desktop and select **File → Ready-to-run examples →
-E1 · Straight conductor**. The project already contains the layout, copper material snapshot,
-physical layer and terminal conditions.
+You will check a known answer, learn the field controls, and save a result before
+moving on to a less uniform layout.
 
 | Input | E1 value |
 | --- | --- |
@@ -37,13 +37,14 @@ current entering the model; in this experiment it enters at the positive-voltage
    inspection. E1 should be one electrically connected sheet with a voltage reference.
 2. Generate the mesh with **F7**. Inspect the mesh on the strip. Boundary terminals
    should coincide with its two ends.
-3. Choose **DC electrical** in the header's Analysis selector and run with **F5**. Review the
+3. Choose **DC electrical** in the header's **Analysis type** selector and run with **F5**. Review the
    convergence status and current/power balance in the result output.
 4. In **Results**, select layer **metal**, region **All solved regions**, and **Potential**.
    The potential should increase linearly from 0 to 0.02 V along x.
 5. Select **Volumetric current density**. The magnitude should be uniform. A
-   profile through the strip center can confirm that visually; arrows show the
-   direction of sheet current when a vector quantity is selected.
+   profile through the strip center (**Results → Draw line profile**) can confirm
+   that visually. Enable **Show vectors** in **Appearance** to inspect the
+   direction of the selected vector quantity.
 
 ![E1 actual geometry and computed potential](../example-gallery/E1_straight.png)
 
@@ -79,7 +80,14 @@ contact crowding region, or nonlinear device.
 ## Save and reproduce
 
 Use **File → Save project as** to save the input configuration and result in a
-portable `.etl` archive. For a headless calculation and numerical exports:
+portable project archive. Reopen it with **File → Open project…** and confirm that
+the same layer and recorded result remain available. Use **Results → Export task**
+for a figure, numerical fields or a self-contained report.
+
+<details>
+<summary>Optional: reproduce the same calculation from the command line</summary>
+
+For a headless calculation and numerical exports:
 
 ```powershell
 .\.venv\Scripts\python.exe -m etlayout solve examples/E1_straight.etl --mode electrical --output results/handbook-e1
@@ -88,6 +96,8 @@ portable `.etl` archive. For a headless calculation and numerical exports:
 Inspect `results.json`, `metrics.csv`, `terminals.csv`, `manifest.json`, the
 per-layer fields and `simulation.etl` in the output directory. The manifest maps
 layer IDs to actual filenames. A saved figure alone cannot reproduce a solve.
+
+</details>
 
 ## One useful variation
 

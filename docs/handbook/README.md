@@ -28,6 +28,8 @@ converged calculations, mesh sensitivity and resource-limited benchmarks.
 
 | Your goal | Start here |
 | --- | --- |
+| Explore the desktop capabilities | [Feature catalog](../features.md) |
+| Choose a GUI use case | [Guided example gallery](../examples.md) |
 | Run a first calculation | [First calculation: a copper strip](first-calculation.md) |
 | Understand what is being solved | [Model and physics](model-and-physics.md) |
 | Build a model from your own GDS/OASIS | [Geometry, materials and boundary conditions](setup-and-boundaries.md) |
@@ -38,7 +40,7 @@ converged calculations, mesh sensitivity and resource-limited benchmarks.
 | Read maps, compare runs and assess accuracy | [Results, exports and validation](results-and-validation.md) |
 | Use Python/CLI or diagnose a problem | [Automation and troubleshooting](automation-and-troubleshooting.md) |
 | Adjust CPU assembly threads or parallelize a study | [CPU execution and Python studies](automation-and-troubleshooting.md#cpu-execution-and-python-studies) |
-| Browse all example structures | [Visual example gallery](../examples.md) |
+| Extend an example experiment | [GUI use cases and example catalog](../examples.md) |
 | Assess power feeds or optimize bounded routes | [Power interconnects and equal-service routing](../POWER_ROUTING.md) |
 
 Read the first calculation, model and worked-example pages in order for a guided

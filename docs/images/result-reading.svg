@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="240" viewBox="0 0 1120 240" role="img" aria-labelledby="title desc">
+<title id="title">Four checks when reading a result</title><desc id="desc">Identify the saved run, physical support, display context and numerical acceptance evidence before comparing maps.</desc>
+<rect width="1120" height="240" rx="16" fill="#f4f7fc"/>
+<g font-family="Segoe UI, Arial, sans-serif"><text x="24" y="36" font-size="23" font-weight="700" fill="#14263e">Read the map in context</text>
+<g transform="translate(24,60)"><rect width="250" height="114" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<text x="16" y="29" font-size="18" font-weight="700" fill="#075bb5">1. Which run?</text>
+<text x="16" y="61" font-size="16" fill="#425670">Original configuration</text>
+<text x="16" y="84" font-size="16" fill="#425670">and saved result identity</text>
+</g>
+<g transform="translate(298,60)"><rect width="250" height="114" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<text x="16" y="29" font-size="18" font-weight="700" fill="#075bb5">2. Which support?</text>
+<text x="16" y="61" font-size="16" fill="#425670">Physical layer and region</text>
+<text x="16" y="84" font-size="16" fill="#425670">that actually contain fields</text>
+</g>
+<g transform="translate(572,60)"><rect width="250" height="114" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<text x="16" y="29" font-size="18" font-weight="700" fill="#075bb5">3. Which view?</text>
+<text x="16" y="61" font-size="16" fill="#425670">Quantity, time and units</text>
+<text x="16" y="84" font-size="16" fill="#425670">with a deliberate scale</text>
+</g>
+<g transform="translate(846,60)"><rect width="250" height="114" rx="10" fill="#ffffff" stroke="#d0dcec"/>
+<text x="16" y="29" font-size="18" font-weight="700" fill="#075bb5">4. What evidence?</text>
+<text x="16" y="61" font-size="16" fill="#425670">Balance and physical averages</text>
+<text x="16" y="84" font-size="16" fill="#425670">plus mesh/time sensitivity</text>
+</g>
+<text x="560" y="211" text-anchor="middle" font-size="17" fill="#425670">Compare the same delivered service, physical support and display scale.</text></g></svg>
