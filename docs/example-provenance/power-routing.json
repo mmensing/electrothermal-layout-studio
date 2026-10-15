@@ -1,0 +1,4376 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-12",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+  "software": "0.3.0",
+  "machine": "AMD64",
+  "processor": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+  "logical_cpus": 16,
+  "physical_cpus": 8,
+  "physical_memory_bytes": 33476079616,
+  "timing_conditions": "Native Windows source execution; final coverage and frozen build ran concurrently. Timings are observations, not isolated benchmarks.",
+  "memory_definition": "Process peak working set reported by Windows via psutil; cumulative across both examples in this process, excludes concurrent builds/tests.",
+  "examples": {
+    "power_cells": {
+      "source_sha256": "c539180421c112a51707f68c88f86b072f91014520cd52d74314ac741ee94555",
+      "variables": [
+        "bus_width",
+        "strap_width",
+        "via_count"
+      ],
+      "elapsed_seconds": 298.66777920000004,
+      "rss_bytes": 168992768,
+      "process_peak_working_set_bytes": 368955392,
+      "multiport": {
+        "validation": {
+          "kcl_absolute_error_S": 1.8633983245308627e-12,
+          "reciprocity_absolute_error_S": 5.329070518200751e-15,
+          "minimum_eigenvalue_S": 1.5698553568199713e-12,
+          "tolerance_S": 5.5136018378259276e-08,
+          "factorizations": 1,
+          "eliminated_dofs": 2589,
+          "sparse_operator_shape": [
+            2591,
+            2591
+          ]
+        },
+        "temperature": {
+          "kind": "uniform_fixed",
+          "temperature_K": 300.0
+        },
+        "parent_current_A": [
+          0.0500000000000004,
+          -0.04999999999999462
+        ],
+        "matrix_current_A": [
+          0.05000000000000745,
+          -0.04999999999999593
+        ]
+      },
+      "dc": {
+        "converged": true,
+        "nodes": 4839,
+        "elements": 9434,
+        "elapsed_seconds": 1.008489499999996,
+        "archive_sha256": "06b96e7af51cc247a99cff8319262583dae917dc027e243a2bd093343ccaa41b",
+        "reopened_exact_fields": true,
+        "execution": {
+          "cpu_threads": 4,
+          "study_workers": 4,
+          "requested_backend": "cpu",
+          "actual_backend": "cpu",
+          "linear_solves": {
+            "cpu": 1
+          },
+          "native_threadpools": [
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.34.106.0",
+              "num_threads": 4
+            },
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.31.dev",
+              "num_threads": 4
+            }
+          ],
+          "effective_cpu_threads": 4,
+          "process_id": 936,
+          "scope": "whole_run",
+          "acceleration_scope": "native_cpu_thread_pools"
+        },
+        "metrics": {
+          "electrical_power": 0.0004534241088736631,
+          "total_current": 0.0500000000000004,
+          "effective_resistance": 0.18136964354948043,
+          "current_balance_error": 1.156019724391002e-13,
+          "power_balance_error": 9.97106896343665e-14
+        },
+        "ports": {
+          "supply": {
+            "voltage": 0.009068482177474094,
+            "current": 0.0500000000000004,
+            "power": 0.0004534241088737083,
+            "feed_power": 2.5339014364786107e-05,
+            "landings": [
+              {
+                "terminal_id": "feed_landing",
+                "resistance": 0.01,
+                "current": 0.0500000000000004,
+                "power": 2.5339014364786107e-05,
+                "thermal_fraction": 1.0,
+                "voltage": 0.008568482177474097,
+                "voltage_min": 0.008437338428950883,
+                "voltage_max": 0.008634440691167707,
+                "ideal": false,
+                "resistance_model": "distributed_total_contact_resistance"
+              }
+            ],
+            "external_node": "supply",
+            "specified_current": 0.05,
+            "constraint_scope": "port"
+          },
+          "return_port": {
+            "voltage": 0.0,
+            "current": -0.04999999999999462,
+            "power": -0.0,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "return_landing",
+                "resistance": 0.0,
+                "current": -0.04999999999999462,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.0,
+                "voltage_min": 0.0,
+                "voltage_max": 0.0,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "return_port",
+            "specified_current": null,
+            "constraint_scope": "port"
+          }
+        },
+        "loss_budget": {
+          "categories": {
+            "routing_metal": 0.00030088520923472165,
+            "other_metal": 0.0,
+            "access": 0,
+            "channel": 0,
+            "contact": 2.2329420240895196e-05,
+            "device_load": 0.00010487046503326015,
+            "external_feed": 2.5339014364786107e-05
+          },
+          "total_power": 0.0004534241088736631,
+          "thermal_deposition": 0.0004534241088736631,
+          "excluded_power": 0.0,
+          "definition": "Disjoint layer-role, interface and external-feed integrals; groups are views, not additional losses"
+        },
+        "devices": {
+          "cell-1": {
+            "current": 0.011653531514622232,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0019422552524370406,
+            "effective_gate_bias": null,
+            "temperature_max": 300.00000000000006,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 3884.510504874077,
+            "current_per_area": 1942255252.4370387,
+            "layer_loss": 4.959457140684303e-07,
+            "contact_loss": 2.263637743162181e-05,
+            "status": "available"
+          },
+          "cell-2": {
+            "current": 0.013691471020565641,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0022819118367609437,
+            "effective_gate_bias": null,
+            "temperature_max": 300.00000000000006,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 4563.823673521881,
+            "current_per_area": 2281911836.76094,
+            "layer_loss": 6.845721913547656e-07,
+            "contact_loss": 3.124582814112083e-05,
+            "status": "available"
+          },
+          "cell-3": {
+            "current": 0.013318650344948689,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0022197750574914493,
+            "effective_gate_bias": null,
+            "temperature_max": 300.00000000000006,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 4439.550114982896,
+            "current_per_area": 2219775057.491448,
+            "layer_loss": 6.47796711594007e-07,
+            "contact_loss": 2.9567340482183887e-05,
+            "status": "available"
+          },
+          "cell-4": {
+            "current": 0.011336347119857966,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0018893911866429973,
+            "effective_gate_bias": null,
+            "temperature_max": 300.00000000000006,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 3778.7823732859883,
+            "current_per_area": 1889391186.6429942,
+            "layer_loss": 4.6931515135406883e-07,
+            "contact_loss": 2.1420918978333428e-05,
+            "status": "available"
+          }
+        },
+        "contacts": {
+          "vias-22956d1de131523b": {
+            "interface_id": "vias",
+            "layer_a": "feed",
+            "layer_b": "strap",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.03073298118976244,
+            "absolute_current": 0.030732981189762445,
+            "power": 1.6071852899764692e-05,
+            "area": 1.0000000000000004e-12,
+            "j_normal_mean": -30732981189.76243,
+            "j_normal_rms": 30929887014.02381,
+            "j_normal_peak": 40085285704.129166,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.6146596237953178,
+            "signed_loading_fraction": 0.6146596237953177,
+            "status": "available"
+          },
+          "vias-32bbc847d211fed6": {
+            "interface_id": "vias",
+            "layer_a": "feed",
+            "layer_b": "strap",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.019267018810231948,
+            "absolute_current": 0.019267018810231944,
+            "power": 6.257567341130506e-06,
+            "area": 1.0000000000000004e-12,
+            "j_normal_mean": -19267018810.23194,
+            "j_normal_rms": 19299591873.815964,
+            "j_normal_peak": 22979659079.198067,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.3853403762046821,
+            "signed_loading_fraction": 0.38534037620468214,
+            "status": "available"
+          },
+          "cells-3b2ec80befd70dc0": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.013691471020565674,
+            "absolute_current": 0.013691471020565674,
+            "power": 3.124582814112091e-05,
+            "area": 6.000000000000006e-12,
+            "j_normal_mean": 2281911836.7609434,
+            "j_normal_rms": 2282024983.1060457,
+            "j_normal_peak": 2332222883.3506093,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.27382942041134295,
+            "signed_loading_fraction": 0.27382942041134295,
+            "status": "available"
+          },
+          "cells-497dff4e9fe35418": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.01165353151462225,
+            "absolute_current": 0.01165353151462225,
+            "power": 2.2636377431621846e-05,
+            "area": 6.000000000000003e-12,
+            "j_normal_mean": 1942255252.4370406,
+            "j_normal_rms": 1942351557.2462604,
+            "j_normal_peak": 1985077622.2889025,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.23307063029247008,
+            "signed_loading_fraction": 0.23307063029247008,
+            "status": "available"
+          },
+          "cells-6ae4be8b3872d530": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.011336347119857983,
+            "absolute_current": 0.011336347119857983,
+            "power": 2.1420918978333465e-05,
+            "area": 6.000000000000001e-12,
+            "j_normal_mean": 1889391186.6429968,
+            "j_normal_rms": 1889484893.5769708,
+            "j_normal_peak": 1931046061.1505017,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.22672694239718405,
+            "signed_loading_fraction": 0.22672694239718405,
+            "status": "available"
+          },
+          "cells-f8babfbd051b7e02": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.013318650344948712,
+            "absolute_current": 0.013318650344948712,
+            "power": 2.9567340482183934e-05,
+            "area": 6.0000000000000076e-12,
+            "j_normal_mean": 2219775057.4914494,
+            "j_normal_rms": 2219885150.2643065,
+            "j_normal_peak": 2268713637.7517805,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.2663730068990029,
+            "signed_loading_fraction": 0.2663730068990029,
+            "status": "available"
+          }
+        }
+      },
+      "coupled": {
+        "converged": true,
+        "nodes": 4839,
+        "elements": 9434,
+        "elapsed_seconds": 5.267538800000693,
+        "archive_sha256": "e68bf130b51a5809774461914b983df86b2c65bebb4d97e3d939f6b4afd3b7c9",
+        "reopened_exact_fields": true,
+        "execution": {
+          "cpu_threads": 4,
+          "study_workers": 4,
+          "requested_backend": "cpu",
+          "actual_backend": "cpu",
+          "linear_solves": {
+            "cpu": 48
+          },
+          "native_threadpools": [
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.34.106.0",
+              "num_threads": 4
+            },
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.31.dev",
+              "num_threads": 4
+            }
+          ],
+          "effective_cpu_threads": 4,
+          "process_id": 936,
+          "scope": "whole_run",
+          "acceleration_scope": "native_cpu_thread_pools"
+        },
+        "metrics": {
+          "electrical_power": 0.00045481915587550713,
+          "total_current": 0.05000000000000043,
+          "effective_resistance": 0.18192766235017632,
+          "current_balance_error": 2.2482016248656699e-13,
+          "power_balance_error": 1.2860651634823306e-13,
+          "temperature_max": 302.2461062958884,
+          "thermal_reference": 300.0,
+          "thermal_balance_error": 4.1207636925246747e-07,
+          "thermal_resistance": 4938.460192083935,
+          "heat_out": 0.0004548189684552807,
+          "thermal_power": 0.00045481915587550713
+        },
+        "ports": {
+          "supply": {
+            "voltage": 0.009096383117508895,
+            "current": 0.05000000000000043,
+            "power": 0.00045481915587544864,
+            "feed_power": 2.534458116476343e-05,
+            "landings": [
+              {
+                "terminal_id": "feed_landing",
+                "resistance": 0.01,
+                "current": 0.05000000000000043,
+                "power": 2.534458116476343e-05,
+                "thermal_fraction": 1.0,
+                "voltage": 0.008596383117508887,
+                "voltage_min": 0.008464146288350991,
+                "voltage_max": 0.008662870608592397,
+                "ideal": false,
+                "resistance_model": "distributed_total_contact_resistance"
+              }
+            ],
+            "external_node": "supply",
+            "specified_current": 0.05,
+            "constraint_scope": "port"
+          },
+          "return_port": {
+            "voltage": 0.0,
+            "current": -0.050000000000011674,
+            "power": -0.0,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "return_landing",
+                "resistance": 0.0,
+                "current": -0.050000000000011674,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.0,
+                "voltage_min": 0.0,
+                "voltage_max": 0.0,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "return_port",
+            "specified_current": null,
+            "constraint_scope": "port"
+          }
+        },
+        "loss_budget": {
+          "categories": {
+            "routing_metal": 0.0003021979163249001,
+            "other_metal": 0.0,
+            "access": 0,
+            "channel": 0,
+            "contact": 2.2393097792112513e-05,
+            "device_load": 0.0001048835605937311,
+            "external_feed": 2.534458116476343e-05
+          },
+          "total_power": 0.00045481915587550713,
+          "thermal_deposition": 0.00045481915587550713,
+          "excluded_power": 0.0,
+          "definition": "Disjoint layer-role, interface and external-feed integrals; groups are views, not additional losses"
+        },
+        "devices": {
+          "cell-1": {
+            "current": 0.011654148017523281,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0019425635744158094,
+            "effective_gate_bias": null,
+            "temperature_max": 300.07257820444187,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 3884.7160058410936,
+            "current_per_area": 1942358002.9205468,
+            "layer_loss": 4.961309338589617e-07,
+            "contact_loss": 2.2641169863865516e-05,
+            "status": "available"
+          },
+          "cell-2": {
+            "current": 0.013691159388325791,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0022822120029234957,
+            "effective_gate_bias": null,
+            "temperature_max": 300.10556598620667,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 4563.719796108597,
+            "current_per_area": 2281859898.0542984,
+            "layer_loss": 6.848088226138618e-07,
+            "contact_loss": 3.124922954738335e-05,
+            "status": "available"
+          },
+          "cell-3": {
+            "current": 0.013318056196788683,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.002219998848354281,
+            "effective_gate_bias": null,
+            "temperature_max": 300.09951292917725,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 4439.3520655962275,
+            "current_per_area": 2219676032.798114,
+            "layer_loss": 6.479777005312724e-07,
+            "contact_loss": 2.9569004523790638e-05,
+            "status": "available"
+          },
+          "cell-4": {
+            "current": 0.011336636397373822,
+            "source_voltage": 0.0,
+            "drain_voltage": 0.0018896284367474973,
+            "effective_gate_bias": null,
+            "temperature_max": 300.06861312858126,
+            "active_width": 3e-06,
+            "active_area": 6e-12,
+            "current_per_width": 3778.878799124607,
+            "current_per_area": 1889439399.5623035,
+            "layer_loss": 4.694578400658335e-07,
+            "contact_loss": 2.1424156658691384e-05,
+            "status": "available"
+          }
+        },
+        "contacts": {
+          "vias-22956d1de131523b": {
+            "interface_id": "vias",
+            "layer_a": "feed",
+            "layer_b": "strap",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.030736589480461086,
+            "absolute_current": 0.030736589480461086,
+            "power": 1.6122763073492945e-05,
+            "area": 1.0000000000000004e-12,
+            "j_normal_mean": -30736589480.461075,
+            "j_normal_rms": 30933542492.449757,
+            "j_normal_peak": 40091012557.208275,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.6147317896091119,
+            "signed_loading_fraction": 0.6147317896091119,
+            "status": "available"
+          },
+          "vias-32bbc847d211fed6": {
+            "interface_id": "vias",
+            "layer_a": "feed",
+            "layer_b": "strap",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.019263410519547844,
+            "absolute_current": 0.019263410519547844,
+            "power": 6.27033471861957e-06,
+            "area": 1.0000000000000004e-12,
+            "j_normal_mean": -19263410519.547836,
+            "j_normal_rms": 19295947227.585873,
+            "j_normal_peak": 22973413967.42248,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.38526821039088804,
+            "signed_loading_fraction": 0.38526821039088804,
+            "status": "available"
+          },
+          "cells-3b2ec80befd70dc0": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.013691159388325828,
+            "absolute_current": 0.013691159388325828,
+            "power": 3.1249229547383446e-05,
+            "area": 6.000000000000006e-12,
+            "j_normal_mean": 2281859898.054302,
+            "j_normal_rms": 2281973174.065681,
+            "j_normal_peak": 2332197196.050739,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.27382318776645265,
+            "signed_loading_fraction": 0.27382318776645265,
+            "status": "available"
+          },
+          "cells-497dff4e9fe35418": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.011654148017523304,
+            "absolute_current": 0.011654148017523302,
+            "power": 2.264116986386555e-05,
+            "area": 6.000000000000003e-12,
+            "j_normal_mean": 1942358002.9205496,
+            "j_normal_rms": 1942454394.1402478,
+            "j_normal_peak": 1985199433.9298594,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.23308296035041165,
+            "signed_loading_fraction": 0.23308296035041168,
+            "status": "available"
+          },
+          "cells-6ae4be8b3872d530": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.011336636397373841,
+            "absolute_current": 0.011336636397373838,
+            "power": 2.1424156658691424e-05,
+            "area": 6.000000000000001e-12,
+            "j_normal_mean": 1889439399.5623064,
+            "j_normal_rms": 1889533183.74296,
+            "j_normal_peak": 1931110794.8258498,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.22673272794742386,
+            "signed_loading_fraction": 0.2267327279474239,
+            "status": "available"
+          },
+          "cells-f8babfbd051b7e02": {
+            "interface_id": "cells",
+            "layer_a": "feed",
+            "layer_b": "return",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.013318056196788702,
+            "absolute_current": 0.0133180561967887,
+            "power": 2.9569004523790685e-05,
+            "area": 6.0000000000000076e-12,
+            "j_normal_mean": 2219676032.7981143,
+            "j_normal_rms": 2219786242.372323,
+            "j_normal_peak": 2268637620.9998245,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.2663611239357118,
+            "signed_loading_fraction": 0.2663611239357119,
+            "status": "available"
+          }
+        }
+      },
+      "optimization": {
+        "status": "complete",
+        "cache_key": "64e28136b5cd1ab0876200191e8e5c068e0eb86e5ae7f584f6108167d87f036e",
+        "termination_reason": "evaluation_budget_or_grid_exhausted",
+        "search_method": "bounded grid enumeration, or seeded sampling without replacement when the grid exceeds budget",
+        "elapsed_seconds": 289.26824619999934,
+        "pareto": [
+          "candidate-e28d8d0f4d767a28"
+        ],
+        "coarse_pareto": [
+          "candidate-e28d8d0f4d767a28"
+        ],
+        "refined_pareto": [
+          "candidate-e28d8d0f4d767a28"
+        ],
+        "pareto_resolution": "refined",
+        "verified": [
+          "candidate-e28d8d0f4d767a28"
+        ],
+        "published": [
+          "candidate-e28d8d0f4d767a28"
+        ],
+        "exports_status": "complete",
+        "implementation_sha256": "168388106f5f2c578c5e819f5290c5b976ae26c8c8db168a89ab4145cd3194da",
+        "experiment": {
+          "id": "four-cell-feed",
+          "recipe_ids": [
+            "bus",
+            "strap",
+            "vias"
+          ],
+          "variables": [
+            {
+              "id": "bus_width",
+              "recipe_id": "bus",
+              "parameter": "width",
+              "kind": "continuous",
+              "minimum": 3e-06,
+              "maximum": 6e-06,
+              "values": [],
+              "step": 0.0
+            },
+            {
+              "id": "strap_width",
+              "recipe_id": "strap",
+              "parameter": "width",
+              "kind": "continuous",
+              "minimum": 4e-06,
+              "maximum": 6e-06,
+              "values": [],
+              "step": 0.0
+            },
+            {
+              "id": "via_count",
+              "recipe_id": "vias",
+              "parameter": "columns",
+              "kind": "integer",
+              "minimum": 2,
+              "maximum": 8,
+              "values": [],
+              "step": 0.0
+            }
+          ],
+          "scenarios": [
+            {
+              "id": "nominal",
+              "settings": {},
+              "service_port": "supply",
+              "reference_port": "return_port",
+              "required_current": 0.05,
+              "service_mode": "target_current",
+              "compliance_voltage": 0.5,
+              "service_tolerance": 0.01,
+              "weight": 1.0
+            },
+            {
+              "id": "high_current",
+              "settings": {},
+              "service_port": "supply",
+              "reference_port": "return_port",
+              "required_current": 0.1,
+              "service_mode": "target_current",
+              "compliance_voltage": 0.5,
+              "service_tolerance": 0.01,
+              "weight": 1.0
+            }
+          ],
+          "objectives": [
+            {
+              "measurement_id": "routing_j",
+              "direction": "min",
+              "scenario_aggregation": "worst"
+            },
+            {
+              "measurement_id": "routing_loss",
+              "direction": "min",
+              "scenario_aggregation": "worst"
+            }
+          ],
+          "constraints": [
+            "routing_j",
+            "peak_temperature"
+          ],
+          "protected_devices": [
+            "cell-1",
+            "cell-2",
+            "cell-3",
+            "cell-4"
+          ],
+          "max_evaluations": 8,
+          "seed": 7,
+          "finalists": 2,
+          "refinement_factors": [
+            1.0,
+            0.5
+          ],
+          "maximum_mesh_change": 0.1,
+          "improvement_margin": 0.0,
+          "assumptions": [],
+          "max_wall_seconds": 3600.0
+        },
+        "rows": [
+          {
+            "id": "baseline",
+            "parameters": {},
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 11071001222.008049,
+              "routing_loss": 0.001228267195332641
+            },
+            "coarse_objectives": {
+              "routing_j": 11056258320.576216,
+              "routing_loss": 0.0012249183547631743
+            },
+            "objective_resolution": "refined",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.05000000000000043,
+                  "required_current": 0.05,
+                  "voltage": 0.009096383117508895,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4839,
+                "elements": 9434,
+                "elapsed_seconds": 5.409227699999974,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 5528309397.56632,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00030219791632490016,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 302.2461062958884,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 302.2461062958884,
+                  "electrical_power": 0.00045481915587550713,
+                  "current_balance_error": 2.2482016248656699e-13,
+                  "power_balance_error": 1.2860651634823306e-13,
+                  "thermal_balance_error": 4.1207636925246747e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.10000000000000006,
+                  "required_current": 0.1,
+                  "voltage": 0.018364116906251185,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4839,
+                "elements": 9434,
+                "elapsed_seconds": 5.569096100000024,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 11056258320.576216,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0012249183547631743,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 309.14623706667606,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 309.14623706667606,
+                  "electrical_power": 0.001836411690625184,
+                  "current_balance_error": 2.137179322403402e-14,
+                  "power_balance_error": 3.5069265445437355e-14,
+                  "thermal_balance_error": 5.37454355133351e-07
+                }
+              }
+            ],
+            "verification": {
+              "status": "mesh_resolved",
+              "factors": [
+                1.0,
+                0.5
+              ],
+              "objectives": {
+                "routing_j": 11071001222.008049,
+                "routing_loss": 0.001228267195332641
+              },
+              "uncertainty_definition": "absolute difference of last two meshes; empirical estimate, not a rigorous error bound",
+              "guidance": [
+                {
+                  "hotspot": [
+                    0.0,
+                    2.6999999999977617e-06
+                  ],
+                  "window_length_m": 6e-06,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true
+                }
+              ],
+              "maximum_relative_change": 0.0028015994978843814,
+              "objective_absolute_changes": {
+                "routing_j": 14742901.431833267,
+                "routing_loss": 3.3488405694667017e-06
+              },
+              "levels": [
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "routing_j": 11056258320.576216,
+                    "routing_loss": 0.0012249183547631743
+                  },
+                  "scenarios": [
+                    {
+                      "id": "nominal",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.05000000000000043,
+                        "required_current": 0.05,
+                        "voltage": 0.009096383117508895,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 4839,
+                      "elements": 9434,
+                      "elapsed_seconds": 5.409227699999974,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 5528309397.56632,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.00030219791632490016,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 302.2461062958884,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 302.2461062958884,
+                        "electrical_power": 0.00045481915587550713,
+                        "current_balance_error": 2.2482016248656699e-13,
+                        "power_balance_error": 1.2860651634823306e-13,
+                        "thermal_balance_error": 4.1207636925246747e-07
+                      }
+                    },
+                    {
+                      "id": "high_current",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.10000000000000006,
+                        "required_current": 0.1,
+                        "voltage": 0.018364116906251185,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 4839,
+                      "elements": 9434,
+                      "elapsed_seconds": 5.569096100000024,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 11056258320.576216,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.0012249183547631743,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 309.14623706667606,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 309.14623706667606,
+                        "electrical_power": 0.001836411690625184,
+                        "current_balance_error": 2.137179322403402e-14,
+                        "power_balance_error": 3.5069265445437355e-14,
+                        "thermal_balance_error": 5.37454355133351e-07
+                      }
+                    }
+                  ]
+                },
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "routing_j": 11071001222.008049,
+                    "routing_loss": 0.001228267195332641
+                  },
+                  "scenarios": [
+                    {
+                      "id": "nominal",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.050000000000000405,
+                        "required_current": 0.05,
+                        "voltage": 0.009112152820971593,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 17696,
+                      "elements": 34905,
+                      "elapsed_seconds": 19.89489070000036,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 5535678969.890955,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.0003030089524963262,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 302.2547449573859,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 302.2547449573859,
+                        "electrical_power": 0.0004556076410486152,
+                        "current_balance_error": 3.104461132607587e-13,
+                        "power_balance_error": 6.996270694167875e-14,
+                        "thermal_balance_error": 4.1231417519696906e-07
+                      }
+                    },
+                    {
+                      "id": "high_current",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.1000000000000017,
+                        "required_current": 0.1,
+                        "voltage": 0.018396742649217115,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 17696,
+                      "elements": 34905,
+                      "elapsed_seconds": 18.55302280000069,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 11071001222.008049,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.001228267195332641,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 309.1821626396243,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 309.1821626396243,
+                        "electrical_power": 0.0018396742649224058,
+                        "current_balance_error": 5.058453655947004e-13,
+                        "power_balance_error": 3.60443183522004e-13,
+                        "thermal_balance_error": 5.384388771443254e-07
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "candidate-8df8d58aa495c8b1",
+            "parameters": {
+              "via_count": 7,
+              "strap_width": 4.911e-06,
+              "bus_width": 4.735e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 7831891305.340524,
+              "routing_loss": 0.00070450562023887
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.050000000000000544,
+                  "required_current": 0.05,
+                  "voltage": 0.006337717812883713,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4978,
+                "elements": 9707,
+                "elapsed_seconds": 6.506258899999921,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 3916016509.8557014,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00017571525748897156,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 300.5231376957097,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.5231376957097,
+                  "electrical_power": 0.0003168858906442501,
+                  "current_balance_error": 3.1419311596886654e-13,
+                  "power_balance_error": 1.9262638101947148e-13,
+                  "thermal_balance_error": 3.632930940610019e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.10000000000000092,
+                  "required_current": 0.1,
+                  "voltage": 0.012694786091815848,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4978,
+                "elements": 9707,
+                "elapsed_seconds": 6.241802999999891,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 7831891305.340524,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00070450562023887,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 302.09918543482985,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 302.09918543482985,
+                  "electrical_power": 0.001269478609181751,
+                  "current_balance_error": 2.2468138460848872e-13,
+                  "power_balance_error": 1.2161716490949694e-13,
+                  "thermal_balance_error": 3.7859517757953453e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-cee7ae7368be31a2",
+            "parameters": {
+              "via_count": 8,
+              "strap_width": 5.823e-06,
+              "bus_width": 4.875e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 7103545658.472498,
+              "routing_loss": 0.0006138171429174198
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0499999999999943,
+                  "required_current": 0.05,
+                  "voltage": 0.005858616088254797,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4980,
+                "elements": 9712,
+                "elapsed_seconds": 6.549673999999868,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 3551812428.6973023,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00015323441101387634,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 300.3406683930601,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.3406683930601,
+                  "electrical_power": 0.00029293080441272177,
+                  "current_balance_error": 1.083855227790374e-13,
+                  "power_balance_error": 5.607352543917405e-14,
+                  "thermal_balance_error": 3.5552041061534763e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.09999999999999995,
+                  "required_current": 0.1,
+                  "voltage": 0.011728427221693602,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4980,
+                "elements": 9712,
+                "elapsed_seconds": 6.49602109999978,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 7103545658.472498,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0006138171429174198,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 301.36513606672725,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 301.36513606672725,
+                  "electrical_power": 0.001172842722169426,
+                  "current_balance_error": 7.271960811294514e-14,
+                  "power_balance_error": 5.6574655494624503e-14,
+                  "thermal_balance_error": 3.6459263178411833e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-6e276fa3a02ae786",
+            "parameters": {
+              "via_count": 3,
+              "strap_width": 4.448e-06,
+              "bus_width": 5.053000000000001e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 9395492679.535442,
+              "routing_loss": 0.001009967378118546
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.049999999999999836,
+                  "required_current": 0.05,
+                  "voltage": 0.007945774120495092,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4936,
+                "elements": 9623,
+                "elapsed_seconds": 6.457626899999923,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 4697867305.447813,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0002504702830705051,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 301.44032556153746,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 301.44032556153746,
+                  "electrical_power": 0.0003972887060247739,
+                  "current_balance_error": 5.440092820663137e-14,
+                  "power_balance_error": 5.185106187221952e-14,
+                  "thermal_balance_error": 3.911377342113918e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.09999999999999962,
+                  "required_current": 0.1,
+                  "voltage": 0.015977739115733438,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4936,
+                "elements": 9623,
+                "elapsed_seconds": 5.953366300000198,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 9395492679.535442,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.001009967378118546,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 305.8237221685932,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 305.8237221685932,
+                  "electrical_power": 0.0015977739115733793,
+                  "current_balance_error": 7.951972413877398e-14,
+                  "power_balance_error": 2.6057105527806282e-14,
+                  "thermal_balance_error": 4.550951783390618e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-e00dfe229ab0e6c9",
+            "parameters": {
+              "via_count": 4,
+              "strap_width": 5.666e-06,
+              "bus_width": 5.327e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 8150591856.792464,
+              "routing_loss": 0.0008214104127196393
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.049999999999999746,
+                  "required_current": 0.05,
+                  "voltage": 0.0069578333473373725,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4884,
+                "elements": 9518,
+                "elapsed_seconds": 6.5028855999999,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 4075360131.763596,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00020447025376995551,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 300.8522451210567,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.8522451210567,
+                  "electrical_power": 0.00034789166736694395,
+                  "current_balance_error": 3.781697177628743e-13,
+                  "power_balance_error": 2.2158269856578925e-13,
+                  "thermal_balance_error": 3.7412583062328977e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.10000000000000003,
+                  "required_current": 0.1,
+                  "voltage": 0.013954464092744787,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4884,
+                "elements": 9518,
+                "elapsed_seconds": 6.225091199999952,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 8150591856.792464,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0008214104127196393,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 303.4288960151199,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 303.4288960151199,
+                  "electrical_power": 0.0013954464092745052,
+                  "current_balance_error": 7.327471962525762e-14,
+                  "power_balance_error": 1.864697344642593e-14,
+                  "thermal_balance_error": 4.0402777857864234e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-e42d6c39fd2a840e",
+            "parameters": {
+              "via_count": 7,
+              "strap_width": 5.077e-06,
+              "bus_width": 5.692000000000001e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 7505939696.48052,
+              "routing_loss": 0.0006840368652848502
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.049999999999999975,
+                  "required_current": 0.05,
+                  "voltage": 0.006236028553822672,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4923,
+                "elements": 9598,
+                "elapsed_seconds": 6.572675299999901,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 3753034703.632844,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00017063580320870997,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 300.49369373658317,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.49369373658317,
+                  "electrical_power": 0.00031180142769119177,
+                  "current_balance_error": 3.033684414787782e-13,
+                  "power_balance_error": 1.8707443808592904e-13,
+                  "thermal_balance_error": 3.618758903470991e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.09999999999999998,
+                  "required_current": 0.1,
+                  "voltage": 0.012489790844230117,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4923,
+                "elements": 9598,
+                "elapsed_seconds": 6.54222049999953,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 7505939696.48052,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0006840368652848502,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 301.98060842259224,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 301.98060842259224,
+                  "electrical_power": 0.001248979084423024,
+                  "current_balance_error": 8.507083926189902e-14,
+                  "power_balance_error": 1.0069620346478245e-14,
+                  "thermal_balance_error": 3.7602934092328153e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-b16bdcecbe30baa1",
+            "parameters": {
+              "via_count": 3,
+              "strap_width": 5.32e-06,
+              "bus_width": 5.835000000000001e-06
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "routing_j": 8532015681.895332,
+              "routing_loss": 0.0009064561900245294
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.049999999999999385,
+                  "required_current": 0.05,
+                  "voltage": 0.00742575164721967,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4879,
+                "elements": 9508,
+                "elapsed_seconds": 6.468835200000285,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 4266084610.9417224,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.000225248613287637,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 301.1284835329284,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 301.1284835329284,
+                  "electrical_power": 0.00037128758236103617,
+                  "current_balance_error": 3.30846461338246e-13,
+                  "power_balance_error": 1.5418203416124307e-13,
+                  "thermal_balance_error": 3.822580292331858e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.09999999999999831,
+                  "required_current": 0.1,
+                  "voltage": 0.014910539310073417,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4879,
+                "elements": 9508,
+                "elapsed_seconds": 6.082343600000058,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 8532015681.895332,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0009064561900245294,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 304.550798630356,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 304.550798630356,
+                  "electrical_power": 0.0014910539310073485,
+                  "current_balance_error": 7.382983113757143e-14,
+                  "power_balance_error": 2.137786112775872e-14,
+                  "thermal_balance_error": 4.2691722756405995e-07
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-e28d8d0f4d767a28",
+            "parameters": {
+              "via_count": 8,
+              "strap_width": 6e-06,
+              "bus_width": 6e-06
+            },
+            "status": "verified_feasible",
+            "reason": "Improvement exceeds combined empirical mesh-change estimate",
+            "objectives": {
+              "routing_j": 6802330726.642482,
+              "routing_loss": 0.000598107540932869
+            },
+            "coarse_objectives": {
+              "routing_j": 6792655786.451046,
+              "routing_loss": 0.0005964017528462701
+            },
+            "objective_resolution": "refined",
+            "scenarios": [
+              {
+                "id": "nominal",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.04999999999999841,
+                  "required_current": 0.05,
+                  "voltage": 0.005772429138966685,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4851,
+                "elements": 9457,
+                "elapsed_seconds": 7.185271499999544,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 3396365569.86197,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.00014890061851891565,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 300.322163222836,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.322163222836,
+                  "electrical_power": 0.00028862145694832757,
+                  "current_balance_error": 5.0237591864288674e-14,
+                  "power_balance_error": 8.639915490285622e-15,
+                  "thermal_balance_error": 3.5428536978230413e-07
+                }
+              },
+              {
+                "id": "high_current",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.09999999999999701,
+                  "required_current": 0.1,
+                  "voltage": 0.011555186137068432,
+                  "compliance_voltage": 0.5,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 4851,
+                "elements": 9457,
+                "elapsed_seconds": 6.173076000000037,
+                "converged": true,
+                "measurements": {
+                  "routing_j": {
+                    "value": 6792655786.451046,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "routing_loss": {
+                    "value": 0.0005964017528462701,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "peak_temperature": {
+                    "value": 301.29082062755964,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 301.29082062755964,
+                  "electrical_power": 0.0011555186137068936,
+                  "current_balance_error": 1.0172418463127785e-13,
+                  "power_balance_error": 7.356129906915098e-14,
+                  "thermal_balance_error": 3.6271618312072494e-07
+                }
+              }
+            ],
+            "verification": {
+              "status": "mesh_resolved",
+              "factors": [
+                1.0,
+                0.5
+              ],
+              "objectives": {
+                "routing_j": 6802330726.642482,
+                "routing_loss": 0.000598107540932869
+              },
+              "baseline_comparison": {
+                "routing_j": {
+                  "gain": 4268670495.365567,
+                  "combined_mesh_change": 24417841.62326908,
+                  "required_gain": 24417841.62326908
+                },
+                "routing_loss": {
+                  "gain": 0.000630159654399772,
+                  "combined_mesh_change": 5.0546286560655684e-06,
+                  "required_gain": 5.0546286560655684e-06
+                }
+              },
+              "uncertainty_definition": "absolute difference of last two meshes; empirical estimate, not a rigorous error bound",
+              "guidance": [
+                {
+                  "hotspot": [
+                    0.0,
+                    2.714285714284123e-06
+                  ],
+                  "window_length_m": 6e-06,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true
+                }
+              ],
+              "maximum_relative_change": 0.005274570513383664,
+              "objective_absolute_changes": {
+                "routing_j": 9674940.191435814,
+                "routing_loss": 1.7057880865988667e-06
+              },
+              "levels": [
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "routing_j": 6792655786.451046,
+                    "routing_loss": 0.0005964017528462701
+                  },
+                  "scenarios": [
+                    {
+                      "id": "nominal",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.04999999999999841,
+                        "required_current": 0.05,
+                        "voltage": 0.005772429138966685,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 4851,
+                      "elements": 9457,
+                      "elapsed_seconds": 7.185271499999544,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 3396365569.86197,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.00014890061851891565,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 300.322163222836,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.322163222836,
+                        "electrical_power": 0.00028862145694832757,
+                        "current_balance_error": 5.0237591864288674e-14,
+                        "power_balance_error": 8.639915490285622e-15,
+                        "thermal_balance_error": 3.5428536978230413e-07
+                      }
+                    },
+                    {
+                      "id": "high_current",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.09999999999999701,
+                        "required_current": 0.1,
+                        "voltage": 0.011555186137068432,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 4851,
+                      "elements": 9457,
+                      "elapsed_seconds": 6.173076000000037,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 6792655786.451046,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.0005964017528462701,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 301.29082062755964,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 301.29082062755964,
+                        "electrical_power": 0.0011555186137068936,
+                        "current_balance_error": 1.0172418463127785e-13,
+                        "power_balance_error": 7.356129906915098e-14,
+                        "thermal_balance_error": 3.6271618312072494e-07
+                      }
+                    }
+                  ]
+                },
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "routing_j": 6802330726.642482,
+                    "routing_loss": 0.000598107540932869
+                  },
+                  "scenarios": [
+                    {
+                      "id": "nominal",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.050000000000000495,
+                        "required_current": 0.05,
+                        "voltage": 0.005780092444745376,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 18317,
+                      "elements": 36148,
+                      "elapsed_seconds": 23.320024800000283,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 3401202785.660275,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.00014932541006187366,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 300.32362569264535,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.32362569264535,
+                        "electrical_power": 0.0002890046222373187,
+                        "current_balance_error": 3.9621084191302035e-13,
+                        "power_balance_error": 1.628153000516088e-13,
+                        "thermal_balance_error": 3.544053371123664e-07
+                      }
+                    },
+                    {
+                      "id": "high_current",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.10000000000000171,
+                        "required_current": 0.1,
+                        "voltage": 0.011570579550186718,
+                        "compliance_voltage": 0.5,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 18317,
+                      "elements": 36148,
+                      "elapsed_seconds": 22.77653569999984,
+                      "converged": true,
+                      "measurements": {
+                        "routing_j": {
+                          "value": 6802330726.642482,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "routing_loss": {
+                          "value": 0.000598107540932869,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "peak_temperature": {
+                          "value": 301.29669534046815,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 301.29669534046815,
+                        "electrical_power": 0.001157057955019392,
+                        "current_balance_error": 9.066358774840918e-13,
+                        "power_balance_error": 6.053237008459938e-13,
+                        "thermal_balance_error": 3.628855265971241e-07
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "exports": {
+          "candidate-e28d8d0f4d767a28": {
+            "status": "verified_export",
+            "asset_sha256": {
+              "candidate-e28d8d0f4d767a28.gds": "6b00f3a0bd9255bf19783f607b8892d9cf1f981184c495e685442350c3f5afc6",
+              "candidate-e28d8d0f4d767a28.gds.provenance.json": "6e001d58482a9e4b089843b6f57c6678029cc60af3572c260cd094b5070d63b8",
+              "candidate-e28d8d0f4d767a28.oas": "936b8cc7d806abb616c33112b7f1bc7e7b131f1f9296e38fa0ee26c4a1ab25f2",
+              "candidate-e28d8d0f4d767a28.oas.provenance.json": "8685ed3ba45426a2fd8c56feb55df5bdc5b55d72e172a9a9284f38719942f4f4",
+              "verification.json": "2b7396555965eaebda44ec4d6ae9e50c2f59bab6b88ff7ccd36f86f13de464cb",
+              "gds/scenario-0.etl": "ea8d02479a6732b18627e94232ff4cbab17eb499f34a0613d7477d591490bbb2",
+              "gds/scenario-1.etl": "e5d1ab6de54bab82ce2cef8dbc1cc37df7bf6d3fab6967bdd92e3a3c7cfe5246",
+              "oas/scenario-0.etl": "8503af09c50276b819cff4befd04b7444b240dd3d5fcc17d0f037641a433ec5a",
+              "oas/scenario-1.etl": "f436f2f7df0b95ccd47fa510dc9da6103f1d22cc513d6e6b80e7d086f6bac21e"
+            },
+            "formats": {
+              "gds": {
+                "status": "feasible_provisional",
+                "objectives": {
+                  "routing_j": 6802331136.801841,
+                  "routing_loss": 0.0005981076132960898
+                },
+                "reevaluation_passed": true,
+                "reevaluation_comparison": {
+                  "routing_j": {
+                    "export_delta": 410.1593589782715,
+                    "baseline_gain": 4268670085.206208,
+                    "required_gain": 24418251.78262806
+                  },
+                  "routing_loss": {
+                    "export_delta": 7.236322077577156e-11,
+                    "baseline_gain": 0.0006301595820365513,
+                    "required_gain": 5.054701019286344e-06
+                  }
+                },
+                "geometry_changed": false,
+                "scenarios": [
+                  {
+                    "id": "nominal",
+                    "status": "feasible_provisional",
+                    "reason": "",
+                    "service": {
+                      "status": "satisfied",
+                      "delivered_current": 0.05000000000000075,
+                      "required_current": 0.05,
+                      "voltage": 0.005780092971667593,
+                      "compliance_voltage": 0.5,
+                      "service_mode": "target_current",
+                      "service_tolerance": 0.01
+                    },
+                    "nodes": 18318,
+                    "elements": 36150,
+                    "elapsed_seconds": 23.668755800000326,
+                    "converged": true,
+                    "measurements": {
+                      "routing_j": {
+                        "value": 3401202990.732252,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "A/m²"
+                      },
+                      "routing_loss": {
+                        "value": 0.00014932542808335748,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "W"
+                      },
+                      "peak_temperature": {
+                        "value": 300.3236257837773,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "K"
+                      }
+                    },
+                    "metrics": {
+                      "temperature_max": 300.3236257837773,
+                      "electrical_power": 0.0002890046485835222,
+                      "current_balance_error": 7.599476603556195e-13,
+                      "power_balance_error": 4.781292188915886e-13,
+                      "thermal_balance_error": 3.544054286037547e-07
+                    }
+                  },
+                  {
+                    "id": "high_current",
+                    "status": "feasible_provisional",
+                    "reason": "",
+                    "service": {
+                      "status": "satisfied",
+                      "delivered_current": 0.1000000000000011,
+                      "required_current": 0.1,
+                      "voltage": 0.011570580607617146,
+                      "compliance_voltage": 0.5,
+                      "service_mode": "target_current",
+                      "service_tolerance": 0.01
+                    },
+                    "nodes": 18318,
+                    "elements": 36150,
+                    "elapsed_seconds": 21.887089000000742,
+                    "converged": true,
+                    "measurements": {
+                      "routing_j": {
+                        "value": 6802331136.801841,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "A/m²"
+                      },
+                      "routing_loss": {
+                        "value": 0.0005981076132960898,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "W"
+                      },
+                      "peak_temperature": {
+                        "value": 301.29669570640345,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "K"
+                      }
+                    },
+                    "metrics": {
+                      "temperature_max": 301.29669570640345,
+                      "electrical_power": 0.001157058060762247,
+                      "current_balance_error": 6.360190152319273e-13,
+                      "power_balance_error": 4.4921386325863273e-13,
+                      "thermal_balance_error": 3.6288506389706986e-07
+                    }
+                  }
+                ]
+              },
+              "oas": {
+                "status": "feasible_provisional",
+                "objectives": {
+                  "routing_j": 6802330957.340628,
+                  "routing_loss": 0.0005981075817128031
+                },
+                "reevaluation_passed": true,
+                "reevaluation_comparison": {
+                  "routing_j": {
+                    "export_delta": 230.69814586639404,
+                    "baseline_gain": 4268670264.6674213,
+                    "required_gain": 24418072.321414948
+                  },
+                  "routing_loss": {
+                    "export_delta": 4.0779934117052274e-11,
+                    "baseline_gain": 0.0006301596136198379,
+                    "required_gain": 5.0546694359996855e-06
+                  }
+                },
+                "geometry_changed": false,
+                "scenarios": [
+                  {
+                    "id": "nominal",
+                    "status": "feasible_provisional",
+                    "reason": "",
+                    "service": {
+                      "status": "satisfied",
+                      "delivered_current": 0.05000000000000069,
+                      "required_current": 0.05,
+                      "voltage": 0.005780092879097079,
+                      "compliance_voltage": 0.5,
+                      "service_mode": "target_current",
+                      "service_tolerance": 0.01
+                    },
+                    "nodes": 18314,
+                    "elements": 36142,
+                    "elapsed_seconds": 22.63468610000018,
+                    "converged": true,
+                    "measurements": {
+                      "routing_j": {
+                        "value": 3401202901.0812845,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "A/m²"
+                      },
+                      "routing_loss": {
+                        "value": 0.0001493254202098286,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "W"
+                      },
+                      "peak_temperature": {
+                        "value": 300.32362575258173,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "K"
+                      }
+                    },
+                    "metrics": {
+                      "temperature_max": 300.32362575258173,
+                      "electrical_power": 0.0002890046439549577,
+                      "current_balance_error": 5.768996391706726e-13,
+                      "power_balance_error": 3.4532597335302666e-13,
+                      "thermal_balance_error": 3.544055785250894e-07
+                    }
+                  },
+                  {
+                    "id": "high_current",
+                    "status": "feasible_provisional",
+                    "reason": "",
+                    "service": {
+                      "status": "satisfied",
+                      "delivered_current": 0.10000000000000125,
+                      "required_current": 0.1,
+                      "voltage": 0.011570580421719111,
+                      "compliance_voltage": 0.5,
+                      "service_mode": "target_current",
+                      "service_tolerance": 0.01
+                    },
+                    "nodes": 18314,
+                    "elements": 36142,
+                    "elapsed_seconds": 21.35072349999973,
+                    "converged": true,
+                    "measurements": {
+                      "routing_j": {
+                        "value": 6802330957.340628,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "A/m²"
+                      },
+                      "routing_loss": {
+                        "value": 0.0005981075817128031,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "W"
+                      },
+                      "peak_temperature": {
+                        "value": 301.29669558114574,
+                        "status": "available",
+                        "within_limits": true,
+                        "unit": "K"
+                      }
+                    },
+                    "metrics": {
+                      "temperature_max": 301.29669558114574,
+                      "electrical_power": 0.001157058042172316,
+                      "current_balance_error": 5.062616992289369e-13,
+                      "power_balance_error": 3.373320679418897e-13,
+                      "thermal_balance_error": 3.6288534671448997e-07
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "cli_resume": {
+          "exit_code": 0,
+          "unchanged_history": true
+        }
+      }
+    },
+    "hemt": {
+      "source_sha256": "67b31c71a7bcc317e029292ac7aaa8200a241c725fe5abf568cbf99e4f7cd9a0",
+      "variables": [
+        "source_start_width",
+        "source_end_width",
+        "feed_ends",
+        "strap_width",
+        "via_columns",
+        "via_pattern"
+      ],
+      "elapsed_seconds": 301.7974018999994,
+      "rss_bytes": 225296384,
+      "process_peak_working_set_bytes": 454012928,
+      "multiport": {
+        "status": "not_applicable",
+        "reason": "HEMT voltage-dependent laws are outside passive DC reduction"
+      },
+      "negative_cases": {
+        "illegal_recipe": {
+          "valid": false,
+          "error": "Variable source_start_width is outside its declared bounds",
+          "numerical_solve_attempted": false
+        },
+        "disconnected_model": {
+          "status": "invalid_physical_model",
+          "reason": "gate_zero: Unreferenced component 1 has unbalanced injection 0.001 A",
+          "intent": "Separate intentionally opened fixed source contact, outside legal routing variables"
+        },
+        "subpicowatt_coupled_case": {
+          "status": "nonconverged",
+          "implementation_sha256": "c67b268078f19839a92aa840a9bc7d34cb85911e3c0dfcae8fa2ccc32a027e8a",
+          "limitation": "At 1 nV, ~6.3e-20 W heating rounds thermal response to zero and relative balance rejects the solve"
+        },
+        "deficient_bias": {
+          "status": "service_failure",
+          "service": {
+            "status": "failed",
+            "delivered_current": 0.0003149297007617388,
+            "required_current": 0.001,
+            "voltage": 0.005,
+            "compliance_voltage": 2.0,
+            "service_mode": "fixed_voltage",
+            "service_tolerance": 0.01
+          }
+        }
+      },
+      "dc": {
+        "converged": true,
+        "nodes": 7441,
+        "elements": 14579,
+        "elapsed_seconds": 3.231455499999356,
+        "archive_sha256": "5e7d2690e7f5895e9973595975bd80074d7491871c6c4b9b7fdc1b739212bf27",
+        "reopened_exact_fields": true,
+        "execution": {
+          "cpu_threads": 4,
+          "study_workers": 4,
+          "requested_backend": "cpu",
+          "actual_backend": "cpu",
+          "linear_solves": {
+            "cpu": 1
+          },
+          "native_threadpools": [
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.34.106.0",
+              "num_threads": 4
+            },
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.31.dev",
+              "num_threads": 4
+            }
+          ],
+          "effective_cpu_threads": 4,
+          "process_id": 936,
+          "scope": "whole_run",
+          "acceleration_scope": "native_cpu_thread_pools"
+        },
+        "metrics": {
+          "electrical_power": 1.5886007031813283e-05,
+          "total_current": 0.0009999999999998552,
+          "effective_resistance": 15.886007060302282,
+          "current_balance_error": 8.59100117430498e-12,
+          "power_balance_error": 1.7930494766021241e-09
+        },
+        "ports": {
+          "source_port": {
+            "voltage": 0.0,
+            "current": -0.0010000000000084462,
+            "power": -0.0,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "source",
+                "resistance": 0.0,
+                "current": -0.0010000000000084462,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.0,
+                "voltage_min": 0.0,
+                "voltage_max": 0.0,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "source_port",
+            "specified_current": null,
+            "constraint_scope": "port"
+          },
+          "drain_port": {
+            "voltage": 0.01588600706029998,
+            "current": 0.0009999999999998552,
+            "power": 1.588600706029768e-05,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "drain",
+                "resistance": 0.0,
+                "current": 0.0009999999999998552,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.015886007060299974,
+                "voltage_min": 0.01588600706029998,
+                "voltage_max": 0.01588600706029998,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "drain_port",
+            "specified_current": 0.001,
+            "constraint_scope": "port"
+          }
+        },
+        "loss_budget": {
+          "categories": {
+            "routing_metal": 2.0297477082202034e-07,
+            "other_metal": 0.0,
+            "access": 9.594728003392782e-06,
+            "channel": 5.526806818764671e-06,
+            "contact": 5.614974388338118e-07,
+            "device_load": 0,
+            "external_feed": 0.0
+          },
+          "total_power": 1.5886007031813286e-05,
+          "thermal_deposition": 1.5886007031813286e-05,
+          "excluded_power": 0.0,
+          "definition": "Disjoint layer-role, interface and external-feed integrals; groups are views, not additional losses"
+        },
+        "devices": {
+          "finger-1": {
+            "current": 0.0002528997891436752,
+            "source_voltage": 0.00023129579653721085,
+            "drain_voltage": 0.01570946333670615,
+            "effective_gate_bias": -0.007739144110351177,
+            "temperature_max": 300.00000000000006,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.8099976571519467,
+            "current_per_area": 175624.85357199667,
+            "layer_loss": 3.770302099709553e-06,
+            "contact_loss": 1.3473800437811266e-07,
+            "status": "available"
+          },
+          "finger-2": {
+            "current": 0.00024643467178880863,
+            "source_voltage": 0.00023241162722668348,
+            "drain_voltage": 0.015712004210158108,
+            "effective_gate_bias": -0.007328321525117589,
+            "temperature_max": 300.00000000000006,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.7381630198756515,
+            "current_per_area": 171135.1887422282,
+            "layer_loss": 3.713577385894165e-06,
+            "contact_loss": 1.4136094339455607e-07,
+            "status": "available"
+          },
+          "finger-3": {
+            "current": 0.00024630874597327804,
+            "source_voltage": 0.0002324188051874607,
+            "drain_voltage": 0.01571184489357124,
+            "effective_gate_bias": -0.007324276196225144,
+            "temperature_max": 300.00000000000006,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.7367638441475335,
+            "current_per_area": 171047.74025922085,
+            "layer_loss": 3.7132765892136964e-06,
+            "contact_loss": 1.4144654337409098e-07,
+            "status": "available"
+          },
+          "finger-4": {
+            "current": 0.00025435679310284025,
+            "source_voltage": 0.00015185147933737507,
+            "drain_voltage": 0.01570868246360936,
+            "effective_gate_bias": -0.007699483683067154,
+            "temperature_max": 300.00000000000006,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.826186590031558,
+            "current_per_area": 176636.6618769724,
+            "layer_loss": 3.808914867294651e-06,
+            "contact_loss": 1.3632595135056484e-07,
+            "status": "available"
+          }
+        },
+        "contacts": {
+          "source_contact-0758cac7a512f58d": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00025335706558454393,
+            "absolute_current": 0.0002533618218293374,
+            "power": 6.559886639806603e-08,
+            "area": 5.099999999999999e-10,
+            "j_normal_mean": 496778.55996969406,
+            "j_normal_rms": 1134130.6284176528,
+            "j_normal_peak": 12776607.344541129,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.2531687750662732,
+            "signed_loading_fraction": 0.2533570655823641,
+            "status": "available"
+          },
+          "source_contact-c9ef2e03cc04b736": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.0004918989585267891,
+            "absolute_current": 0.0004926115322333746,
+            "power": 1.433616231767619e-07,
+            "area": 5.100000000000003e-10,
+            "j_normal_mean": 964507.761817233,
+            "j_normal_rms": 1676607.3539001886,
+            "j_normal_peak": 16070597.72776885,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.4922361913037147,
+            "signed_loading_fraction": 0.49189895852255694,
+            "status": "available"
+          },
+          "source_contact-d3266c515d61b8ab": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00025474397589727053,
+            "absolute_current": 0.00025478916794662205,
+            "power": 6.638626636147367e-08,
+            "area": 5.099999999999997e-10,
+            "j_normal_mean": 499497.9919554327,
+            "j_normal_rms": 1140916.9545956438,
+            "j_normal_peak": 12837188.371816834,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.254595033630012,
+            "signed_loading_fraction": 0.25474397589507874,
+            "status": "available"
+          },
+          "drain_contact-4c4c3e63c8e5bcae": {
+            "interface_id": "drain_contact",
+            "layer_a": "channel",
+            "layer_b": "drain_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.0005006655390761185,
+            "absolute_current": 0.0005006655390761185,
+            "power": 1.4293750170396318e-07,
+            "area": 5.099999999999997e-10,
+            "j_normal_mean": -981697.1354433701,
+            "j_normal_rms": 1674125.4767317823,
+            "j_normal_peak": 15265579.849214686,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.5006655390718117,
+            "signed_loading_fraction": 0.5006655390718117,
+            "status": "available"
+          },
+          "drain_contact-aa7c7c27dc89273a": {
+            "interface_id": "drain_contact",
+            "layer_a": "channel",
+            "layer_b": "drain_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.0004993344609324837,
+            "absolute_current": 0.0004993344609324837,
+            "power": 1.4212837902335748e-07,
+            "area": 5.100000000000002e-10,
+            "j_normal_mean": -979087.1782989873,
+            "j_normal_rms": 1669380.4123812828,
+            "j_normal_peak": 15166946.067389619,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.4993344609281884,
+            "signed_loading_fraction": 0.4993344609281884,
+            "status": "available"
+          },
+          "source_vias-21521f33b6411777": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00010048370521992413,
+            "absolute_current": 0.0001004837052199241,
+            "power": 2.0501026879566573e-10,
+            "area": 1.0000000000000012e-12,
+            "j_normal_mean": 100483705.21992402,
+            "j_normal_rms": 100842253.8349632,
+            "j_normal_peak": 119535795.18845221,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.20763461050442636,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-2800579bcec8919a": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -2.5245815256252155e-05,
+            "absolute_current": 2.5245815256252148e-05,
+            "power": 1.3310438795537545e-11,
+            "area": 1.0000000000000079e-12,
+            "j_normal_mean": -25245815.256251957,
+            "j_normal_rms": 25695136.108219247,
+            "j_normal_peak": 35643636.463328466,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.05216671704258816,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-28d0c009e8a1bf8c": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.00019035608529774449,
+            "absolute_current": 0.00019035608529774449,
+            "power": 7.381000319547068e-10,
+            "area": 1.0000000000000216e-12,
+            "j_normal_mean": -190356085.29774037,
+            "j_normal_rms": 191342898.377905,
+            "j_normal_peak": 233744594.5705032,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.39334249808403304,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-2d611ee4f3c082b7": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 1.702963448174325e-05,
+            "absolute_current": 1.702963448174325e-05,
+            "power": 5.888053472548867e-12,
+            "area": 9.999999999999961e-13,
+            "j_normal_mean": 17029634.481743317,
+            "j_normal_rms": 17089942.78725564,
+            "j_normal_peak": 20842026.758831427,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.03518920321370071,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-452196722b4d06d2": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -3.1946924129138733e-06,
+            "absolute_current": 3.194704418033469e-06,
+            "power": 2.5925880698687774e-13,
+            "area": 1.0000000000000097e-12,
+            "j_normal_mean": -3194692.412913842,
+            "j_normal_rms": 3586092.562996766,
+            "j_normal_peak": 6855816.328260726,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.006601380851386268,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-53a0dbedeb94bef0": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 5.3251033668434e-05,
+            "absolute_current": 5.3251033668433996e-05,
+            "power": 5.756186943700502e-11,
+            "area": 9.999999999999961e-13,
+            "j_normal_mean": 53251033.66843421,
+            "j_normal_rms": 53434553.05482503,
+            "j_normal_peak": 63645356.91407458,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.11003532971344922,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-79f01caa6d2e5647": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 4.206795689990841e-05,
+            "absolute_current": 4.2067956899908394e-05,
+            "power": 3.613181586243757e-11,
+            "area": 1.0000000000000079e-12,
+            "j_normal_mean": 42067956.89990807,
+            "j_normal_rms": 42335006.44802396,
+            "j_normal_peak": 53139840.4422073,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.08692716721096316,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-98e8e455b1ace505": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -2.317583755204235e-05,
+            "absolute_current": 2.317583755204235e-05,
+            "power": 1.1264809361337699e-11,
+            "area": 1.0000000000000147e-12,
+            "j_normal_mean": -23175837.552042007,
+            "j_normal_rms": 23638322.817448393,
+            "j_normal_peak": 32523919.352426425,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.04788941642528143,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-ff2405f2c5b67264": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 2.914010024904656e-05,
+            "absolute_current": 2.914010024904656e-05,
+            "power": 1.7275623703338218e-11,
+            "area": 1.0000000000000012e-12,
+            "j_normal_mean": 29140100.249046527,
+            "j_normal_rms": 29273294.637526307,
+            "j_normal_peak": 35272877.88680663,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.06021367695417164,
+            "signed_loading_fraction": null,
+            "status": "available"
+          }
+        }
+      },
+      "coupled": {
+        "converged": true,
+        "nodes": 7441,
+        "elements": 14579,
+        "elapsed_seconds": 15.672528999999486,
+        "archive_sha256": "be4bba1cceda65d801ab70bbd43f74884be46d2d87baa36b0851512dff2ef791",
+        "reopened_exact_fields": true,
+        "execution": {
+          "cpu_threads": 4,
+          "study_workers": 4,
+          "requested_backend": "cpu",
+          "actual_backend": "cpu",
+          "linear_solves": {
+            "cpu": 39
+          },
+          "native_threadpools": [
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.34.106.0",
+              "num_threads": 4
+            },
+            {
+              "user_api": "blas",
+              "internal_api": "openblas",
+              "prefix": "libscipy_openblas",
+              "version": "0.3.31.dev",
+              "num_threads": 4
+            }
+          ],
+          "effective_cpu_threads": 4,
+          "process_id": 936,
+          "scope": "whole_run",
+          "acceleration_scope": "native_cpu_thread_pools"
+        },
+        "metrics": {
+          "electrical_power": 1.5886075015221746e-05,
+          "total_current": 0.001000000000006808,
+          "effective_resistance": 15.886075014799538,
+          "current_balance_error": 1.2891814351985275e-11,
+          "power_balance_error": 1.296147305213189e-11,
+          "temperature_max": 300.0018315968636,
+          "thermal_reference": 300.0,
+          "thermal_balance_error": 6.711442933850172e-06,
+          "thermal_resistance": 115.29574560457674,
+          "heat_out": 1.5885968396735846e-05,
+          "thermal_power": 1.5886075015221753e-05
+        },
+        "ports": {
+          "source_port": {
+            "voltage": 0.0,
+            "current": -0.0010000000000196998,
+            "power": -0.0,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "source",
+                "resistance": 0.0,
+                "current": -0.0010000000000196998,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.0,
+                "voltage_min": 0.0,
+                "voltage_max": 0.0,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "source_port",
+            "specified_current": null,
+            "constraint_scope": "port"
+          },
+          "drain_port": {
+            "voltage": 0.01588607501490769,
+            "current": 0.001000000000006808,
+            "power": 1.588607501501584e-05,
+            "feed_power": 0.0,
+            "landings": [
+              {
+                "terminal_id": "drain",
+                "resistance": 0.0,
+                "current": 0.001000000000006808,
+                "power": 0.0,
+                "thermal_fraction": 0.0,
+                "voltage": 0.0158860750149077,
+                "voltage_min": 0.01588607501490769,
+                "voltage_max": 0.01588607501490769,
+                "ideal": true,
+                "resistance_model": "ideal_equipotential"
+              }
+            ],
+            "external_node": "drain_port",
+            "specified_current": 0.001,
+            "constraint_scope": "port"
+          }
+        },
+        "loss_budget": {
+          "categories": {
+            "routing_metal": 2.0297492258767668e-07,
+            "other_metal": 0.0,
+            "access": 9.594759164389616e-06,
+            "channel": 5.526842864824296e-06,
+            "contact": 5.61498063420163e-07,
+            "device_load": 0,
+            "external_feed": 0.0
+          },
+          "total_power": 1.5886075015221753e-05,
+          "thermal_deposition": 1.5886075015221753e-05,
+          "excluded_power": 0.0,
+          "definition": "Disjoint layer-role, interface and external-feed integrals; groups are views, not additional losses"
+        },
+        "devices": {
+          "finger-1": {
+            "current": 0.00025289980469295133,
+            "source_voltage": 0.00023129590476582665,
+            "drain_voltage": 0.01570953122317959,
+            "effective_gate_bias": -0.007739176499382866,
+            "temperature_max": 300.00181336023144,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.8099978299216812,
+            "current_per_area": 175624.8643701051,
+            "layer_loss": 3.770319011448416e-06,
+            "contact_loss": 1.3473814334858697e-07,
+            "status": "available"
+          },
+          "finger-2": {
+            "current": 0.0002464346638961633,
+            "source_voltage": 0.0002324117344440679,
+            "drain_voltage": 0.01571207210583822,
+            "effective_gate_bias": -0.007328352610059883,
+            "temperature_max": 300.0018178949898,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.738162932179592,
+            "current_per_area": 171135.18326122453,
+            "layer_loss": 3.7135937830180324e-06,
+            "contact_loss": 1.4136110774826936e-07,
+            "status": "available"
+          },
+          "finger-3": {
+            "current": 0.00024630873786972765,
+            "source_voltage": 0.00023241891229979953,
+            "drain_voltage": 0.015711912791397643,
+            "effective_gate_bias": -0.007324307268753889,
+            "temperature_max": 300.0018200715888,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.7367637541080847,
+            "current_per_area": 171047.7346317553,
+            "layer_loss": 3.713292983853366e-06,
+            "contact_loss": 1.414467080897242e-07,
+            "status": "available"
+          },
+          "finger-4": {
+            "current": 0.0002543567935610422,
+            "source_voltage": 0.00015185150767501706,
+            "drain_voltage": 0.01570875035806898,
+            "effective_gate_bias": -0.007699516025144253,
+            "temperature_max": 300.0018315968636,
+            "active_width": 9e-05,
+            "active_area": 1.44e-09,
+            "current_per_width": 2.826186595122691,
+            "current_per_area": 176636.6621951682,
+            "layer_loss": 3.8089316661027726e-06,
+            "contact_loss": 1.3632607665796808e-07,
+            "status": "available"
+          }
+        },
+        "contacts": {
+          "source_contact-0758cac7a512f58d": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00025335708207253286,
+            "absolute_current": 0.0002533618383449418,
+            "power": 6.559892661171182e-08,
+            "area": 5.099999999999999e-10,
+            "j_normal_mean": 496778.5922990841,
+            "j_normal_rms": 1134131.148930644,
+            "j_normal_peak": 12776633.251767794,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.25316879080079463,
+            "signed_loading_fraction": 0.2533570820674947,
+            "status": "available"
+          },
+          "source_contact-c9ef2e03cc04b736": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.0004918989408141195,
+            "absolute_current": 0.0004926115173818993,
+            "power": 1.433617932869752e-07,
+            "area": 5.100000000000003e-10,
+            "j_normal_mean": 964507.7270865082,
+            "j_normal_rms": 1676608.3486153143,
+            "j_normal_peak": 16070642.782823209,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.49223617496936223,
+            "signed_loading_fraction": 0.49189894080433777,
+            "status": "available"
+          },
+          "source_contact-d3266c515d61b8ab": {
+            "interface_id": "source_contact",
+            "layer_a": "channel",
+            "layer_b": "source_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00025474397713323336,
+            "absolute_current": 0.00025478916932032854,
+            "power": 6.638631960138007e-08,
+            "area": 5.099999999999997e-10,
+            "j_normal_mean": 499497.99437888927,
+            "j_normal_rms": 1140917.4120871024,
+            "j_normal_peak": 12837213.947289031,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.2545950342298433,
+            "signed_loading_fraction": 0.2547439771281676,
+            "status": "available"
+          },
+          "drain_contact-4c4c3e63c8e5bcae": {
+            "interface_id": "drain_contact",
+            "layer_a": "channel",
+            "layer_b": "drain_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.0005006655314307698,
+            "absolute_current": 0.0005006655314307698,
+            "power": 1.429376685724571e-07,
+            "area": 5.099999999999997e-10,
+            "j_normal_mean": -981697.1204524904,
+            "j_normal_rms": 1674126.4539375962,
+            "j_normal_peak": 15265620.848204566,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.5006655314208144,
+            "signed_loading_fraction": 0.5006655314208144,
+            "status": "available"
+          },
+          "drain_contact-aa7c7c27dc89273a": {
+            "interface_id": "drain_contact",
+            "layer_a": "channel",
+            "layer_b": "drain_metal",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.0004993344685891147,
+            "absolute_current": 0.0004993344685891147,
+            "power": 1.4212855246677022e-07,
+            "area": 5.100000000000002e-10,
+            "j_normal_mean": -979087.1933119892,
+            "j_normal_rms": 1669381.4309778137,
+            "j_normal_peak": 15166987.18564559,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.4993344685791858,
+            "signed_loading_fraction": 0.4993344685791858,
+            "status": "available"
+          },
+          "source_vias-21521f33b6411777": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 0.00010048369730786695,
+            "absolute_current": 0.00010048369730786693,
+            "power": 2.0501043054238796e-10,
+            "area": 1.0000000000000012e-12,
+            "j_normal_mean": 100483697.30786683,
+            "j_normal_rms": 100842245.95491117,
+            "j_normal_peak": 119535787.25809273,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.20763460747909987,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-2800579bcec8919a": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -2.524581358823226e-05,
+            "absolute_current": 2.524581358823226e-05,
+            "power": 1.3310448139540093e-11,
+            "area": 1.0000000000000079e-12,
+            "j_normal_mean": -25245813.588232063,
+            "j_normal_rms": 25695134.389657844,
+            "j_normal_peak": 35643633.71018713,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.052166716943373645,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-28d0c009e8a1bf8c": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -0.00019035605731820653,
+            "absolute_current": 0.00019035605731820653,
+            "power": 7.381004575787002e-10,
+            "area": 1.0000000000000216e-12,
+            "j_normal_mean": -190356057.3182024,
+            "j_normal_rms": 191342870.21199352,
+            "j_normal_peak": 233744559.9923242,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.3933424655089841,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-2d611ee4f3c082b7": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 1.702963072788801e-05,
+            "absolute_current": 1.702963072788801e-05,
+            "power": 5.888055637164901e-12,
+            "area": 9.999999999999961e-13,
+            "j_normal_mean": 17029630.727888077,
+            "j_normal_rms": 17089939.048981432,
+            "j_normal_peak": 20842022.842283223,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.035189197714983106,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-452196722b4d06d2": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -3.194699004963554e-06,
+            "absolute_current": 3.1947110060098785e-06,
+            "power": 2.592598752751226e-13,
+            "area": 1.0000000000000097e-12,
+            "j_normal_mean": -3194699.0049635232,
+            "j_normal_rms": 3586098.4917779337,
+            "j_normal_peak": 6855823.289039958,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.006601394888064978,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-53a0dbedeb94bef0": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 5.3251037637067944e-05,
+            "absolute_current": 5.325103763706794e-05,
+            "power": 5.7561924252444284e-11,
+            "area": 9.999999999999961e-13,
+            "j_normal_mean": 53251037.63706815,
+            "j_normal_rms": 53434557.07161657,
+            "j_normal_peak": 63645362.181899816,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.11003534497492792,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-79f01caa6d2e5647": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 4.206795925927345e-05,
+            "absolute_current": 4.206795925927345e-05,
+            "power": 3.613184962236623e-11,
+            "area": 1.0000000000000079e-12,
+            "j_normal_mean": 42067959.25927312,
+            "j_normal_rms": 42335008.84552774,
+            "j_normal_peak": 53139843.434852764,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.08692717766429318,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-98e8e455b1ace505": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": -2.3175845082427343e-05,
+            "absolute_current": 2.3175845082427347e-05,
+            "power": 1.1264827138276018e-11,
+            "area": 1.0000000000000147e-12,
+            "j_normal_mean": -23175845.082427002,
+            "j_normal_rms": 23638330.14804248,
+            "j_normal_peak": 32523926.76339163,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.04788943505873053,
+            "signed_loading_fraction": null,
+            "status": "available"
+          },
+          "source_vias-ff2405f2c5b67264": {
+            "interface_id": "source_vias",
+            "layer_a": "source_metal",
+            "layer_b": "upper_source",
+            "direction": "layer_a_to_layer_b",
+            "current_a_to_b": 2.9140090061767203e-05,
+            "absolute_current": 2.9140090061767203e-05,
+            "power": 1.7275628082355013e-11,
+            "area": 1.0000000000000012e-12,
+            "j_normal_mean": 29140090.06176717,
+            "j_normal_rms": 29273284.479125436,
+            "j_normal_peak": 35272867.11803193,
+            "peak_definition": "raw P1 vertex maximum; mesh-sensitive",
+            "absolute_loading_fraction": 0.06021365976754276,
+            "signed_loading_fraction": null,
+            "status": "available"
+          }
+        }
+      },
+      "optimization": {
+        "status": "complete",
+        "cache_key": "f26f293008c507856c8626684a22d3f81c04d38d26613133dd6c1c8ecf131faf",
+        "termination_reason": "evaluation_budget_or_grid_exhausted",
+        "search_method": "bounded grid enumeration, or seeded sampling without replacement when the grid exceeds budget",
+        "elapsed_seconds": 261.5218291000001,
+        "pareto": [
+          "candidate-4966ef3f45d52473"
+        ],
+        "coarse_pareto": [
+          "candidate-4966ef3f45d52473"
+        ],
+        "refined_pareto": [],
+        "pareto_resolution": "coarse",
+        "verified": [],
+        "published": [],
+        "exports_status": "complete",
+        "implementation_sha256": "168388106f5f2c578c5e819f5290c5b976ae26c8c8db168a89ab4145cd3194da",
+        "experiment": {
+          "id": "hemt-source-feed",
+          "recipe_ids": [
+            "source_bus_lower",
+            "source_bus_upper",
+            "upper_feed",
+            "upper_strap",
+            "source_vias"
+          ],
+          "variables": [
+            {
+              "id": "source_start_width",
+              "recipe_id": "source_bus_lower",
+              "parameter": "width",
+              "kind": "continuous",
+              "minimum": 6e-06,
+              "maximum": 1.2e-05,
+              "values": [
+                6e-06,
+                1.2e-05
+              ],
+              "step": 0.0
+            },
+            {
+              "id": "source_end_width",
+              "recipe_id": "source_bus_upper",
+              "parameter": "width",
+              "kind": "continuous",
+              "minimum": 6e-06,
+              "maximum": 1.2e-05,
+              "values": [
+                6e-06,
+                1.2e-05
+              ],
+              "step": 0.0
+            },
+            {
+              "id": "feed_ends",
+              "recipe_id": "upper_feed",
+              "parameter": "end",
+              "kind": "choice",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "values": [
+                "single",
+                "dual"
+              ],
+              "step": 0.0
+            },
+            {
+              "id": "strap_width",
+              "recipe_id": "upper_strap",
+              "parameter": "width",
+              "kind": "continuous",
+              "minimum": 6e-06,
+              "maximum": 1.2e-05,
+              "values": [
+                6e-06,
+                1.2e-05
+              ],
+              "step": 0.0
+            },
+            {
+              "id": "via_columns",
+              "recipe_id": "source_vias",
+              "parameter": "columns",
+              "kind": "integer",
+              "minimum": 3,
+              "maximum": 7,
+              "values": [
+                3,
+                5,
+                7
+              ],
+              "step": 0.0
+            },
+            {
+              "id": "via_pattern",
+              "recipe_id": "source_vias",
+              "parameter": "pattern",
+              "kind": "choice",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "values": [
+                "uniform",
+                "graded",
+                "staggered"
+              ],
+              "step": 0.0
+            }
+          ],
+          "scenarios": [
+            {
+              "id": "gate_zero",
+              "settings": {
+                "terminals.gate_control.value": 0.0
+              },
+              "service_port": "drain_port",
+              "reference_port": "source_port",
+              "required_current": 0.001,
+              "service_mode": "target_current",
+              "compliance_voltage": 2.0,
+              "service_tolerance": 0.01,
+              "weight": 1.0
+            },
+            {
+              "id": "gate_negative",
+              "settings": {
+                "terminals.gate_control.value": -1.0
+              },
+              "service_port": "drain_port",
+              "reference_port": "source_port",
+              "required_current": 0.002,
+              "service_mode": "target_current",
+              "compliance_voltage": 2.0,
+              "service_tolerance": 0.01,
+              "weight": 1.0
+            }
+          ],
+          "objectives": [
+            {
+              "measurement_id": "source_j",
+              "direction": "min",
+              "scenario_aggregation": "worst"
+            },
+            {
+              "measurement_id": "source_loss",
+              "direction": "min",
+              "scenario_aggregation": "worst"
+            }
+          ],
+          "constraints": [
+            "source_j",
+            "channel_temperature"
+          ],
+          "protected_devices": [
+            "finger-1",
+            "finger-2",
+            "finger-3",
+            "finger-4"
+          ],
+          "max_evaluations": 6,
+          "seed": 7,
+          "finalists": 2,
+          "refinement_factors": [
+            1.0,
+            0.5
+          ],
+          "maximum_mesh_change": 0.1,
+          "improvement_margin": 0.0,
+          "assumptions": [],
+          "max_wall_seconds": 3600.0
+        },
+        "rows": [
+          {
+            "id": "baseline",
+            "parameters": {},
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "source_j": 96121702.00576288,
+              "source_loss": 4.809093932786824e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.001000000000006808,
+                  "required_current": 0.001,
+                  "voltage": 0.01588607501490769,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7441,
+                "elements": 14579,
+                "elapsed_seconds": 15.505462700000862,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 48073616.92492062,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 1.2029087608240236e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0018315968636,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0018315968636,
+                  "electrical_power": 1.5886075015221746e-05,
+                  "current_balance_error": 1.2891814351985275e-11,
+                  "power_balance_error": 1.296147305213189e-11,
+                  "thermal_balance_error": 6.711442933850172e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.002000000000040511,
+                  "required_current": 0.002,
+                  "voltage": 0.0369649540399036,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7441,
+                "elements": 14579,
+                "elapsed_seconds": 15.716684400000304,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 96121702.00576288,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 4.809093932786824e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0100775203011,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0100775203011,
+                  "electrical_power": 7.3929908081606e-05,
+                  "current_balance_error": 4.960658619877393e-12,
+                  "power_balance_error": 4.075478944206696e-12,
+                  "thermal_balance_error": 6.713805318997462e-06
+                }
+              }
+            ],
+            "verification": {
+              "status": "mesh_uncertain",
+              "reason": "Refined mesh is not feasible",
+              "factors": [
+                1.0,
+                0.5
+              ],
+              "uncertainty_definition": "absolute difference of last two meshes; empirical estimate, not a rigorous error bound",
+              "guidance": [
+                {
+                  "hotspot": [
+                    6.275000000003423e-05,
+                    8.000000000000394e-05
+                  ],
+                  "window_length_m": 1.6e-05,
+                  "target_size_m": 2e-06,
+                  "resolved": true
+                },
+                {
+                  "hotspot": [
+                    6.125000000003578e-05,
+                    8.00000000000041e-05
+                  ],
+                  "window_length_m": 1.6e-05,
+                  "target_size_m": 2e-06,
+                  "resolved": true
+                },
+                {
+                  "interface": "source_contact",
+                  "layer": "channel",
+                  "transfer_length_m": 2.432285595164256e-07,
+                  "target_size_m": 1.25e-07,
+                  "resolved": false,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "source_contact",
+                  "layer": "source_metal",
+                  "transfer_length_m": 6.454948778883495e-05,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "drain_contact",
+                  "layer": "channel",
+                  "transfer_length_m": 6.216415613294773e-07,
+                  "target_size_m": 1.5541039033236932e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "drain_contact",
+                  "layer": "drain_metal",
+                  "transfer_length_m": 6.454950998576063e-05,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                }
+              ],
+              "maximum_relative_change": null,
+              "objective_absolute_changes": {
+                "source_j": null,
+                "source_loss": null
+              },
+              "levels": [
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "source_j": 96121702.00576288,
+                    "source_loss": 4.809093932786824e-07
+                  },
+                  "scenarios": [
+                    {
+                      "id": "gate_zero",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.001000000000006808,
+                        "required_current": 0.001,
+                        "voltage": 0.01588607501490769,
+                        "compliance_voltage": 2.0,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 7441,
+                      "elements": 14579,
+                      "elapsed_seconds": 15.505462700000862,
+                      "converged": true,
+                      "measurements": {
+                        "source_j": {
+                          "value": 48073616.92492062,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "source_loss": {
+                          "value": 1.2029087608240236e-07,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "channel_temperature": {
+                          "value": 300.0018315968636,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.0018315968636,
+                        "electrical_power": 1.5886075015221746e-05,
+                        "current_balance_error": 1.2891814351985275e-11,
+                        "power_balance_error": 1.296147305213189e-11,
+                        "thermal_balance_error": 6.711442933850172e-06
+                      }
+                    },
+                    {
+                      "id": "gate_negative",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.002000000000040511,
+                        "required_current": 0.002,
+                        "voltage": 0.0369649540399036,
+                        "compliance_voltage": 2.0,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 7441,
+                      "elements": 14579,
+                      "elapsed_seconds": 15.716684400000304,
+                      "converged": true,
+                      "measurements": {
+                        "source_j": {
+                          "value": 96121702.00576288,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "source_loss": {
+                          "value": 4.809093932786824e-07,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "channel_temperature": {
+                          "value": 300.0100775203011,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.0100775203011,
+                        "electrical_power": 7.3929908081606e-05,
+                        "current_balance_error": 4.960658619877393e-12,
+                        "power_balance_error": 4.075478944206696e-12,
+                        "thermal_balance_error": 6.713805318997462e-06
+                      }
+                    }
+                  ]
+                },
+                {
+                  "status": "invalid_physical_model",
+                  "objectives": {},
+                  "scenarios": [
+                    {
+                      "id": "gate_zero",
+                      "status": "invalid_physical_model",
+                      "reason": "Generated 479,355 elements, exceeding budget 250,000; increase sizes or budget",
+                      "measurements": {},
+                      "metrics": {}
+                    },
+                    {
+                      "id": "gate_negative",
+                      "status": "invalid_physical_model",
+                      "reason": "Generated 479,337 elements, exceeding budget 250,000; increase sizes or budget",
+                      "measurements": {},
+                      "metrics": {}
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "candidate-c6a8cd627c8f17c4",
+            "parameters": {
+              "via_pattern": "uniform",
+              "via_columns": 3,
+              "strap_width": 6e-06,
+              "feed_ends": "dual",
+              "source_end_width": 6e-06,
+              "source_start_width": 1.2e-05
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "source_j": 88965473.15519032,
+              "source_loss": 4.46127835495004e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0010000000000018466,
+                  "required_current": 0.001,
+                  "voltage": 0.015880975905720313,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7552,
+                "elements": 14801,
+                "elapsed_seconds": 16.335780600000362,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 44494597.784889914,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 1.1159112887524512e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.00182923213697,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.00182923213697,
+                  "electrical_power": 1.588097590601384e-05,
+                  "current_balance_error": 1.6766752916447805e-11,
+                  "power_balance_error": 1.6636454229221727e-11,
+                  "thermal_balance_error": 6.71144541140876e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0020000000000024673,
+                  "required_current": 0.002,
+                  "voltage": 0.036956437893338204,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7552,
+                "elements": 14801,
+                "elapsed_seconds": 17.802429200000915,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 88965473.15519032,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 4.46127835495004e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.01006635426296,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.01006635426296,
+                  "electrical_power": 7.391287578668928e-05,
+                  "current_balance_error": 5.886567275268211e-12,
+                  "power_balance_error": 6.945972920933058e-12,
+                  "thermal_balance_error": 6.713757214499079e-06
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-817300e3e5f45b75",
+            "parameters": {
+              "via_pattern": "staggered",
+              "via_columns": 7,
+              "strap_width": 6e-06,
+              "feed_ends": "dual",
+              "source_end_width": 6e-06,
+              "source_start_width": 1.2e-05
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "source_j": 83314471.18705502,
+              "source_loss": 3.9125257680821495e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.001000000000004532,
+                  "required_current": 0.001,
+                  "voltage": 0.01586906125938824,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7684,
+                "elements": 15065,
+                "elapsed_seconds": 20.538043900000048,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 41678622.57798957,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 9.791332830724148e-08,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0018269063629,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0018269063629,
+                  "electrical_power": 1.5869061259507202e-05,
+                  "current_balance_error": 3.0600522116045375e-12,
+                  "power_balance_error": 2.9645238064929338e-12,
+                  "thermal_balance_error": 6.7114432766854204e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0019999999999619094,
+                  "required_current": 0.002,
+                  "voltage": 0.03693209928778396,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7684,
+                "elements": 15065,
+                "elapsed_seconds": 19.489519399998244,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 83314471.18705502,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 3.9125257680821495e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.01005612422375,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.01005612422375,
+                  "electrical_power": 7.386419857409962e-05,
+                  "current_balance_error": 3.129332730455547e-11,
+                  "power_balance_error": 3.212625044506628e-11,
+                  "thermal_balance_error": 6.713781693789647e-06
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-1aff5c0582a16006",
+            "parameters": {
+              "via_pattern": "uniform",
+              "via_columns": 5,
+              "strap_width": 6e-06,
+              "feed_ends": "dual",
+              "source_end_width": 1.2e-05,
+              "source_start_width": 1.2e-05
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "source_j": 74802297.80891486,
+              "source_loss": 3.305889539143818e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0009999999999927012,
+                  "required_current": 0.001,
+                  "voltage": 0.01585316043553377,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7645,
+                "elements": 14987,
+                "elapsed_seconds": 19.985871900000348,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 37419833.64815454,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 8.272961205416398e-08,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.00182589859077,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.00182589859077,
+                  "electrical_power": 1.5853160435888864e-05,
+                  "current_balance_error": 2.9913571619514984e-11,
+                  "power_balance_error": 2.969762671478806e-11,
+                  "thermal_balance_error": 6.711457914646972e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0019999999999721282,
+                  "required_current": 0.002,
+                  "voltage": 0.03690027697697921,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7645,
+                "elements": 14987,
+                "elapsed_seconds": 20.196232899999814,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 74802297.80891486,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 3.305889539143818e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.01005053658713,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.01005053658713,
+                  "electrical_power": 7.380055395288206e-05,
+                  "current_balance_error": 9.58608192833548e-12,
+                  "power_balance_error": 1.0234835757342043e-11,
+                  "thermal_balance_error": 6.713714158394421e-06
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-931458ab95f12234",
+            "parameters": {
+              "via_pattern": "graded",
+              "via_columns": 3,
+              "strap_width": 1.2e-05,
+              "feed_ends": "dual",
+              "source_end_width": 1.2e-05,
+              "source_start_width": 1.2e-05
+            },
+            "status": "feasible_provisional",
+            "reason": "",
+            "objectives": {
+              "source_j": 74233562.05472003,
+              "source_loss": 3.4320800756737945e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.00100000000000261,
+                  "required_current": 0.001,
+                  "voltage": 0.01585595159874434,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7495,
+                "elements": 14687,
+                "elapsed_seconds": 19.818656600000395,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 37131795.485798806,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 8.587119948733585e-08,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0018263941969,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0018263941969,
+                  "electrical_power": 1.5855951599048078e-05,
+                  "current_balance_error": 1.6880594144543774e-11,
+                  "power_balance_error": 1.6546253645634785e-11,
+                  "thermal_balance_error": 6.711471415285053e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.00200000000001245,
+                  "required_current": 0.002,
+                  "voltage": 0.03690599291178623,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7495,
+                "elements": 14687,
+                "elapsed_seconds": 18.539573500000188,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 74233562.05472003,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 3.4320800756737945e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0100530955235,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0100530955235,
+                  "electrical_power": 7.381198582443939e-05,
+                  "current_balance_error": 6.4210789462675645e-12,
+                  "power_balance_error": 5.520013746671842e-12,
+                  "thermal_balance_error": 6.713797400934349e-06
+                }
+              }
+            ]
+          },
+          {
+            "id": "candidate-4966ef3f45d52473",
+            "parameters": {
+              "via_pattern": "staggered",
+              "via_columns": 7,
+              "strap_width": 1.2e-05,
+              "feed_ends": "dual",
+              "source_end_width": 1.2e-05,
+              "source_start_width": 1.2e-05
+            },
+            "status": "mesh_uncertain",
+            "reason": "Baseline and finalist must both pass comparable mesh verification",
+            "objectives": {
+              "source_j": 70040740.9646284,
+              "source_loss": 3.055330990402962e-07
+            },
+            "objective_resolution": "coarse",
+            "scenarios": [
+              {
+                "id": "gate_zero",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0009999999999964898,
+                  "required_current": 0.001,
+                  "voltage": 0.01584786105690993,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7634,
+                "elements": 14965,
+                "elapsed_seconds": 20.80419190000066,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 35043958.23155141,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 7.648599757351835e-08,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0018242571425,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0018242571425,
+                  "electrical_power": 1.584786105705684e-05,
+                  "current_balance_error": 1.2628136383772259e-11,
+                  "power_balance_error": 1.2780218698691287e-11,
+                  "thermal_balance_error": 6.71143307021515e-06
+                }
+              },
+              {
+                "id": "gate_negative",
+                "status": "feasible_provisional",
+                "reason": "",
+                "service": {
+                  "status": "satisfied",
+                  "delivered_current": 0.0019999999999933994,
+                  "required_current": 0.002,
+                  "voltage": 0.036889537074705124,
+                  "compliance_voltage": 2.0,
+                  "service_mode": "target_current",
+                  "service_tolerance": 0.01
+                },
+                "nodes": 7634,
+                "elements": 14965,
+                "elapsed_seconds": 20.574182599999403,
+                "converged": true,
+                "measurements": {
+                  "source_j": {
+                    "value": 70040740.9646284,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "A/m²"
+                  },
+                  "source_loss": {
+                    "value": 3.055330990402962e-07,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "W"
+                  },
+                  "channel_temperature": {
+                    "value": 300.0100436328966,
+                    "status": "available",
+                    "within_limits": true,
+                    "unit": "K"
+                  }
+                },
+                "metrics": {
+                  "temperature_max": 300.0100436328966,
+                  "electrical_power": 7.377907414909573e-05,
+                  "current_balance_error": 7.0134870133727835e-12,
+                  "power_balance_error": 7.976216033517933e-12,
+                  "thermal_balance_error": 6.713758074140053e-06
+                }
+              }
+            ],
+            "verification": {
+              "status": "mesh_uncertain",
+              "reason": "Refined mesh is not feasible",
+              "factors": [
+                1.0,
+                0.5
+              ],
+              "uncertainty_definition": "absolute difference of last two meshes; empirical estimate, not a rigorous error bound",
+              "guidance": [
+                {
+                  "hotspot": [
+                    6.275000000001565e-05,
+                    8.000000000002051e-05
+                  ],
+                  "window_length_m": 1.6e-05,
+                  "target_size_m": 2e-06,
+                  "resolved": true
+                },
+                {
+                  "hotspot": [
+                    5.674999999981041e-05,
+                    6e-05
+                  ],
+                  "window_length_m": 1.6e-05,
+                  "target_size_m": 2e-06,
+                  "resolved": true
+                },
+                {
+                  "interface": "source_contact",
+                  "layer": "channel",
+                  "transfer_length_m": 2.4323373214379843e-07,
+                  "target_size_m": 1.25e-07,
+                  "resolved": false,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "source_contact",
+                  "layer": "source_metal",
+                  "transfer_length_m": 6.454948708955091e-05,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "drain_contact",
+                  "layer": "channel",
+                  "transfer_length_m": 6.216414987645162e-07,
+                  "target_size_m": 1.5541037469112906e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                },
+                {
+                  "interface": "drain_contact",
+                  "layer": "drain_metal",
+                  "transfer_length_m": 6.454951049370114e-05,
+                  "target_size_m": 7.5e-07,
+                  "resolved": true,
+                  "estimate": "minimum local directional sheet conductance across coarse scenarios"
+                }
+              ],
+              "maximum_relative_change": null,
+              "objective_absolute_changes": {
+                "source_j": null,
+                "source_loss": null
+              },
+              "levels": [
+                {
+                  "status": "feasible_provisional",
+                  "objectives": {
+                    "source_j": 70040740.9646284,
+                    "source_loss": 3.055330990402962e-07
+                  },
+                  "scenarios": [
+                    {
+                      "id": "gate_zero",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.0009999999999964898,
+                        "required_current": 0.001,
+                        "voltage": 0.01584786105690993,
+                        "compliance_voltage": 2.0,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 7634,
+                      "elements": 14965,
+                      "elapsed_seconds": 20.80419190000066,
+                      "converged": true,
+                      "measurements": {
+                        "source_j": {
+                          "value": 35043958.23155141,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "source_loss": {
+                          "value": 7.648599757351835e-08,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "channel_temperature": {
+                          "value": 300.0018242571425,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.0018242571425,
+                        "electrical_power": 1.584786105705684e-05,
+                        "current_balance_error": 1.2628136383772259e-11,
+                        "power_balance_error": 1.2780218698691287e-11,
+                        "thermal_balance_error": 6.71143307021515e-06
+                      }
+                    },
+                    {
+                      "id": "gate_negative",
+                      "status": "feasible_provisional",
+                      "reason": "",
+                      "service": {
+                        "status": "satisfied",
+                        "delivered_current": 0.0019999999999933994,
+                        "required_current": 0.002,
+                        "voltage": 0.036889537074705124,
+                        "compliance_voltage": 2.0,
+                        "service_mode": "target_current",
+                        "service_tolerance": 0.01
+                      },
+                      "nodes": 7634,
+                      "elements": 14965,
+                      "elapsed_seconds": 20.574182599999403,
+                      "converged": true,
+                      "measurements": {
+                        "source_j": {
+                          "value": 70040740.9646284,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "A/m²"
+                        },
+                        "source_loss": {
+                          "value": 3.055330990402962e-07,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "W"
+                        },
+                        "channel_temperature": {
+                          "value": 300.0100436328966,
+                          "status": "available",
+                          "within_limits": true,
+                          "unit": "K"
+                        }
+                      },
+                      "metrics": {
+                        "temperature_max": 300.0100436328966,
+                        "electrical_power": 7.377907414909573e-05,
+                        "current_balance_error": 7.0134870133727835e-12,
+                        "power_balance_error": 7.976216033517933e-12,
+                        "thermal_balance_error": 6.713758074140053e-06
+                      }
+                    }
+                  ]
+                },
+                {
+                  "status": "invalid_physical_model",
+                  "objectives": {},
+                  "scenarios": [
+                    {
+                      "id": "gate_zero",
+                      "status": "invalid_physical_model",
+                      "reason": "Generated 476,387 elements, exceeding budget 250,000; increase sizes or budget",
+                      "measurements": {},
+                      "metrics": {}
+                    },
+                    {
+                      "id": "gate_negative",
+                      "status": "invalid_physical_model",
+                      "reason": "Generated 476,401 elements, exceeding budget 250,000; increase sizes or budget",
+                      "measurements": {},
+                      "metrics": {}
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "exports": {},
+        "cli_resume": {
+          "exit_code": 0,
+          "unchanged_history": true
+        }
+      }
+    }
+  },
+  "compatibility_evidence": {
+    "regressions": [
+      "tests/test_power_local_fields.py",
+      "tests/test_power_optimization_failures.py",
+      "tests/test_power_stack.py",
+      "tests/test_power_embedded_resume.py"
+    ],
+    "scope": "Legacy ambiguity, multiple reservoirs, empty support and interrupted-history behavior are automated regressions; this receipt adds actual disconnected, low-service and sub-resolution thermal demonstrations."
+  },
+  "provenance_scope": "Historical 0.3.0 measurements; private revision mapping and bulky development evidence are not included in this source edition. This receipt is not current-source validation."
+}

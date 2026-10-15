@@ -1,0 +1,17 @@
+KLayout published license interpretation
+Source: https://www.klayout.de/license.html
+Retrieved: 2026-10-15
+
+License implications for Ruby and Python scripts
+
+There is some discussion whether the GPL also applies to scripts written in Python or Ruby on KLayout. In other words: whether scripts have to be considered "derived work". In such a case, the GPL implies that these scripts would have to be published under GPL as well. You might consider a KLayout script being "derived" in a sense, that it cannot be run without KLayout's engine.
+
+On the other hand, a Python script is still Python, not KLayout, and the functions and classes it uses might as well be taken from a different library.
+
+So my interpretation is: such scripts DO NOT count as "derived work". I feel that applying GPL to scripts running on KLayout would seriously limit it's usability in professional applications. So you can develop such scripts and use them freely and without obligations. Such scripts running in KLayout is an exception to KLayout’s GPL license. If you wish to share them, you are free to chose any license, including GPL.
+
+If you do not chose GPL, please clearly indicate your license model to avoid confusion with the application's own license.
+
+I apply this interpretation as well to the Python packages which wrap KLayout's core algorithms (e.g. "klayout" on PyPI). In other words, you are free to import these packages into your own Python application, regardless of the license you choose.
+
+This relaxed interpretation does NOT apply to KLayout's C++ code. Reuse of C++ code is subject to the requirements of the GPL.

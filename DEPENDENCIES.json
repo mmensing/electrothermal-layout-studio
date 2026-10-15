@@ -1,0 +1,634 @@
+{
+  "format_version": 1,
+  "source_edition_license": "MPL-2.0",
+  "purpose": "Exact Windows Python 3.12 dependency catalog; runtime environment is not a frozen-content claim",
+  "dependencies": [
+    {
+      "name": "altgraph",
+      "version": "0.17.5",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Documentation, https://altgraph.readthedocs.io/en/latest/",
+        "Issue tracker, https://github.com/ronaldoussoren/altgraph/issues",
+        "Repository, https://github.com/ronaldoussoren/altgraph"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "colorama",
+      "version": "0.4.6",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "Homepage, https://github.com/tartley/colorama"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "contourpy",
+      "version": "1.4.0",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "Homepage, https://github.com/contourpy/contourpy",
+        "Changelog, https://contourpy.readthedocs.io/en/latest/changelog.html",
+        "Documentation, https://contourpy.readthedocs.io",
+        "Repository, https://github.com/contourpy/contourpy"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "coverage",
+      "version": "7.16.2",
+      "scope": "build-or-test",
+      "license_expression": "Apache-2.0",
+      "upstream_urls": [
+        "Documentation, https://coverage.readthedocs.io/en/7.16.2",
+        "Funding, https://tidelift.com/subscription/pkg/pypi-coverage?utm_source=pypi-coverage&utm_medium=referral&utm_campaign=pypi",
+        "Issues, https://github.com/coveragepy/coveragepy/issues",
+        "Mastodon, https://hachyderm.io/@coveragepy",
+        "Mastodon (nedbat), https://hachyderm.io/@nedbat"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "cycler",
+      "version": "0.12.1",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "homepage, https://matplotlib.org/cycler/",
+        "repository, https://github.com/matplotlib/cycler"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "fonttools",
+      "version": "4.66.1",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "gmsh",
+      "version": "4.15.2",
+      "scope": "runtime-environment",
+      "license_expression": "GPL-2.0-or-later",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "exception": "Limited named-library permission in Gmsh LICENSE.txt; not a blanket application-linking exception"
+    },
+    {
+      "name": "iniconfig",
+      "version": "2.3.1",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Homepage, https://github.com/pytest-dev/iniconfig"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "kiwisolver",
+      "version": "1.5.1",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "homepage, https://github.com/nucleic/kiwi",
+        "documentation, https://kiwisolver.readthedocs.io/en/latest/",
+        "repository, https://github.com/nucleic/kiwi",
+        "changelog, https://github.com/nucleic/kiwi/blob/main/releasenotes.rst"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "klayout",
+      "version": "0.30.12",
+      "scope": "runtime-environment",
+      "license_expression": "GPL-3.0-or-later",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "exception": "Published Python script/import interpretation at https://www.klayout.de/license.html; C++ remains GPL"
+    },
+    {
+      "name": "markdown-it-py",
+      "version": "4.2.0",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Documentation, https://markdown-it-py.readthedocs.io",
+        "Homepage, https://github.com/executablebooks/markdown-it-py"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "matplotlib",
+      "version": "3.11.2",
+      "scope": "runtime-environment",
+      "license_expression": "LicenseRef-Matplotlib",
+      "upstream_urls": [
+        "Homepage, https://matplotlib.org",
+        "Download, https://matplotlib.org/stable/install/index.html",
+        "Documentation, https://matplotlib.org",
+        "Source Code, https://github.com/matplotlib/matplotlib",
+        "Bug Tracker, https://github.com/matplotlib/matplotlib/issues",
+        "Forum, https://discourse.matplotlib.org/",
+        "Donate, https://numfocus.org/donate-to-matplotlib"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "mdurl",
+      "version": "0.1.2",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Homepage, https://github.com/executablebooks/mdurl"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "meshio",
+      "version": "5.3.5",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "homepage, https://github.com/nschloe/meshio",
+        "code, https://github.com/nschloe/meshio",
+        "issues, https://github.com/nschloe/meshio/issues"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "numpy",
+      "version": "2.5.4",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0",
+      "upstream_urls": [
+        "homepage, https://numpy.org",
+        "documentation, https://numpy.org/doc/",
+        "source, https://github.com/numpy/numpy",
+        "download, https://pypi.org/project/numpy/#files",
+        "tracker, https://github.com/numpy/numpy/issues",
+        "release notes, https://numpy.org/doc/stable/release"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "packaging",
+      "version": "26.3",
+      "scope": "runtime-environment",
+      "license_expression": "Apache-2.0 OR BSD-2-Clause",
+      "upstream_urls": [
+        "Documentation, https://packaging.pypa.io/",
+        "Source, https://github.com/pypa/packaging"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pefile",
+      "version": "2024.8.26",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pillow",
+      "version": "12.3.0",
+      "scope": "runtime-environment",
+      "license_expression": "MIT-CMU",
+      "upstream_urls": [
+        "Release notes, https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
+        "Changelog, https://github.com/python-pillow/Pillow/releases",
+        "Documentation, https://pillow.readthedocs.io",
+        "Funding, https://tidelift.com/subscription/pkg/pypi-pillow?utm_source=pypi-pillow&utm_medium=pypi",
+        "Homepage, https://python-pillow.github.io",
+        "Mastodon, https://fosstodon.org/@pillow",
+        "Source, https://github.com/python-pillow/Pillow"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "platformdirs",
+      "version": "4.12.4",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Changelog, https://platformdirs.readthedocs.io/en/latest/changelog.html",
+        "Documentation, https://platformdirs.readthedocs.io",
+        "Homepage, https://github.com/tox-dev/platformdirs",
+        "Source, https://github.com/tox-dev/platformdirs",
+        "Tracker, https://github.com/tox-dev/platformdirs/issues"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pluggy",
+      "version": "1.6.0",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "psutil",
+      "version": "7.2.2",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pygments",
+      "version": "2.21.0",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-2-Clause",
+      "upstream_urls": [
+        "Homepage, https://pygments.org",
+        "Documentation, https://pygments.org/docs",
+        "Source, https://github.com/pygments/pygments",
+        "Bug Tracker, https://github.com/pygments/pygments/issues",
+        "Changelog, https://github.com/pygments/pygments/blob/master/CHANGES"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyinstaller",
+      "version": "6.22.3",
+      "scope": "build-or-test",
+      "license_expression": "GPL-2.0-or-later WITH Bootloader-exception",
+      "upstream_urls": [
+        "Homepage, https://pyinstaller.org",
+        "Documentation, https://pyinstaller.org",
+        "Source Code, https://github.com/pyinstaller/pyinstaller",
+        "Release Notes, https://pyinstaller.org/en/stable/CHANGES.html"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyinstaller-hooks-contrib",
+      "version": "2026.8",
+      "scope": "build-or-test",
+      "license_expression": "GPL-2.0-or-later AND Apache-2.0",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyparsing",
+      "version": "3.3.3",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Documentation, https://pyparsing-docs.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/pyparsing/pyparsing/",
+        "Source, https://github.com/pyparsing/pyparsing.git"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyqtgraph",
+      "version": "0.14.0",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Documentation, https://pyqtgraph.readthedocs.io",
+        "Source, https://github.com/pyqtgraph/pyqtgraph"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyside6",
+      "version": "6.12.0",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyside6-addons",
+      "version": "6.12.0",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyside6-essentials",
+      "version": "6.12.0",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyside6-pdf",
+      "version": "6.12.0.140",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pyside6-webengine",
+      "version": "6.12.0.140",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pytest",
+      "version": "9.1.1",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Changelog, https://docs.pytest.org/en/stable/changelog.html",
+        "Contact, https://docs.pytest.org/en/stable/contact.html",
+        "Funding, https://docs.pytest.org/en/stable/sponsor.html",
+        "Homepage, https://docs.pytest.org/en/latest/",
+        "Source, https://github.com/pytest-dev/pytest",
+        "Tracker, https://github.com/pytest-dev/pytest/issues"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pytest-qt",
+      "version": "4.5.0",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "python-dateutil",
+      "version": "2.9.0.post0",
+      "scope": "runtime-environment",
+      "license_expression": "Apache-2.0 OR BSD-3-Clause",
+      "upstream_urls": [
+        "Documentation, https://dateutil.readthedocs.io/en/stable/",
+        "Source, https://github.com/dateutil/dateutil"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "pywin32-ctypes",
+      "version": "0.2.3",
+      "scope": "build-or-test",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "rich",
+      "version": "15.0.0",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Documentation, https://rich.readthedocs.io/en/latest/",
+        "Homepage, https://github.com/Textualize/rich"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "ruff",
+      "version": "0.17.0",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Changelog, https://github.com/astral-sh/ruff/blob/main/CHANGELOG.md",
+        "Documentation, https://docs.astral.sh/ruff/",
+        "Repository, https://github.com/astral-sh/ruff"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "scipy",
+      "version": "1.18.1",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "homepage, https://scipy.org/",
+        "documentation, https://docs.scipy.org/doc/scipy/",
+        "source, https://github.com/scipy/scipy",
+        "download, https://github.com/scipy/scipy/releases",
+        "tracker, https://github.com/scipy/scipy/issues"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "setuptools",
+      "version": "84.0.0",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Source, https://github.com/pypa/setuptools",
+        "Documentation, https://setuptools.pypa.io/",
+        "Changelog, https://setuptools.pypa.io/en/stable/history.html"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "shapely",
+      "version": "2.2.0",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "Documentation, https://shapely.readthedocs.io/",
+        "Repository, https://github.com/shapely/shapely"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "shiboken6",
+      "version": "6.12.0",
+      "scope": "runtime-environment",
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "upstream_urls": [
+        "Homepage, https://pyside.org",
+        "Documentation, https://doc.qt.io/qtforpython",
+        "Repository, https://code.qt.io/cgit/pyside/pyside-setup.git/",
+        "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
+        "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "six",
+      "version": "1.17.0",
+      "scope": "runtime-environment",
+      "license_expression": "MIT",
+      "upstream_urls": [],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "threadpoolctl",
+      "version": "3.7.0",
+      "scope": "runtime-environment",
+      "license_expression": "BSD-3-Clause",
+      "upstream_urls": [
+        "homepage, https://github.com/joblib/threadpoolctl"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "typing-extensions",
+      "version": "4.16.0",
+      "scope": "build-or-test",
+      "license_expression": "PSF-2.0",
+      "upstream_urls": [
+        "Bug Tracker, https://github.com/python/typing_extensions/issues",
+        "Changes, https://github.com/python/typing_extensions/blob/main/CHANGELOG.md",
+        "Documentation, https://typing-extensions.readthedocs.io/",
+        "Home, https://github.com/python/typing_extensions",
+        "Q & A, https://github.com/python/typing/discussions",
+        "Repository, https://github.com/python/typing_extensions"
+      ],
+      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+    },
+    {
+      "name": "wheel",
+      "version": "0.48.0",
+      "scope": "build-or-test",
+      "license_expression": "MIT",
+      "upstream_urls": [
+        "Source, https://github.com/pypa/wheel"
+      ],
+      "modifications": "No project patches to dependency source",
+      "bundled_status": "Build tool; not part of application wheel or frozen runtime unless actual inventory shows otherwise"
+    }
+  ],
+  "native_components": [
+    {
+      "name": "Gmsh bundled native code",
+      "version": "4.15.2",
+      "license_expression": "GPL-2.0-or-later",
+      "review": "Inspect exact Gmsh native build and bundled Netgen/METIS/OpenCASCADE/FLTK/etc.; linking exception limited to named combinations"
+    },
+    {
+      "name": "GEOS",
+      "version": "3.14.1",
+      "license_expression": "LGPL-2.1-or-later",
+      "source": "https://libgeos.org/",
+      "review": "Shapely wheel native DLLs independently inventoried; exact corresponding source required"
+    },
+    {
+      "name": "NumPy OpenBLAS/LAPACK",
+      "version": "OpenBLAS 0.3.34.106.0 ILP64",
+      "license_expression": "BSD-3-Clause AND BSD-3-Clause-Open-MPI AND (GPL-3.0-or-later WITH GCC-exception-3.1)",
+      "source": "https://github.com/OpenMathLib/OpenBLAS",
+      "review": "Wheel version/configuration measured; exact native revision and static-runtime sources not yet established"
+    },
+    {
+      "name": "SciPy OpenBLAS/LAPACK",
+      "version": "OpenBLAS 0.3.31.dev LP64",
+      "license_expression": "BSD-3-Clause AND BSD-3-Clause-Open-MPI AND (GPL-3.0-or-later WITH GCC-exception-3.1)",
+      "source": "https://github.com/OpenMathLib/OpenBLAS",
+      "review": "Distinct from NumPy ILP64 DLL; exact development revision and static-runtime sources not yet established"
+    },
+    {
+      "name": "Qt",
+      "version": "6.12.0",
+      "license_expression": "NOASSERTION",
+      "source": "https://code.qt.io/qt",
+      "review": "Resolve each actually shipped module, plugin and embedded third-party component; virtual keyboard open-source option is GPL-3.0-only"
+    },
+    {
+      "name": "Matplotlib fonts",
+      "version": "From Matplotlib 3.11.2 wheel",
+      "license_expression": "NOASSERTION",
+      "source": "https://matplotlib.org/stable/project/license.html",
+      "review": "Individually inventory DejaVu, STIX, Computer Modern and PDF core font assets and retain wheel notices"
+    },
+    {
+      "name": "CPython",
+      "version": "3.12.14",
+      "license_expression": "Python-2.0",
+      "source": "https://www.python.org/downloads/source/",
+      "review": "Includes PSF/history notices and separately licensed native libraries"
+    },
+    {
+      "name": "Microsoft runtime DLLs",
+      "version": "Per-file version in candidate SBOM",
+      "license_expression": "LicenseRef-Microsoft-Redistributable",
+      "source": "https://learn.microsoft.com/visualstudio/releases/2022/redistribution",
+      "review": "Verify exact redistributable origin, permitted files and terms; not MPL"
+    }
+  ]
+}

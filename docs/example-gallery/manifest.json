@@ -1,0 +1,4066 @@
+{
+  "schema_version": 1,
+  "generated_utc": "2026-10-11T11:44:16.922913+00:00",
+  "source_fingerprint": "6c4c5bbf62f1a9424c6d682037ec21e335ba5c34dc44a85b9237647f37fd015b",
+  "solver_version": "0.1.0",
+  "visual_spec": {
+    "claim": "Prepared device geometry alongside one representative computed field at its stated operating point.",
+    "visual_form": "equal-aspect spatial geometry and finite-element scalar map",
+    "metric": "selected scalar field or vector magnitude on its active physical layer",
+    "unit": "shown beside each scale; layout axes in micrometers",
+    "direction": "spatial field, not an optimization ranking",
+    "focal_series": "selected layer highlighted in teal; other layers in neutral gray",
+    "baselines": "none; no experimental reference is supplied",
+    "ordering": "stable numerical example ID; physical layers ordered by z",
+    "width_px": 960,
+    "height_px": 500,
+    "raster_scale": 2,
+    "uncertainty": "deterministic discretized result; no experimental uncertainty estimate",
+    "annotation_plan": "up to four drive/sense terminal IDs; full setup retained in manifest and ETL",
+    "tick_policy": "3–5 major ticks, engineering-scaled field unit, exact range in manifest",
+    "formats": [
+      "png",
+      "svg (vector geometry/text; 2× raster FE field)"
+    ],
+    "style_conventions": [
+      "Equal-aspect geometry and fields",
+      "Restrained neutral/teal palette",
+      "Ordered scalar scales with explicit units"
+    ]
+  },
+  "examples": [
+    {
+      "name": "E1_straight",
+      "catalog": {
+        "id": "E1",
+        "name": "E1_straight",
+        "title": "Straight conductor",
+        "category": "Fundamentals",
+        "level": "Starter",
+        "learning_goal": "Compare the solved resistance with the uniform-strip analytical limit.",
+        "layer": "metal",
+        "field": "potential",
+        "recommended_mode": "electrical",
+        "physical_scope": "Uniform thickness copper sheet; the analytical comparison applies at fixed 300 K."
+      },
+      "mode": "electrical",
+      "configuration_hash": "6e40d4c159d4cb30465ad6932097d69a440ac7d527113d2bf528f52efc4dcbee",
+      "physics_hash": "a5391d0a81a6d846ccd1e23051340ac939ee390c863b8b14c7f30bd6d3cde310",
+      "layout_sha256": "67a24e5934c5f98cc71e99481b776a682e7d22c12bd02fa413e86cdf316ebbd1",
+      "bias_summary": "source 0 V (ground); drain 0.02 V (voltage)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.02,
+          "layer": "metal",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Analytical R = rho L/(w t) = 0.084 ohm at 300 K; L=100 µm, w=10 µm, t=2 µm.",
+      "field": {
+        "layer": "metal",
+        "field": "potential",
+        "unit": "V",
+        "minimum": 0.0,
+        "maximum": 0.02,
+        "display_unit": "mV",
+        "display_scale": 1000.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 0.0,
+        "display_maximum": 20.0
+      },
+      "physical_layers": [
+        {
+          "id": "metal",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E1_straight.etl",
+        "gds": "../../examples/E1_straight.gds",
+        "oas": "../../examples/E1_straight.oas"
+      },
+      "result": {
+        "configuration_hash": "6e40d4c159d4cb30465ad6932097d69a440ac7d527113d2bf528f52efc4dcbee",
+        "physics_hash": "a5391d0a81a6d846ccd1e23051340ac939ee390c863b8b14c7f30bd6d3cde310",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 360,
+        "mesh_triangles": 608,
+        "metrics": {
+          "electrical_power": 0.004761904761904762,
+          "joule_power": 0.004761904761904762,
+          "contact_power": 0.0,
+          "terminal_power": 0.00476190476190496,
+          "current_balance_error": 5.735412145213484e-14,
+          "power_balance_error": 4.152928001488303e-14,
+          "electrical_residual": 1.2123635428906255e-14,
+          "total_current": 0.23809523809524802,
+          "current_density_max": 11904761904.762554,
+          "current_density_average": 11904761904.761904,
+          "current_density_p95": 11904761904.762339,
+          "peak_to_average": 1.0000000000000546,
+          "contacts": {},
+          "electrical_dofs": 360,
+          "effective_resistance": 0.0839999999999965,
+          "resistance": 0.0839999999999965,
+          "voltage_drop": 0.02,
+          "resistance_current": 0.23809523809524802,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.23809523809523436,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.02,
+            "current": 0.23809523809524802,
+            "power": 0.00476190476190496
+          }
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "E2_bent_taper",
+      "catalog": {
+        "id": "E2",
+        "name": "E2_bent_taper",
+        "title": "Bent and tapered conductor",
+        "category": "Fundamentals",
+        "level": "Starter",
+        "learning_goal": "See how a taper and a reentrant corner redistribute current.",
+        "layer": "metal",
+        "field": "current_density",
+        "recommended_mode": "electrical",
+        "physical_scope": "Ideal sharp corners have mesh-sensitive peak current density; refine before comparing peaks."
+      },
+      "mode": "electrical",
+      "configuration_hash": "47e2ef568c227ba8ccc21f3cb1ca90c9eee2746645022ad5a555893279f29093",
+      "physics_hash": "e2ca45e2a44859ebcded5bc1091dac49d87baff12d598e53e73b31da516f4044",
+      "layout_sha256": "4d27af775efbd62aa2a2d6b044c4ac3f31994a5c950cb2b037b93636d9d5cc3a",
+      "bias_summary": "source 0 V (ground); drain 0.1 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.1,
+          "layer": "metal",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Bent, tapered conductor; current crowding near the reentrant corner is mesh-sensitive.",
+      "field": {
+        "layer": "metal",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 191652008.18880412,
+        "maximum": 7804960755.353908,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 191.6520081888041,
+        "display_maximum": 7804.960755353907
+      },
+      "physical_layers": [
+        {
+          "id": "metal",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E2_bent_taper.etl",
+        "gds": "../../examples/E2_bent_taper.gds",
+        "oas": "../../examples/E2_bent_taper.oas"
+      },
+      "result": {
+        "configuration_hash": "47e2ef568c227ba8ccc21f3cb1ca90c9eee2746645022ad5a555893279f29093",
+        "physics_hash": "e2ca45e2a44859ebcded5bc1091dac49d87baff12d598e53e73b31da516f4044",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 845,
+        "mesh_triangles": 1523,
+        "metrics": {
+          "electrical_power": 0.0006804322336198656,
+          "joule_power": 0.0006804322336198656,
+          "contact_power": 0.0,
+          "terminal_power": 0.0006804322336198959,
+          "current_balance_error": 5.578870698741388e-14,
+          "power_balance_error": 4.461525972702899e-14,
+          "electrical_residual": 1.4432899320127035e-14,
+          "total_current": 0.10000000000000321,
+          "current_density_max": 7804960755.353908,
+          "current_density_average": 2781361802.428488,
+          "current_density_p95": 3779426446.8257103,
+          "peak_to_average": 2.8061652204107963,
+          "contacts": {},
+          "electrical_dofs": 845,
+          "effective_resistance": 0.06804322336198522,
+          "resistance": 0.06804322336198522,
+          "voltage_drop": 0.0068043223361987405,
+          "resistance_current": 0.10000000000000321,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.09999999999999763,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.0068043223361987405,
+            "current": 0.10000000000000321,
+            "power": 0.0006804322336198959
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_metal extends outside its layer and is clipped.",
+            "object_id": "sink_metal",
+            "bounds": [
+              0.0,
+              0.0,
+              0.0001,
+              6e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E3_parallel",
+      "catalog": {
+        "id": "E3",
+        "name": "E3_parallel",
+        "title": "Unequal parallel routes",
+        "category": "Fundamentals",
+        "level": "Starter",
+        "learning_goal": "Compare current sharing through unequal-width branches and common access buses.",
+        "layer": "metal",
+        "field": "current_density",
+        "recommended_mode": "electrical",
+        "physical_scope": "Distributed access resistance is included, so branch sharing is not a simple width-only ratio."
+      },
+      "mode": "electrical",
+      "configuration_hash": "e982b75abd88b522819474f43ef366fe2585ed3ed37454f7b9134b61449b031d",
+      "physics_hash": "5268382604fdd2b0303672c2102a0a77aba0159913640e6a93d2e9750cb139ff",
+      "layout_sha256": "72f5262edd522f804b2337d56c56a5d7e8a96c74a64a2dab15f4287c42d249c5",
+      "bias_summary": "source 0 V (ground); drain 0.3 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.3,
+          "layer": "metal",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Two parallel routes with 10 and 20 µm widths, including distributed access resistance.",
+      "field": {
+        "layer": "metal",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 131023680.09349135,
+        "maximum": 7931476320.390677,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 131.02368009349135,
+        "display_maximum": 7931.476320390677
+      },
+      "physical_layers": [
+        {
+          "id": "metal",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E3_parallel.etl",
+        "gds": "../../examples/E3_parallel.gds",
+        "oas": "../../examples/E3_parallel.oas"
+      },
+      "result": {
+        "configuration_hash": "e982b75abd88b522819474f43ef366fe2585ed3ed37454f7b9134b61449b031d",
+        "physics_hash": "5268382604fdd2b0303672c2102a0a77aba0159913640e6a93d2e9750cb139ff",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 1152,
+        "mesh_triangles": 2054,
+        "metrics": {
+          "electrical_power": 0.002420445159590676,
+          "joule_power": 0.002420445159590676,
+          "contact_power": 0.0,
+          "terminal_power": 0.002420445159590754,
+          "current_balance_error": 3.534209961723354e-14,
+          "power_balance_error": 3.22513220800074e-14,
+          "electrical_residual": 7.216449660063518e-15,
+          "total_current": 0.3000000000000104,
+          "current_density_max": 7931476320.390677,
+          "current_density_average": 4468019882.134736,
+          "current_density_p95": 5120870587.905277,
+          "peak_to_average": 1.7751658519033193,
+          "contacts": {},
+          "electrical_dofs": 1152,
+          "effective_resistance": 0.026893835106562063,
+          "resistance": 0.026893835106562063,
+          "voltage_drop": 0.008068150531968899,
+          "resistance_current": 0.3000000000000104,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.2999999999999998,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.008068150531968899,
+            "current": 0.3000000000000104,
+            "power": 0.002420445159590754
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_metal extends outside its layer and is clipped.",
+            "object_id": "sink_metal",
+            "bounds": [
+              0.0,
+              0.0,
+              0.0001,
+              5e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E4_multilayer",
+      "catalog": {
+        "id": "E4",
+        "name": "E4_multilayer",
+        "title": "Two-metal transfer",
+        "category": "Interconnects",
+        "level": "Intermediate",
+        "learning_goal": "Follow lateral transport through a nonrectangular second layer and a finite via.",
+        "layer": "m2",
+        "field": "potential",
+        "recommended_mode": "electrical",
+        "physical_scope": "Separate sheet potentials couple through a finite copper via; this is a 2.5D representation."
+      },
+      "mode": "electrical",
+      "configuration_hash": "0f383fef807ac6b3953fe36e2980e8b809b83206fe6102a7f34a87b459f4d684",
+      "physics_hash": "ac669d8b934b97fc446cb709e902441530c403ed39f585505d1b02d7c83a95c6",
+      "layout_sha256": "47bd3fdfa3f3c4923df2e06e145c46cd828c54d916b71c2e7cfbbf7be22c11bb",
+      "bias_summary": "source 0 V (ground); drain 0.2 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "m1",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.2,
+          "layer": "m2",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Nonrectangular two-metal structure, finite copper via and separate layer potentials.",
+      "field": {
+        "layer": "m2",
+        "field": "potential",
+        "unit": "V",
+        "minimum": 0.005039178140135661,
+        "maximum": 0.01331652034499492,
+        "display_unit": "mV",
+        "display_scale": 1000.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 5.039178140135661,
+        "display_maximum": 13.31652034499492
+      },
+      "physical_layers": [
+        {
+          "id": "m1",
+          "material": "copper",
+          "z_m": 0,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "m2",
+          "material": "copper",
+          "z_m": 4e-06,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E4_multilayer.etl",
+        "gds": "../../examples/E4_multilayer.gds",
+        "oas": "../../examples/E4_multilayer.oas"
+      },
+      "result": {
+        "configuration_hash": "0f383fef807ac6b3953fe36e2980e8b809b83206fe6102a7f34a87b459f4d684",
+        "physics_hash": "ac669d8b934b97fc446cb709e902441530c403ed39f585505d1b02d7c83a95c6",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 910,
+        "mesh_triangles": 1643,
+        "metrics": {
+          "electrical_power": 0.002663304068999158,
+          "joule_power": 0.002647590207057849,
+          "contact_power": 1.5713861941308892e-05,
+          "terminal_power": 0.0026633040689989663,
+          "current_balance_error": 6.356026815978861e-14,
+          "power_balance_error": 7.197336058119385e-14,
+          "electrical_residual": 1.5543122344751302e-14,
+          "total_current": 0.19999999999999868,
+          "current_density_max": 12231892901.689066,
+          "current_density_average": 4176117159.8825545,
+          "current_density_p95": 5438249721.94613,
+          "peak_to_average": 2.9290109528519706,
+          "contacts": {
+            "via": {
+              "power": 1.5713861941308892e-05,
+              "current_a_to_b": -0.20000000000001555
+            }
+          },
+          "electrical_dofs": 1053,
+          "effective_resistance": 0.06658260172497504,
+          "resistance": 0.06658260172497504,
+          "voltage_drop": 0.01331652034499492,
+          "resistance_current": 0.19999999999999868,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.2000000000000114,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.01331652034499492,
+            "current": 0.19999999999999868,
+            "power": 0.0026633040689989663
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_m1 extends outside its layer and is clipped.",
+            "object_id": "sink_m1",
+            "bounds": [
+              0.0,
+              0.0,
+              0.00012,
+              8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_m2 extends outside its layer and is clipped.",
+            "object_id": "sink_m2",
+            "bounds": [
+              0.0,
+              0.0,
+              0.00012,
+              8e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E5_via_array",
+      "catalog": {
+        "id": "E5",
+        "name": "E5_via_array",
+        "title": "Hierarchical via array",
+        "category": "Interconnects",
+        "level": "Intermediate",
+        "learning_goal": "Inspect repeated layout instances and unequal transfer through a 4 × 5 via array.",
+        "layer": "m2",
+        "field": "current_density",
+        "recommended_mode": "electrical",
+        "physical_scope": "Individual via footprints are resolved; through-thickness current is represented by interface links."
+      },
+      "mode": "electrical",
+      "configuration_hash": "3304ed2f2b9754f2c64f54118e22aa086254b07b05ef2247a6ee1a9e14341912",
+      "physics_hash": "aa0075a584f4ed96c6637ff1d8cd2a31fa80636965f0df87ed9b8eb930bd9162",
+      "layout_sha256": "0dce9dec8c92c946ed4a368ae94b2003cc5899b8b30a260de35e589e31e2974a",
+      "bias_summary": "source 0 V (ground); drain 2 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "m1",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 2.0,
+          "layer": "m2",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Hierarchical 4 × 5 array of finite vias; nonuniform transfer current across a 200 µm pad.",
+      "field": {
+        "layer": "m2",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 122990.28241052141,
+        "maximum": 2901265755.9977164,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 0.1229902824105214,
+        "display_maximum": 2901.2657559977165
+      },
+      "physical_layers": [
+        {
+          "id": "m1",
+          "material": "copper",
+          "z_m": 0,
+          "thickness_m": 5e-06
+        },
+        {
+          "id": "m2",
+          "material": "copper",
+          "z_m": 1e-05,
+          "thickness_m": 5e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E5_via_array.etl",
+        "gds": "../../examples/E5_via_array.gds",
+        "oas": "../../examples/E5_via_array.oas"
+      },
+      "result": {
+        "configuration_hash": "3304ed2f2b9754f2c64f54118e22aa086254b07b05ef2247a6ee1a9e14341912",
+        "physics_hash": "aa0075a584f4ed96c6637ff1d8cd2a31fa80636965f0df87ed9b8eb930bd9162",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 12160,
+        "mesh_triangles": 23918,
+        "metrics": {
+          "electrical_power": 0.012526524696494686,
+          "joule_power": 0.011997198347485133,
+          "contact_power": 0.0005293263490095523,
+          "terminal_power": 0.012526524696503083,
+          "current_balance_error": 1.1196599203350409e-12,
+          "power_balance_error": 6.704011328495653e-13,
+          "electrical_residual": 5.88418203051333e-15,
+          "total_current": 2.0000000000001004,
+          "current_density_max": 2903506370.18961,
+          "current_density_average": 1038883608.8505152,
+          "current_density_p95": 2038444059.8797996,
+          "peak_to_average": 2.7948331703897304,
+          "contacts": {
+            "array": {
+              "power": 0.0005293263490095523,
+              "current_a_to_b": -1.9999999999985367
+            }
+          },
+          "electrical_dofs": 24320,
+          "effective_resistance": 0.003131631174125457,
+          "resistance": 0.003131631174125457,
+          "voltage_drop": 0.006263262348251228,
+          "resistance_current": 2.0000000000001004,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -1.999999999997861,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.006263262348251228,
+            "current": 2.0000000000001004,
+            "power": 0.012526524696503083
+          }
+        },
+        "diagnostics": []
+      }
+    },
+    {
+      "name": "E6_kelvin",
+      "catalog": {
+        "id": "E6",
+        "name": "E6_kelvin",
+        "title": "Kelvin sheet and contact test",
+        "category": "Measurements",
+        "level": "Intermediate",
+        "learning_goal": "Separate voltage sensing from current injection using zero-current floating electrodes.",
+        "layer": "film",
+        "field": "potential",
+        "recommended_mode": "electrical",
+        "physical_scope": "Floating sense electrodes are equipotential constraints and can perturb the sheet locally."
+      },
+      "mode": "electrical",
+      "configuration_hash": "7417072e48ac0063b2c93d9ffa115bcc35801308e63e98efbeaa13e562186ae0",
+      "physics_hash": "2496310d281cae64d53934cfbe74ba568904250dff515b6ef10fcdfcdf969c77",
+      "layout_sha256": "e3b80ef344c61fbbb114194f4058226f4f801e37629c899d204ecfe87f50e90e",
+      "bias_summary": "source 0 V (ground); drain 0.001 A (current); sense_a 0 (floating); sense_b 0 (floating)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "pads",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.001,
+          "layer": "pads",
+          "unit": "A"
+        },
+        {
+          "id": "sense_a",
+          "kind": "floating",
+          "value": 0.0,
+          "layer": "film",
+          "unit": ""
+        },
+        {
+          "id": "sense_b",
+          "kind": "floating",
+          "value": 0.0,
+          "layer": "film",
+          "unit": ""
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Four-terminal sheet/contact test; floating sense terminals draw exactly zero net current.",
+      "field": {
+        "layer": "film",
+        "field": "potential",
+        "unit": "V",
+        "minimum": 5.12216682604206e-05,
+        "maximum": 0.4312082883746019,
+        "display_unit": "mV",
+        "display_scale": 1000.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 0.0512216682604206,
+        "display_maximum": 431.2082883746019
+      },
+      "physical_layers": [
+        {
+          "id": "film",
+          "material": "silicon",
+          "z_m": 0,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "pads",
+          "material": "copper",
+          "z_m": 1e-06,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E6_kelvin.etl",
+        "gds": "../../examples/E6_kelvin.gds",
+        "oas": "../../examples/E6_kelvin.oas"
+      },
+      "result": {
+        "configuration_hash": "7417072e48ac0063b2c93d9ffa115bcc35801308e63e98efbeaa13e562186ae0",
+        "physics_hash": "2496310d281cae64d53934cfbe74ba568904250dff515b6ef10fcdfcdf969c77",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 411,
+        "mesh_triangles": 726,
+        "metrics": {
+          "electrical_power": 0.000431259210065724,
+          "joule_power": 0.0004152692949057303,
+          "contact_power": 1.5989915159993697e-05,
+          "terminal_power": 0.00043125920990004355,
+          "current_balance_error": 3.8417892192415307e-10,
+          "power_balance_error": 3.8417836365586435e-10,
+          "electrical_residual": 8.239936510758729e-14,
+          "total_current": 0.00099999999963174,
+          "current_density_max": 50334698.16393317,
+          "current_density_average": 26948907.915129494,
+          "current_density_p95": 50001673.58801614,
+          "peak_to_average": 1.8677824838933295,
+          "contacts": {
+            "ohmic": {
+              "power": 1.5989915159993697e-05,
+              "current_a_to_b": 5.182486384480711e-17
+            }
+          },
+          "electrical_dofs": 701,
+          "effective_resistance": 431.2592102176777,
+          "resistance": 431.2592102176777,
+          "voltage_drop": 0.43125921005886214,
+          "resistance_current": 0.00099999999963174,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.0010000000000159105,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.43125921005886214,
+            "current": 0.00099999999963174,
+            "power": 0.0004312592099000466
+          },
+          "sense_a": {
+            "voltage": 0.06563399271568023,
+            "current": -4.0657581468206416e-20,
+            "power": -2.6685194059214354e-21
+          },
+          "sense_b": {
+            "voltage": 0.36563399272045355,
+            "current": -8.321251673826247e-18,
+            "power": -3.0425324739328476e-18
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Layer Pads contains 2 disconnected polygon islands; inspect connectivity.",
+            "object_id": "pads",
+            "bounds": [
+              0.0,
+              0.0,
+              0.00012,
+              2e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_pads extends outside its layer and is clipped.",
+            "object_id": "sink_pads",
+            "bounds": [
+              0.0,
+              0.0,
+              0.00012,
+              2e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E7_hemt",
+      "catalog": {
+        "id": "E7",
+        "name": "E7_hemt",
+        "title": "Interdigitated HEMT",
+        "category": "Devices",
+        "level": "Intermediate",
+        "learning_goal": "Explore local gate control, finite source/drain contacts, and thermal coupling.",
+        "layer": "channel",
+        "field": "sheet_current",
+        "recommended_mode": "electrical",
+        "physical_scope": "Illustrative resistive 2DEG law, with ungated edge bypass; the insulated field plate has no electrostatic effect."
+      },
+      "mode": "electrical",
+      "configuration_hash": "38c1b83aafc7b8b6b3b5feb3763c074454d0cb3a4f1481c8baeb852fac24dafe",
+      "physics_hash": "6a9e994c4b3b20e9497a41efc552bf78b887e64775653e30b1f5437aea00f432",
+      "layout_sha256": "5dc152eac5d81ab49a83f0cc533053ec00ab5a339f474c4bd16497d710069046",
+      "bias_summary": "source 0 V (ground); drain 0.2 V (voltage); gate_bias 0 V (voltage); field_plate_bias 0 V (voltage); gate_control 0 V (gate)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "source_metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.2,
+          "layer": "drain_metal",
+          "unit": "V"
+        },
+        {
+          "id": "gate_bias",
+          "kind": "voltage",
+          "value": 0.0,
+          "layer": "gate_metal",
+          "unit": "V"
+        },
+        {
+          "id": "field_plate_bias",
+          "kind": "voltage",
+          "value": 0.0,
+          "layer": "field_plate",
+          "unit": "V"
+        },
+        {
+          "id": "gate_control",
+          "kind": "gate",
+          "value": 0.0,
+          "layer": "channel",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.gate_control.value",
+          "values": [
+            -5.0,
+            -3.0,
+            -1.0,
+            1.0
+          ],
+          "mode": "electrothermal",
+          "name": "Gate control"
+        }
+      ],
+      "sweep_summary": "`terminals.gate_control.value` = `[-5.0, -3.0, -1.0, 1.0]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Illustrative depletion-mode interdigitated HEMT. Local gate control only under gate mask; access channel uses the configured ungated carrier-density cap. Field plate is insulated and has no electrostatic effect. Ungated channel edges permit bypass current. Metal/channel to substrate thermal links use an effective 2e-7 m²K/W for omitted buffer/dielectric paths; these parallel heat paths require process calibration. Not a calibrated transistor model.",
+      "field": {
+        "layer": "channel",
+        "field": "sheet_current",
+        "unit": "A/m",
+        "minimum": 0.0020167914440927673,
+        "maximum": 67.40583292303062,
+        "display_unit": "A/m",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 0.0020167914440927673,
+        "display_maximum": 67.40583292303062
+      },
+      "physical_layers": [
+        {
+          "id": "channel",
+          "material": "2deg",
+          "z_m": 0,
+          "thickness_m": 1e-08
+        },
+        {
+          "id": "source_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "drain_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "gate_metal",
+          "material": "copper",
+          "z_m": 4e-07,
+          "thickness_m": 1.5e-07
+        },
+        {
+          "id": "field_plate",
+          "material": "copper",
+          "z_m": 1e-06,
+          "thickness_m": 3e-07
+        },
+        {
+          "id": "substrate",
+          "material": "sic",
+          "z_m": -0.0001,
+          "thickness_m": 0.0001
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E7_hemt.etl",
+        "gds": "../../examples/E7_hemt.gds",
+        "oas": "../../examples/E7_hemt.oas"
+      },
+      "result": {
+        "configuration_hash": "38c1b83aafc7b8b6b3b5feb3763c074454d0cb3a4f1481c8baeb852fac24dafe",
+        "physics_hash": "6a9e994c4b3b20e9497a41efc552bf78b887e64775653e30b1f5437aea00f432",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 7053,
+        "mesh_triangles": 13807,
+        "metrics": {
+          "electrical_power": 0.0025167664904179633,
+          "joule_power": 0.0024278875759083597,
+          "contact_power": 8.88789145096034e-05,
+          "terminal_power": 0.0025167664757445255,
+          "current_balance_error": 2.979838059522603e-12,
+          "power_balance_error": 5.830273832671944e-09,
+          "electrical_residual": 4.812205232803599e-09,
+          "total_current": 0.012583832378722626,
+          "current_density_max": 6740583292.303062,
+          "current_density_average": 1445092648.84517,
+          "current_density_p95": 3528480111.910108,
+          "peak_to_average": 4.664464453327422,
+          "contacts": {
+            "source_contact": {
+              "power": 4.367257189472741e-05,
+              "current_a_to_b": 0.012583832378685713
+            },
+            "drain_contact": {
+              "power": 4.520634261487599e-05,
+              "current_a_to_b": -0.012583832378685707
+            }
+          },
+          "electrical_dofs": 9543,
+          "effective_resistance": 15.893409414620782,
+          "resistance": 15.893409414620782,
+          "voltage_drop": 0.2,
+          "resistance_current": 0.012583832378722626,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.012583832378685128,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.2,
+            "current": 0.012583832378722626,
+            "power": 0.0025167664757445255
+          },
+          "gate_bias": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          },
+          "field_plate_bias": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          },
+          "gate_control": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Physical volumes of Source Metal and Gate Metal overlap in z and x–y. Verify stack positions and material assignment; electrical potentials remain independent.",
+            "object_id": "source_metal",
+            "bounds": [
+              3e-06,
+              4.7000000000000004e-05,
+              5e-06,
+              5.3e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_channel extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_channel",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_source_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_source_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_drain_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_drain_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_gate_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_gate_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_field_plate extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_field_plate",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E8_hemt_routing",
+      "catalog": {
+        "id": "E8",
+        "name": "E8_hemt_routing",
+        "title": "HEMT with resistive routing",
+        "category": "Devices",
+        "level": "Intermediate",
+        "learning_goal": "Compare thin access buses with the thicker routing in E7.",
+        "layer": "source_metal",
+        "field": "current_density",
+        "recommended_mode": "electrical",
+        "physical_scope": "Same effective channel law as E7; metal thickness changes routing resistance, not transistor electrostatics."
+      },
+      "mode": "electrical",
+      "configuration_hash": "a50181f6bacb4505f7ca1a6da356d84cf1fa802828c8696bb30532ec08033908",
+      "physics_hash": "22501413487ac74e899f7a92d6d3887692448740b2644c832218267e3425d291",
+      "layout_sha256": "6962449e9625413c858ac7a5ebd54fd54428a8242c6b9db0f72bb1359f0c4bfe",
+      "bias_summary": "source 0 V (ground); drain 0.2 V (voltage); gate_bias 0 V (voltage); field_plate_bias 0 V (voltage); gate_control 0 V (gate)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "source_metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.2,
+          "layer": "drain_metal",
+          "unit": "V"
+        },
+        {
+          "id": "gate_bias",
+          "kind": "voltage",
+          "value": 0.0,
+          "layer": "gate_metal",
+          "unit": "V"
+        },
+        {
+          "id": "field_plate_bias",
+          "kind": "voltage",
+          "value": 0.0,
+          "layer": "field_plate",
+          "unit": "V"
+        },
+        {
+          "id": "gate_control",
+          "kind": "gate",
+          "value": 0.0,
+          "layer": "channel",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.gate_control.value",
+          "values": [
+            -5.0,
+            -3.0,
+            -1.0,
+            1.0
+          ],
+          "mode": "electrothermal",
+          "name": "Gate control"
+        }
+      ],
+      "sweep_summary": "`terminals.gate_control.value` = `[-5.0, -3.0, -1.0, 1.0]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Illustrative depletion-mode interdigitated HEMT. Local gate control only under gate mask; access channel uses the configured ungated carrier-density cap. Field plate is insulated and has no electrostatic effect. Ungated channel edges permit bypass current. Metal/channel to substrate thermal links use an effective 2e-7 m²K/W for omitted buffer/dielectric paths; these parallel heat paths require process calibration. Not a calibrated transistor model.",
+      "field": {
+        "layer": "source_metal",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 1315707.1783476206,
+        "maximum": 1903132856.1477406,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 1.3157071783476206,
+        "display_maximum": 1903.1328561477405
+      },
+      "physical_layers": [
+        {
+          "id": "channel",
+          "material": "2deg",
+          "z_m": 0,
+          "thickness_m": 1e-08
+        },
+        {
+          "id": "source_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 7e-07
+        },
+        {
+          "id": "drain_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 7e-07
+        },
+        {
+          "id": "gate_metal",
+          "material": "copper",
+          "z_m": 4e-07,
+          "thickness_m": 1.5e-07
+        },
+        {
+          "id": "field_plate",
+          "material": "copper",
+          "z_m": 1e-06,
+          "thickness_m": 3e-07
+        },
+        {
+          "id": "substrate",
+          "material": "sic",
+          "z_m": -0.0001,
+          "thickness_m": 0.0001
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E8_hemt_routing.etl",
+        "gds": "../../examples/E8_hemt_routing.gds",
+        "oas": "../../examples/E8_hemt_routing.oas"
+      },
+      "result": {
+        "configuration_hash": "a50181f6bacb4505f7ca1a6da356d84cf1fa802828c8696bb30532ec08033908",
+        "physics_hash": "22501413487ac74e899f7a92d6d3887692448740b2644c832218267e3425d291",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 7095,
+        "mesh_triangles": 13891,
+        "metrics": {
+          "electrical_power": 0.0025013978071146436,
+          "joule_power": 0.0024136035976447304,
+          "contact_power": 8.779420946991335e-05,
+          "terminal_power": 0.0025013977934287947,
+          "current_balance_error": 1.0727222092279425e-11,
+          "power_balance_error": 5.471280440163465e-09,
+          "electrical_residual": 4.840404275224218e-09,
+          "total_current": 0.012506988967143973,
+          "current_density_max": 6698122040.518987,
+          "current_density_average": 1571756142.7834716,
+          "current_density_p95": 3512763937.9641585,
+          "peak_to_average": 4.26155295862695,
+          "contacts": {
+            "source_contact": {
+              "power": 4.3141051019623326e-05,
+              "current_a_to_b": 0.012506988967009781
+            },
+            "drain_contact": {
+              "power": 4.465315845029002e-05,
+              "current_a_to_b": -0.012506988967009773
+            }
+          },
+          "electrical_dofs": 9375,
+          "effective_resistance": 15.99105912105645,
+          "resistance": 15.99105912105645,
+          "voltage_drop": 0.2,
+          "resistance_current": 0.012506988967143973,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.012506988967009807,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.2,
+            "current": 0.012506988967143973,
+            "power": 0.0025013977934287947
+          },
+          "gate_bias": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          },
+          "field_plate_bias": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          },
+          "gate_control": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Physical volumes of Source Metal and Gate Metal overlap in z and x–y. Verify stack positions and material assignment; electrical potentials remain independent.",
+            "object_id": "source_metal",
+            "bounds": [
+              3e-06,
+              4.7000000000000004e-05,
+              5e-06,
+              5.3e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_channel extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_channel",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_source_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_source_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_drain_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_drain_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_gate_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_gate_metal",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_field_plate extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_field_plate",
+            "bounds": [
+              -1e-05,
+              0.0,
+              0.00011,
+              0.0001
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E9_sic",
+      "catalog": {
+        "id": "E9",
+        "name": "E9_sic",
+        "title": "Conducting SiC sheet",
+        "category": "Devices",
+        "level": "Intermediate",
+        "learning_goal": "Connect carrier density and mobility to sheet conduction and contact loss.",
+        "layer": "sic",
+        "field": "potential",
+        "recommended_mode": "electrical",
+        "physical_scope": "Effective doped semiconductor resistor; no junction, depletion, or breakdown physics."
+      },
+      "mode": "electrical",
+      "configuration_hash": "70958b911bc5f7e603c589e2ae11889115ebd573df2d671f6a3331e1d6175ed8",
+      "physics_hash": "fb6a43cb0e4ec3fbf7866bc6ea607bd88ebabcf635c8202526d48c911d4817c8",
+      "layout_sha256": "7476d295293a8e6a1ffc1c9547a1cfb88ae540d60497691429bb0ead1bde14dd",
+      "bias_summary": "source 0 V (ground); drain 1 V (voltage)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "pads",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 1.0,
+          "layer": "pads",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Effective n=10^18 cm^-3, mobility=400 cm²/Vs at 300 K; resistive sheet, no junction physics.",
+      "field": {
+        "layer": "sic",
+        "field": "potential",
+        "unit": "V",
+        "minimum": 0.00483821490027315,
+        "maximum": 0.9951614233451767,
+        "display_unit": "mV",
+        "display_scale": 1000.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 4.83821490027315,
+        "display_maximum": 995.1614233451767
+      },
+      "physical_layers": [
+        {
+          "id": "sic",
+          "material": "sic",
+          "z_m": 0,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "pads",
+          "material": "copper",
+          "z_m": 2e-06,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E9_sic.etl",
+        "gds": "../../examples/E9_sic.gds",
+        "oas": "../../examples/E9_sic.oas"
+      },
+      "result": {
+        "configuration_hash": "70958b911bc5f7e603c589e2ae11889115ebd573df2d671f6a3331e1d6175ed8",
+        "physics_hash": "fb6a43cb0e4ec3fbf7866bc6ea607bd88ebabcf635c8202526d48c911d4817c8",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 960,
+        "mesh_triangles": 1788,
+        "metrics": {
+          "electrical_power": 0.0044123405521953474,
+          "joule_power": 0.004220736557437761,
+          "contact_power": 0.0001916039947575865,
+          "terminal_power": 0.004412340552651273,
+          "current_balance_error": 1.0334725646519576e-10,
+          "power_balance_error": 1.0332956458963656e-10,
+          "electrical_residual": 6.290442741919098e-15,
+          "total_current": 0.004412340552651273,
+          "current_density_max": 73927781.30220598,
+          "current_density_average": 52887194.07837919,
+          "current_density_p95": 73540282.37168401,
+          "peak_to_average": 1.397838977667155,
+          "contacts": {
+            "ohmic": {
+              "power": 0.0001916039947575865,
+              "current_a_to_b": -1.5959455978986625e-16
+            }
+          },
+          "electrical_dofs": 1190,
+          "effective_resistance": 226.63708480052006,
+          "resistance": 226.63708480052006,
+          "voltage_drop": 1.0,
+          "resistance_current": 0.004412340552651273,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          }
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.004412340552195269,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 1.0,
+            "current": 0.004412340552651273,
+            "power": 0.004412340552651273
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Layer Pads contains 2 disconnected polygon islands; inspect connectivity.",
+            "object_id": "pads",
+            "bounds": [
+              0.0,
+              0.0,
+              0.0001,
+              3e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Thermal boundary sink_pads extends outside its layer and is clipped.",
+            "object_id": "sink_pads",
+            "bounds": [
+              0.0,
+              0.0,
+              0.0001,
+              3e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E10_thermal_stack",
+      "catalog": {
+        "id": "E10",
+        "name": "E10_thermal_stack",
+        "title": "Metal–oxide–silicon stack",
+        "category": "Thermal",
+        "level": "Intermediate",
+        "learning_goal": "Resolve lateral heat spreading and the resistance of a layered thermal path.",
+        "layer": "substrate",
+        "field": "temperature",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Thickness-averaged layers; the bottom boundary includes half of the substrate thickness."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "37904468fc2ac50eab128c733d444adf633323e71d25634b78e774da438240cd",
+      "physics_hash": "a987cef47b32a404f2175d2b51ece8500ef2fd61b77a13d135c6d038b40db1e7",
+      "layout_sha256": "2d93f4bc65d8e03249590eb1f58f282b3dcc9fb17f84c7583671328d7cff26f3",
+      "bias_summary": "source 0 V (ground); drain 0.4 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.4,
+          "layer": "metal",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.04
+          ],
+          "mode": "electrothermal",
+          "name": "Bias sweep"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.04]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Thickness-averaged metal/oxide/silicon model. Bottom boundary includes half substrate thickness.",
+      "field": {
+        "layer": "substrate",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 300.10755479726095,
+        "maximum": 300.3290773071155,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 300.10755479726095,
+        "display_maximum": 300.3290773071155
+      },
+      "physical_layers": [
+        {
+          "id": "metal",
+          "material": "copper",
+          "z_m": 1e-06,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "oxide",
+          "material": "sio2",
+          "z_m": 0,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -5e-05,
+          "thickness_m": 5e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E10_thermal_stack.etl",
+        "gds": "../../examples/E10_thermal_stack.gds",
+        "oas": "../../examples/E10_thermal_stack.oas"
+      },
+      "result": {
+        "configuration_hash": "37904468fc2ac50eab128c733d444adf633323e71d25634b78e774da438240cd",
+        "physics_hash": "a987cef47b32a404f2175d2b51ece8500ef2fd61b77a13d135c6d038b40db1e7",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 7899,
+        "mesh_triangles": 15456,
+        "metrics": {
+          "electrical_power": 0.02815959311643448,
+          "joule_power": 0.02815959311643448,
+          "contact_power": 0.0,
+          "terminal_power": 0.028159593116436774,
+          "current_balance_error": 1.8457457784395262e-13,
+          "power_balance_error": 8.143954444791802e-14,
+          "electrical_residual": 3.330669073875452e-14,
+          "total_current": 0.3999999999999928,
+          "current_density_max": 20000448310.83661,
+          "current_density_average": 20000000000.062824,
+          "current_density_p95": 20000443221.394497,
+          "peak_to_average": 1.0000224155386892,
+          "contacts": {},
+          "electrical_dofs": 709,
+          "effective_resistance": 0.17599745697773617,
+          "resistance": 0.17599745697773617,
+          "voltage_drop": 0.0703989827910932,
+          "resistance_current": 0.3999999999999928,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 312.16451582699705,
+          "temperature_min": 300.10755479726095,
+          "temperature_average": 300.8911349620904,
+          "temperature_rise": 12.164515826997047,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.028159593116434484,
+          "heat_out": 0.028159411486092127,
+          "thermal_resistance": 431.9847867367657,
+          "thermal_balance_error": 6.4500343313047635e-06,
+          "thermal_residual": 6.4074162093276346e-06,
+          "boundary_heat_flows": {
+            "sink": 0.028159169227004052,
+            "top_air": 2.422590880734286e-07
+          },
+          "hotspot": {
+            "layer": "metal",
+            "x": 0.00010100000000051433,
+            "y": 5.019615242281941e-05,
+            "z": 1e-06,
+            "temperature": 312.16451582699705
+          },
+          "thermal_dofs": 16507
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.399999999999919,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.0703989827910932,
+            "current": 0.3999999999999928,
+            "power": 0.028159593116436774
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Interface metal_oxide extends outside its two layers and is clipped to their common area.",
+            "object_id": "metal_oxide",
+            "bounds": [
+              -1e-05,
+              -1e-05,
+              0.00021,
+              0.00011
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Thermal boundary top_air extends outside its layer and is clipped.",
+            "object_id": "top_air",
+            "bounds": [
+              -1e-05,
+              -1e-05,
+              0.00021,
+              0.00011
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E11_serpentine_heater",
+      "catalog": {
+        "id": "E11",
+        "name": "E11_serpentine_heater",
+        "title": "Serpentine thin-film heater",
+        "category": "Thermal",
+        "level": "Advanced",
+        "learning_goal": "Inspect corner crowding, temperature feedback, and heat spreading beyond a five-pass trace.",
+        "layer": "heater",
+        "field": "temperature",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Illustrative platinum film on silicon, with an effective thermal interface; sharp-corner peaks need mesh refinement."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "28984751d461d76ddcb0aa4ad52aad826ae5092d1513c7b4c8df65ef29a519e8",
+      "physics_hash": "b64740a09b01662435489308cfd7f62a659ab58bc7355d63e18dfd5a3cb713c6",
+      "layout_sha256": "67540ab49873a842c7ee60594e0dd0c5c64ff61069c4e8b88ab20e7400617030",
+      "bias_summary": "source 0 V (ground); drain 0.02 A (current); prescribed heat: background_heating 0.002 W",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "heater",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.02,
+          "layer": "heater",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "background_heating",
+          "value": 0.002,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.01,
+            0.02,
+            0.03
+          ],
+          "mode": "electrothermal",
+          "name": "Heater current"
+        },
+        {
+          "parameter": "interfaces.heater_substrate.thermal_value",
+          "values": [
+            1e-06,
+            2e-06,
+            4e-06
+          ],
+          "mode": "electrothermal",
+          "name": "Effective dielectric thermal resistance"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.01, 0.02, 0.03]` (SI values, electrothermal); `interfaces.heater_substrate.thermal_value` = `[1e-06, 2e-06, 4e-06]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Five-pass 8 µm wide, 0.25 µm thick platinum serpentine, driven at 20 mA. Square turns demonstrate current crowding; corner peaks require a mesh study. The explicit 260 × 152 µm silicon substrate extends beyond the imported conductor. A 2e-6 m²K/W effective dielectric link and a 2e6 W/m²K backside sink are illustrative; the omitted dielectric has no resolved lateral heat flow. An independent 2 mW heater load also makes thermal-only mode meaningful. Steady-state thickness-averaged model; no transient heat capacity, radiation or calibrated thin-film transport.",
+      "field": {
+        "layer": "heater",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 303.77901477984,
+        "maximum": 306.29021748219725,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 303.77901477984,
+        "display_maximum": 306.29021748219725
+      },
+      "physical_layers": [
+        {
+          "id": "heater",
+          "material": "platinum",
+          "z_m": 1e-06,
+          "thickness_m": 2.5e-07
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -5e-05,
+          "thickness_m": 5e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E11_serpentine_heater.etl",
+        "gds": "../../examples/E11_serpentine_heater.gds",
+        "oas": "../../examples/E11_serpentine_heater.oas"
+      },
+      "result": {
+        "configuration_hash": "28984751d461d76ddcb0aa4ad52aad826ae5092d1513c7b4c8df65ef29a519e8",
+        "physics_hash": "b64740a09b01662435489308cfd7f62a659ab58bc7355d63e18dfd5a3cb713c6",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 5567,
+        "mesh_triangles": 10856,
+        "metrics": {
+          "electrical_power": 0.021096835180948206,
+          "joule_power": 0.021096835180948206,
+          "contact_power": 0.0,
+          "terminal_power": 0.021096835180958305,
+          "current_balance_error": 8.526165884428641e-13,
+          "power_balance_error": 4.787239408426856e-13,
+          "electrical_residual": 1.3322676295501866e-13,
+          "total_current": 0.02000000000000235,
+          "current_density_max": 16093969740.977797,
+          "current_density_average": 9750155074.314081,
+          "current_density_p95": 10249212802.449598,
+          "peak_to_average": 1.6506373096953024,
+          "contacts": {},
+          "electrical_dofs": 1382,
+          "effective_resistance": 52.74208795238338,
+          "resistance": 52.74208795238338,
+          "voltage_drop": 1.0548417590477914,
+          "resistance_current": 0.02000000000000235,
+          "resistance_terminal_pair": [
+            "drain",
+            "source"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "drain",
+              "source"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 306.29021748219725,
+          "temperature_min": 300.20799766988193,
+          "temperature_average": 301.268653546939,
+          "temperature_rise": 6.290217482197249,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.023096835180948204,
+          "heat_out": 0.02309660610144967,
+          "thermal_resistance": 272.3410992422822,
+          "thermal_balance_error": 9.91822025567433e-06,
+          "thermal_residual": 9.955957172750372e-06,
+          "boundary_heat_flows": {
+            "backside": 0.02309660610144967
+          },
+          "hotspot": {
+            "layer": "heater",
+            "x": 9.044827586181356e-05,
+            "y": 5.343178673357642e-05,
+            "z": 1e-06,
+            "temperature": 306.29021748219725
+          },
+          "thermal_dofs": 6949
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.019999999999985297,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 1.0548417590477914,
+            "current": 0.02000000000000235,
+            "power": 0.021096835180958305
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Interface heater_substrate extends outside its two layers and is clipped to their common area.",
+            "object_id": "heater_substrate",
+            "bounds": [
+              -3.9999999999999996e-05,
+              -2.4e-05,
+              0.00021999999999999998,
+              0.000128
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source background_heating extends outside its layer and is clipped.",
+            "object_id": "background_heating",
+            "bounds": [
+              -3.9999999999999996e-05,
+              -2.4e-05,
+              0.00021999999999999998,
+              0.000128
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E12_via_ladder",
+      "catalog": {
+        "id": "E12",
+        "name": "E12_via_ladder",
+        "title": "Three-level via ladder",
+        "category": "Interconnects",
+        "level": "Advanced",
+        "learning_goal": "Follow sequential vertical transfer through two hierarchical 3 × 3 via banks.",
+        "layer": "m2",
+        "field": "current_density",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Three independent sheet potentials linked by finite copper vias; no full 3D via-sidewall field solution."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "db47a343e729f2574bd65647f568ea3df1c36edc870c5026796f5f0b80594ce4",
+      "physics_hash": "d9a75967507735364c4b88888d76b09ddf511fdbec68ecef22b731564436d2f6",
+      "layout_sha256": "6905ed931b3ded2842f55ae3e1e39a0cf5af2b77d86ec24a61c6c511b05cd3d1",
+      "bias_summary": "source 0 V (ground); drain 0.3 A (current); prescribed heat: riser_heating 0.003 W",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "m1",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.3,
+          "layer": "m3",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "riser_heating",
+          "value": 0.003,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.1,
+            0.3,
+            0.5
+          ],
+          "mode": "electrothermal",
+          "name": "Route current"
+        },
+        {
+          "parameter": "interfaces.via12.height",
+          "values": [
+            1e-06,
+            2e-06,
+            4e-06
+          ],
+          "mode": "electrical",
+          "name": "Lower via height"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.1, 0.3, 0.5]` (SI values, electrothermal); `interfaces.via12.height` = `[1e-06, 2e-06, 4e-06]` (SI values, electrical)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Three 1 µm copper levels form a U-shaped series route with two hierarchical 3 × 3 banks of 6 × 6 µm finite copper vias, 2 µm high. A 0.3 A terminal current must cross both banks; individual vias can carry different currents. Each metal has a separate potential and temperature. Effective 1e-6 m²K/W links to a larger silicon substrate approximate omitted dielectric paths; they are parallel thermal paths requiring process calibration. An independent 3 mW load is applied to the middle riser. Vias are distributed interlayer conductances, not resolved 3D solids. The via-height sweep changes electrical resistance only; thermal via conductance is independently fixed.",
+      "field": {
+        "layer": "m2",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 140368817.7488966,
+        "maximum": 12409001010.673742,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 140.3688177488966,
+        "display_maximum": 12409.00101067374
+      },
+      "physical_layers": [
+        {
+          "id": "m1",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "m2",
+          "material": "copper",
+          "z_m": 3e-06,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "m3",
+          "material": "copper",
+          "z_m": 6e-06,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -4e-05,
+          "thickness_m": 4e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E12_via_ladder.etl",
+        "gds": "../../examples/E12_via_ladder.gds",
+        "oas": "../../examples/E12_via_ladder.oas"
+      },
+      "result": {
+        "configuration_hash": "db47a343e729f2574bd65647f568ea3df1c36edc870c5026796f5f0b80594ce4",
+        "physics_hash": "d9a75967507735364c4b88888d76b09ddf511fdbec68ecef22b731564436d2f6",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 6100,
+        "mesh_triangles": 11914,
+        "metrics": {
+          "electrical_power": 0.021301890889458292,
+          "joule_power": 0.02121273536000244,
+          "contact_power": 8.915552945585258e-05,
+          "terminal_power": 0.021301890889454726,
+          "current_balance_error": 2.194540845342068e-13,
+          "power_balance_error": 1.6743074523836386e-13,
+          "electrical_residual": 2.960594732332988e-14,
+          "total_current": 0.3000000000000115,
+          "current_density_max": 12409001010.673742,
+          "current_density_average": 8037174747.365878,
+          "current_density_p95": 9660190135.527641,
+          "peak_to_average": 1.543950629509542,
+          "contacts": {
+            "via12": {
+              "power": 4.5626390304264135e-05,
+              "current_a_to_b": -0.30000000000005234
+            },
+            "via23": {
+              "power": 4.352913915158845e-05,
+              "current_a_to_b": -0.30000000000007665
+            }
+          },
+          "electrical_dofs": 2679,
+          "effective_resistance": 0.2366876765494788,
+          "resistance": 0.2366876765494788,
+          "voltage_drop": 0.07100630296484636,
+          "resistance_current": 0.3000000000000115,
+          "resistance_terminal_pair": [
+            "drain",
+            "source"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "drain",
+              "source"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 302.97603605610135,
+          "temperature_min": 300.0930490162344,
+          "temperature_average": 300.58853212605896,
+          "temperature_rise": 2.97603605610135,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.024301890889458295,
+          "heat_out": 0.024301708786463174,
+          "thermal_resistance": 122.46109035870532,
+          "thermal_balance_error": 7.493367324750776e-06,
+          "thermal_residual": 7.31001613968278e-06,
+          "boundary_heat_flows": {
+            "backside": 0.024301708786463174
+          },
+          "hotspot": {
+            "layer": "m2",
+            "x": 0.000168,
+            "y": 7.199999999999993e-05,
+            "z": 3e-06,
+            "temperature": 302.97603605610135
+          },
+          "thermal_dofs": 8779
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.3000000000000773,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.07100630296484636,
+            "current": 0.3000000000000115,
+            "power": 0.021301890889454726
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Interface heat_m1 extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_m1",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00021999999999999998,
+              0.000164
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_m2 extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_m2",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00021999999999999998,
+              0.000164
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_m3 extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_m3",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00021999999999999998,
+              0.000164
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E13_perforated_spreader",
+      "catalog": {
+        "id": "E13",
+        "name": "E13_perforated_spreader",
+        "title": "Perforated current spreader",
+        "category": "Interconnects",
+        "level": "Advanced",
+        "learning_goal": "See current diversion around staggered slots and diamond holes in a conducting sheet.",
+        "layer": "spreader",
+        "field": "current_density",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "True void topology is preserved in the mesh; ideal hole corners produce mesh-sensitive current peaks."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "48d7c328e9e8337f4ec2e2732ba63c3ab1f44a00474c86a6df1eb47138052a2b",
+      "physics_hash": "d90cf31c1f0758b76eb117222f857eab9cd266451ade9524e229c76141845ee7",
+      "layout_sha256": "8f3f1d8ef77991a970b2b2f1b8e3bb70afeff8bc8a7dd2c8a9958e403ee009d8",
+      "bias_summary": "source 0 V (ground); drain 0.75 A (current); prescribed heat: local_load 0.006 W",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "spreader",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.75,
+          "layer": "spreader",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "local_load",
+          "value": 0.006,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "terminals.drain.value",
+          "values": [
+            0.25,
+            0.5,
+            0.75
+          ],
+          "mode": "electrothermal",
+          "name": "Sheet current"
+        },
+        {
+          "parameter": "heat_sources.local_load.value",
+          "values": [
+            0.002,
+            0.006,
+            0.012
+          ],
+          "mode": "thermal",
+          "name": "Local heating"
+        }
+      ],
+      "sweep_summary": "`terminals.drain.value` = `[0.25, 0.5, 0.75]` (SI values, electrothermal); `heat_sources.local_load.value` = `[0.002, 0.006, 0.012]` (SI values, thermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "A 240 × 140 µm, 2 µm thick copper sheet contains three staggered 10 × 92 µm slots and two diamond cutouts. These are actual holes in the conductor, not decorative masks. A 0.75 A edge drive diverts current around slot ends; a separate 6 mW localized load exercises thermal-only mode. The continuous, larger SiC substrate remains beneath the copper holes. Its effective interface resistance is 5e-7 m²K/W and backside sink is 2e6 W/m²K. Sharp-corner current peaks are mesh-dependent; use spatial averages or a refinement study. This steady-state sheet approximation omits 3D sidewall spreading and mechanical stress.",
+      "field": {
+        "layer": "spreader",
+        "field": "current_density",
+        "unit": "A/m²",
+        "minimum": 59743616.05662554,
+        "maximum": 18274030539.358734,
+        "display_unit": "MA/m²",
+        "display_scale": 1e-06,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 59.743616056625534,
+        "display_maximum": 18274.030539358733
+      },
+      "physical_layers": [
+        {
+          "id": "spreader",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "substrate",
+          "material": "sic",
+          "z_m": -4e-05,
+          "thickness_m": 4e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E13_perforated_spreader.etl",
+        "gds": "../../examples/E13_perforated_spreader.gds",
+        "oas": "../../examples/E13_perforated_spreader.oas"
+      },
+      "result": {
+        "configuration_hash": "48d7c328e9e8337f4ec2e2732ba63c3ab1f44a00474c86a6df1eb47138052a2b",
+        "physics_hash": "d90cf31c1f0758b76eb117222f857eab9cd266451ade9524e229c76141845ee7",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 7257,
+        "mesh_triangles": 14204,
+        "metrics": {
+          "electrical_power": 0.016024090172483244,
+          "joule_power": 0.016024090172483244,
+          "contact_power": 0.0,
+          "terminal_power": 0.016024090172482304,
+          "current_balance_error": 8.600527697429207e-14,
+          "power_balance_error": 5.867541394605894e-14,
+          "electrical_residual": 1.776356839400104e-14,
+          "total_current": 0.7499999999999972,
+          "current_density_max": 18274030539.358734,
+          "current_density_average": 3342733638.990816,
+          "current_density_p95": 7133446530.610875,
+          "peak_to_average": 5.466792306214304,
+          "contacts": {},
+          "electrical_dofs": 4606,
+          "effective_resistance": 0.02848727141774653,
+          "resistance": 0.02848727141774653,
+          "voltage_drop": 0.02136545356330982,
+          "resistance_current": 0.7499999999999972,
+          "resistance_terminal_pair": [
+            "drain",
+            "source"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "drain",
+              "source"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 301.92214940771237,
+          "temperature_min": 300.1705250451651,
+          "temperature_average": 300.35714873885127,
+          "temperature_rise": 1.922149407712368,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.02202409017248324,
+          "heat_out": 0.02202393588973764,
+          "thermal_resistance": 87.27486096628361,
+          "thermal_balance_error": 7.005181344232605e-06,
+          "thermal_residual": 6.789903264504275e-06,
+          "boundary_heat_flows": {
+            "backside": 0.02202393588973764
+          },
+          "hotspot": {
+            "layer": "spreader",
+            "x": 0.00011908456431544451,
+            "y": 1.3914378493624811e-05,
+            "z": 0.0,
+            "temperature": 301.92214940771237
+          },
+          "thermal_dofs": 11863
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.7500000000000617,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.02136545356330982,
+            "current": 0.7499999999999972,
+            "power": 0.016024090172482304
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "KLayout normalized a nonsimple polygon/cutline on mask 1/0: Ring Self-intersection[0.00021 8e-05]. Inspect the resulting geometry; cutlines encoding holes are expected in GDS.",
+            "object_id": "1/0",
+            "bounds": [
+              0.0,
+              0.0,
+              0.00024,
+              0.00014000000000000001
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface sheet_substrate extends outside its two layers and is clipped to their common area.",
+            "object_id": "sheet_substrate",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00026,
+              0.00015999999999999999
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E14_bridge_sensor",
+      "catalog": {
+        "id": "E14",
+        "name": "E14_bridge_sensor",
+        "title": "Four-arm resistive bridge",
+        "category": "Measurements",
+        "level": "Advanced",
+        "learning_goal": "Read a differential bridge imbalance with separate current drive and floating midpoint probes.",
+        "layer": "arm_br",
+        "field": "potential",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Four effective sheet resistors and metal pads; resistor mismatch represents a sensor response without a mechanical model."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "38989c797d7ffe81b7b20b85d9b59bc020219bd9a3b684d1a4b1296111485dab",
+      "physics_hash": "2c0febfc96bf576da5da7c7d3b4a97d20618a335387bcaea8373b51b71b64617",
+      "layout_sha256": "212148c027cc75d50388e1c9430e283f5a7733242901d0c27e4248a465895a1c",
+      "bias_summary": "source 0 V (ground); drain 0.1 V (voltage); sense_top 0 (floating); sense_bottom 0 (floating); prescribed heat: sensor_load 0.0002 W",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "pads",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.1,
+          "layer": "pads",
+          "unit": "V"
+        },
+        {
+          "id": "sense_top",
+          "kind": "floating",
+          "value": 0.0,
+          "layer": "pads",
+          "unit": ""
+        },
+        {
+          "id": "sense_bottom",
+          "kind": "floating",
+          "value": 0.0,
+          "layer": "pads",
+          "unit": ""
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "sensor_load",
+          "value": 0.0002,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "layers.arm_br.electrical.sheet_resistance.value",
+          "values": [
+            80.0,
+            100.0,
+            120.0
+          ],
+          "mode": "electrical",
+          "name": "Bridge imbalance (lower-right Ω/□)"
+        }
+      ],
+      "sweep_summary": "`layers.arm_br.electrical.sheet_resistance.value` = `[80.0, 100.0, 120.0]` (SI values, electrical)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Four-arm Wheatstone bridge: three 100 Ω/□ TaN sheets and one 110 Ω/□ sensing arm. The 0.1 V drive uses finite-conductivity metal buses and ideal arm/pad interfaces. Floating midpoint electrodes draw zero net current. Read V(sense_top) − V(sense_bottom); effective resistance instead reports the source/drain drive resistance. Sweep the lower-right sheet resistance through 100 Ω/□ to reverse the differential output. A separate 0.2 mW prescribed sensor load also makes thermal-only operation meaningful; fixed sheet resistance does not model thermoresistive transduction. Synthetic 2.5D demonstration, not a calibrated sensor.",
+      "field": {
+        "layer": "arm_br",
+        "field": "potential",
+        "unit": "V",
+        "minimum": 0.04761907803297417,
+        "maximum": 0.0999997229231971,
+        "display_unit": "mV",
+        "display_scale": 1000.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 47.619078032974166,
+        "display_maximum": 99.9997229231971
+      },
+      "physical_layers": [
+        {
+          "id": "arm_tl",
+          "material": "tan",
+          "z_m": 0.0,
+          "thickness_m": 2e-07
+        },
+        {
+          "id": "arm_tr",
+          "material": "tan",
+          "z_m": 0.0,
+          "thickness_m": 2e-07
+        },
+        {
+          "id": "arm_bl",
+          "material": "tan",
+          "z_m": 0.0,
+          "thickness_m": 2e-07
+        },
+        {
+          "id": "arm_br",
+          "material": "tan",
+          "z_m": 0.0,
+          "thickness_m": 2e-07
+        },
+        {
+          "id": "pads",
+          "material": "copper",
+          "z_m": 2e-07,
+          "thickness_m": 2e-06
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -3e-05,
+          "thickness_m": 3e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E14_bridge_sensor.etl",
+        "gds": "../../examples/E14_bridge_sensor.gds",
+        "oas": "../../examples/E14_bridge_sensor.oas"
+      },
+      "result": {
+        "configuration_hash": "38989c797d7ffe81b7b20b85d9b59bc020219bd9a3b684d1a4b1296111485dab",
+        "physics_hash": "2c0febfc96bf576da5da7c7d3b4a97d20618a335387bcaea8373b51b71b64617",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 1717,
+        "mesh_triangles": 3280,
+        "metrics": {
+          "electrical_power": 1.5618842709009808e-05,
+          "joule_power": 1.5618842709009808e-05,
+          "contact_power": 0.0,
+          "terminal_power": 1.5618842717897857e-05,
+          "current_balance_error": 5.800830282045035e-10,
+          "power_balance_error": 5.690593735535989e-10,
+          "electrical_residual": 2.729559733597695e-10,
+          "total_current": 0.00015618842718691708,
+          "current_density_max": 50001813.181230076,
+          "current_density_average": 24168520.283730652,
+          "current_density_p95": 49999329.2702864,
+          "peak_to_average": 2.068881859303957,
+          "contacts": {},
+          "electrical_dofs": 696,
+          "effective_resistance": 640.2523017283225,
+          "resistance": 640.2523017283225,
+          "voltage_drop": 0.1,
+          "resistance_current": 0.00015618842717168846,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 300.4458560320921,
+          "temperature_min": 300.0040639847885,
+          "temperature_average": 300.0244370753354,
+          "temperature_rise": 0.445856032092081,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.00021561884270900985,
+          "heat_out": 0.00021561739571546835,
+          "thermal_resistance": 2067.7971669377225,
+          "thermal_balance_error": 6.710886318318341e-06,
+          "thermal_residual": 6.710885555102799e-06,
+          "boundary_heat_flows": {
+            "backside": 0.00021561739571546835
+          },
+          "hotspot": {
+            "layer": "arm_br",
+            "x": 9.294117647038894e-05,
+            "y": 2.109426708105917e-06,
+            "z": 0.0,
+            "temperature": 300.4458560320921
+          },
+          "thermal_dofs": 2413
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.00015618842709631483,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.1,
+            "current": 0.00015618842717168846,
+            "power": 1.5618842717168846e-05
+          },
+          "sense_top": {
+            "voltage": 0.04999999996651262,
+            "current": 1.6112328485307081e-15,
+            "power": 8.056164237257945e-17
+          },
+          "sense_bottom": {
+            "voltage": 0.04761907803297417,
+            "current": 1.3617396327301329e-14,
+            "power": 6.484478583156978e-16
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Layer Bridge electrodes contains 4 disconnected polygon islands; inspect connectivity.",
+            "object_id": "pads",
+            "bounds": [
+              -8.000000000000001e-06,
+              0.0,
+              0.00012800000000000002,
+              4.8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface contact_arm_tl extends outside its two layers and is clipped to their common area.",
+            "object_id": "contact_arm_tl",
+            "bounds": [
+              -8.000000000000001e-06,
+              0.0,
+              0.00012800000000000002,
+              4.8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_arm_tl extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_arm_tl",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface contact_arm_tr extends outside its two layers and is clipped to their common area.",
+            "object_id": "contact_arm_tr",
+            "bounds": [
+              -8.000000000000001e-06,
+              0.0,
+              0.00012800000000000002,
+              4.8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_arm_tr extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_arm_tr",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface contact_arm_bl extends outside its two layers and is clipped to their common area.",
+            "object_id": "contact_arm_bl",
+            "bounds": [
+              -8.000000000000001e-06,
+              0.0,
+              0.00012800000000000002,
+              4.8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_arm_bl extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_arm_bl",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface contact_arm_br extends outside its two layers and is clipped to their common area.",
+            "object_id": "contact_arm_br",
+            "bounds": [
+              -8.000000000000001e-06,
+              0.0,
+              0.00012800000000000002,
+              4.8e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_arm_br extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_arm_br",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_pads extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_pads",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source sensor_load extends outside its layer and is clipped.",
+            "object_id": "sensor_load",
+            "bounds": [
+              -1.8e-05,
+              -1.2e-05,
+              0.000138,
+              5.9999999999999995e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E15_thermal_crosstalk",
+      "catalog": {
+        "id": "E15",
+        "name": "E15_thermal_crosstalk",
+        "title": "Dual-heater thermal crosstalk",
+        "category": "Thermal",
+        "level": "Advanced",
+        "learning_goal": "Inspect overlapping temperature fields from independently driven meanders on a shared substrate.",
+        "layer": "substrate",
+        "field": "temperature",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Effective sheet-to-substrate heat transfer; prescribed sources also permit a meaningful independent thermal solve."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "baf0dd2cf3df44b5392fb89134120eb417c845822a885bbf717ab47fd0a08a29",
+      "physics_hash": "b2ab7504f7d52eebb2acad5ba6c85a80f10e753c653b2bbe3d0fb79cdcc56f96",
+      "layout_sha256": "548c67c543194a0b1f698b3d0443c1a823fd94e9630ec69672234ad6b4a32b8b",
+      "bias_summary": "source_a 0 V (ground); drain_a 0.4 V (voltage); source_b 0 V (ground); drain_b 0.25 V (voltage); prescribed heat: load_a 0.0005 W, load_b 0.00015 W",
+      "terminals": [
+        {
+          "id": "source_a",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "heater_a",
+          "unit": "V"
+        },
+        {
+          "id": "drain_a",
+          "kind": "voltage",
+          "value": 0.4,
+          "layer": "heater_a",
+          "unit": "V"
+        },
+        {
+          "id": "source_b",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "heater_b",
+          "unit": "V"
+        },
+        {
+          "id": "drain_b",
+          "kind": "voltage",
+          "value": 0.25,
+          "layer": "heater_b",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "load_a",
+          "value": 0.0005,
+          "kind": "total"
+        },
+        {
+          "id": "load_b",
+          "value": 0.00015,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "heat_sources.load_a.value",
+          "values": [
+            0.0,
+            0.0005,
+            0.002
+          ],
+          "mode": "thermal",
+          "name": "Heater A thermal crosstalk (W)"
+        },
+        {
+          "parameter": "terminals.drain_a.value",
+          "values": [
+            0.2,
+            0.4,
+            0.6
+          ],
+          "mode": "electrothermal",
+          "name": "Heater A electrical bias (V)"
+        }
+      ],
+      "sweep_summary": "`heat_sources.load_a.value` = `[0.0, 0.0005, 0.002]` (SI values, thermal); `terminals.drain_a.value` = `[0.2, 0.4, 0.6]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Two electrically independent three-pass TiN heaters share a larger silicon thermal layer. A and B are biased at 0.4 V and 0.25 V; prescribed loads add 0.5 mW and 0.15 mW respectively. Electrical mode computes each powered net; reported resistance uses A only. Thermal-only mode uses prescribed loads without Joule heating, whereas electrothermal mode adds both Joule loads. Sweep load_a with B held fixed and inspect the rise of B temperature to observe thermal crosstalk. Effective 2e-6 m²K/W interfaces represent omitted isolation stacks; the 5e4 W/m²K backside sink and representative film properties need calibration. Synthetic steady-state 2.5D example.",
+      "field": {
+        "layer": "substrate",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 302.68768534875926,
+        "maximum": 302.74454578677927,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 302.68768534875926,
+        "display_maximum": 302.74454578677927
+      },
+      "physical_layers": [
+        {
+          "id": "heater_a",
+          "material": "tin",
+          "z_m": 0.0,
+          "thickness_m": 5e-07
+        },
+        {
+          "id": "heater_b",
+          "material": "tin",
+          "z_m": 0.0,
+          "thickness_m": 5e-07
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -3e-05,
+          "thickness_m": 3e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E15_thermal_crosstalk.etl",
+        "gds": "../../examples/E15_thermal_crosstalk.gds",
+        "oas": "../../examples/E15_thermal_crosstalk.oas"
+      },
+      "result": {
+        "configuration_hash": "baf0dd2cf3df44b5392fb89134120eb417c845822a885bbf717ab47fd0a08a29",
+        "physics_hash": "b2ab7504f7d52eebb2acad5ba6c85a80f10e753c653b2bbe3d0fb79cdcc56f96",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 4688,
+        "mesh_triangles": 9124,
+        "metrics": {
+          "electrical_power": 0.0014414383992215878,
+          "joule_power": 0.0014414383992215878,
+          "contact_power": 0.0,
+          "terminal_power": 0.001441438399221706,
+          "current_balance_error": 2.121224989684631e-14,
+          "power_balance_error": 8.198618606575858e-14,
+          "electrical_residual": 1.0715622274500767e-13,
+          "total_current": 0.00421163523187075,
+          "current_density_max": 1836823746.5103846,
+          "current_density_average": 1030543992.9866455,
+          "current_density_p95": 1295098978.7431266,
+          "peak_to_average": 1.782382662953611,
+          "contacts": {},
+          "electrical_dofs": 968,
+          "effective_resistance": 154.4283919439546,
+          "resistance": 154.4283919439546,
+          "voltage_drop": 0.4000000000000001,
+          "resistance_current": 0.0025901972750267885,
+          "resistance_terminal_pair": [
+            "source_a",
+            "drain_a"
+          ],
+          "resistance_current_terminal": "drain_a",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source_a",
+              "drain_a"
+            ],
+            "current_terminal": "drain_a",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 305.22120675222175,
+          "temperature_min": 302.68768534875926,
+          "temperature_average": 302.9503643531593,
+          "temperature_rise": 5.221206752221747,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.0020914383992215874,
+          "heat_out": 0.0020914251841724868,
+          "thermal_resistance": 2496.4669072562824,
+          "thermal_balance_error": 6.318641326229674e-06,
+          "thermal_residual": 6.289526575829304e-06,
+          "boundary_heat_flows": {
+            "backside": 0.0020914251841724868
+          },
+          "hotspot": {
+            "layer": "heater_a",
+            "x": 5.000000000007822e-05,
+            "y": 1.2e-05,
+            "z": 0.0,
+            "temperature": 305.22120675222175
+          },
+          "thermal_dofs": 5656
+        },
+        "terminals": {
+          "source_a": {
+            "voltage": 0.0,
+            "current": -0.0025901972750259914,
+            "power": -0.0
+          },
+          "drain_a": {
+            "voltage": 0.4000000000000001,
+            "current": 0.0025901972750267885,
+            "power": 0.0010360789100107156
+          },
+          "source_b": {
+            "voltage": 0.0,
+            "current": -0.001621437956844848,
+            "power": -0.0
+          },
+          "drain_b": {
+            "voltage": 0.25,
+            "current": 0.0016214379568439616,
+            "power": 0.0004053594892109904
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Interface heat_a extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_a",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00011999999999999999,
+              8.999999999999999e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_b extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_b",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00011999999999999999,
+              8.999999999999999e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source load_a extends outside its layer and is clipped.",
+            "object_id": "load_a",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00011999999999999999,
+              8.999999999999999e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source load_b extends outside its layer and is clipped.",
+            "object_id": "load_b",
+            "bounds": [
+              -1.9999999999999998e-05,
+              -1.9999999999999998e-05,
+              0.00011999999999999999,
+              8.999999999999999e-05
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E16_full_gate_hemt_array",
+      "catalog": {
+        "id": "E16",
+        "name": "E16_full_gate_hemt_array",
+        "title": "Full-width gated HEMT array",
+        "category": "Devices",
+        "level": "Advanced",
+        "learning_goal": "Contrast E7's edge bypass with gate control that spans every channel in a four-channel array.",
+        "layer": "channel",
+        "field": "sheet_current",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Resistive 2DEG approximation with finite contacts; no velocity saturation, gate leakage, trapping, or electrostatic field-plate model."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "d4836c150e5f961b9420041df00548a83d6f13d93c977c502a169ab3fa865934",
+      "physics_hash": "13b4e4cf183093c7191b30605dbc56b10066e43fc21f735811ad781de8ea22ec",
+      "layout_sha256": "985b69157e43d488bd82151060f10ce06f46c8531f5d7a2ee360eb9e3f9fe0f3",
+      "bias_summary": "source 0 V (ground); drain 0.1 V (voltage); gate_control 0 V (gate); prescribed heat: channel_load 0.0002 W",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "source_metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.1,
+          "layer": "drain_metal",
+          "unit": "V"
+        },
+        {
+          "id": "gate_control",
+          "kind": "gate",
+          "value": 0.0,
+          "layer": "channel",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "channel_load",
+          "value": 0.0002,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "terminals.gate_control.value",
+          "values": [
+            -5.0,
+            -3.0,
+            -1.0,
+            1.0
+          ],
+          "mode": "electrothermal",
+          "name": "Full-width gate transfer (V)"
+        }
+      ],
+      "sweep_summary": "`terminals.gate_control.value` = `[-5.0, -3.0, -1.0, 1.0]` (SI values, electrothermal)",
+      "transient": null,
+      "waveform_summary": "",
+      "notes": "Four separated parallel GaN 2DEG stripes join shared source/drain metal buses through finite 1e-10 Ωm² contacts, with 0.1 V drain bias. One gate bar spans each complete channel width, so every source-to-drain channel path crosses a controlled region; there is no ungated edge bypass. The gold gate is electrically insulated and modeled as a thermal-only layer; its voltage enters the local analytical charge-control model through gate_control. No gate leakage, capacitance, electrostatic field solution, velocity saturation or calibrated transistor prediction is provided. A 1e-7 S sheet-conductance floor limits deep-off current and maintains numerical conditioning; the off-state current is not a leakage prediction. A 0.2 mW prescribed channel load supports thermal-only operation and adds to Joule heating in coupled mode. Effective thermal interfaces represent omitted buffer/dielectric paths.",
+      "field": {
+        "layer": "channel",
+        "field": "sheet_current",
+        "unit": "A/m",
+        "minimum": 5.4403717447486044e-05,
+        "maximum": 3.6828008112247517,
+        "display_unit": "A/m",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 5.4403717447486044e-05,
+        "display_maximum": 3.6828008112247517
+      },
+      "physical_layers": [
+        {
+          "id": "channel",
+          "material": "2deg",
+          "z_m": 0.0,
+          "thickness_m": 1e-08
+        },
+        {
+          "id": "source_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "drain_metal",
+          "material": "copper",
+          "z_m": 1e-07,
+          "thickness_m": 1e-06
+        },
+        {
+          "id": "gate_metal",
+          "material": "gold",
+          "z_m": 5e-07,
+          "thickness_m": 2e-07
+        },
+        {
+          "id": "substrate",
+          "material": "sic",
+          "z_m": -7.5e-05,
+          "thickness_m": 7.5e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E16_full_gate_hemt_array.etl",
+        "gds": "../../examples/E16_full_gate_hemt_array.gds",
+        "oas": "../../examples/E16_full_gate_hemt_array.oas"
+      },
+      "result": {
+        "configuration_hash": "d4836c150e5f961b9420041df00548a83d6f13d93c977c502a169ab3fa865934",
+        "physics_hash": "13b4e4cf183093c7191b30605dbc56b10066e43fc21f735811ad781de8ea22ec",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 5027,
+        "mesh_triangles": 9798,
+        "metrics": {
+          "electrical_power": 1.4546015627952116e-05,
+          "joule_power": 1.4453589667792314e-05,
+          "contact_power": 9.242596015980236e-08,
+          "terminal_power": 1.4546015632532765e-05,
+          "current_balance_error": 3.1491022992559267e-10,
+          "power_balance_error": 3.14907481360118e-10,
+          "electrical_residual": 8.548387537241679e-11,
+          "total_current": 0.00014546015632532772,
+          "current_density_max": 368280081.12247515,
+          "current_density_average": 168263923.12916607,
+          "current_density_p95": 363696997.3914987,
+          "peak_to_average": 2.188704947998679,
+          "contacts": {
+            "source_contact": {
+              "power": 4.621876002412498e-08,
+              "current_a_to_b": 0.00014546015627952036
+            },
+            "drain_contact": {
+              "power": 4.6207200135677376e-08,
+              "current_a_to_b": -0.00014546015627952728
+            }
+          },
+          "electrical_dofs": 2534,
+          "effective_resistance": 687.4734808915355,
+          "resistance": 687.4734808915355,
+          "voltage_drop": 0.09999999999999995,
+          "resistance_current": 0.00014546015632532772,
+          "resistance_terminal_pair": [
+            "source",
+            "drain"
+          ],
+          "resistance_current_terminal": "drain",
+          "resistance_measurement": {
+            "voltage_terminals": [
+              "source",
+              "drain"
+            ],
+            "current_terminal": "drain",
+            "network": 0,
+            "method": "explicit",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "temperature_max": 300.0169326774348,
+          "temperature_min": 300.0032005151061,
+          "temperature_average": 300.0052832352849,
+          "temperature_rise": 0.016932677434795096,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.00021454601562795214,
+          "heat_out": 0.00021454457596852678,
+          "thermal_resistance": 78.92329011673812,
+          "thermal_balance_error": 6.71025943385913e-06,
+          "thermal_residual": 6.708942146280637e-06,
+          "boundary_heat_flows": {
+            "backside": 0.00021454457596852678
+          },
+          "hotspot": {
+            "layer": "channel",
+            "x": 5.230702912343532e-05,
+            "y": 6.300748190357477e-05,
+            "z": 0.0,
+            "temperature": 300.0169326774348
+          },
+          "thermal_dofs": 7858
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": -0.00014546015627952083,
+            "power": -0.0
+          },
+          "drain": {
+            "voltage": 0.09999999999999995,
+            "current": 0.00014546015632532772,
+            "power": 1.4546015632532765e-05
+          },
+          "gate_control": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Layer Four GaN 2DEG channels contains 4 disconnected polygon islands; inspect connectivity.",
+            "object_id": "channel",
+            "bounds": [
+              0.0,
+              1e-05,
+              0.0001,
+              9.5e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_channel extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_channel",
+            "bounds": [
+              -2.2e-05,
+              -2e-06,
+              0.000122,
+              0.000107
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_source_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_source_metal",
+            "bounds": [
+              -2.2e-05,
+              -2e-06,
+              0.000122,
+              0.000107
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_drain_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_drain_metal",
+            "bounds": [
+              -2.2e-05,
+              -2e-06,
+              0.000122,
+              0.000107
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface heat_gate_metal extends outside its two layers and is clipped to their common area.",
+            "object_id": "heat_gate_metal",
+            "bounds": [
+              -2.2e-05,
+              -2e-06,
+              0.000122,
+              0.000107
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Terminal gate_control extends outside its layer and is clipped.",
+            "object_id": "gate_control",
+            "bounds": [
+              4.6e-05,
+              8.000000000000001e-06,
+              5.4000000000000005e-05,
+              9.7e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source channel_load extends outside its layer and is clipped.",
+            "object_id": "channel_load",
+            "bounds": [
+              -2.2e-05,
+              -2e-06,
+              0.000122,
+              0.000107
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "E17_pulsed_thermal",
+      "catalog": {
+        "id": "E17",
+        "name": "E17_pulsed_thermal",
+        "title": "Pulsed heating and cooling",
+        "category": "Transient",
+        "level": "Starter",
+        "learning_goal": "Compare pulse heating and cooling with the uniform lumped thermal RC limit, then refine the time step.",
+        "layer": "plate",
+        "field": "temperature",
+        "recommended_mode": "thermal",
+        "physical_scope": "Prescribed heat drives uniform copper thermal storage; electrical Joule heating is excluded. Pulse width means high plateau."
+      },
+      "mode": "thermal",
+      "configuration_hash": "0946a86f77c1ca74d6f6c947d4728de2202c71f29c55398d66c4ac2f56df83bb",
+      "physics_hash": "dcbfd04199e60b87629806abe4f4168812b6123f25beae269acf3f2b1610bf57",
+      "layout_sha256": "7724d5a76291ea28fa7ef1298995227d67fd650d7b6c59660b537300dcc7dc15",
+      "bias_summary": "source 0 V (ground); drain 0 V (voltage); prescribed heat: heater 1e+06 W/m²",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "plate",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "voltage",
+          "value": 0.0,
+          "layer": "plate",
+          "unit": "V"
+        }
+      ],
+      "heat_sources": [
+        {
+          "id": "heater",
+          "value": 1000000.0,
+          "kind": "density"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "transient.drives.0.waveform.high",
+          "values": [
+            250000.0,
+            500000.0,
+            1000000.0
+          ],
+          "mode": "thermal",
+          "name": "Pulse heat level"
+        }
+      ],
+      "sweep_summary": "`transient.drives.0.waveform.high` = `[250000.0, 500000.0, 1000000.0]` (SI values, thermal)",
+      "transient": {
+        "enabled": true,
+        "stop_time": 0.0021,
+        "time_step": 2.5e-05,
+        "output_interval": 5e-05,
+        "max_steps": 100000,
+        "max_snapshots": 1000,
+        "max_history_bytes": 268435456,
+        "drives": [
+          {
+            "target": "heat_sources.heater.value",
+            "waveform": {
+              "kind": "pulse",
+              "value": 0.0,
+              "low": 0.0,
+              "high": 1000000.0,
+              "delay": 0.0001,
+              "width": 0.0002,
+              "period": 0.0007,
+              "rise_time": 0.0,
+              "fall_time": 0.0,
+              "times": [],
+              "values": []
+            }
+          }
+        ],
+        "initialization": "uniform",
+        "initial_state_digest": "",
+        "retain_peak": true,
+        "periodic_tolerance": 0.0,
+        "periodic_min_cycles": 3,
+        "periodic_required_cycles": 2
+      },
+      "waveform_summary": "`heat_sources.heater.value`: 0 → 1e+06, delay 0.0001 s, rise 0 s, plateau 0.0002 s, fall 0 s, period 0.0007 s (target SI units).",
+      "notes": "Uniform prescribed heat pulses in a 100 × 100 × 10 µm copper plate, with h=1e5 W/(m² K). Thermal-only operation excludes Joule heating. The spatially uniform limit has tau=rho*cp*t/h and high-level steady rise=10 K, so the transient can be checked against a lumped RC. Pulse width is the 200 µs plateau, period 700 µs, and delay 100 µs. Reduce dt to check time accuracy.",
+      "field": {
+        "layer": "plate",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 301.6244149684132,
+        "maximum": 301.6244149684132,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": true,
+        "display_minimum": 301.3227905534448,
+        "display_maximum": 301.9260393833816,
+        "time_s": 0.0021,
+        "time_selection": "last accepted state"
+      },
+      "physical_layers": [
+        {
+          "id": "plate",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 1e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E17_pulsed_thermal.etl",
+        "gds": "../../examples/E17_pulsed_thermal.gds",
+        "oas": "../../examples/E17_pulsed_thermal.oas"
+      },
+      "result": {
+        "configuration_hash": "0946a86f77c1ca74d6f6c947d4728de2202c71f29c55398d66c4ac2f56df83bb",
+        "physics_hash": "dcbfd04199e60b87629806abe4f4168812b6123f25beae269acf3f2b1610bf57",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 302,
+        "mesh_triangles": 542,
+        "metrics": {
+          "temperature_max": 301.6244149684132,
+          "temperature_min": 301.6244149684132,
+          "temperature_average": 301.62441496841325,
+          "temperature_rise": 1.6244149684131912,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.0,
+          "heat_out": 0.0016244149684131915,
+          "thermal_resistance": null,
+          "thermal_balance_error": 2.130473679366784e-13,
+          "thermal_residual": 9.625456067751251e-14,
+          "boundary_heat_flows": {
+            "ambient": 0.0016244149684131915
+          },
+          "hotspot": {
+            "layer": "plate",
+            "x": 9.399323454085572e-05,
+            "y": 1.603400885126897e-05,
+            "z": 0.0,
+            "temperature": 301.6244149684132
+          },
+          "thermal_dofs": 302,
+          "thermal_storage_rate": -0.0016244149684128454,
+          "thermal_stored_energy": 5.603581875038146e-07,
+          "thermal_balance_absolute_error": 3.46077333457373e-16,
+          "thermal_balance_roundoff_allowance": 3.5351173997606744e-13,
+          "time": 0.0021,
+          "time_s": 0.0021,
+          "time_step": 2.499999999999985e-05,
+          "state_kind": "transient_snapshot",
+          "transient_input_energy": 6.0000000000000035e-06,
+          "transient_output_energy": 5.43964181249652e-06,
+          "transient_energy_reference_offset": 0.0,
+          "transient_initialization": {
+            "kind": "uniform",
+            "thermal_state_sha256": "839ca4b2e6dc796f4c16f82e8fdc95d1096f3ae5a56660d2965fc8419822dd0f"
+          },
+          "transient_start_time": 0.0,
+          "drive_time_convention": "left_limit_at_step_end",
+          "drive_values": {
+            "heat_sources.heater.value": 0.0
+          },
+          "applied_drives": {
+            "heat_sources.heater.value": 0.0
+          },
+          "transient_completed": true,
+          "transient_steps": 84,
+          "transient_snapshot_count": 43,
+          "transient_time": 0.0021,
+          "transient_requested_stop_time": 0.0021,
+          "transient_peak_temperature": 304.97592113387054,
+          "transient_peak_time": 0.0017000000000000001,
+          "transient_peak_scope": "whole_run",
+          "transient_energy_scope": "whole_run",
+          "transient_peak_retained": true,
+          "transient_peak_snapshot_index": 34,
+          "transient_periodic_converged": false,
+          "transient_periodic_cycles": 0,
+          "transient_periodic_temperature_change": null,
+          "transient_stop_reason": "stop_time",
+          "transient_stored_energy": 5.603581875038146e-07,
+          "transient_energy_balance_error": 3.307663659028043e-19,
+          "transient_history_bytes": 1232832
+        },
+        "terminals": {},
+        "diagnostics": [
+          {
+            "severity": "info",
+            "message": "Transient heat flow uses backward Euler and quasi-static electrical states; electrical capacitance, inductance and wave propagation are not modeled.",
+            "object_id": "",
+            "bounds": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "E18_pulsed_conductor",
+      "catalog": {
+        "id": "E18",
+        "name": "E18_pulsed_conductor",
+        "title": "Pulsed electrothermal conductor",
+        "category": "Transient",
+        "level": "Intermediate",
+        "learning_goal": "Follow current pulses, Joule energy, delayed temperature peaks and cooling with temperature feedback.",
+        "layer": "metal",
+        "field": "temperature",
+        "recommended_mode": "electrothermal",
+        "physical_scope": "Backward Euler thermal storage with quasi-static electrical feedback; no electrical capacitance, inductance or switching losses."
+      },
+      "mode": "electrothermal",
+      "configuration_hash": "6b3b7f7552daaa969179206af2c6f8dbc5ec0158008a243f5a19f1946a0db315",
+      "physics_hash": "c2fc5f6fe25ce734c035106a39697573670b11b645434a7d6ff45a726aa17cd9",
+      "layout_sha256": "aa56f0cbb662faf93771e750b5b8e9e2870b89d26bb8d6625af8ef63a9806c70",
+      "bias_summary": "source 0 V (ground); drain 0.25 A (current)",
+      "terminals": [
+        {
+          "id": "source",
+          "kind": "ground",
+          "value": 0.0,
+          "layer": "metal",
+          "unit": "V"
+        },
+        {
+          "id": "drain",
+          "kind": "current",
+          "value": 0.25,
+          "layer": "metal",
+          "unit": "A"
+        }
+      ],
+      "heat_sources": [],
+      "sweeps": [
+        {
+          "parameter": "transient.drives.0.waveform.high",
+          "values": [
+            0.05,
+            0.15,
+            0.25
+          ],
+          "mode": "electrothermal",
+          "name": "Pulse current level"
+        }
+      ],
+      "sweep_summary": "`transient.drives.0.waveform.high` = `[0.05, 0.15, 0.25]` (SI values, electrothermal)",
+      "transient": {
+        "enabled": true,
+        "stop_time": 0.0004,
+        "time_step": 5e-06,
+        "output_interval": 1e-05,
+        "max_steps": 100000,
+        "max_snapshots": 1000,
+        "max_history_bytes": 268435456,
+        "drives": [
+          {
+            "target": "terminals.drain.value",
+            "waveform": {
+              "kind": "pulse",
+              "value": 0.0,
+              "low": 0.0,
+              "high": 0.25,
+              "delay": 2.5e-05,
+              "width": 6e-05,
+              "period": 0.0002,
+              "rise_time": 1e-05,
+              "fall_time": 1e-05,
+              "times": [],
+              "values": []
+            }
+          }
+        ],
+        "initialization": "uniform",
+        "initial_state_digest": "",
+        "retain_peak": true,
+        "periodic_tolerance": 0.0,
+        "periodic_min_cycles": 3,
+        "periodic_required_cycles": 2
+      },
+      "waveform_summary": "`terminals.drain.value`: 0 → 0.25, delay 2.5e-05 s, rise 1e-05 s, plateau 6e-05 s, fall 1e-05 s, period 0.0002 s (target SI units).",
+      "notes": "Pulsed 100 × 10 × 2 µm copper conductor with quasi-static current and temperature-dependent resistivity. The 0.25 A pulse has 10 µs rise, 60 µs high plateau and 10 µs fall, repeated every 200 µs after a 25 µs delay. Finite edge times need time-step refinement. Heat capacity and cooling produce delayed thermal response; electrical capacitance and inductance are not included.",
+      "field": {
+        "layer": "metal",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 301.43528745782254,
+        "maximum": 301.4352874578226,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": true,
+        "display_minimum": 301.1338521703648,
+        "display_maximum": 301.7367227452804,
+        "time_s": 0.0004,
+        "time_selection": "last accepted state"
+      },
+      "physical_layers": [
+        {
+          "id": "metal",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 2e-06
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E18_pulsed_conductor.etl",
+        "gds": "../../examples/E18_pulsed_conductor.gds",
+        "oas": "../../examples/E18_pulsed_conductor.oas"
+      },
+      "result": {
+        "configuration_hash": "6b3b7f7552daaa969179206af2c6f8dbc5ec0158008a243f5a19f1946a0db315",
+        "physics_hash": "c2fc5f6fe25ce734c035106a39697573670b11b645434a7d6ff45a726aa17cd9",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 360,
+        "mesh_triangles": 608,
+        "metrics": {
+          "temperature_max": 301.4352874578226,
+          "temperature_min": 301.43528745782254,
+          "temperature_average": 301.43528745782254,
+          "temperature_rise": 1.4352874578225965,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.0,
+          "heat_out": 0.00028705749156451377,
+          "thermal_resistance": null,
+          "thermal_balance_error": 4.802215442278744e-05,
+          "thermal_residual": 6.079369400726196e-06,
+          "boundary_heat_flows": {
+            "ambient": 0.00028705749156451377
+          },
+          "hotspot": {
+            "layer": "metal",
+            "x": 9.606139379973416e-05,
+            "y": 6.7096770623687765e-06,
+            "z": 0.0,
+            "temperature": 301.4352874578226
+          },
+          "thermal_dofs": 360,
+          "thermal_storage_rate": -0.00028704370644532564,
+          "thermal_stored_energy": 9.902335229009465e-09,
+          "thermal_balance_absolute_error": 1.3785119188129084e-08,
+          "thermal_balance_roundoff_allowance": 6.932422007783621e-14,
+          "electrical_power": 0.0,
+          "joule_power": 0.0,
+          "contact_power": 0.0,
+          "terminal_power": 0.0,
+          "current_balance_error": 0.0,
+          "power_balance_error": 0.0,
+          "electrical_residual": 0.0,
+          "total_current": 0.0,
+          "current_density_max": 0.0,
+          "current_density_average": 0.0,
+          "current_density_p95": 0.0,
+          "peak_to_average": null,
+          "contacts": {},
+          "electrical_dofs": 360,
+          "effective_resistance": null,
+          "resistance": null,
+          "voltage_drop": null,
+          "resistance_current": null,
+          "resistance_terminal_pair": [],
+          "resistance_current_terminal": "",
+          "resistance_measurement": {
+            "voltage_terminals": [],
+            "current_terminal": "",
+            "network": null,
+            "method": "automatic",
+            "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+          },
+          "time": 0.0004,
+          "time_s": 0.0004,
+          "time_step": 5.000000000000013e-06,
+          "state_kind": "transient_snapshot",
+          "transient_input_energy": 7.529051285202367e-07,
+          "transient_output_energy": 7.429947895144606e-07,
+          "transient_energy_reference_offset": 0.0,
+          "transient_initialization": {
+            "kind": "uniform",
+            "thermal_state_sha256": "07873950af6f99fbcf0275af9d855dae73eada2622b1f70846a4c25e5c52a4ab"
+          },
+          "transient_start_time": 0.0,
+          "drive_time_convention": "left_limit_at_step_end",
+          "drive_values": {
+            "terminals.drain.value": 0.0
+          },
+          "applied_drives": {
+            "terminals.drain.value": 0.0
+          },
+          "transient_completed": true,
+          "transient_steps": 80,
+          "transient_snapshot_count": 42,
+          "transient_time": 0.0004,
+          "transient_requested_stop_time": 0.0004,
+          "transient_peak_temperature": 323.592264610614,
+          "transient_peak_time": 0.000295,
+          "transient_peak_scope": "whole_run",
+          "transient_energy_scope": "whole_run",
+          "transient_peak_retained": true,
+          "transient_peak_snapshot_index": 30,
+          "transient_periodic_converged": false,
+          "transient_periodic_cycles": 0,
+          "transient_periodic_temperature_change": null,
+          "transient_stop_reason": "stop_time",
+          "transient_stored_energy": 9.902335229009465e-09,
+          "transient_energy_balance_error": 8.003776766690633e-12,
+          "transient_history_bytes": 3688960
+        },
+        "terminals": {
+          "source": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          },
+          "drain": {
+            "voltage": 0.0,
+            "current": 0.0,
+            "power": 0.0
+          }
+        },
+        "diagnostics": [
+          {
+            "severity": "info",
+            "message": "Transient heat flow uses backward Euler and quasi-static electrical states; electrical capacitance, inductance and wave propagation are not modeled.",
+            "object_id": "",
+            "bounds": null
+          }
+        ]
+      }
+    },
+    {
+      "name": "E19_pulsed_multilayer",
+      "catalog": {
+        "id": "E19",
+        "name": "E19_pulsed_multilayer",
+        "title": "Multilayer pulse and thermal crosstalk",
+        "category": "Transient",
+        "level": "Advanced",
+        "learning_goal": "Compare heater, substrate and unpowered receiver histories to locate the delayed crosstalk peak.",
+        "layer": "substrate",
+        "field": "temperature",
+        "recommended_mode": "thermal",
+        "physical_scope": "A prescribed single heat pulse transfers through finite interfaces and a shared silicon sheet; no electrical drive or through-thickness diffusion."
+      },
+      "mode": "thermal",
+      "configuration_hash": "00d5ac8a6cf0ba6dca39a3a5972dffac0ad32e7b4ecf34e5e7ae24a1d8a971b1",
+      "physics_hash": "102368f5537c11828c111b747ab7a139be2ff36603be595037e7a44af4b224ad",
+      "layout_sha256": "5890082ba2c3cdf705bf13b916e35c058d37f116abefb227c797a19da90be8ac",
+      "bias_summary": "; prescribed heat: pulse_heat 0.01 W",
+      "terminals": [],
+      "heat_sources": [
+        {
+          "id": "pulse_heat",
+          "value": 0.01,
+          "kind": "total"
+        }
+      ],
+      "sweeps": [
+        {
+          "parameter": "transient.drives.0.waveform.high",
+          "values": [
+            0.0025,
+            0.005,
+            0.01
+          ],
+          "mode": "thermal",
+          "name": "Pulse heat level (W)"
+        }
+      ],
+      "sweep_summary": "`transient.drives.0.waveform.high` = `[0.0025, 0.005, 0.01]` (SI values, thermal)",
+      "transient": {
+        "enabled": true,
+        "stop_time": 0.001,
+        "time_step": 1e-05,
+        "output_interval": 1e-05,
+        "max_steps": 100000,
+        "max_snapshots": 1000,
+        "max_history_bytes": 268435456,
+        "drives": [
+          {
+            "target": "heat_sources.pulse_heat.value",
+            "waveform": {
+              "kind": "pulse",
+              "value": 0.0,
+              "low": 0.0,
+              "high": 0.01,
+              "delay": 5e-05,
+              "width": 0.0001,
+              "period": 0.0,
+              "rise_time": 0.0,
+              "fall_time": 0.0,
+              "times": [],
+              "values": []
+            }
+          }
+        ],
+        "initialization": "uniform",
+        "initial_state_digest": "",
+        "retain_peak": true,
+        "periodic_tolerance": 0.0,
+        "periodic_min_cycles": 3,
+        "periodic_required_cycles": 2
+      },
+      "waveform_summary": "`heat_sources.pulse_heat.value`: 0 → 0.01, delay 5e-05 s, rise 0 s, plateau 0.0001 s, fall 0 s, period 0 s (target SI units).",
+      "notes": "A 10 mW, 100 µs single pulse heats a 30 × 30 × 5 µm copper island. An unpowered 30 × 30 × 10 µm copper receiver sits 20 µm away on the same 20 µm silicon substrate. Finite interface conductances create separate layer temperatures; receiver heating and its delayed peak arise entirely from thermal crosstalk. Inspect heater, substrate and receiver histories. Prescribed heat only; no electrical solve. Input energy is 1 µJ. Thickness-averaged sheets and representative materials require process calibration.",
+      "field": {
+        "layer": "substrate",
+        "field": "temperature",
+        "unit": "K",
+        "minimum": 301.02199598944816,
+        "maximum": 301.02406964465223,
+        "display_unit": "K",
+        "display_scale": 1.0,
+        "normalization": "linear",
+        "uniform": false,
+        "display_minimum": 301.02199598944816,
+        "display_maximum": 301.02406964465223,
+        "time_s": 0.001,
+        "time_selection": "last accepted state"
+      },
+      "physical_layers": [
+        {
+          "id": "heater",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 5e-06
+        },
+        {
+          "id": "receiver",
+          "material": "copper",
+          "z_m": 0.0,
+          "thickness_m": 1e-05
+        },
+        {
+          "id": "substrate",
+          "material": "silicon",
+          "z_m": -2e-05,
+          "thickness_m": 2e-05
+        }
+      ],
+      "downloads": {
+        "etl": "../../examples/E19_pulsed_multilayer.etl",
+        "gds": "../../examples/E19_pulsed_multilayer.gds",
+        "oas": "../../examples/E19_pulsed_multilayer.oas"
+      },
+      "result": {
+        "configuration_hash": "00d5ac8a6cf0ba6dca39a3a5972dffac0ad32e7b4ecf34e5e7ae24a1d8a971b1",
+        "physics_hash": "102368f5537c11828c111b747ab7a139be2ff36603be595037e7a44af4b224ad",
+        "solver_version": "0.1.0",
+        "converged": true,
+        "mesh_nodes": 977,
+        "mesh_triangles": 1838,
+        "metrics": {
+          "temperature_max": 301.3602331067702,
+          "temperature_min": 301.02199598944816,
+          "temperature_average": 301.06496469201085,
+          "temperature_rise": 1.3602331067701812,
+          "thermal_reference": 300.0,
+          "thermal_power": 0.0,
+          "heat_out": 0.00042960940184814744,
+          "thermal_resistance": null,
+          "thermal_balance_error": 3.1432594352485977e-13,
+          "thermal_residual": 8.382488359094571e-12,
+          "boundary_heat_flows": {
+            "backside": 0.00042960940184814744
+          },
+          "hotspot": {
+            "layer": "receiver",
+            "x": 5.9249106023880066e-05,
+            "y": 1.580511883257827e-05,
+            "z": 0.0,
+            "temperature": 301.3602331067702
+          },
+          "thermal_dofs": 1214,
+          "thermal_storage_rate": -0.0004296094018480124,
+          "thermal_stored_energy": 3.4043280250462135e-07,
+          "thermal_balance_absolute_error": 1.3503738058306958e-16,
+          "thermal_balance_roundoff_allowance": 9.075949043253421e-13,
+          "time": 0.001,
+          "time_s": 0.001,
+          "time_step": 1.0000000000000026e-05,
+          "state_kind": "transient_snapshot",
+          "transient_input_energy": 1e-06,
+          "transient_output_energy": 6.595671974956439e-07,
+          "transient_energy_reference_offset": 0.0,
+          "transient_initialization": {
+            "kind": "uniform",
+            "thermal_state_sha256": "a1a8cb31e927deda89607d634c6d5599e4ebf33ee1242cd24ce0549417281086"
+          },
+          "transient_start_time": 0.0,
+          "drive_time_convention": "left_limit_at_step_end",
+          "drive_values": {
+            "heat_sources.pulse_heat.value": 0.0
+          },
+          "applied_drives": {
+            "heat_sources.pulse_heat.value": 0.0
+          },
+          "transient_completed": true,
+          "transient_steps": 100,
+          "transient_snapshot_count": 101,
+          "transient_time": 0.001,
+          "transient_requested_stop_time": 0.001,
+          "transient_peak_temperature": 337.6921215117596,
+          "transient_peak_time": 0.00015000000000000001,
+          "transient_peak_scope": "whole_run",
+          "transient_energy_scope": "whole_run",
+          "transient_peak_retained": true,
+          "transient_peak_snapshot_index": 15,
+          "transient_periodic_converged": false,
+          "transient_periodic_cycles": 0,
+          "transient_periodic_temperature_change": null,
+          "transient_stop_reason": "stop_time",
+          "transient_stored_energy": 3.4043280250462135e-07,
+          "transient_energy_balance_error": 2.652801311682062e-19,
+          "transient_history_bytes": 16845480
+        },
+        "terminals": {},
+        "diagnostics": [
+          {
+            "severity": "warning",
+            "message": "Interface heater_substrate extends outside its two layers and is clipped to their common area.",
+            "object_id": "heater_substrate",
+            "bounds": [
+              -2e-05,
+              -2e-05,
+              0.0001,
+              5e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Interface receiver_substrate extends outside its two layers and is clipped to their common area.",
+            "object_id": "receiver_substrate",
+            "bounds": [
+              -2e-05,
+              -2e-05,
+              0.0001,
+              5e-05
+            ]
+          },
+          {
+            "severity": "warning",
+            "message": "Heat source pulse_heat extends outside its layer and is clipped.",
+            "object_id": "pulse_heat",
+            "bounds": [
+              -2e-05,
+              -2e-05,
+              0.0001,
+              5e-05
+            ]
+          },
+          {
+            "severity": "info",
+            "message": "Transient heat flow uses backward Euler and quasi-static electrical states; electrical capacitance, inductance and wave propagation are not modeled.",
+            "object_id": "",
+            "bounds": null
+          }
+        ]
+      }
+    }
+  ]
+}

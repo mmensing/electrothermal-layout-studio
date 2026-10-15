@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=77.0.3", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "etlayout"
+version = "0.4.0.dev0"
+description = "2.5D finite-element electrothermal analysis of semiconductor layouts"
+requires-python = ">=3.12"
+license = "MPL-2.0"
+license-files = ["LICENSE", "LICENSES/*", "THIRD_PARTY_NOTICES.md", "packaging/license-texts/*", "docs/licensing.md", "CONTRIBUTING.md", "REUSE.toml", "DEPENDENCIES.json"]
+authors = [{name = "mmensing"}]
+dependencies = [
+  "numpy>=2.2,<3", "scipy>=1.15,<2", "shapely>=2.1,<3",
+  "klayout>=0.30,<0.31", "gmsh>=4.14,<5",
+  "PySide6>=6.8,<7", "pyqtgraph>=0.13,<0.15", "matplotlib>=3.10,<4",
+  "meshio>=5.3,<6", "platformdirs>=4,<5", "threadpoolctl>=3.6,<4", "psutil>=6,<8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-qt>=4.4,<5", "coverage>=7.16,<8", "ruff>=0.11", "pyinstaller>=6.12,<7"]
+
+[project.scripts]
+etlayout = "etlayout.cli.main:main"
+
+[project.gui-scripts]
+etlayout-gui = "etlayout.app.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+etlayout = ["data/**/*"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["**/__pycache__/**", "**/*.pyc", "**/*.log", "**/*PROMPT*.md", "**/*HANDOFF*.md", "**/mockups/**", "**/verification/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --capture=sys"
+markers = [
+  "fast: model, geometry and state contracts without a full numerical/desktop journey",
+  "numerical: integration calculations and independent scientific regressions",
+  "desktop: native Qt interactions, workers and workflow regressions",
+  "packaging: distribution policy and release-identity contracts; actual frozen builds run separately",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/etlayout"]
+parallel = true
+concurrency = ["multiprocessing", "thread"]
+patch = ["subprocess", "_exit"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
+ignore = ["B905"]
+

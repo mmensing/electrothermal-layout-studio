@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "publication_allowed": false,
+  "edition": "source-only",
+  "candidate_builds_allowed": true,
+  "blockers": [
+    "Establish exact corresponding source, modifications and reproducible build/install information for every bundled GPL/LGPL/native component.",
+    "Complete Qt module/plugin/embedded-third-party and native/font notice review against exact candidate file hashes.",
+    "Verify LGPL shared-library replacement and debugging/relinking information for exact frozen candidate.",
+    "Verify Microsoft runtime redistribution origin/terms and exact included files.",
+    "Review candidate license route including MPL section 3.3 and Gmsh GPL larger-work requirements."
+  ],
+  "approval": "A future owner-reviewed PR may update this policy with immutable evidence; a build or upstream URL does not clear it."
+}

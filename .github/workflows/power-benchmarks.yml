@@ -1,0 +1,79 @@
+name: Opt-in power-device benchmarks
+
+on:
+  workflow_dispatch:
+    inputs:
+      examples:
+        description: 'Space-separated E20 E21 E22 E23 E24 IDs; generation is not validation'
+        default: 'E21 E23'
+        required: true
+        type: string
+      preset:
+        description: 'Size/point preset; small is GaN-only and stress is multi-bank-only'
+        required: true
+        default: reference
+        type: choice
+        options: [compact, reference, small, large, stress]
+      mesh_factor:
+        description: 'Positive normal/tangential mesh factor; 1 is reference'
+        required: true
+        default: '1'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  QT_QPA_PLATFORM: offscreen
+  PYTHONUTF8: '1'
+  MPLBACKEND: Agg
+
+jobs:
+  windows-benchmarks:
+    if: github.actor == 'mmensing' && github.repository == 'mmensing/electrothermal-layout-studio' && github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    timeout-minutes: 90
+    env:
+      BENCHMARK_EXAMPLES: ${{ inputs.examples }}
+      BENCHMARK_PRESET: ${{ inputs.preset }}
+      BENCHMARK_MESH_FACTOR: ${{ inputs.mesh_factor }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Install hash-verified Windows wheels and local source
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-windows-py312.lock
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install --no-build-isolation --no-deps -e .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip check
+      - name: Attempt bounded calculations; inspect individual scientific status
+        run: |
+          $selectedExamples = $env:BENCHMARK_EXAMPLES -split '\s+'
+          python scripts/benchmark_power_examples.py --examples $selectedExamples --preset $env:BENCHMARK_PRESET --mesh-factor $env:BENCHMARK_MESH_FACTOR --timeout 1200 --output artifacts/power-benchmarks
+      - name: Retain compact benchmark receipts only
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-power-benchmarks
+          path: |
+            artifacts/power-benchmarks/*.json
+            artifacts/power-benchmarks/**/*.json
+            artifacts/power-benchmarks/**/*.csv
+            artifacts/power-benchmarks/**/*.png
+          if-no-files-found: warn
+          retention-days: 7

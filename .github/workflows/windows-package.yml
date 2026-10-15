@@ -1,0 +1,72 @@
+name: Verify Windows candidate
+
+# Manual executable validation only. Binary/ZIP publication remains blocked by
+# packaging/binary-publication-policy.json; artifacts below contain evidence only.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: pwsh
+
+env:
+  QT_QPA_PLATFORM: offscreen
+  PYTHONUTF8: '1'
+  MPLBACKEND: Agg
+
+jobs:
+  windows-package:
+    if: github.actor == 'mmensing' && github.repository == 'mmensing/electrothermal-layout-studio' && github.ref == 'refs/heads/main'
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12.10'
+          architecture: x64
+      - name: Install hash-verified Windows wheels and local source
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-windows-py312.lock
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install --no-build-isolation --no-deps -e .
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip check
+      - name: Validate audited source before freezing
+        run: |
+          python scripts/check_publication_policy.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pytest --basetemp=.pytest_package
+      - name: Build and execute local candidate, GUI, CLI and extracted worker checks
+        env:
+          QT_QPA_PLATFORM: windows
+        run: python scripts/build_windows.py
+      - name: Retain non-binary candidate evidence only
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: windows-candidate-validation
+          path: |
+            build/verification/smoke-results.json
+            build/verification/archive-results.json
+            build/verification/frozen-worker.json
+            build/verification/frozen-E21-parallel.json
+            build/verification/frozen-transient-study.json
+            build/verification/frozen-gui.png
+            build/verification/extracted-gui.png
+            dist/ElectrothermalLayoutStudio/BUILD_MANIFEST.json
+            dist/ElectrothermalLayoutStudio/compliance/sbom.cdx.json
+            dist/ElectrothermalLayoutStudio/compliance/artifact-manifest.json
+            dist/ElectrothermalLayoutStudio/compliance/binary-publication-policy.json
+          if-no-files-found: warn
+          retention-days: 7

@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="720pt" height="259.2pt" viewBox="0 0 720 259.2" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 259.2 
+L 720 259.2 
+L 720 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="line2d_1">
+    <path d="M 21.312 84.29184 
+L 698.688 84.29184 
+" clip-path="url(#pae3aad9802)" style="fill: none; stroke: #98a69f; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="line2d_2">
+    <path d="M 21.312 198.75456 
+L 698.688 198.75456 
+" clip-path="url(#pae3aad9802)" style="fill: none; stroke: #98a69f; stroke-width: 0.8; stroke-linecap: square"/>
+   </g>
+   <g id="text_1">
+    <text style="font-weight: 600; font-size: 16px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="32.06406" transform="rotate(-0 21.312 32.06406)">Power reference calculations</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #55635d" x="21.312" y="43.75296" transform="rotate(-0 21.312 43.75296)">Coupled electrothermal · four CPUs per job · synthetic assumptions</text>
+   </g>
+   <g id="text_3">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="74.75328" transform="rotate(-0 21.312 74.75328)">Family / die (mm)</text>
+   </g>
+   <g id="text_4">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="74.75328" transform="rotate(-0 332.352 74.75328)">I (A)</text>
+   </g>
+   <g id="text_5">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="74.75328" transform="rotate(-0 422.208 74.75328)">R (mΩ)</text>
+   </g>
+   <g id="text_6">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="74.75328" transform="rotate(-0 512.064 74.75328)">Max T (K)</text>
+   </g>
+   <g id="text_7">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="74.75328" transform="rotate(-0 608.832 74.75328)">Calc (s)</text>
+   </g>
+   <g id="text_8">
+    <text style="font-weight: 600; font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="74.75328" transform="rotate(-0 698.688 74.75328)">RSS (GiB)</text>
+   </g>
+   <g id="text_9">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="103.36896" transform="rotate(-0 21.312 103.36896)">E20 · 1 × 1</text>
+   </g>
+   <g id="text_10">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="103.36896" transform="rotate(-0 332.352 103.36896)">10.0</text>
+   </g>
+   <g id="text_11">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="103.36896" transform="rotate(-0 422.208 103.36896)">10.23</text>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="103.36896" transform="rotate(-0 512.064 103.36896)">332.4</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="103.36896" transform="rotate(-0 608.832 103.36896)">19.8</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="103.36896" transform="rotate(-0 698.688 103.36896)">0.26</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="123.6384" transform="rotate(-0 21.312 123.6384)">E21 · 1.14 × 1.1</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="123.6384" transform="rotate(-0 332.352 123.6384)">5.0</text>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="123.6384" transform="rotate(-0 422.208 123.6384)">149.02</text>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="123.6384" transform="rotate(-0 512.064 123.6384)">328.5</text>
+   </g>
+   <g id="text_19">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="123.6384" transform="rotate(-0 608.832 123.6384)">222.0</text>
+   </g>
+   <g id="text_20">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="123.6384" transform="rotate(-0 698.688 123.6384)">1.62</text>
+   </g>
+   <g id="text_21">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="143.90784" transform="rotate(-0 21.312 143.90784)">E22 · 2.4 × 2.4</text>
+   </g>
+   <g id="text_22">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="143.90784" transform="rotate(-0 332.352 143.90784)">10.0</text>
+   </g>
+   <g id="text_23">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="143.90784" transform="rotate(-0 422.208 143.90784)">73.29</text>
+   </g>
+   <g id="text_24">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="143.90784" transform="rotate(-0 512.064 143.90784)">332.7</text>
+   </g>
+   <g id="text_25">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="143.90784" transform="rotate(-0 608.832 143.90784)">863.9</text>
+   </g>
+   <g id="text_26">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="143.90784" transform="rotate(-0 698.688 143.90784)">4.57</text>
+   </g>
+   <g id="text_27">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="164.17728" transform="rotate(-0 21.312 164.17728)">E23 · 1 × 1</text>
+   </g>
+   <g id="text_28">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="164.17728" transform="rotate(-0 332.352 164.17728)">10.0</text>
+   </g>
+   <g id="text_29">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="164.17728" transform="rotate(-0 422.208 164.17728)">246.02</text>
+   </g>
+   <g id="text_30">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="164.17728" transform="rotate(-0 512.064 164.17728)">364.7</text>
+   </g>
+   <g id="text_31">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="164.17728" transform="rotate(-0 608.832 164.17728)">34.1</text>
+   </g>
+   <g id="text_32">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="164.17728" transform="rotate(-0 698.688 164.17728)">0.25</text>
+   </g>
+   <g id="text_33">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #18211e" x="21.312" y="184.44672" transform="rotate(-0 21.312 184.44672)">E24 · 1 × 1</text>
+   </g>
+   <g id="text_34">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="332.352" y="184.44672" transform="rotate(-0 332.352 184.44672)">10.0</text>
+   </g>
+   <g id="text_35">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="422.208" y="184.44672" transform="rotate(-0 422.208 184.44672)">201.99</text>
+   </g>
+   <g id="text_36">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="512.064" y="184.44672" transform="rotate(-0 512.064 184.44672)">350.9</text>
+   </g>
+   <g id="text_37">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="608.832" y="184.44672" transform="rotate(-0 608.832 184.44672)">92.8</text>
+   </g>
+   <g id="text_38">
+    <text style="font-size: 11px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #18211e" x="698.688" y="184.44672" transform="rotate(-0 698.688 184.44672)">0.43</text>
+   </g>
+   <g id="text_39">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #55635d" x="21.312" y="215.44704" transform="rotate(-0 21.312 215.44704)">All rows are converged reference solves; individual receipts remain provisional.</text>
+   </g>
+   <g id="text_40">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #55635d" x="21.312" y="232.13952" transform="rotate(-0 21.312 232.13952)">Observed mesh acceptance and shared-host performance details: power-devices.json and guide.</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pae3aad9802">
+   <rect x="14.4" y="10.368" width="691.2" height="238.464"/>
+  </clipPath>
+ </defs>
+</svg>

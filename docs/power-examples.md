@@ -1,0 +1,382 @@
+# Power-device examples and benchmarks
+
+E20–E24 extend the library; E1–E19 and the separate [power-routing demonstrations](POWER_ROUTING.md)
+remain available. E7/E8 have documented ungated edge bypass, E16 has four fully
+gated stripes, and E9 is a doped SiC resistor. The new examples use separate,
+shared parameterized builders. They are **synthetic engineering configurations,
+not calibrated device ratings**. No new switching, breakdown or avalanche physics
+is implied.
+
+Generator version 2 uses coplanar opposing GaN source/drain combs, connected
+insulated gate landings/routing, and all-sided SiC nonactive termination margins.
+Active channel widths, SiC active areas, device parameters and nominal current
+requests are preserved. The measured tables, field images and detailed resource
+results explicitly labeled **0.3.0** below describe the earlier geometry; their
+source hashes are retained and do not validate the revised reference projects.
+
+## Reference projects
+
+Open **File → Ready-to-run examples → Power engineering**. Each complete project
+selects coupled electrothermal operation, an initial physical layer, local feeds,
+one backside reservoir, measurements and bounded studies. Opening does not solve.
+Use F6 to check, F7 to mesh and F5 to run; numerical work remains cancellable in
+background processes. In Results choose the physical layer and temperature,
+sheet current or metal density deliberately. The loss ledger separates metal,
+contact/via, device-load and external-feed losses. Device groups report actual
+current, active width/area and local source voltage. Passive Kelvin probes draw
+no current. A solver-converged result remains provisional until mesh acceptance.
+
+| ID / reference | Dimensions | Nominal request | Purpose / limitations |
+| :-- | --: | --: | :-- |
+| [E20 ETL](../examples/E20_high_current_rdl.etl) · [GDS](../examples/E20_high_current_rdl.gds) · [OAS](../examples/E20_high_current_rdl.oas) | 1 × 1 mm | 10 A | Three 10 µm copper levels, 45 vias, tapered branches and protected opening. Uniform/graded arrays and unequal-width poor routing. |
+| [E21 ETL](../examples/E21_long_finger_gan.etl) · [GDS](../examples/E21_long_finger_gan.gds) · [OAS](../examples/E21_long_finger_gan.oas) | 1.14 × 1.10 mm | 5 A | 32 actual gate fingers × 500 µm, 16 mm total conducting gate width; opposing coplanar combs and upper source redistribution. |
+| [E22 ETL](../examples/E22_multibank_gan.etl) · [GDS](../examples/E22_multibank_gan.gds) · [OAS](../examples/E22_multibank_gan.oas) | 2.4 × 2.4 mm | 10 A | Four hierarchical banks, each 16 × 500 µm; 32 mm total width, shared RDL, bank and finger measurements. |
+| [E23 ETL](../examples/E23_sic_stripes.etl) · [GDS](../examples/E23_sic_stripes.gds) · [OAS](../examples/E23_sic_stripes.oas) | 1 × 1 mm | 10 A | Twenty active stripes; narrow/wide/cross source straps, insulated gate runners in the gaps, perimeter termination margin and fixed source landing. |
+| [E24 ETL](../examples/E24_sic_cells.etl) · [GDS](../examples/E24_sic_cells.gds) · [OAS](../examples/E24_sic_cells.oas) | 1 × 1 mm | 10 A | 64 macrocells, active area 0.571536 mm²; gate grid in nonactive corridors, bond/clip/bump feed footprints and passive Kelvin sensing. |
+
+Dimensions and operating points come from `power_examples.settings`; generated
+project notes contain the complete SI configuration. Titles/scopes live in the
+existing catalog, builder dispatch in the explicit registry. Do not maintain a
+second independent catalog of electrical inputs.
+
+Current thermal selectors request exact live common-area support, so avoidable
+out-of-layer clipping warnings are eliminated. Disconnected channel/source
+islands remain real: separate active paths connect through their declared
+contacts, vias and collection sheets. Inspect them; they do not replace
+connectivity or mesh checks.
+Directional GaN mesh sizing was introduced in 0.3.0. Current generator-version-2
+archives require **0.3.1** for live `exclude_sources` selectors; an older reader
+must not silently drop those exclusions. Older archives without either optional
+setting retain their physical hash when loaded by the current reader.
+An old waveform attached to a physical-port landing is now rejected with explicit
+migration guidance: target the owning `power.ports.<id>.value` instead.
+
+## Current 0.3.1 reference validation
+
+The [current measured provenance](example-provenance/power-devices-0.3.1.json)
+records actual generator-version-2 calculations. E21 and E23 were each recomputed
+at mesh factors 1 and 0.8 on their recorded historical source snapshot, retaining the configured
+5 A/10 A, device and thermal parameters, active geometry and resource budgets.
+Their source guards, export/reimport masks and device identities passed. The
+existing comparator established its two-level 3% observed-sensitivity screen for
+both pairs; individual solves remain provisional. No routing ranking is claimed.
+
+| Reference / measured level | Triangles | Delivered current | Resistance | Maximum temperature | Verification scope |
+| :-- | --: | --: | --: | --: | :-- |
+| E20 RDL · native nominal | 25,132 | 10 A | 10.2341 mΩ | 332.372 K | Converged/model-screened; no current two-level screen. |
+| E21 long fingers · 0.8 | 227,203 | 5 A | 149.0131 mΩ | 313.539 K | Current two-level screen; 32 × 500 µm, 16 mm total gate width. |
+| E22 four banks · native nominal | 373,106 | 10 A | 73.3511 mΩ | 329.577 K | Converged/model-screened; no current two-level screen. |
+| E23 SiC stripes · 0.8 | 23,292 | 10 A | 246.0211 mΩ | 364.729 K | Current two-level screen; unchanged 20-stripe active area. |
+| E24 SiC tiles · native nominal | 26,564 | 10 A | 201.9918 mΩ | 350.945 K | Converged/model-screened; no current two-level screen. |
+
+The strict E21/E23 comparisons use the same benchmark source fingerprint at both
+levels. Other rows come from independently audited native F6/F7/F5 archives at the
+earlier frozen working-tree checkpoint, source fingerprint `bf16c999…`; their
+physical inputs match the current references. The provenance distinguishes these
+checkpoints instead of presenting them as one identical-source benchmark run.
+
+E21's 110 µm averaged hotspot was 312.8284 → 312.8349 K; E23's 100 µm hotspot was
+364.2673 → 364.2681 K, both relative to the named 300 K backside reservoir.
+Finger loading deviation was 3.30497% → 3.31131%, and stripe loading deviation
+0.768644% → 0.768084%. The largest screened relative change was routing loss:
+0.198% for GaN and 0.305% for SiC. The comparator uses relative changes for
+integral/spread/hotspot quantities and absolute changes for dimensionless sharing
+fractions. Two levels do not establish an asymptotic error bound or calibration.
+
+Preparation/mesh/physics/report times and sampled memory are recorded in the
+provenance. Complete coarse/fine benchmark processes took 149.78/280.07 s for
+E21 and 25.51/32.03 s for E23; sampled process-tree peaks were 1.55/2.44 GiB and
+0.27/0.38 GiB. E22's native nominal solve took 862.188 s. Source tests and desktop
+acceptance shared the 8-physical/16-logical-CPU Windows host, so these are resource
+observations rather than isolated performance or speedup claims.
+
+Re-run these bounded calculations on a named public revision and retain its new
+source identities; do not relabel historical receipts as a current validation:
+
+```powershell
+python scripts/benchmark_power_examples.py --examples E21 E23 --preset reference --mesh-factor 1 --cpu-threads 4 --timeout 900 --output .artifacts/mesh-coarse --save-fields
+python scripts/benchmark_power_examples.py --examples E21 E23 --preset reference --mesh-factor 0.8 --cpu-threads 4 --timeout 900 --output .artifacts/mesh-fine --save-fields
+python scripts/compare_power_benchmarks.py .artifacts/mesh-coarse/E21_long_finger_gan/receipt.json .artifacts/mesh-fine/E21_long_finger_gan/receipt.json --output .artifacts/mesh-E21.json
+python scripts/compare_power_benchmarks.py .artifacts/mesh-coarse/E23_sic_stripes/receipt.json .artifacts/mesh-fine/E23_sic_stripes/receipt.json --output .artifacts/mesh-E23.json
+```
+
+Compact landing callouts can overlap at fit-all zoom; select a layer or zoom in to
+inspect individual footprints. SuperLU and reporting phases remain serial.
+Subtracting a reservoir to display temperature rise can magnify ULP-scale noise
+when the rise is nearly zero; use absolute **Temperature** or a manual display
+range. Current large presets were not rerun for these screens; the larger and
+stress results below retain their historical 0.3.0 identity.
+
+### Historical 0.3.0 reference-field views
+
+[![Historical 0.3.0 5 A GaN channel field](images/power-examples/gan-reference-temperature.png)](images/power-examples/gan-reference-temperature.png)
+
+[![Historical 0.3.0 10 A tiled SiC source field](images/power-examples/sic-reference-temperature.png)](images/power-examples/sic-reference-temperature.png)
+
+These native Windows views show actual saved **0.3.0** reference fields. The layer is
+explicit: GaN channel temperature differs from the model-wide maximum, and SiC
+source temperature is shown only over active macrocells. Text, units and compact
+controls were inspected at native scale; Qt 1.25 scaling was also exercised.
+They preserve earlier source identity and should not be read as fields of the
+current generator-version-2 layouts.
+
+## Physics and boundaries
+
+**GaN:** every 9 µm source-to-drain strip crosses a 1 µm gate-controlled region.
+Finite 2 µm contact zones and 2 µm access regions lie on either side. Finger length
+means conducting width along the finger, not conduction distance. Isolated strips
+prevent end bypass; total gate width is counted once per conducting path. The
+existing analytical local-gate law uses synthetic mobility 0.12 m²/(V·s) at 300 K,
+exponent 1.5, threshold −3 V, gate coupling 1.5×10¹⁶ m⁻²/V, density cap
+2×10¹⁷ m⁻², smoothing 0.1 V and fixed gate bias +3 V. Specific contacts are
+10⁻¹⁰ Ω·m². The numerical conductance floor 10⁻¹⁰ S is not predicted leakage.
+Gate metal is insulated, thermal only; it is not an additional source/drain path.
+The source and drain collection metals now share the same 0.1 µm bottom elevation
+and 8 µm thickness. Their opposing combs have no projected overlap: source has a
+bottom spine, drain a top spine, and the fingers stop before the opposite bus.
+The upper source RDL provides insulated crossbars and declared vias. Dual feeds
+add the opposite source-finger end and the left end of the top drain bus;
+distributed feeds add intermediate source taps. Multi-bank drain collection uses
+its separate upper RDL; via heights follow the actual updated stack. Specific
+contacts include the unresolved local ohmic transfer rather than an extra device
+resistance. A 120 × 100 µm gate pad connects the long gate runners through a 5 µm
+feed neck; bank pads share an insulated trunk. The prescribed DC gate bias remains
+the analytical local-gate model's input, without solving gate charging or gate
+lead voltage drop.
+Use local field screening ≤3×10⁵ V/m and temperature 300–425 K; these are declared
+synthetic applicability screens, not established saturation/breakdown limits.
+High-field transport, trapping and switching are absent. Report I/W in A/m and
+sheet current in A/m separately from metal volumetric density in A/m².
+
+**SiC MOSFET on-state interconnect models:** the existing distributed load solves
+`j_z = (V_d − V_s) / R_on,sp(T)` locally with `R_cell = R_on,sp / A_cell`.
+The synthetic reference is 1 mΩ·cm² = 10⁻⁷ Ω·m² at 300 K, with linear temperature
+coefficient 0.003 K⁻¹ and declared range 300–450 K. Current sharing emerges from
+coupled sheet/load voltages; currents are not assigned equally per macrocell.
+R_on,sp includes the homogenized channel, drift region and intrinsic device
+contacts. The SiC substrate is thermal only, avoiding a second electrical drift
+loss. Explicit metal, collection vias and external feeds remain separate.
+The insulated gate drawing does not control this fixed-on-state load. Macrocells
+represent groups of physical cells, not resolved planar/trench transistor cells.
+The gate landing is 60 × 60 µm on a 1 mm die, with 3 µm runners through gaps
+between active stripes/tiles. A 60 µm perimeter collar is protected from new
+frontside routing; it is a nonactive geometric termination margin, without
+breakdown-field or guard-ring physics. Dimensions scale with the selected die
+preset. The gate network never overlaps active-device support. The backside
+drain still covers the die, while power-source and passive Kelvin footprints
+remain localized on the frontside collection metal.
+No body diode, avalanche, switching or architecture comparison is supported.
+Load heat is split between endpoint sheets by the existing thickness-averaged
+interface model, rather than depth-resolved dissipation.
+
+These are openly identified synthetic parameters, not extracted measurements.
+Existing material snapshots provide the named Cu/Au/GaN/SiC/SiO₂ properties; see
+[physics](physics.md) and project snapshots for values and provenance.
+Package/interface calibration and device/process measurements are required
+before interpreting temperatures or on-state resistance as a product prediction.
+
+Feeds occupy localized physical footprints. Equivalent total external resistance
+is 1 mΩ per GaN/RDL port; SiC source is 2 mΩ and drain 1 mΩ. Parallel footprints
+each use N times the total resistance, preserving the equivalent feed component
+while allowing unequal currents. 25% of feed loss enters the landing, 75% is
+outside the modeled die, explicitly retained in the ledger. No entire studied bus
+is made equipotential. Source/drain metal thicknesses, footprints and active
+geometry are fixed across a feed comparison unless explicitly varied.
+
+Thermal paths descend to the nearest underlying sheet over exact overlap;
+selectors intersect upper/lower source masks, then subtract intervening masks
+and physical contacts/vias using `exclude_sources`. These masks remain live after
+routing edits. Explicit polygons, if present, are unioned after that subtraction;
+the general selector does not silently subtract exclusions from explicit support.
+Intervening footprints block deeper parallel paths. Geometric gaps use synthetic
+SiO₂-equivalent insulation. Physical contacts/vias replace those gap areas.
+GaN has a 2 µm effective GaN buffer and 150 µm SiC substrate; SiC has a 200 µm
+thermal substrate and backside drain; RDL has a 300 µm SiC support.
+Only the backside has a 300 K reservoir: synthetic attach resistance area
+2×10⁻⁶ (`attached`) or 10⁻⁵ (`resistive_attach`) m²K/W, plus half the boundary
+sheet thickness divided by conductivity. Other hot sheets have no ideal sink.
+For scale, the two attach values correspond to a 50 µm effective layer with
+conductivity 25 or 5 W/(m·K); they are synthetic package assumptions, not fitted
+to obtain an acceptable temperature.
+There is no prescribed heating added to Joule/contact/device losses.
+Depth gradients and detailed package geometry are thickness-averaged/effective
+approximations. Cooling is not adjusted to meet a requested current.
+
+## Generate and calculate
+
+```powershell
+python -m etlayout examples .artifacts/gan-dual --name E21 --preset reference --variant dual
+python -m etlayout solve .artifacts/gan-dual/E21_long_finger_gan.etl --mode electrical --no-plots --output .artifacts/gan-fixed-T
+python -m etlayout solve .artifacts/gan-dual/E21_long_finger_gan.etl --no-plots --output .artifacts/gan-coupled
+python -m etlayout examples .artifacts/sic-clip --name E24 --variant clip --current 10 --thermal resistive_attach
+python -m etlayout examples .artifacts/gan-custom --name E21 --preset compact --fingers 12 --gate-width-um 200 --current 1
+python -m etlayout examples .artifacts/sic-pulse --name E23 --preset compact --pulse
+python -m etlayout transient .artifacts/sic-pulse/E23_sic_stripes.etl --no-plots --output .artifacts/sic-pulse-results
+```
+
+Independent finger-count/width overrides do not adjust requested current.
+Electrical-only references converge at their fixed material reference temperature;
+their named-reservoir temperature-rise measurement remains explicitly unavailable
+because no heat-removal problem is solved. The benchmark receipt therefore retains
+that reporting exception rather than inventing a thermal result.
+Optional pulses use quasi-static port current with thermal storage: 2 ms period,
+0.5 ms high plateau, 20 µs edges, three periods, 0.1 ms integration steps and
+0.5 ms retained-field intervals plus the actual peak snapshot. They are a starting
+point for time refinement, not switching-loss calculations. Large pulse histories
+can exceed the explicit retention budget and are rejected before solving; review
+the estimate and adjust output retention explicitly. Port sweeps/drives
+target `power.ports.drain.value`; an owned landing cannot carry a separate waveform.
+Saved current, thickness and attach sweeps are bounded, explicit studies. The
+two-choice collection-bus optimization uses fixed-current service and model
+screens with mesh-verified finalists; RDL varies a branch taper, GaN edits between
+connecting spines, stripes preserve side rails, and tiles compare the full edge
+with a narrower neck connected at both ends. Nominal recipe replay preserves all
+masks exactly. It is optional, not automatically executed.
+`--stress` disables verified-ranking experiments. Higher currents are requests,
+not silently reduced or guaranteed valid. Retain failures and overload results.
+
+| Family | Compact test | Other presets | Routing variants |
+| :-- | :-- | :-- | :-- |
+| E20 | 200 µm, 1 A | reference 1 mm / 10 A; large 2 mm / 20 A | uniform/graded × single/distributed; poor_single |
+| E21 | 4 × 60 µm, 0.075 A | small 16 × 250 µm / 1.5 A; reference 32 × 500 µm / 5 A; large 64 × 1000 µm / 20 A | single, dual, distributed |
+| E22 | 2 × 2 banks of 2 × 60 µm, 0.15 A | reference 2 × 2; large 2 × 4 / 20 A; stress 2 × 4 / 30 A | single, dual, distributed, asymmetric |
+| E23/E24 | 250 µm, 0.25 A | reference 1 mm / 10 A; large 2 mm / 40 A | narrow/wide/cross; bonds/clip/bumps |
+
+Presets are geometry and service together; use `--current` to study 1/5/10/20 A
+RDL or 5/10/20/40 A SiC at the same die size. For the bank feed-placement study,
+compare `single` with `asymmetric`: their complete GDS geometry is identical;
+only the drain landing moves. `distributed` also changes finger redistribution,
+so its comparison studies the broader feed arrangement.
+Review model and thermal screens.
+The gate/contact-normal mesh spacing is 0.25 µm versus ~0.62 µm contact transfer
+length at 300 K; tangential spacing is 20 µm. Opt-in conforming directional
+triangles preserve the long fingers without globally applying this fine spacing.
+Scalar/layer/contact refinements remain hard bounds. Nonrectangular partitions
+fall back to the normal mesh; slender-element quality warnings remain visible.
+Hierarchy reduces layout duplication, not FEM cost.
+
+## Budgets and measured acceptance
+
+[![Historical 0.3.0 reference calculations](images/power-examples/reference-calculations.png)](images/power-examples/reference-calculations.svg)
+
+All five **0.3.0** reference operating points completed coupled calculations on
+the recorded native Windows host. The [historical measured provenance](example-provenance/power-devices.json)
+contains actual phase times, sampled RSS, hardware, input/layout/physics hashes,
+losses and current sharing. The table reports model temperatures, not calibrated
+junction ratings. Individual solves remain provisional; two-level acceptance is
+reported separately. Source and desktop/package checks can share this host, so
+timings are observations rather than isolated performance or speedup claims.
+
+Default CPU budget is four. Compact: 80k triangles / 350k DOFs / 1 GiB process
+tree RSS. Reference RDL/SiC: 200k / 900k / 3 GiB. GaN reference/large:
+650k / 1.5M / 8 GiB. Banks: 450k / 2M / 6 GiB. The explicit benchmark monitor
+also caps memory at 80% of available host RAM and defaults to a 900 s wall limit.
+These are resource bounds, not promised performance. Adjusting them must be
+explicit; a resource-limited large case never substitutes a smaller layout.
+
+```powershell
+python scripts/benchmark_power_examples.py --examples E20 E21 E22 E23 E24 --timeout 1500 --output .artifacts/power-reference
+python scripts/benchmark_power_examples.py --examples E21 E24 --mode electrical --output .artifacts/power-fixed-T
+python scripts/benchmark_power_examples.py --examples E21 E24 --thermal resistive_attach --output .artifacts/power-weak-attach
+python scripts/benchmark_power_examples.py --examples E20 E21 E22 E23 E24 --preset large --timeout 900 --output .artifacts/power-large
+```
+
+Receipts report generation, preparation, meshing, solve and postprocessing times,
+process-tree peak RSS, hardware, solver execution settings, declared service,
+losses, groups and model acceptance. GDS/OASIS export/reimport checks every mask
+and group identity; different format bytes need not have the same layout hash.
+Use two explicit levels for each representative variant, then
+`scripts/compare_power_benchmarks.py BASE_COARSE BASE_FINE ALT_COARSE ALT_FINE --output .artifacts/comparison.json`.
+It checks active geometry, parameters, reservoir and delivered service, integral
+resistance/power, sharing/spread and physically averaged hotspot rise. A 3%
+observed mesh-change screen and summed coarse/fine changes bound interpretation;
+two meshes are not a rigorous error bound. No overall winner is implied.
+Individual benchmark solves always remain provisional; only the comparison
+receipt can establish its specific two-level acceptance.
+
+Normal CI reuses one immutable exact compact solve per family and independent
+analytical regressions, including GaN gate control, SiC area scaling, current and
+thermal conservation, metal I² power scaling, asymmetric sharing, exact support,
+portable reopening and browser/CLI behavior. Large cases are excluded from the
+introductory three-mode loop. The manual **Power device benchmarks** workflow
+uploads detailed receipts/logs; workflow completion is not scientific acceptance.
+No solved-field archives or detailed performance logs are tracked.
+
+## Historical 0.3.0 release validation
+
+Native Windows 11 / Python 3.12.14 source validation: **1,201 passed in 2,176.03 s**;
+statement coverage **85.94%**, branch coverage **75.71%**, zero excluded lines.
+The same initial focused command grew from 58 tests / 13.07 s to 68 / 16.29 s
+as catalog-format cases expanded; this is not a solver speedup comparison.
+Ruff and diff whitespace checks passed. Seven native desktop regression scripts,
+all five reference browser openings, compact F5 GaN/SiC worker solves and actual
+reference-field rendering completed. Native captures were inspected for readable
+units/text; 1280 × 800 controls and Qt scale 1.25 were exercised.
+
+The frozen Windows build passed **22** smoke checks, including dynamic power
+example generation, compact coupled solves and engineering-project GUI opening.
+Wheel contents include the new generator and offline guide, with resource-policy
+exclusions checked. These are native build-host/source checks; clean-machine
+execution, physical monitor DPI and screen-reader certification were not performed.
+Detailed logs, coverage and solved fields remain CI/release artifacts.
+
+A real three-period compact SiC pulse completed 69 integration steps, 14 retained
+fields and maximum relative energy-balance error 7.76×10⁻¹⁰. The bounded compact
+SiC optimization completed baseline mesh resolution; no verified improvement was
+claimed. Current, waveform and integration step were retained when reducing the
+example's field-output cadence to fit its declared history budget.
+
+
+### Historical 0.3.0 measured routing and resource results
+
+The historical 0.3.0 measured table contains exact nominal coupled calculations, including
+32 × 500 µm GaN at 5 A and four GaN banks at 10 A. The reference projects from the
+[0.3.0 release](releases/0.3.0.md) have the same physical identity as those inputs.
+Current GaN/SiC layout hashes and all five thermal-selector configuration hashes
+differ. Reproduce these earlier calculations from the `v0.3.0` checkout, rather
+than substituting current reference files. Individual historical solves remain
+provisional; the following 0.3.0 comparisons passed the explicit two-level protocol.
+
+| Comparison | Mesh-size factors | Observed outcome at equal delivered service |
+| --- | --- | --- |
+| E21 single / dual feeds, 5 A | 1 and 0.75 for each | Resistance 149.108 → 140.663 mΩ; routing loss 0.3460 → 0.1515 W. Both changes exceed summed observed mesh changes (0.156 mΩ / 0.000963 W). |
+| E24 bond / clip feeds, 10 A | 1 and 0.5 for each | Clip improves sharing error from 0.6761% to 0.6560%, but increases resistance, routing loss, averaged hotspot and source-potential spread. No overall winner. |
+| E20 uniform / graded distributed feeds, 10 A | 1 and 0.5 for each | Integral, sharing and averaged-hotspot screens passed; inspect metric-specific effects in the provenance receipt. |
+| E23 stripe reference, 10 A | 1 and 0.5 | Integral, sharing and averaged-hotspot screens passed. |
+| E22 four-bank reference, 10 A | 1.25 and 1 | Screens passed. A further 0.75 attempt exceeded the declared element budget (estimated 541,309 / 450,000). |
+
+Both E24 thermal-boundary scenarios were solved at the explicitly requested 5 A:
+maximum temperature was 311.57 K with the attached boundary and 353.75 K with
+resistive attach. At the unchanged 10 A nominal request, resistive attach produced
+704.29 K and failed the declared 450 K applicability limit. That rejected result
+is retained without clamping temperature or reducing requested current. E21
+resistive attach at 5 A remained within its declared screen at 358.51 K.
+Fixed-temperature electrical references converged for all five families; the
+thermal-rise measurement is explicitly unavailable because those calculations
+have no thermal solution. This does not provide a thermal acceptance result.
+
+All five larger presets were generated and attempted on the reported host:
+
+| Larger preset | Requested service | Observed result |
+| --- | --- | --- |
+| E20, 2 × 2 mm | 20 A | Converged, maximum 343.77 K; provisional. |
+| E21, 64 × 1000 µm, 1.78 × 1.60 mm | 20 A | Resource limited by the explicit 900 s wall budget; no validated current or thermal result. |
+| E22, eight banks, 2.4 × 4.8 mm | 20 A | Resource limited before meshing: estimated 611,693 elements exceed 450,000. |
+| E23, 2 × 2 mm | 40 A | Converged, maximum 390.43 K; provisional. |
+| E24, 2 × 2 mm | 40 A | Converged, maximum 357.61 K; provisional. |
+
+Large converged solves have not received the reference two-level mesh screen and
+are excluded from verified rankings. Resource-limited cases retain their actual
+geometry and requested service. Timing and process-tree RSS for every completed
+phase, comparison receipts, applicability failures and stress attempts are in
+[measured provenance](example-provenance/power-devices.json). Raw fields and logs
+belong in release/CI artifacts. Results use synthetic assumptions and establish
+neither calibrated device ratings nor high-field or switching performance.
+
+
+The four-bank stress attempt retained 20 A and the 2.4 × 2.4 mm active layout,
+using the explicitly reported 1.25 mesh factor. It completed its calculation
+at 484.52 K and failed the declared GaN applicability screen; it is not a
+verified high-current ranking. The eight-bank 30 A stress preset exceeded its
+450,000-element budget before meshing. These presets are reproducible stress
+requests, not validated device operating ratings.

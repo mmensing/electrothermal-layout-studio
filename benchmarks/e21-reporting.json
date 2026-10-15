@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "scope": "reporting only; same archived mesh and solved fields",
+  "field_sha256": "17d7edf66b72924ad8565b415da645265ec42b653f32787174b8a8e791f004d6",
+  "physics_hash": "94fd5cde31a05740886f0e441cdbad9423565d3e6426a29d1e9f54dfb3fc1e7d",
+  "triangles": 143324,
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14",
+    "logical_cpus": 16,
+    "physical_cpus": 8
+  },
+  "baseline_source_sha256": "ee4d46c7de69085039b93b4ebc05ab257fd6545520081067deef935fb55017b7",
+  "final_source_sha256": "fc0907930602f8ae5a195fb26efc051f159f6806656889e2734c0d571348442e",
+  "cpu_threads": 1,
+  "baseline_wall_seconds": [
+    59.014986000001954,
+    58.97818610000104
+  ],
+  "final_wall_seconds": [
+    22.06642140000622,
+    20.574915799996234
+  ],
+  "baseline_median_seconds": 58.9965860500015,
+  "final_median_seconds": 21.320668600001227,
+  "fractional_report_time_reduction": 0.6386118243870709,
+  "configured_measurements": 12,
+  "device_groups": 33,
+  "all_outputs_equivalent": true,
+  "comparison_relative_tolerance": 1e-10,
+  "comparison_absolute_tolerance": 1e-13,
+  "limitation": "Two repetitions per revision on the native build host; report-only comparison, not a whole-run speedup guarantee",
+  "provenance_scope": "Historical report-only comparison. Content fingerprints identify the compared implementations; this receipt is not a current-source performance guarantee."
+}

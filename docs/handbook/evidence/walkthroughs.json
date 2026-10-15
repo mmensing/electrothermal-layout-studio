@@ -1,0 +1,463 @@
+{
+  "purpose": "Recomputed handbook examples; no experimental calibration implied",
+  "solver_version": "0.1.0",
+  "python": "3.12.14",
+  "platform": "Windows",
+  "cases": [
+    {
+      "example": "E1_straight",
+      "mode": "electrical",
+      "converged": true,
+      "configuration_hash": "ed14b2d9f7bff711be08b13e8641dc401492e6587d53e0e52576b5f230d9acf4",
+      "physics_hash": "a5391d0a81a6d846ccd1e23051340ac939ee390c863b8b14c7f30bd6d3cde310",
+      "nodes": 360,
+      "triangles": 608,
+      "metrics": {
+        "electrical_power": 0.004761904761904762,
+        "joule_power": 0.004761904761904762,
+        "contact_power": 0.0,
+        "terminal_power": 0.00476190476190496,
+        "current_balance_error": 5.735412145213484e-14,
+        "power_balance_error": 4.152928001488303e-14,
+        "electrical_residual": 1.2123635428906255e-14,
+        "total_current": 0.23809523809524802,
+        "current_density_max": 11904761904.762554,
+        "current_density_average": 11904761904.761904,
+        "current_density_p95": 11904761904.762339,
+        "peak_to_average": 1.0000000000000546,
+        "contacts": {},
+        "electrical_dofs": 360,
+        "effective_resistance": 0.0839999999999965,
+        "resistance": 0.0839999999999965,
+        "voltage_drop": 0.02,
+        "resistance_current": 0.23809523809524802,
+        "resistance_terminal_pair": [
+          "source",
+          "drain"
+        ],
+        "resistance_current_terminal": "drain",
+        "resistance_measurement": {
+          "voltage_terminals": [
+            "source",
+            "drain"
+          ],
+          "current_terminal": "drain",
+          "network": 0,
+          "method": "automatic",
+          "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+        }
+      },
+      "terminals": {
+        "source": {
+          "voltage": 0.0,
+          "current": -0.23809523809523436,
+          "power": -0.0
+        },
+        "drain": {
+          "voltage": 0.02,
+          "current": 0.23809523809524802,
+          "power": 0.00476190476190496
+        }
+      },
+      "diagnostics": [],
+      "analytic": {
+        "resistivity_ohm_m": 1.68e-08,
+        "resistance_ohm": 0.084,
+        "current_A": 0.23809523809523808,
+        "power_W": 0.0047619047619047615
+      }
+    },
+    {
+      "example": "E10_thermal_stack",
+      "mode": "thermal",
+      "converged": true,
+      "configuration_hash": "88893180e6e530204fb772bfa0af15e0e113db26f0f469e1f7258a5bc0065c40",
+      "physics_hash": "d8c568b011b369c4d8dfd31f433309e8bd86aca9ced0bde369bb480c00f0f201",
+      "nodes": 7899,
+      "triangles": 15456,
+      "metrics": {
+        "temperature_max": 300.0,
+        "temperature_min": 300.0,
+        "temperature_average": 299.99999999999994,
+        "temperature_rise": 0.0,
+        "thermal_reference": 300.0,
+        "thermal_power": 0.0,
+        "heat_out": 0.0,
+        "thermal_resistance": null,
+        "thermal_balance_error": 0.0,
+        "thermal_residual": 0.0,
+        "boundary_heat_flows": {
+          "sink": 0.0,
+          "top_air": 0.0
+        },
+        "hotspot": {
+          "layer": "metal",
+          "x": 4.0085565132463826e-06,
+          "y": 4.833516509593964e-05,
+          "z": 1e-06,
+          "temperature": 300.0
+        },
+        "thermal_dofs": 16507
+      },
+      "terminals": {},
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "message": "Interface metal_oxide extends outside its two layers and is clipped to their common area.",
+          "object_id": "metal_oxide",
+          "bounds": [
+            -1e-05,
+            -1e-05,
+            0.00021,
+            0.00011
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Thermal boundary top_air extends outside its layer and is clipped.",
+          "object_id": "top_air",
+          "bounds": [
+            -1e-05,
+            -1e-05,
+            0.00021,
+            0.00011
+          ]
+        }
+      ]
+    },
+    {
+      "example": "E10_thermal_stack",
+      "mode": "electrothermal",
+      "converged": true,
+      "configuration_hash": "72b0ea7544431fa609c702537e3b248ce94b89bbee2db845f0f7c17f0d2a422b",
+      "physics_hash": "a987cef47b32a404f2175d2b51ece8500ef2fd61b77a13d135c6d038b40db1e7",
+      "nodes": 7899,
+      "triangles": 15456,
+      "metrics": {
+        "electrical_power": 0.02815959311643448,
+        "joule_power": 0.02815959311643448,
+        "contact_power": 0.0,
+        "terminal_power": 0.028159593116436774,
+        "current_balance_error": 1.8457457784395262e-13,
+        "power_balance_error": 8.143954444791802e-14,
+        "electrical_residual": 3.330669073875452e-14,
+        "total_current": 0.3999999999999928,
+        "current_density_max": 20000448310.83661,
+        "current_density_average": 20000000000.062824,
+        "current_density_p95": 20000443221.394497,
+        "peak_to_average": 1.0000224155386892,
+        "contacts": {},
+        "electrical_dofs": 709,
+        "effective_resistance": 0.17599745697773617,
+        "resistance": 0.17599745697773617,
+        "voltage_drop": 0.0703989827910932,
+        "resistance_current": 0.3999999999999928,
+        "resistance_terminal_pair": [
+          "source",
+          "drain"
+        ],
+        "resistance_current_terminal": "drain",
+        "resistance_measurement": {
+          "voltage_terminals": [
+            "source",
+            "drain"
+          ],
+          "current_terminal": "drain",
+          "network": 0,
+          "method": "automatic",
+          "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+        },
+        "temperature_max": 312.16451582699705,
+        "temperature_min": 300.10755479726095,
+        "temperature_average": 300.8911349620904,
+        "temperature_rise": 12.164515826997047,
+        "thermal_reference": 300.0,
+        "thermal_power": 0.028159593116434484,
+        "heat_out": 0.028159411486092127,
+        "thermal_resistance": 431.9847867367657,
+        "thermal_balance_error": 6.4500343313047635e-06,
+        "thermal_residual": 6.4074162093276346e-06,
+        "boundary_heat_flows": {
+          "sink": 0.028159169227004052,
+          "top_air": 2.422590880734286e-07
+        },
+        "hotspot": {
+          "layer": "metal",
+          "x": 0.00010100000000051433,
+          "y": 5.019615242281941e-05,
+          "z": 1e-06,
+          "temperature": 312.16451582699705
+        },
+        "thermal_dofs": 16507
+      },
+      "terminals": {
+        "source": {
+          "voltage": 0.0,
+          "current": -0.399999999999919,
+          "power": -0.0
+        },
+        "drain": {
+          "voltage": 0.0703989827910932,
+          "current": 0.3999999999999928,
+          "power": 0.028159593116436774
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "message": "Interface metal_oxide extends outside its two layers and is clipped to their common area.",
+          "object_id": "metal_oxide",
+          "bounds": [
+            -1e-05,
+            -1e-05,
+            0.00021,
+            0.00011
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Thermal boundary top_air extends outside its layer and is clipped.",
+          "object_id": "top_air",
+          "bounds": [
+            -1e-05,
+            -1e-05,
+            0.00021,
+            0.00011
+          ]
+        }
+      ],
+      "same_xy_temperature_K": {
+        "point_m": [
+          0.0001,
+          5e-05
+        ],
+        "layers": {
+          "metal": 312.1643480095727,
+          "oxide": 307.33323860863254,
+          "substrate": 300.32888052283863
+        }
+      }
+    },
+    {
+      "example": "E12_via_ladder",
+      "mode": "electrical",
+      "converged": true,
+      "configuration_hash": "cf3270a40db49e2bf4ca4813f10dd08abed76963d72d0f05973f465f5c020ae9",
+      "physics_hash": "a61a3f56990f10215820dae73effb7e02855af97bdd10efb6d2593dcffd3fd7b",
+      "nodes": 6100,
+      "triangles": 11914,
+      "metrics": {
+        "electrical_power": 0.021156355186591737,
+        "joule_power": 0.021067611252878708,
+        "contact_power": 8.874393371303057e-05,
+        "terminal_power": 0.02115635518659301,
+        "current_balance_error": 1.8503717077088384e-13,
+        "power_balance_error": 6.018461214783683e-14,
+        "electrical_residual": 6.272760089132134e-14,
+        "total_current": 0.29999999999998817,
+        "current_density_max": 12417031703.470829,
+        "current_density_average": 8036964670.596571,
+        "current_density_p95": 9662338133.485012,
+        "peak_to_average": 1.544990206178066,
+        "contacts": {
+          "via12": {
+            "power": 4.5417119429124395e-05,
+            "current_a_to_b": -0.299999999999959
+          },
+          "via23": {
+            "power": 4.3326814283906184e-05,
+            "current_a_to_b": -0.299999999999981
+          }
+        },
+        "electrical_dofs": 2679,
+        "effective_resistance": 0.23507061318438532,
+        "resistance": 0.23507061318438532,
+        "voltage_drop": 0.07052118395531282,
+        "resistance_current": 0.29999999999998817,
+        "resistance_terminal_pair": [
+          "drain",
+          "source"
+        ],
+        "resistance_current_terminal": "drain",
+        "resistance_measurement": {
+          "voltage_terminals": [
+            "drain",
+            "source"
+          ],
+          "current_terminal": "drain",
+          "network": 0,
+          "method": "explicit",
+          "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+        }
+      },
+      "terminals": {
+        "source": {
+          "voltage": 0.0,
+          "current": -0.29999999999993265,
+          "power": -0.0
+        },
+        "drain": {
+          "voltage": 0.07052118395531282,
+          "current": 0.29999999999998817,
+          "power": 0.02115635518659301
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "message": "Interface heat_m1 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m1",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Interface heat_m2 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m2",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Interface heat_m3 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m3",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        }
+      ]
+    },
+    {
+      "example": "E12_via_ladder",
+      "mode": "electrothermal",
+      "converged": true,
+      "configuration_hash": "fe5809e756e7bd5c3c56dcac4a45eba98c5fb4eeac9050b2725d30640ff86319",
+      "physics_hash": "d9a75967507735364c4b88888d76b09ddf511fdbec68ecef22b731564436d2f6",
+      "nodes": 6100,
+      "triangles": 11914,
+      "metrics": {
+        "electrical_power": 0.021301890889458292,
+        "joule_power": 0.02121273536000244,
+        "contact_power": 8.915552945585258e-05,
+        "terminal_power": 0.021301890889454726,
+        "current_balance_error": 2.194540845342068e-13,
+        "power_balance_error": 1.6743074523836386e-13,
+        "electrical_residual": 2.960594732332988e-14,
+        "total_current": 0.3000000000000115,
+        "current_density_max": 12409001010.673742,
+        "current_density_average": 8037174747.365878,
+        "current_density_p95": 9660190135.527641,
+        "peak_to_average": 1.543950629509542,
+        "contacts": {
+          "via12": {
+            "power": 4.5626390304264135e-05,
+            "current_a_to_b": -0.30000000000005234
+          },
+          "via23": {
+            "power": 4.352913915158845e-05,
+            "current_a_to_b": -0.30000000000007665
+          }
+        },
+        "electrical_dofs": 2679,
+        "effective_resistance": 0.2366876765494788,
+        "resistance": 0.2366876765494788,
+        "voltage_drop": 0.07100630296484636,
+        "resistance_current": 0.3000000000000115,
+        "resistance_terminal_pair": [
+          "drain",
+          "source"
+        ],
+        "resistance_current_terminal": "drain",
+        "resistance_measurement": {
+          "voltage_terminals": [
+            "drain",
+            "source"
+          ],
+          "current_terminal": "drain",
+          "network": 0,
+          "method": "explicit",
+          "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
+        },
+        "temperature_max": 302.97603605610135,
+        "temperature_min": 300.0930490162344,
+        "temperature_average": 300.58853212605896,
+        "temperature_rise": 2.97603605610135,
+        "thermal_reference": 300.0,
+        "thermal_power": 0.024301890889458295,
+        "heat_out": 0.024301708786463174,
+        "thermal_resistance": 122.46109035870532,
+        "thermal_balance_error": 7.493367324750776e-06,
+        "thermal_residual": 7.31001613968278e-06,
+        "boundary_heat_flows": {
+          "backside": 0.024301708786463174
+        },
+        "hotspot": {
+          "layer": "m2",
+          "x": 0.000168,
+          "y": 7.199999999999993e-05,
+          "z": 3e-06,
+          "temperature": 302.97603605610135
+        },
+        "thermal_dofs": 8779
+      },
+      "terminals": {
+        "source": {
+          "voltage": 0.0,
+          "current": -0.3000000000000773,
+          "power": -0.0
+        },
+        "drain": {
+          "voltage": 0.07100630296484636,
+          "current": 0.3000000000000115,
+          "power": 0.021301890889454726
+        }
+      },
+      "diagnostics": [
+        {
+          "severity": "warning",
+          "message": "Interface heat_m1 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m1",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Interface heat_m2 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m2",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        },
+        {
+          "severity": "warning",
+          "message": "Interface heat_m3 extends outside its two layers and is clipped to their common area.",
+          "object_id": "heat_m3",
+          "bounds": [
+            -1.9999999999999998e-05,
+            -1.9999999999999998e-05,
+            0.00021999999999999998,
+            0.000164
+          ]
+        }
+      ]
+    }
+  ]
+}

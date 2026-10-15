@@ -1,0 +1,10 @@
+version = 1
+
+[[annotations]]
+path = ["README.md", "CONTRIBUTING.md", "SECURITY.md", "CHANGELOG.md", "pyproject.toml", "requirements*.lock", ".gitignore", ".github/**", "docs/**", "examples/**", "benchmarks/**", "src/etlayout/data/**", "packaging/resources.py", "LICENSES/README.md", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 mmensing"
+SPDX-License-Identifier = "MPL-2.0"
+
+# Verbatim third-party license texts retain their embedded copyright/license notices.
+# Per-file source notices take precedence over this resource annotation.

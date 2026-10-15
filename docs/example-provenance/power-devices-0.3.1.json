@@ -1,0 +1,1286 @@
+{
+  "schema_version": 1,
+  "purpose": "Measured generator-version-2 0.3.1 power-reference provenance; synthetic models, not calibrated device ratings",
+  "performance_context": "Source tests and native desktop acceptance ran concurrently. Phase times and sampled memory are host resource observations, not isolated performance or speedup claims.",
+  "checkpoints": {
+    "strict_mesh": {
+      "source_fingerprint": "42d0679e634af17c6850b408b1ab6a632b67c2a66845aace20cfef5d92b1a55e",
+      "memory_sample_interval_seconds": 0.1
+    },
+    "native_nominal": {
+      "source_tree_sha256": "bf16c999d3583d2dc29e9e83723232de34edd4c89dfa00c96fab9d571e4b37ca",
+      "source_tree_final_sha256": "bf16c999d3583d2dc29e9e83723232de34edd4c89dfa00c96fab9d571e4b37ca",
+      "source_guard_passed": true,
+      "qpa": "windows",
+      "scale": 1.0,
+      "memory_sample_interval_seconds": 0.2,
+      "source_state": "Historical numerical/execution source snapshot; the complete source identity is pinned by the native source-tree guard. This receipt is not current-source validation."
+    }
+  },
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "logical_cpus": 16,
+    "physical_cpus": 8,
+    "physical_memory_bytes": 33476079616
+  },
+  "strict_mesh_screens": [
+    {
+      "name": "E21_long_finger_gan",
+      "configuration": {
+        "family": "gan",
+        "preset": "reference",
+        "variant": "single",
+        "generator_version": 2,
+        "die_um": [
+          1140.0,
+          1100.0
+        ],
+        "requested_current_A": 5.0,
+        "total_gate_width_m": 0.016,
+        "gate_width_per_finger_m": 0.0005,
+        "actual_gate_fingers": 32,
+        "model_temperature_range_K": [
+          300.0,
+          425.0
+        ],
+        "maximum_channel_field_V_m": 300000.0,
+        "thermal": "attached",
+        "reservoir_temperature_K": 300.0,
+        "attach_resistance_area_m2_K_W": 2e-06,
+        "substrate_thickness_m": 0.00015,
+        "model": "Synthetic analytical local-gate-bias GaN 2DEG; no high-field saturation, breakdown, trapping or switching. Conductance floor is numerical, not leakage.",
+        "metallization_assumption": "Source and drain collection are coplanar opposing combs with no projected overlap. Crossovers use separately elevated source/drain redistribution and physical vias. Specific contacts represent complete local ohmic transfer, not an additional resolved plug.",
+        "stress": false
+      },
+      "levels": [
+        {
+          "status": "converged_provisional",
+          "converged": true,
+          "mesh_verified": false,
+          "model_failures": [],
+          "unavailable": {},
+          "response": {
+            "current_per_total_gate_width_A_m": 312.49999999996925,
+            "delivered_current_A": 4.999999999999508,
+            "effective_on_state_resistance_ohm": 0.14894082246929266,
+            "maximum_channel_field_V_m": 226528.7570104365,
+            "terminal_voltage_V": 0.74470411234639
+          },
+          "sharing": {
+            "banks": {
+              "count": 1,
+              "current_sum_A": 5.0000000005543335,
+              "loading_max": 312.50000003464584,
+              "loading_min": 312.50000003464584,
+              "loading_units": "A/m",
+              "maximum_relative_loading_deviation": 0.0,
+              "source_potential_spread_V": 0.0
+            },
+            "fingers": {
+              "count": 32,
+              "current_sum_A": 5.0000000005543335,
+              "loading_max": 322.8280426546156,
+              "loading_min": 309.145097006473,
+              "loading_units": "A/m",
+              "maximum_relative_loading_deviation": 0.033049736380239114,
+              "source_potential_spread_V": 0.007216027246238647
+            }
+          },
+          "loss_categories_W": {
+            "access": 1.9732156149861955,
+            "channel": 1.0798703839294492,
+            "contact": 0.27340411664846004,
+            "device_load": 0,
+            "external_feed": 0.05273111434973752,
+            "other_metal": 0,
+            "routing_metal": 0.34429932632136373
+          },
+          "terminal_power_W": 3.723520556235206,
+          "thermal_deposition_W": 3.683972220472903,
+          "external_heat_excluded_W": 0.03954833576230314,
+          "maximum_temperature_K": 313.55213535375833,
+          "conservation": {
+            "current_balance_error": 1.1293312950829268e-10,
+            "power_balance_error": 1.4761238683054437e-09,
+            "thermal_balance_error": 1.331630954587801e-06
+          },
+          "measurements": {
+            "contact_via_loss": {
+              "value": 0.27340411664846004,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "regularized_hotspot": {
+              "value": 312.8284008966465,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": "",
+              "averaging_length_m": 0.00010999999999999999
+            },
+            "routing_loss": {
+              "value": 0.3442993263213637,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "temperature_rise": {
+              "value": 13.552135353758331,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "transport_field": {
+              "value": 226528.7570104365,
+              "unit": "V/m",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            }
+          },
+          "mesh": {
+            "nodes": 71787,
+            "elements": 143346,
+            "estimated_dofs": 301113,
+            "minimum_quality": 0.021459511321893842,
+            "mean_quality": 0.08331763186080554,
+            "minimum_angle_deg": 0.7099485399413251,
+            "directional_partitions": 255
+          },
+          "mesh_factor": 1.0,
+          "input_identity": {
+            "project_archive_sha256": "46ea8310f9263239379f0a6604b3df0c044e5a559255becbcc722015867f6273",
+            "layout_sha256": "fd7c8489eb0b00150798a797290125d02b2688b6efe31bed0798416bedad2e89",
+            "physics_hash": "94fd5cde31a05740886f0e441cdbad9423565d3e6426a29d1e9f54dfb3fc1e7d"
+          },
+          "source_fingerprint": "42d0679e634af17c6850b408b1ab6a632b67c2a66845aace20cfef5d92b1a55e",
+          "source_unchanged_during_run": true,
+          "phases": {
+            "calculation_seconds": 142.48634799999854,
+            "generation_seconds": 0.10458639999706065,
+            "meshing_seconds": 6.426309100002982,
+            "physics_solve_seconds": 68.79940989999886,
+            "postprocessing_seconds": 66.60691249999945,
+            "preparation_seconds": 0.6537164999972447
+          },
+          "process_wall_seconds": 149.77505279999605,
+          "peak_sampled_process_tree_RSS_bytes": 1669263360,
+          "execution": {
+            "cpu_threads": 4,
+            "study_workers": 1,
+            "actual_backend": "cpu",
+            "linear_factorizations": 36,
+            "reused_factorizations": 15,
+            "parallel_assembly": {
+              "batches": 130,
+              "linear_solver": "SciPy sparse solver; SuperLU factorization remains serial",
+              "tasks": 1099,
+              "wall_seconds": 6.716975500028639,
+              "worker_cpu_seconds": 10.90625,
+              "worker_thread_ids": [
+                16404,
+                23656,
+                58708,
+                67560
+              ]
+            }
+          },
+          "limits": {
+            "declared_memory_bytes": 8589934592,
+            "memory_bytes": 8589934592,
+            "wall_seconds": 900.0
+          },
+          "export_reimport": {
+            "groups_preserved": true,
+            "masks_identical": true,
+            "physics_hash_equal": false,
+            "valid": true,
+            "violations": []
+          }
+        },
+        {
+          "status": "converged_provisional",
+          "converged": true,
+          "mesh_verified": false,
+          "model_failures": [],
+          "unavailable": {},
+          "response": {
+            "current_per_total_gate_width_A_m": 312.50000000003644,
+            "delivered_current_A": 5.000000000000583,
+            "effective_on_state_resistance_ohm": 0.14901307036504724,
+            "maximum_channel_field_V_m": 227394.13006786144,
+            "terminal_voltage_V": 0.745065351825323
+          },
+          "sharing": {
+            "banks": {
+              "count": 1,
+              "current_sum_A": 5.000000025446542,
+              "loading_max": 312.50000159040883,
+              "loading_min": 312.50000159040883,
+              "loading_units": "A/m",
+              "maximum_relative_loading_deviation": 0.0,
+              "source_potential_spread_V": 0.0
+            },
+            "fingers": {
+              "count": 32,
+              "current_sum_A": 5.000000025446542,
+              "loading_max": 322.8478335408991,
+              "loading_min": 309.13456236919734,
+              "loading_units": "A/m",
+              "maximum_relative_loading_deviation": 0.03311306207304621,
+              "source_potential_spread_V": 0.007217404565726504
+            }
+          },
+          "loss_categories_W": {
+            "access": 1.974635545052495,
+            "channel": 1.0799834111970776,
+            "contact": 0.2730006245950265,
+            "device_load": 0,
+            "external_feed": 0.0527250112552687,
+            "other_metal": 0,
+            "routing_metal": 0.34498217883429483
+          },
+          "terminal_power_W": 3.725326770934162,
+          "thermal_deposition_W": 3.685783012492711,
+          "external_heat_excluded_W": 0.03954375844145152,
+          "maximum_temperature_K": 313.53873435464953,
+          "conservation": {
+            "current_balance_error": 5.298271851647086e-09,
+            "power_balance_error": 3.169416749465813e-09,
+            "thermal_balance_error": 1.3333991454108283e-06
+          },
+          "measurements": {
+            "contact_via_loss": {
+              "value": 0.2730006245950265,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "regularized_hotspot": {
+              "value": 312.8349498957555,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": "",
+              "averaging_length_m": 0.00010999999999999999
+            },
+            "routing_loss": {
+              "value": 0.34498217883429483,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "temperature_rise": {
+              "value": 13.538734354649534,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "transport_field": {
+              "value": 227394.13006786144,
+              "unit": "V/m",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            }
+          },
+          "mesh": {
+            "nodes": 113744,
+            "elements": 227203,
+            "estimated_dofs": 474482,
+            "minimum_quality": 0.022166618558013346,
+            "mean_quality": 0.08727518776156123,
+            "minimum_angle_deg": 0.7333459290487113,
+            "directional_partitions": 255
+          },
+          "mesh_factor": 0.8,
+          "input_identity": {
+            "project_archive_sha256": "7b30343ea0b99cfe203955fa3b07d4c1abe273f508da7745099741dd422407d8",
+            "layout_sha256": "fd7c8489eb0b00150798a797290125d02b2688b6efe31bed0798416bedad2e89",
+            "physics_hash": "f11f6b18377f8530d9a039bec5ca67c29c07a5f4b6a58e6c04f1ece4e0617ca7"
+          },
+          "source_fingerprint": "42d0679e634af17c6850b408b1ab6a632b67c2a66845aace20cfef5d92b1a55e",
+          "source_unchanged_during_run": true,
+          "phases": {
+            "calculation_seconds": 271.6346749999939,
+            "generation_seconds": 0.11513519999425625,
+            "meshing_seconds": 7.333921999997983,
+            "physics_solve_seconds": 171.11194689999684,
+            "postprocessing_seconds": 92.47253389999969,
+            "preparation_seconds": 0.7162721999993664
+          },
+          "process_wall_seconds": 280.0705253999986,
+          "peak_sampled_process_tree_RSS_bytes": 2619035648,
+          "execution": {
+            "cpu_threads": 4,
+            "study_workers": 1,
+            "actual_backend": "cpu",
+            "linear_factorizations": 50,
+            "reused_factorizations": 0,
+            "parallel_assembly": {
+              "batches": 130,
+              "linear_solver": "SciPy sparse solver; SuperLU factorization remains serial",
+              "tasks": 1099,
+              "wall_seconds": 7.998405500031367,
+              "worker_cpu_seconds": 14.828125,
+              "worker_thread_ids": [
+                18868,
+                19452,
+                61532,
+                70064
+              ]
+            }
+          },
+          "limits": {
+            "declared_memory_bytes": 8589934592,
+            "memory_bytes": 8589934592,
+            "wall_seconds": 900.0
+          },
+          "export_reimport": {
+            "groups_preserved": true,
+            "masks_identical": true,
+            "physics_hash_equal": false,
+            "valid": true,
+            "violations": []
+          }
+        }
+      ],
+      "comparison": {
+        "status": "mesh_resolved",
+        "acceptance_errors": [],
+        "maximum_mesh_change": 0.03,
+        "mesh_sensitivity": [
+          {
+            "resistance_ohm": {
+              "absolute": 7.224789575457913e-05,
+              "normalized": 0.00048484267573031445,
+              "accepted": true
+            },
+            "terminal_power_W": {
+              "absolute": 0.0018062146989561434,
+              "normalized": 0.00048484731944822585,
+              "accepted": true
+            },
+            "routing_loss_W": {
+              "absolute": 0.0006828525129311536,
+              "normalized": 0.0019793848923980156,
+              "accepted": true
+            },
+            "regularized_hotspot_rise_K": {
+              "absolute": 0.006548999109043052,
+              "normalized": 0.000510247345118876,
+              "accepted": true
+            },
+            "banks_sharing_error": {
+              "absolute": 0.0,
+              "normalized": 0.0,
+              "accepted": true
+            },
+            "banks_source_spread_V": {
+              "absolute": 0.0,
+              "normalized": 0.0,
+              "accepted": true
+            },
+            "fingers_sharing_error": {
+              "absolute": 6.332569280709244e-05,
+              "normalized": 6.332569280709244e-05,
+              "accepted": true
+            },
+            "fingers_source_spread_V": {
+              "absolute": 1.377319487856632e-06,
+              "normalized": 0.00019083307237578845,
+              "accepted": true
+            }
+          }
+        ],
+        "effects": {},
+        "equal_service_checked": true,
+        "limitation": "Two levels bound observed mesh sensitivity; no experimental calibration or unique overall winner."
+      }
+    },
+    {
+      "name": "E23_sic_stripes",
+      "configuration": {
+        "family": "sic_stripes",
+        "preset": "reference",
+        "variant": "cross",
+        "generator_version": 2,
+        "die_um": [
+          1000.0,
+          1000.0
+        ],
+        "requested_current_A": 10.0,
+        "active_area_m2": 4.838400000000001e-07,
+        "macrocell_count": 20,
+        "on_state_specific_resistance_ohm_m2": 1e-07,
+        "reference_temperature_K": 300.0,
+        "temperature_coefficient_K_inverse": 0.003,
+        "model_temperature_range_K": [
+          300.0,
+          450.0
+        ],
+        "thermal": "attached",
+        "reservoir_temperature_K": 300.0,
+        "attach_resistance_area_m2_K_W": 2e-06,
+        "substrate_thickness_m": 0.0002,
+        "model": "SiC MOSFET on-state interconnect model. Ron,sp includes channel/drift/intrinsic device contacts, excluding modeled metal/vias/external feeds. No separate electrical substrate loss, body diode, avalanche, switching or trench/planar distinction.",
+        "fixed_gate_assumption": "On state; drawn insulated gate does not control the load",
+        "stress": false
+      },
+      "levels": [
+        {
+          "status": "converged_provisional",
+          "converged": true,
+          "mesh_verified": false,
+          "model_failures": [],
+          "unavailable": {},
+          "response": {
+            "delivered_current_A": 9.999999999975573,
+            "effective_on_state_resistance_ohm": 0.24601515160443554,
+            "kelvin_error_V": 0.03569626707743364,
+            "terminal_voltage_V": 2.460151516038346
+          },
+          "sharing": {
+            "macrocells": {
+              "count": 20,
+              "current_sum_A": 9.999999998451196,
+              "loading_max": 20826852.73376661,
+              "loading_min": 20591550.96619925,
+              "loading_units": "A/m\u00b2",
+              "maximum_relative_loading_deviation": 0.007686442826634776,
+              "source_potential_spread_V": 0.010244851194848564
+            }
+          },
+          "loss_categories_W": {
+            "access": 0,
+            "channel": 0,
+            "contact": 0.002503901617899666,
+            "device_load": 24.167937313044934,
+            "external_feed": 0.30045301246017464,
+            "other_metal": 0,
+            "routing_metal": 0.13062092946778564
+          },
+          "terminal_power_W": 24.601515156590793,
+          "thermal_deposition_W": 24.376175397245664,
+          "external_heat_excluded_W": 0.22533975934513098,
+          "maximum_temperature_K": 364.6938996446348,
+          "conservation": {
+            "current_balance_error": 1.5318590841462713e-10,
+            "power_balance_error": 1.5172127965204537e-10,
+            "thermal_balance_error": 9.782824906800877e-07
+          },
+          "measurements": {
+            "contact_via_loss": {
+              "value": 0.002503901617899666,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "device_loss": {
+              "value": 24.16793731304493,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "kelvin_potential": {
+              "value": 0.03569626707743364,
+              "unit": "V",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "regularized_hotspot": {
+              "value": 364.26725957178195,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": "",
+              "averaging_length_m": 9.999999999999999e-05
+            },
+            "routing_loss": {
+              "value": 0.1306209294677856,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "temperature_rise": {
+              "value": 64.69389964463483,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            }
+          },
+          "mesh": {
+            "nodes": 7907,
+            "elements": 15572,
+            "estimated_dofs": 42423,
+            "minimum_quality": 0.15124919728230332,
+            "mean_quality": 0.7175668898085273,
+            "minimum_angle_deg": 5.029073581785355,
+            "directional_partitions": 0
+          },
+          "mesh_factor": 1.0,
+          "input_identity": {
+            "project_archive_sha256": "1e6f4ce8d13652aea74edf5cd6c4ce034b5e9d053351b948b78f0cedd59f7fdc",
+            "layout_sha256": "299dc07d258d0cf6c82abee634286df88050145c4aae28a6701e162e3d9ae9a0",
+            "physics_hash": "139e73d843fb285f8c862f09b53ad293b28858778e9b944a999ef48ad7a21bd7"
+          },
+          "source_fingerprint": "42d0679e634af17c6850b408b1ab6a632b67c2a66845aace20cfef5d92b1a55e",
+          "source_unchanged_during_run": true,
+          "phases": {
+            "calculation_seconds": 22.849923800000397,
+            "generation_seconds": 0.116598000000522,
+            "meshing_seconds": 1.7377524999974412,
+            "physics_solve_seconds": 15.432339099999808,
+            "postprocessing_seconds": 5.01288950000162,
+            "preparation_seconds": 0.6669427000015276
+          },
+          "process_wall_seconds": 25.506475900001533,
+          "peak_sampled_process_tree_RSS_bytes": 293957632,
+          "execution": {
+            "cpu_threads": 4,
+            "study_workers": 1,
+            "actual_backend": "cpu",
+            "linear_factorizations": 39,
+            "reused_factorizations": 18,
+            "parallel_assembly": {
+              "batches": 0,
+              "linear_solver": "SciPy sparse solver; SuperLU factorization remains serial",
+              "tasks": 0,
+              "wall_seconds": 0.0,
+              "worker_cpu_seconds": 0.0,
+              "worker_thread_ids": []
+            }
+          },
+          "limits": {
+            "declared_memory_bytes": 3221225472,
+            "memory_bytes": 3221225472,
+            "wall_seconds": 900.0
+          },
+          "export_reimport": {
+            "groups_preserved": true,
+            "masks_identical": true,
+            "physics_hash_equal": false,
+            "valid": true,
+            "violations": []
+          }
+        },
+        {
+          "status": "converged_provisional",
+          "converged": true,
+          "mesh_verified": false,
+          "model_failures": [],
+          "unavailable": {},
+          "response": {
+            "delivered_current_A": 9.999999999965752,
+            "effective_on_state_resistance_ohm": 0.24602105588354614,
+            "kelvin_error_V": 0.03573202401362334,
+            "terminal_voltage_V": 2.4602105588270358
+          },
+          "sharing": {
+            "macrocells": {
+              "count": 20,
+              "current_sum_A": 9.99999999752949,
+              "loading_max": 20826736.964469112,
+              "loading_min": 20591575.594588466,
+              "loading_units": "A/m\u00b2",
+              "maximum_relative_loading_deviation": 0.007680841537822225,
+              "source_potential_spread_V": 0.010247388366652756
+            }
+          },
+          "loss_categories_W": {
+            "access": 0,
+            "channel": 0,
+            "contact": 0.002498113272550816,
+            "device_load": 24.168132802694398,
+            "external_feed": 0.3004541206898578,
+            "other_metal": 0,
+            "routing_metal": 0.13102054556332624
+          },
+          "terminal_power_W": 24.602105582220133,
+          "thermal_deposition_W": 24.37676499170274,
+          "external_heat_excluded_W": 0.22534059051739336,
+          "maximum_temperature_K": 364.7286964450764,
+          "conservation": {
+            "current_balance_error": 2.4437216697720065e-10,
+            "power_balance_error": 2.4249816659043064e-10,
+            "thermal_balance_error": 4.7626534910399895e-07
+          },
+          "measurements": {
+            "contact_via_loss": {
+              "value": 0.002498113272550816,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "device_loss": {
+              "value": 24.168132802694394,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "kelvin_potential": {
+              "value": 0.03573202401362334,
+              "unit": "V",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "regularized_hotspot": {
+              "value": 364.26806814634574,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": "",
+              "averaging_length_m": 9.999999999999999e-05
+            },
+            "routing_loss": {
+              "value": 0.13102054556332624,
+              "unit": "W",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            },
+            "temperature_rise": {
+              "value": 64.72869644507642,
+              "unit": "K",
+              "status": "available",
+              "within_limits": true,
+              "reason": ""
+            }
+          },
+          "mesh": {
+            "nodes": 11797,
+            "elements": 23292,
+            "estimated_dofs": 64062,
+            "minimum_quality": 0.2147054447107402,
+            "mean_quality": 0.7831010506351996,
+            "minimum_angle_deg": 7.177245850862659,
+            "directional_partitions": 0
+          },
+          "mesh_factor": 0.8,
+          "input_identity": {
+            "project_archive_sha256": "59164564875c6c4fb6b7730b38f4b457a282e7c22aae581234f6b6f651962ccd",
+            "layout_sha256": "299dc07d258d0cf6c82abee634286df88050145c4aae28a6701e162e3d9ae9a0",
+            "physics_hash": "5e54f8201aac311e5ab5de09ecac57bde49f5695e6dd2d58d8cdcaa76c52ad73"
+          },
+          "source_fingerprint": "42d0679e634af17c6850b408b1ab6a632b67c2a66845aace20cfef5d92b1a55e",
+          "source_unchanged_during_run": true,
+          "phases": {
+            "calculation_seconds": 29.26064149999729,
+            "generation_seconds": 0.1231608000016422,
+            "meshing_seconds": 1.765350199995737,
+            "physics_solve_seconds": 20.856901300001482,
+            "postprocessing_seconds": 5.800590599996212,
+            "preparation_seconds": 0.8377994000038598
+          },
+          "process_wall_seconds": 32.026448299999174,
+          "peak_sampled_process_tree_RSS_bytes": 406269952,
+          "execution": {
+            "cpu_threads": 4,
+            "study_workers": 1,
+            "actual_backend": "cpu",
+            "linear_factorizations": 41,
+            "reused_factorizations": 19,
+            "parallel_assembly": {
+              "batches": 61,
+              "linear_solver": "SciPy sparse solver; SuperLU factorization remains serial",
+              "tasks": 305,
+              "wall_seconds": 0.5163346999834175,
+              "worker_cpu_seconds": 0.375,
+              "worker_thread_ids": [
+                29396,
+                44148,
+                63072,
+                70428
+              ]
+            }
+          },
+          "limits": {
+            "declared_memory_bytes": 3221225472,
+            "memory_bytes": 3221225472,
+            "wall_seconds": 900.0
+          },
+          "export_reimport": {
+            "groups_preserved": true,
+            "masks_identical": true,
+            "physics_hash_equal": false,
+            "valid": true,
+            "violations": []
+          }
+        }
+      ],
+      "comparison": {
+        "status": "mesh_resolved",
+        "acceptance_errors": [],
+        "maximum_mesh_change": 0.03,
+        "mesh_sensitivity": [
+          {
+            "resistance_ohm": {
+              "absolute": 5.904279110596766e-06,
+              "normalized": 2.3999080442088468e-05,
+              "accepted": true
+            },
+            "terminal_power_W": {
+              "absolute": 0.0005904256293405297,
+              "normalized": 2.3998987703200024e-05,
+              "accepted": true
+            },
+            "routing_loss_W": {
+              "absolute": 0.0003996160955406225,
+              "normalized": 0.0030500261911020348,
+              "accepted": true
+            },
+            "regularized_hotspot_rise_K": {
+              "absolute": 0.0008085745637913533,
+              "normalized": 1.2581280052640395e-05,
+              "accepted": true
+            },
+            "macrocells_sharing_error": {
+              "absolute": 5.601288812551175e-06,
+              "normalized": 5.601288812551175e-06,
+              "accepted": true
+            },
+            "macrocells_source_spread_V": {
+              "absolute": 2.5371718041927727e-06,
+              "normalized": 0.0002475920413487289,
+              "accepted": true
+            }
+          }
+        ],
+        "effects": {},
+        "equal_service_checked": true,
+        "limitation": "Two levels bound observed mesh sensitivity; no experimental calibration or unique overall winner."
+      }
+    }
+  ],
+  "native_nominal_references": [
+    {
+      "name": "E20_high_current_rdl",
+      "status": "converged_provisional",
+      "mesh_verified": false,
+      "input_identity": {
+        "project_archive_sha256": "236b307ed8cc0572524747b858b0325d034dcbbfeec69a72df837f7c2a3a5f9c",
+        "layout_sha256": "5e4e1ec135fc98877ab837414feb503a3c88a895ed8bfb34c2681a71aa519a37",
+        "physics_hash": "2543de798408080635d1532ccdb20fde29c419034d73f9cc949dfb747ccc697b"
+      },
+      "configuration": {
+        "family": "rdl",
+        "preset": "reference",
+        "variant": "uniform_single",
+        "generator_version": 2,
+        "die_um": [
+          1000.0,
+          1000.0
+        ],
+        "requested_current_A": 10.0,
+        "model_temperature_range_K": [
+          300.0,
+          450.0
+        ],
+        "thermal": "attached",
+        "reservoir_temperature_K": 300.0,
+        "attach_resistance_area_m2_K_W": 2e-06,
+        "substrate_thickness_m": 0.0003,
+        "model": "Synthetic copper DC RDL with geometric vias; no semiconductor, EM or switching prediction.",
+        "stress": false
+      },
+      "physical_identity_equal": true,
+      "model_failures": [],
+      "unavailable": {},
+      "response": {
+        "delivered_current_A": 10.000000000000075,
+        "terminal_voltage_V": 0.10234055967634896,
+        "effective_on_state_resistance_ohm": 0.01023405596763482
+      },
+      "sharing": {},
+      "conservation": [
+        {
+          "metric": "current_balance_error",
+          "value": 7.421618875011438e-13,
+          "limit": 0.001,
+          "passed": true
+        },
+        {
+          "metric": "power_balance_error",
+          "value": 5.864601180705748e-13,
+          "limit": 0.005,
+          "passed": true
+        },
+        {
+          "metric": "thermal_balance_error",
+          "value": 2.7459967000080924e-07,
+          "limit": 0.01,
+          "passed": true
+        }
+      ],
+      "terminal_vs_disjoint_loss_error": 5.864601180705748e-13,
+      "loss_categories_W": {
+        "routing_metal": 0.7958063549249619,
+        "other_metal": 0,
+        "access": 0,
+        "channel": 0,
+        "contact": 0.024990664350116203,
+        "device_load": 0,
+        "external_feed": 0.2026085774890194
+      },
+      "terminal_power_W": 1.0234055967640974,
+      "maximum_temperature_K": 332.37186333256426,
+      "measurements": {
+        "routing_loss": {
+          "value": 0.7958063549249615,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "contact_via_loss": {
+          "value": 0.024990664350116203,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "temperature_rise": {
+          "value": 32.37186333256426,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "regularized_hotspot": {
+          "value": 310.0455266872744,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": "",
+          "averaging_length_m": 9.999999999999999e-05
+        }
+      },
+      "mesh": {
+        "nodes": 12735,
+        "elements": 25132,
+        "estimated_dofs": 35361,
+        "minimum_quality": 0.35749293281927774,
+        "mean_quality": 0.9778795242873399,
+        "minimum_angle_deg": 14.578428362778093,
+        "directional_partitions": 0
+      },
+      "solver_elapsed_seconds": 13.025106799999776,
+      "native_phases": [
+        {
+          "phase": "preparation",
+          "wall_seconds": 2.4059999999990396,
+          "peak_gui_rss_bytes": 309616640,
+          "peak_worker_rss_bytes": 121888768,
+          "sampling_errors": []
+        },
+        {
+          "phase": "validation",
+          "wall_seconds": 2.047000000002299,
+          "peak_gui_rss_bytes": 312676352,
+          "peak_worker_rss_bytes": 122605568,
+          "sampling_errors": []
+        },
+        {
+          "phase": "meshing",
+          "wall_seconds": 2.7190000000009604,
+          "peak_gui_rss_bytes": 317652992,
+          "peak_worker_rss_bytes": 155262976,
+          "sampling_errors": []
+        },
+        {
+          "phase": "solve_and_postprocessing",
+          "wall_seconds": 16.875,
+          "peak_gui_rss_bytes": 335826944,
+          "peak_worker_rss_bytes": 289583104,
+          "sampling_errors": []
+        }
+      ],
+      "export_reimport": "Not established by this native nominal receipt; independent strict E21/E23 checks are recorded separately."
+    },
+    {
+      "name": "E22_multibank_gan",
+      "status": "converged_provisional",
+      "mesh_verified": false,
+      "input_identity": {
+        "project_archive_sha256": "d2f5ed37978618a274d7b76c3111d63fd26f84d3d516df8eec40277f31c30365",
+        "layout_sha256": "744f2bf765ca37f50d3ed4cf0398b7915a4bfcf3fc03cd5dba67fa354b718400",
+        "physics_hash": "530cbb2068bd00f6f26d4183b3133f4858924edf0a700b575481ad1b45240285"
+      },
+      "configuration": {
+        "family": "gan_banks",
+        "preset": "reference",
+        "variant": "distributed",
+        "generator_version": 2,
+        "die_um": [
+          2400.0,
+          2400.0
+        ],
+        "requested_current_A": 10.0,
+        "total_gate_width_m": 0.032,
+        "gate_width_per_finger_m": 0.0005,
+        "actual_gate_fingers": 64,
+        "model_temperature_range_K": [
+          300.0,
+          425.0
+        ],
+        "maximum_channel_field_V_m": 300000.0,
+        "thermal": "attached",
+        "reservoir_temperature_K": 300.0,
+        "attach_resistance_area_m2_K_W": 2e-06,
+        "substrate_thickness_m": 0.00015,
+        "model": "Synthetic analytical local-gate-bias GaN 2DEG; no high-field saturation, breakdown, trapping or switching. Conductance floor is numerical, not leakage.",
+        "metallization_assumption": "Source and drain collection are coplanar opposing combs with no projected overlap. Crossovers use separately elevated source/drain redistribution and physical vias. Specific contacts represent complete local ohmic transfer, not an additional resolved plug.",
+        "stress": false
+      },
+      "physical_identity_equal": true,
+      "model_failures": [],
+      "unavailable": {},
+      "response": {
+        "delivered_current_A": 10.000000000000355,
+        "terminal_voltage_V": 0.7335114574771119,
+        "effective_on_state_resistance_ohm": 0.07335114574770858,
+        "current_per_total_gate_width_A_m": 312.5000000000111,
+        "maximum_channel_field_V_m": 230515.8130575748
+      },
+      "sharing": {
+        "fingers": {
+          "count": 64,
+          "current_sum_A": 9.99999999433956,
+          "maximum_relative_loading_deviation": 0.046247637279480225,
+          "source_potential_spread_V": 0.024844553428052543,
+          "loading_units": "A/m",
+          "loading_min": 301.1081862535302,
+          "loading_max": 326.9523864647682
+        },
+        "banks": {
+          "count": 4,
+          "current_sum_A": 9.999999994339559,
+          "maximum_relative_loading_deviation": 0.04063480920682494,
+          "source_potential_spread_V": 0.023339335648352638,
+          "loading_units": "A/m",
+          "loading_min": 301.6357884796447,
+          "loading_max": 325.19837769305616
+        }
+      },
+      "conservation": [
+        {
+          "metric": "current_balance_error",
+          "value": 5.986860786693095e-10,
+          "limit": 0.001,
+          "passed": true
+        },
+        {
+          "metric": "power_balance_error",
+          "value": 8.624129811664351e-10,
+          "limit": 0.005,
+          "passed": true
+        },
+        {
+          "metric": "thermal_balance_error",
+          "value": 4.241912654882764e-07,
+          "limit": 0.01,
+          "passed": true
+        }
+      ],
+      "terminal_vs_disjoint_loss_error": 8.624129811664351e-10,
+      "loss_categories_W": {
+        "routing_metal": 0.5565194397681732,
+        "other_metal": 0,
+        "access": 3.8712103558838145,
+        "channel": 2.1193710137857917,
+        "contact": 0.569869785317023,
+        "device_load": 0,
+        "external_feed": 0.21814397369067945
+      },
+      "terminal_power_W": 7.335114568445482,
+      "maximum_temperature_K": 329.57684376709983,
+      "measurements": {
+        "routing_loss": {
+          "value": 0.5565194397681732,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "contact_via_loss": {
+          "value": 0.5698697853170231,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "temperature_rise": {
+          "value": 29.57684376709983,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "regularized_hotspot": {
+          "value": 309.25467498543696,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": "",
+          "averaging_length_m": 0.00023999999999999998
+        },
+        "transport_field": {
+          "value": 230515.8130575748,
+          "unit": "V/m",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        }
+      },
+      "mesh": {
+        "nodes": 186794,
+        "elements": 373106,
+        "estimated_dofs": 910301,
+        "minimum_quality": 0.020959622539011985,
+        "mean_quality": 0.1553914202532709,
+        "minimum_angle_deg": 0.6934097695026886,
+        "directional_partitions": 3556
+      },
+      "solver_elapsed_seconds": 862.1875714000016,
+      "native_phases": [
+        {
+          "phase": "preparation",
+          "wall_seconds": 3.0940000000009604,
+          "peak_gui_rss_bytes": 287244288,
+          "peak_worker_rss_bytes": 129228800,
+          "sampling_errors": []
+        },
+        {
+          "phase": "validation",
+          "wall_seconds": 3.2810000000026776,
+          "peak_gui_rss_bytes": 291487744,
+          "peak_worker_rss_bytes": 128811008,
+          "sampling_errors": []
+        },
+        {
+          "phase": "meshing",
+          "wall_seconds": 108.79599999999846,
+          "peak_gui_rss_bytes": 356089856,
+          "peak_worker_rss_bytes": 532410368,
+          "sampling_errors": []
+        },
+        {
+          "phase": "solve_and_postprocessing",
+          "wall_seconds": 884.655999999999,
+          "peak_gui_rss_bytes": 1128947712,
+          "peak_worker_rss_bytes": 4902449152,
+          "sampling_errors": []
+        }
+      ],
+      "export_reimport": "Not established by this native nominal receipt; independent strict E21/E23 checks are recorded separately."
+    },
+    {
+      "name": "E24_sic_cells",
+      "status": "converged_provisional",
+      "mesh_verified": false,
+      "input_identity": {
+        "project_archive_sha256": "ec4ec0e0cd2c4eb0b6f07c7c252f1d8d76301f2c34c64ec28eed8de9c694ea55",
+        "layout_sha256": "7f2205e97e50834331b415ed4f10edf3268993f776a020e7ee162a567aa5ab89",
+        "physics_hash": "13f21c777677941f418d8d8288a1a5bf7f14debbf081ab70ab075f73358384fc"
+      },
+      "configuration": {
+        "family": "sic_cells",
+        "preset": "reference",
+        "variant": "bonds",
+        "generator_version": 2,
+        "die_um": [
+          1000.0,
+          1000.0
+        ],
+        "requested_current_A": 10.0,
+        "active_area_m2": 5.715360000000002e-07,
+        "macrocell_count": 64,
+        "on_state_specific_resistance_ohm_m2": 1e-07,
+        "reference_temperature_K": 300.0,
+        "temperature_coefficient_K_inverse": 0.003,
+        "model_temperature_range_K": [
+          300.0,
+          450.0
+        ],
+        "thermal": "attached",
+        "reservoir_temperature_K": 300.0,
+        "attach_resistance_area_m2_K_W": 2e-06,
+        "substrate_thickness_m": 0.0002,
+        "model": "SiC MOSFET on-state interconnect model. Ron,sp includes channel/drift/intrinsic device contacts, excluding modeled metal/vias/external feeds. No separate electrical substrate loss, body diode, avalanche, switching or trench/planar distinction.",
+        "fixed_gate_assumption": "On state; drawn insulated gate does not control the load",
+        "stress": false
+      },
+      "physical_identity_equal": true,
+      "model_failures": [],
+      "unavailable": {},
+      "response": {
+        "delivered_current_A": 10.000000000001656,
+        "terminal_voltage_V": 2.0199178456823907,
+        "effective_on_state_resistance_ohm": 0.20199178456820563,
+        "kelvin_error_V": 0.02028443954778548
+      },
+      "sharing": {
+        "macrocells": {
+          "count": 64,
+          "current_sum_A": 9.99999999672986,
+          "maximum_relative_loading_deviation": 0.006765499657536367,
+          "source_potential_spread_V": 0.0007743742873912683,
+          "loading_units": "A/m\u00b2",
+          "loading_min": 17417099.42165884,
+          "loading_max": 17615084.602340184
+        }
+      },
+      "conservation": [
+        {
+          "metric": "current_balance_error",
+          "value": 3.2743212591083714e-10,
+          "limit": 0.001,
+          "passed": true
+        },
+        {
+          "metric": "power_balance_error",
+          "value": 3.254138432774493e-10,
+          "limit": 0.005,
+          "passed": true
+        },
+        {
+          "metric": "thermal_balance_error",
+          "value": 5.52473577883043e-07,
+          "limit": 0.01,
+          "passed": true
+        }
+      ],
+      "terminal_vs_disjoint_loss_error": 3.254138432774493e-10,
+      "loss_categories_W": {
+        "routing_metal": 0.020398193240066878,
+        "other_metal": 0,
+        "access": 0,
+        "channel": 0,
+        "contact": 0.000885665755940598,
+        "device_load": 19.877842143330025,
+        "external_feed": 0.3000524479281288
+      },
+      "terminal_power_W": 20.19917845025416,
+      "maximum_temperature_K": 350.94506838172083,
+      "measurements": {
+        "kelvin_potential": {
+          "value": 0.02028443954778548,
+          "unit": "V",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "device_loss": {
+          "value": 19.877842143330028,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "routing_loss": {
+          "value": 0.02039819324006687,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "contact_via_loss": {
+          "value": 0.000885665755940598,
+          "unit": "W",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "temperature_rise": {
+          "value": 50.94506838172083,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": ""
+        },
+        "regularized_hotspot": {
+          "value": 350.8652667106358,
+          "unit": "K",
+          "status": "available",
+          "within_limits": true,
+          "reason": "",
+          "averaging_length_m": 9.999999999999999e-05
+        }
+      },
+      "mesh": {
+        "nodes": 13403,
+        "elements": 26564,
+        "estimated_dofs": 86113,
+        "minimum_quality": 0.05326728095189101,
+        "mean_quality": 0.8556108560245393,
+        "minimum_angle_deg": 1.8183029644516369,
+        "directional_partitions": 0
+      },
+      "solver_elapsed_seconds": 51.73027330000332,
+      "native_phases": [
+        {
+          "phase": "preparation",
+          "wall_seconds": 2.1569999999992433,
+          "peak_gui_rss_bytes": 285585408,
+          "peak_worker_rss_bytes": 123555840,
+          "sampling_errors": []
+        },
+        {
+          "phase": "validation",
+          "wall_seconds": 2.313000000001921,
+          "peak_gui_rss_bytes": 290758656,
+          "peak_worker_rss_bytes": 123420672,
+          "sampling_errors": []
+        },
+        {
+          "phase": "meshing",
+          "wall_seconds": 4.610000000000582,
+          "peak_gui_rss_bytes": 296480768,
+          "peak_worker_rss_bytes": 160219136,
+          "sampling_errors": []
+        },
+        {
+          "phase": "solve_and_postprocessing",
+          "wall_seconds": 56.46899999999732,
+          "peak_gui_rss_bytes": 313049088,
+          "peak_worker_rss_bytes": 514179072,
+          "sampling_errors": []
+        }
+      ],
+      "export_reimport": "Not established by this native nominal receipt; independent strict E21/E23 checks are recorded separately."
+    }
+  ],
+  "reproduction": {
+    "coarse": "python scripts/benchmark_power_examples.py --examples E21 E23 --preset reference --mesh-factor 1 --cpu-threads 4 --timeout 900 --output .artifacts/release031/mesh-screen/coarse --save-fields",
+    "fine": "python scripts/benchmark_power_examples.py --examples E21 E23 --preset reference --mesh-factor 0.8 --cpu-threads 4 --timeout 900 --output .artifacts/release031/mesh-screen/fine --save-fields",
+    "comparison": "python scripts/compare_power_benchmarks.py COARSE_RECEIPT FINE_RECEIPT --output COMPARISON_JSON",
+    "native": "python scripts/power_examples_desktop_acceptance.py --catalog --workflow all --solve --scale 1 --output .artifacts/current-example-workflow/native-all-100"
+  },
+  "limitations": [
+    "Only E21/E23 have current strict two-level 3% observed-sensitivity screens. Individual solves and E20/E22/E24 nominal receipts remain provisional.",
+    "Native nominal and strict mesh checkpoints have separate source guards and fingerprint conventions; they are not represented as one identical source run.",
+    "Two levels do not establish asymptotic convergence, a rigorous error bound, experimental calibration or a routing winner.",
+    "GaN excludes high-field saturation, breakdown, trapping and switching; its conductance floor is not leakage. SiC is a fixed-on distributed area-specific resistance model.",
+    "Existing large/stress attempts belong to historical0.3.0 geometry. Large presets were not rerun for these mesh screens.",
+    "SuperLU and reporting remain serial. Compact landing labels can overlap. Derived temperature-rise cancellation can magnify ULP-only differences; inspect absolute Temperature or set a manual range.",
+    "Sampled memory can miss short peaks. No clean-machine, physical mixed-monitor DPI, GPU or screen-reader certification."
+  ]
+}

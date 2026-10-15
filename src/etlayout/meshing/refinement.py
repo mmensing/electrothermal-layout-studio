@@ -1,0 +1,344 @@
+# SPDX-License-Identifier: MPL-2.0
+"""Reviewable local sizing suggestions, not an a posteriori error estimator.
+
+Supports are exact prepared geometry. Estimates deliberately count overlapping
+refinements independently; they are planning screens, not peak-RSS guarantees.
+"""
+from __future__ import annotations
+
+import math
+from copy import deepcopy
+from dataclasses import asdict, dataclass, field
+
+import numpy as np
+from shapely import polygons, union_all
+from shapely.geometry import box
+
+from etlayout.geometry.prepare import geometry_region, polygon_parts, prepare_geometry
+from etlayout.io.project import configuration_hash
+from etlayout.models import (
+    MeasurementSpec,
+    RefinementRegion,
+    RegionSpec,
+    SimulationError,
+    SupportSelector,
+    checkpoint,
+)
+
+
+@dataclass
+class RefinementSuggestion:
+    id: str
+    purpose: str
+    target: str
+    geometry: RegionSpec
+    size: float
+    reason: str
+    length: float
+
+
+@dataclass
+class RefinementPlan:
+    configuration_hash: str
+    suggestions: list[RefinementSuggestion] = field(default_factory=list)
+    warnings: list[str] = field(default_factory=list)
+    max_elements: int = 250000
+    max_dofs: int = 500000
+    max_memory_bytes: int = 4 * 1024**3
+    sharing_groups: list[str] = field(default_factory=list)
+    hotspot_measurements: list[str] = field(default_factory=list)
+    generated_hotspot: MeasurementSpec | None = None
+
+    def to_dict(self):
+        return {"version": 1, **asdict(self)}
+
+    @classmethod
+    def from_dict(cls, data):
+        if not isinstance(data, dict) or data.get("version") != 1:
+            raise SimulationError("Local mesh plan requires supported version 1")
+        try:
+            values = {key: deepcopy(value) for key, value in data.items() if key != "version"}
+            values["suggestions"] = [RefinementSuggestion(**{**value,
+                "geometry": RegionSpec(**value["geometry"])}) for value in values["suggestions"]]
+            if values.get("generated_hotspot") is not None:
+                value = values["generated_hotspot"]
+                selector = {**value["selector"]}
+                if selector.get("geometry") is not None:
+                    selector["geometry"] = RegionSpec(**selector["geometry"])
+                values["generated_hotspot"] = MeasurementSpec(**{**value, "selector": SupportSelector(**selector)})
+            return cls(**values)
+        except (TypeError, KeyError) as error:
+            raise SimulationError("Malformed local mesh plan; regenerate with mesh-plan") from error
+
+
+def _groups(project):
+    buckets = {}
+    for group in project.power.devices:
+        dimensions = (group.active_width, group.active_area)
+        if max(dimensions) > 0:
+            buckets.setdefault(dimensions, []).append(group.id)
+    # Do not mix parent banks with their constituent fingers or area/width loads.
+    return max(buckets.values(), key=len, default=[]) if buckets else []
+
+
+def contact_transfer_estimate(project, interface, layer_id, states=()):
+    """Shared with optimizer verification; shortest recorded directional L_T."""
+    from etlayout.physics.constitutive import sheet_conductance
+
+    layer = project.layer(layer_id)
+    conductances = []
+    estimate = "minimum local directional sheet conductance across coarse scenarios"
+    for state in states:
+        values = state.fields.get(layer_id, {}).get("sheet_conductance")
+        elements = state.mesh.regions.get("interface:" + interface.id, [])
+        if values is not None and len(elements):
+            selected = np.asarray(values)[elements]
+            conductances.extend(selected[np.isfinite(selected) & (selected > 0)].ravel())
+    if not conductances and layer.electrical.kind in {"bulk", "sheet", "semiconductor"}:
+        conductances.extend(sheet_conductance(layer, project.materials[layer.material_id],
+            np.array([project.solver.initial_temperature])).ravel())
+        estimate = "constitutive sheet conductance at declared initial temperature"
+    if not conductances or interface.electrical_value <= 0:
+        return None, "Local sheet conductance unavailable for transfer-length estimate"
+    return math.sqrt(interface.electrical_value / (1. / min(conductances))), estimate
+
+
+def suggest_refinements(project, result=None, *, geometry=None, progress=None, cancel=None,
+                        max_memory_bytes=4 * 1024**3, averaging_length=None, hotspot_layer=None):
+    from etlayout.physics.constitutive import sheet_conductance
+    from etlayout.power.analysis import _context_error, evaluate_measurement, selected_support
+    from etlayout.simulation.runner import _verify_layout
+
+    _verify_layout(project)
+    geometry = geometry or prepare_geometry(project, progress=progress, cancel=cancel)
+    plan = RefinementPlan(configuration_hash(project), max_elements=project.mesh.max_elements,
+                          max_dofs=project.mesh.max_dofs, max_memory_bytes=max_memory_bytes,
+                          sharing_groups=_groups(project), hotspot_measurements=[spec.id for spec in
+                          project.power.measurements if spec.averaging_length > 0 and spec.aggregation == "maximum"])
+    compatible = result is not None and result.converged and not _context_error(project, result)
+    if result is not None and not compatible:
+        plan.warnings.append("Solved-state guidance omitted: result is unconverged or does not match this working configuration.")
+    if not plan.hotspot_measurements:
+        layers = ([layer for layer in project.layers if layer.role == "conductor"]
+                  if project.solver.mode == "electrical" else project.layers)
+        layer = next((item for item in layers if item.id == hotspot_layer), layers[0] if layers else None)
+        if hotspot_layer and (layer is None or layer.id != hotspot_layer):
+            raise SimulationError("Hotspot layer must name an existing participating physical layer")
+        length = project.mesh.max_size * 4 if averaging_length is None else averaging_length
+        if not math.isfinite(length) or length <= 0:
+            raise SimulationError("Hotspot averaging length must be finite and positive in meters")
+        if layer is not None:
+            quantity = ("metal_current_density" if layer.electrical.kind == "bulk" else "sheet_current") if project.solver.mode == "electrical" else "temperature"
+            identifier = "guided-averaged-" + layer.id
+            if any(spec.id == identifier for spec in project.power.measurements):
+                raise SimulationError(f"Measurement {identifier} already exists with incompatible averaging; review or rename it first")
+            plan.generated_hotspot = MeasurementSpec(identifier, quantity,
+                SupportSelector(layers=[layer.id]), averaging_length=length)
+            plan.hotspot_measurements.append(identifier)
+            plan.warnings.append(f"Reviewed study measurement: {quantity} on {layer.id}, fixed {length * 1e6:g} µm supported-area averaging. This default length is a reporting choice, not a calibrated physical length.")
+
+    def add(identifier, purpose, target, support, length, reason):
+        if support.is_empty or support.area <= 0 or not math.isfinite(length) or length <= 0:
+            return
+        size = min(project.mesh.max_size, length / 4)
+        if size < project.mesh.min_size:
+            reason += " Applying this suggestion explicitly lowers the minimum mesh size."
+        plan.suggestions.append(RefinementSuggestion(identifier, purpose, target,
+                                geometry_region(support), size, reason, length))
+
+    for interface in project.interfaces:
+        checkpoint(cancel)
+        if not interface.enabled or interface.electrical_kind != "specific" or interface.purpose == "device_load":
+            continue
+        if not math.isfinite(interface.electrical_value) or interface.electrical_value <= 0:
+            continue
+        support = geometry.interfaces.get(interface.id)
+        if support is None:
+            continue
+        for layer_id in (interface.layer_a, interface.layer_b):
+            layer = project.layer(layer_id)
+            if layer.role != "conductor":
+                continue
+            length, estimate = contact_transfer_estimate(project, interface, layer_id, [result] if compatible else [])
+            if length is None:
+                plan.warnings.append(f"{interface.id}/{layer_id}: solve the biased HEMT before estimating contact transfer length.")
+                continue
+            add(f"contact-{interface.id}-{layer_id}", "Contact transfer", f"{interface.id}/{layer_id}",
+                support, length, f"Four elements per L_T = sqrt(rho_c G_s), using {estimate}; estimate varies with bias/temperature.")
+
+    for port in project.power.ports:
+        for landing in port.landings:
+            terminal = next((item for item in project.terminals if item.id == landing.terminal_id), None)
+            support = geometry.terminals.get(landing.terminal_id)
+            if terminal is None or support is None or support.area <= 0 or landing.resistance <= 0:
+                continue
+            layer = project.layer(terminal.layer_id)
+            if layer.electrical.kind == "hemt":
+                plan.warnings.append(f"{port.id}/{terminal.id}: direct HEMT landing transfer-length estimate is unavailable; use an explicit contact interface.")
+                continue
+            conductance = sheet_conductance(layer, project.materials[layer.material_id],
+                                           np.array([project.solver.initial_temperature]))
+            length = math.sqrt(landing.resistance * support.area * float(conductance.min()))
+            add(f"landing-{port.id}-{terminal.id}", "Finite feed landing", terminal.id, support, length,
+                "Four elements per L_T from landing resistance × footprint area and initial-temperature sheet conductance. Ideal landings have no finite transfer length.")
+
+    for layer in project.layers:
+        if layer.role == "conductor" and layer.electrical.kind != "hemt":
+            narrow = []
+            widths = []
+            for part in polygon_parts(geometry.layers[layer.id]):
+                coordinates = np.asarray(part.minimum_rotated_rectangle.exterior.coords)
+                lengths = np.linalg.norm(np.diff(coordinates, axis=0), axis=1)
+                if lengths.min() <= 2 * project.mesh.max_size and lengths.max() >= 4 * lengths.min():
+                    narrow.append(part)
+                    widths.append(float(lengths.min()))
+            if narrow:
+                add("narrow-" + layer.id, "Narrow conductor", layer.id, union_all(narrow), min(widths),
+                    "Four elements across the short extent of elongated conductor islands. This geometric heuristic does not certify notches or complex neck widths.")
+        if layer.role != "conductor" or layer.electrical.kind != "hemt":
+            continue
+        gate_ids = layer.electrical.gate_regions or [terminal.id for terminal in project.terminals
+                                                   if terminal.kind == "gate" and terminal.layer_id == layer.id]
+        for gate_id in gate_ids:
+            support = geometry.terminals.get(gate_id)
+            if support is None:
+                continue
+            support = support.intersection(geometry.layers[layer.id])
+            parts = list(polygon_parts(support))
+            widths = []
+            for part in parts:
+                # The short extent estimates gate length, not conducting finger width.
+                coordinates = np.asarray(part.minimum_rotated_rectangle.exterior.coords)
+                widths.append(float(np.linalg.norm(np.diff(coordinates, axis=0), axis=1).min()))
+            if widths:
+                add(f"channel-{layer.id}-{gate_id}", "Gated channel", f"{layer.id}/{gate_id}", support,
+                    min(widths), "Four elements across the short rotated gate-support extent. Exact channel boundaries remain unchanged; inspect irregular gate shapes.")
+
+    if compatible:
+        specifications = {spec.id: spec for spec in project.power.measurements}
+        if plan.generated_hotspot:
+            specifications[plan.generated_hotspot.id] = plan.generated_hotspot
+        for identifier in plan.hotspot_measurements:
+            spec = specifications[identifier]
+            record = result.analysis.get("measurements", {}).get(identifier, {})
+            if record.get("specification") != asdict(spec):
+                record = evaluate_measurement(project, result, spec)
+            center = record.get("window_center")
+            if record.get("status") != "available" or center is None:
+                plan.warnings.append(f"{identifier}: averaged-hotspot guidance unavailable: {record.get('reason') or 'solve a compatible configuration first'}")
+                continue
+            x, y = center
+            half = spec.averaging_length / 2
+            window = box(x-half, y-half, x+half, y+half)
+            selected, clips = selected_support(project, result, spec.selector)
+            pieces = []
+            for layer, elements in selected.items():
+                shapes = polygons(result.mesh.points[result.mesh.triangles[elements]])
+                shapes = shapes[window.intersects(shapes)]
+                local = window.intersection(shapes)
+                if clips.get(layer) is not None:
+                    local = clips[layer].intersection(local)
+                pieces.extend(local)
+            support = union_all(pieces).intersection(geometry.domain)
+            add("hotspot-" + identifier, "Averaged hotspot", identifier, support, spec.averaging_length,
+                "Four elements across this solved physical averaging window; its location is fixed throughout the study.")
+    checkpoint(cancel, progress, 1., f"Prepared {len(plan.suggestions)} local refinement suggestions")
+    return plan
+
+
+def local_study_metrics(project, result, plan):
+    """Track fixed physical averaging lengths and like-sized device groups."""
+    values = {}
+    for identifier in plan.hotspot_measurements:
+        record = result.analysis.get("measurements", {}).get(identifier, {})
+        spec = next((item for item in project.power.measurements if item.id == identifier), None)
+        if spec is None or record.get("status") != "available":
+            raise SimulationError(f"Local mesh study needs available averaged measurement {identifier}: {record.get('reason', 'missing specification')}")
+        values[f"regularized_{spec.quantity}:{identifier}"] = record["value"]
+    if len(plan.sharing_groups) > 1:
+        loading, potentials = [], []
+        for identifier in plan.sharing_groups:
+            record = result.analysis.get("devices", {}).get(identifier, {})
+            group = next((item for item in project.power.devices if item.id == identifier), None)
+            if group is None or record.get("status") != "available":
+                raise SimulationError(f"Current-sharing study needs available device group {identifier}: {record.get('reason', 'missing group')}")
+            normalization = group.active_width or group.active_area
+            loading.append(record["current"] / normalization)
+            if record.get("source_voltage") is not None:
+                potentials.append(record["source_voltage"])
+        mean = float(np.mean(np.abs(loading)))
+        if mean > 0:
+            values["device_current_sharing_error"] = float(np.ptp(loading) / mean)
+        if len(potentials) == len(loading):
+            values["device_source_voltage_spread"] = float(np.ptp(potentials))
+    return values
+
+
+def apply_refinement_plan(project, plan, selected=None, *, factor=1.):
+    """Return an independent candidate. This operation is an explicit user commit."""
+    if isinstance(plan, dict):
+        plan = RefinementPlan.from_dict(plan)
+    if configuration_hash(project) != plan.configuration_hash:
+        raise SimulationError("Local mesh plan belongs to a different configuration; regenerate suggestions before applying.")
+    if not math.isfinite(factor) or not 0 < factor <= 1:
+        raise SimulationError("Local refinement factor must be finite, positive and no greater than 1")
+    for value, label in ((plan.max_elements, "element"), (plan.max_dofs, "DOF"), (plan.max_memory_bytes, "memory")):
+        if type(value) is not int or value <= 0:
+            raise SimulationError(f"Local refinement {label} budget must be a positive integer")
+    identifiers = [item.id for item in plan.suggestions]
+    if len(set(identifiers)) != len(identifiers):
+        raise SimulationError("Local mesh suggestion IDs must be unique")
+    selected = set(identifiers if selected is None else selected)
+    if not selected or selected - set(identifiers):
+        raise SimulationError("Select at least one existing local mesh suggestion")
+    candidate = deepcopy(project)
+    candidate.mesh.max_elements, candidate.mesh.max_dofs = plan.max_elements, plan.max_dofs
+    existing = {item.id: index for index, item in enumerate(candidate.mesh.refinements)}
+    for suggestion in plan.suggestions:
+        if suggestion.id not in selected:
+            continue
+        size = suggestion.size * factor
+        if not math.isfinite(size) or size <= 0 or suggestion.geometry.line:
+            raise SimulationError(f"Suggestion {suggestion.id} requires positive finite area sizing")
+        identifier = "guided-" + suggestion.id
+        refinement = RefinementRegion(identifier, deepcopy(suggestion.geometry), size)
+        if identifier in existing:
+            candidate.mesh.refinements[existing[identifier]] = refinement
+        else:
+            existing[identifier] = len(candidate.mesh.refinements)
+            candidate.mesh.refinements.append(refinement)
+        candidate.mesh.min_size = min(candidate.mesh.min_size, size)
+    if plan.generated_hotspot:
+        if any(spec.id == plan.generated_hotspot.id for spec in candidate.power.measurements):
+            raise SimulationError("Generated averaged measurement conflicts with an existing ID; regenerate the plan")
+        candidate.power.measurements.append(deepcopy(plan.generated_hotspot))
+    return candidate
+
+
+def estimate_resources(project, *, geometry=None):
+    """Conservative overlap-counting planning estimate; actual Gmsh limits apply too."""
+    geometry = geometry or prepare_geometry(project)
+    base = 2.31 * geometry.domain.area / project.mesh.max_size**2
+    extra = 0.
+    controls = [(support, project.mesh.contact_size) for support in geometry.interfaces.values()]
+    controls += [(support, project.mesh.contact_size) for support in geometry.terminals.values()]
+    controls += [(geometry.refinements[item.id], min(item.axis_sizes or [item.size]))
+                 for item in project.mesh.refinements]
+    controls += [(geometry.layers[item.id], item.mesh_size) for item in project.layers if item.mesh_size]
+    for support, size in controls:
+        extra += 2.31 * support.area * max(0., 1 / size**2 - 1 / project.mesh.max_size**2)
+    elements = math.ceil(base + extra)
+    weighted_layers = sum((2 if layer.role == "conductor" else 1) * geometry.layers[layer.id].area
+                          for layer in project.layers) / geometry.domain.area
+    dofs = math.ceil((elements / 2 + 4 * math.sqrt(elements)) * weighted_layers)
+    return {"elements": elements, "dofs": dofs, "memory_bytes": dofs * 2048 + elements * 512,
+            "planning_estimate_only": True,
+            "definition": "Additional numerical memory only, approximately 2 KiB/DOF plus 512 B/element; excludes Python/Qt/import baselines. Overlapping supports count independently; sparse fill, allocator and reporting costs vary."}
+
+
+def screen_resources(project, plan, *, geometry=None):
+    estimate = estimate_resources(project, geometry=geometry)
+    for metric, maximum in (("elements", plan.max_elements), ("dofs", plan.max_dofs), ("memory_bytes", plan.max_memory_bytes)):
+        if estimate[metric] > maximum:
+            raise SimulationError(f"Local refinement planning estimate {metric}={estimate[metric]:,} exceeds budget {maximum:,}; deselect expensive supports, use fewer levels or explicitly increase the budget. Estimates are not peak-memory guarantees.")
+    return estimate

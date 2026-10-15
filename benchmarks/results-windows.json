@@ -1,0 +1,562 @@
+{
+  "hardware": {
+    "cpu": "AMD Ryzen AI 7 PRO 350 w/ Radeon 860M          ",
+    "logical_cpus": 16,
+    "physical_cpus": 8,
+    "system_ram_gib": 31.17702865600586,
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14 (main, Aug 25 2026, 14:01:42) [MSC v.1944 64 bit (AMD64)]",
+    "machine": "AMD64"
+  },
+  "measured_local_date": "2026-10-10",
+  "protocol": "One fresh native worker per workload; single observed run; RSS sampled every 10 ms; runner including lazy backend imports, mesh and physics timed; input layout generation excluded; other workstation activity possible.",
+  "benchmarks": [
+    {
+      "name": "small_metal",
+      "mode": "electrical",
+      "elapsed_s": 0.7717764000008174,
+      "converged": true,
+      "errors": [],
+      "nodes": 360,
+      "triangles": 608,
+      "electrical_dofs": 360,
+      "thermal_dofs": 0,
+      "mesh_statistics": {
+        "nodes": 360,
+        "elements": 608,
+        "estimated_dofs": 720,
+        "partitions": 1,
+        "minimum_quality": 0.8960255787872858,
+        "mean_quality": 0.9950638495097788,
+        "minimum_angle_deg": 44.11600529987669,
+        "area_m2": 1e-09,
+        "elapsed_seconds": 0.02060650000203168,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.004761904761904762,
+            "joule_power": 0.004761904761904762,
+            "contact_power": 0.0,
+            "terminal_power": 0.00476190476190496,
+            "current_balance_error": 5.735412145213484e-14,
+            "power_balance_error": 4.152928001488303e-14,
+            "electrical_residual": 1.2123635428906255e-14,
+            "effective_resistance": 0.0839999999999965,
+            "resistance": 0.0839999999999965,
+            "voltage_drop": 0.02,
+            "total_current": 0.23809523809524802,
+            "current_density_max": 11904761904.762554,
+            "contacts": {},
+            "electrical_dofs": 360
+          },
+          "configuration_hash": "71f4ce4ea91e65e2eaee969041dadd4af335349a8fb9b60fc8d5165429b367fb"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 104.94140625,
+      "worker_exit_code": 0
+    },
+    {
+      "name": "multilayer",
+      "mode": "electrical",
+      "elapsed_s": 1.73510179999721,
+      "converged": true,
+      "errors": [],
+      "nodes": 9070,
+      "triangles": 17788,
+      "electrical_dofs": 18140,
+      "thermal_dofs": 0,
+      "mesh_statistics": {
+        "nodes": 9070,
+        "elements": 17788,
+        "estimated_dofs": 36280,
+        "partitions": 16,
+        "minimum_quality": 0.7677433099652939,
+        "mean_quality": 0.9871102726138197,
+        "minimum_angle_deg": 36.33047844151477,
+        "area_m2": 4e-08,
+        "elapsed_seconds": 0.4625784999989264,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.013599894535029829,
+            "joule_power": 0.012900515466076014,
+            "contact_power": 0.0006993790689538142,
+            "terminal_power": 0.013599894535030084,
+            "current_balance_error": 4.551914400963252e-15,
+            "power_balance_error": 1.87504653298421e-14,
+            "electrical_residual": 3.441691376337985e-14,
+            "effective_resistance": 0.00339997363375767,
+            "resistance": 0.00339997363375767,
+            "voltage_drop": 0.006799947267515191,
+            "total_current": 1.999999999999956,
+            "current_density_max": 3529269219.0614605,
+            "contacts": {
+              "array": {
+                "power": 0.0006993790689538142,
+                "current_a_to_b": -1.999999999999942
+              }
+            },
+            "electrical_dofs": 18140
+          },
+          "configuration_hash": "999b3d68e2211889af4fe5415a3bb4f6900f5d244b1be62d96a97b97594e01d9"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 150.77734375,
+      "worker_exit_code": 0
+    },
+    {
+      "name": "millimeter",
+      "mode": "electrical",
+      "elapsed_s": 0.9572356999997282,
+      "converged": true,
+      "errors": [],
+      "nodes": 3439,
+      "triangles": 4760,
+      "electrical_dofs": 3439,
+      "thermal_dofs": 0,
+      "mesh_statistics": {
+        "nodes": 3439,
+        "elements": 4760,
+        "estimated_dofs": 6878,
+        "partitions": 1,
+        "minimum_quality": 0.7395792883760858,
+        "mean_quality": 0.9680316706780043,
+        "minimum_angle_deg": 37.07254466258804,
+        "area_m2": 3.420000000000002e-07,
+        "elapsed_seconds": 0.1327032999979565,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.10824413084379074,
+            "joule_power": 0.10824413084379074,
+            "contact_power": 0.0,
+            "terminal_power": 0.10824413084378139,
+            "current_balance_error": 1.4210854715196819e-13,
+            "power_balance_error": 8.641234318713642e-14,
+            "electrical_residual": 7.638334409417751e-14,
+            "effective_resistance": 0.02706103271092945,
+            "resistance": 0.02706103271092945,
+            "voltage_drop": 0.054122065421874796,
+            "total_current": 2.0000000000005875,
+            "current_density_max": 3808631933.53575,
+            "contacts": {},
+            "electrical_dofs": 3439
+          },
+          "configuration_hash": "2596448d4648db4210a20ca18974db9903c502794f8322de360c88471f3ee4dd"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 109.046875,
+      "worker_exit_code": 0
+    },
+    {
+      "name": "hemt",
+      "mode": "electrical",
+      "elapsed_s": 1.5011053000016545,
+      "converged": true,
+      "errors": [],
+      "nodes": 7053,
+      "triangles": 13807,
+      "electrical_dofs": 9543,
+      "thermal_dofs": 0,
+      "mesh_statistics": {
+        "nodes": 7053,
+        "elements": 13807,
+        "estimated_dofs": 26139,
+        "partitions": 21,
+        "minimum_quality": 0.7371038827979054,
+        "mean_quality": 0.9805141960721808,
+        "minimum_angle_deg": 35.44474484429569,
+        "area_m2": 1.2000000000000002e-08,
+        "elapsed_seconds": 0.3700965999996697,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.0025167664904179633,
+            "joule_power": 0.0024278875759083597,
+            "contact_power": 8.88789145096034e-05,
+            "terminal_power": 0.0025167664757445255,
+            "current_balance_error": 2.979838059522603e-12,
+            "power_balance_error": 5.830273832671944e-09,
+            "electrical_residual": 4.812205232803599e-09,
+            "effective_resistance": 15.893409414620782,
+            "resistance": 15.893409414620782,
+            "voltage_drop": 0.2,
+            "total_current": 0.012583832378722626,
+            "current_density_max": 6740583292.303062,
+            "contacts": {
+              "source_contact": {
+                "power": 4.367257189472741e-05,
+                "current_a_to_b": 0.012583832378685713
+              },
+              "drain_contact": {
+                "power": 4.520634261487599e-05,
+                "current_a_to_b": -0.012583832378685707
+              }
+            },
+            "electrical_dofs": 9543
+          },
+          "configuration_hash": "ba2c2f0e9bdf95e877dbd307907205304086cc06ae25ff672d072d87625178c4"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 135.41796875,
+      "worker_exit_code": 0
+    },
+    {
+      "name": "coupled_stack",
+      "mode": "electrothermal",
+      "elapsed_s": 7.5701859000000695,
+      "converged": true,
+      "errors": [],
+      "nodes": 7899,
+      "triangles": 15456,
+      "electrical_dofs": 709,
+      "thermal_dofs": 16507,
+      "mesh_statistics": {
+        "nodes": 7899,
+        "elements": 15456,
+        "estimated_dofs": 17216,
+        "partitions": 2,
+        "minimum_quality": 0.8914750461002243,
+        "mean_quality": 0.9981049604920064,
+        "minimum_angle_deg": 43.87510366651419,
+        "area_m2": 2.6400000000000005e-08,
+        "elapsed_seconds": 0.3920652999986487,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.02815959311643448,
+            "joule_power": 0.02815959311643448,
+            "contact_power": 0.0,
+            "terminal_power": 0.028159593116436774,
+            "current_balance_error": 1.8457457784395262e-13,
+            "power_balance_error": 8.143954444791802e-14,
+            "electrical_residual": 3.330669073875452e-14,
+            "effective_resistance": 0.17599745697773617,
+            "resistance": 0.17599745697773617,
+            "voltage_drop": 0.0703989827910932,
+            "total_current": 0.3999999999999928,
+            "current_density_max": 20000448310.83661,
+            "contacts": {},
+            "electrical_dofs": 709,
+            "temperature_max": 312.16451582699705,
+            "temperature_min": 300.10755479726095,
+            "temperature_average": 300.8911349620904,
+            "temperature_rise": 12.164515826997047,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.028159593116434484,
+            "heat_out": 0.028159411486092127,
+            "thermal_resistance": 431.9847867367657,
+            "thermal_balance_error": 6.4500343313047635e-06,
+            "thermal_residual": 6.4074162093276346e-06,
+            "boundary_heat_flows": {
+              "sink": 0.028159169227004052,
+              "top_air": 2.422590880734286e-07
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 0.00010100000000051433,
+              "y": 5.019615242281941e-05,
+              "z": 1e-06,
+              "temperature": 312.16451582699705
+            },
+            "thermal_dofs": 16507
+          },
+          "configuration_hash": "078e6e2d3c7cd619b6dcf1d965f9feae2be463c4af04de3912db17e990bb63dd"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 190.81640625,
+      "worker_exit_code": 0
+    },
+    {
+      "name": "parameter_sweep",
+      "mode": "5-point electrothermal sweep",
+      "elapsed_s": 1.7126420000022335,
+      "converged": true,
+      "errors": [],
+      "nodes": 360,
+      "triangles": 608,
+      "electrical_dofs": 360,
+      "thermal_dofs": 360,
+      "mesh_statistics": {
+        "nodes": 360,
+        "elements": 608,
+        "estimated_dofs": 720,
+        "partitions": 1,
+        "minimum_quality": 0.8960255787872858,
+        "mean_quality": 0.9950638495097788,
+        "minimum_angle_deg": 44.11600529987669,
+        "area_m2": 1e-09,
+        "elapsed_seconds": 0.020491800001764204,
+        "backend": "Gmsh 4.15.2",
+        "warnings": []
+      },
+      "results": [
+        {
+          "metrics": {
+            "electrical_power": 0.001187704297746872,
+            "joule_power": 0.001187704297746872,
+            "contact_power": 0.0,
+            "terminal_power": 0.0011877042977469293,
+            "current_balance_error": 3.4352570949161314e-14,
+            "power_balance_error": 4.819876026030204e-14,
+            "electrical_residual": 1.4021457530269834e-14,
+            "effective_resistance": 0.08419604121135171,
+            "resistance": 0.08419604121135171,
+            "voltage_drop": 0.01,
+            "total_current": 0.11877042977469293,
+            "current_density_max": 5938521488.734793,
+            "contacts": {},
+            "electrical_dofs": 360,
+            "temperature_max": 300.5938483319876,
+            "temperature_min": 300.59384833198754,
+            "temperature_average": 300.5938483319876,
+            "temperature_rise": 0.5938483319876013,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.001187704297746872,
+            "heat_out": 0.0011876966639751902,
+            "thermal_resistance": 499.99678633322964,
+            "thermal_balance_error": 6.427333551221269e-06,
+            "thermal_residual": 6.4273698851360144e-06,
+            "boundary_heat_flows": {
+              "sink_metal": 0.0011876966639751902
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 3.939038361683015e-06,
+              "y": 3.2913061917140143e-06,
+              "z": 0.0,
+              "temperature": 300.5938483319876
+            },
+            "thermal_dofs": 360
+          },
+          "configuration_hash": "8bb46b13fa814e061c00ef66bdf7570f582c7101aaea12adf52233a74a9ba738"
+        },
+        {
+          "metrics": {
+            "electrical_power": 0.0047181620399940425,
+            "joule_power": 0.0047181620399940425,
+            "contact_power": 0.0,
+            "terminal_power": 0.004718162039993961,
+            "current_balance_error": 3.482563893560778e-14,
+            "power_balance_error": 1.7280458509011464e-14,
+            "electrical_residual": 1.8824669694922797e-14,
+            "effective_resistance": 0.08477877542342993,
+            "resistance": 0.08477877542342993,
+            "voltage_drop": 0.02,
+            "total_current": 0.23590810199969803,
+            "current_density_max": 11795405099.985529,
+            "contacts": {},
+            "electrical_dofs": 360,
+            "temperature_max": 302.3590676827472,
+            "temperature_min": 302.3590676827471,
+            "temperature_average": 302.3590676827471,
+            "temperature_rise": 2.3590676827471952,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.0047181620399940425,
+            "heat_out": 0.004718135365494232,
+            "thermal_resistance": 499.9971732107306,
+            "thermal_balance_error": 5.6535785723878515e-06,
+            "thermal_residual": 5.653581723129632e-06,
+            "boundary_heat_flows": {
+              "sink_metal": 0.004718135365494232
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 9.689696971235652e-05,
+              "y": 5.417981355807929e-06,
+              "z": 0.0,
+              "temperature": 302.3590676827472
+            },
+            "thermal_dofs": 360
+          },
+          "configuration_hash": "2951ee81b38fbb609f857b57caf2f843b9d76fed0d73cc2d09dc8772e6487ee5"
+        },
+        {
+          "metrics": {
+            "electrical_power": 0.010497738756993516,
+            "joule_power": 0.010497738756993516,
+            "contact_power": 0.0,
+            "terminal_power": 0.010497738756993709,
+            "current_balance_error": 1.5863745283509594e-14,
+            "power_balance_error": 1.8342455484057822e-14,
+            "electrical_residual": 1.269099622680767e-14,
+            "effective_resistance": 0.08573274881701644,
+            "resistance": 0.08573274881701644,
+            "voltage_drop": 0.03,
+            "total_current": 0.3499246252331236,
+            "current_density_max": 17496231261.65701,
+            "contacts": {},
+            "electrical_dofs": 360,
+            "temperature_max": 305.2488453199385,
+            "temperature_min": 305.2488453199381,
+            "temperature_average": 305.24884531993825,
+            "temperature_rise": 5.248845319938482,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.010497738756993516,
+            "heat_out": 0.010497690639876498,
+            "thermal_resistance": 499.9977082151849,
+            "thermal_balance_error": 4.583569674580963e-06,
+            "thermal_residual": 4.583569714133622e-06,
+            "boundary_heat_flows": {
+              "sink_metal": 0.010497690639876498
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 9.606139379973416e-05,
+              "y": 6.7096770623687765e-06,
+              "z": 0.0,
+              "temperature": 305.2488453199385
+            },
+            "thermal_dofs": 360
+          },
+          "configuration_hash": "0ff9da05dc8553c8a6cfdd02ed27666c512e544c663201b045442aaa6eccd238"
+        },
+        {
+          "metrics": {
+            "electrical_power": 0.01838354410678955,
+            "joule_power": 0.01838354410678955,
+            "contact_power": 0.0,
+            "terminal_power": 0.018383544106789537,
+            "current_balance_error": 1.509805478986951e-14,
+            "power_balance_error": 7.549027394934694e-16,
+            "electrical_residual": 1.3527857091722988e-14,
+            "effective_resistance": 0.0870343602248642,
+            "resistance": 0.0870343602248642,
+            "voltage_drop": 0.04,
+            "total_current": 0.45958860266973844,
+            "current_density_max": 22979430133.48841,
+            "contacts": {},
+            "electrical_dofs": 360,
+            "temperature_max": 309.19168855223626,
+            "temperature_min": 309.1916885522359,
+            "temperature_average": 309.1916885522361,
+            "temperature_rise": 9.191688552236258,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.01838354410678955,
+            "heat_out": 0.01838337710447213,
+            "thermal_resistance": 499.99545783130645,
+            "thermal_balance_error": 9.084337407916746e-06,
+            "thermal_residual": 9.084337374521074e-06,
+            "boundary_heat_flows": {
+              "sink_metal": 0.01838337710447213
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 1.8773805764358983e-06,
+              "y": 3.1609804640214987e-06,
+              "z": 0.0,
+              "temperature": 309.19168855223626
+            },
+            "thermal_dofs": 360
+          },
+          "configuration_hash": "93f8b56f1918fd89e2289781c7419a0090380ef1108cb60f7e47bc890c6ad9d3"
+        },
+        {
+          "metrics": {
+            "electrical_power": 0.02819934138733269,
+            "joule_power": 0.02819934138733269,
+            "contact_power": 0.0,
+            "terminal_power": 0.02819934138733302,
+            "current_balance_error": 3.87799723488232e-14,
+            "power_balance_error": 1.1688126183813876e-14,
+            "electrical_residual": 1.3385980303146837e-14,
+            "effective_resistance": 0.08865455280182484,
+            "resistance": 0.08865455280182484,
+            "voltage_drop": 0.049999999999999996,
+            "total_current": 0.5639868277466604,
+            "current_density_max": 28199341387.33417,
+            "contacts": {},
+            "electrical_dofs": 360,
+            "temperature_max": 314.0995783406824,
+            "temperature_min": 314.0995783406816,
+            "temperature_average": 314.0995783406819,
+            "temperature_rise": 14.099578340682399,
+            "thermal_reference": 300.0,
+            "thermal_power": 0.02819934138733269,
+            "heat_out": 0.028199156681363677,
+            "thermal_resistance": 499.9967249950033,
+            "thermal_balance_error": 6.550010033059908e-06,
+            "thermal_residual": 6.55001244004815e-06,
+            "boundary_heat_flows": {
+              "sink_metal": 0.028199156681363677
+            },
+            "hotspot": {
+              "layer": "metal",
+              "x": 9.812124586256431e-05,
+              "y": 6.836666224335954e-06,
+              "z": 0.0,
+              "temperature": 314.0995783406824
+            },
+            "thermal_dofs": 360
+          },
+          "configuration_hash": "eb8fec7355da38ad69091072ee83668913f6e76cac3450a658ec0089bb7ed5c3"
+        }
+      ],
+      "versions": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shapely": "2.2.0"
+      },
+      "peak_rss_mib": 107.01171875,
+      "worker_exit_code": 0
+    }
+  ]
+}

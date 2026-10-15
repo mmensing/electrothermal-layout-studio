@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "purpose": "Native Windows CPU execution comparison; one isolated unprofiled pair, not a speedup guarantee",
+  "application_version": "0.3.1",
+  "physical_reference": "v0.3.0:examples/E21_long_finger_gan.etl; earlier geometry, not the revised coplanar example",
+  "physics_hash": "efea8663a6ae7b062138375a8b73722d7831922912e6096ce20835a97043aa33",
+  "mesh_sha256": "12e67fc4c14ab9eaf4a87318d74ab0afca84bc60711702eef6ababbea019b19a",
+  "dimensions": {
+    "gate_fingers": 32,
+    "gate_width_per_finger_um": 500,
+    "total_gate_width_mm": 16,
+    "die_um": [
+      1140,
+      1100
+    ],
+    "requested_current_A": 5
+  },
+  "triangles": 144744,
+  "nodes": 72486,
+  "hardware": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "logical_cpus": 16,
+    "physical_cpus": 8,
+    "total_memory_bytes": 33476079616
+  },
+  "source_sha256": "f92f10eb5af8826efff2994d3eaab0198b2833313b9478f57ea4926cba38ca29",
+  "sampling_interval_s": 0.25,
+  "runs": [
+    {
+      "cpus": 1,
+      "numerical_seconds": 63.851,
+      "postprocessing_seconds": 40.365109199998756,
+      "solve_and_report_seconds": 104.21610919999875,
+      "process_cpu_seconds": 103.46875,
+      "average_cores": 0.9928287554991665,
+      "peak_cores_250ms": 1.1546947910824132,
+      "peak_rss_bytes": 1695703040,
+      "assembly": {
+        "batches": 0,
+        "tasks": 0,
+        "worker_cpu_seconds": 0.0,
+        "wall_seconds": 0.0,
+        "actual_worker_threads": 0
+      },
+      "conservation": {
+        "current_balance_error": 2.372550156056448e-10,
+        "power_balance_error": 8.233327256962997e-11,
+        "thermal_balance_error": 2.65777813403698e-07
+      }
+    },
+    {
+      "cpus": 4,
+      "numerical_seconds": 59.339,
+      "postprocessing_seconds": 50.4657770000012,
+      "solve_and_report_seconds": 109.8047770000012,
+      "process_cpu_seconds": 114.171875,
+      "average_cores": 1.0397714755160312,
+      "peak_cores_250ms": 2.5807633564902055,
+      "peak_rss_bytes": 1682821120,
+      "assembly": {
+        "batches": 146,
+        "tasks": 1397,
+        "worker_cpu_seconds": 9.875,
+        "wall_seconds": 5.528400999985024,
+        "actual_worker_threads": 4
+      },
+      "conservation": {
+        "current_balance_error": 2.372550156056448e-10,
+        "power_balance_error": 8.233374938438481e-11,
+        "thermal_balance_error": 2.65777813403698e-07
+      }
+    }
+  ],
+  "equivalence": {
+    "reference_1_vs_4": {
+      "compared_fields": 49,
+      "maximum_absolute_field_difference": 0.0,
+      "maximum_relative_to_field_scale": 0.0,
+      "delivered_currents_A": [
+        4.999999999999453,
+        4.999999999999453
+      ],
+      "maximum_temperatures_K": [
+        328.5371444806179,
+        328.5371444806179
+      ]
+    },
+    "reference_old_vs_new": {
+      "compared_fields": 49,
+      "maximum_absolute_field_difference": 12.804916381835938,
+      "maximum_relative_to_field_scale": 1.0946688824697773e-09,
+      "delivered_currents_A": [
+        4.999999999999517,
+        4.999999999999453
+      ],
+      "maximum_temperatures_K": [
+        328.53714448217704,
+        328.5371444806179
+      ]
+    },
+    "compact_1_vs_4": {
+      "compared_fields": 49,
+      "maximum_absolute_field_difference": 0.0,
+      "maximum_relative_to_field_scale": 0.0,
+      "delivered_currents_A": [
+        0.07500000000125656,
+        0.07500000000125656
+      ],
+      "maximum_temperatures_K": [
+        303.45809397709377,
+        303.45809397709377
+      ]
+    }
+  },
+  "limitations": [
+    "SuperLU factorization and exact-support reporting remain serial.",
+    "Four CPUs improved the numerical phase in this pair, but overall time was slower as reporting time varied.",
+    "CPU peaks are sampled process CPU divided by wall time; they can miss shorter peaks.",
+    "Current revised geometry is validated separately through complete native example workflows.",
+    "No clean-machine or GPU validation."
+  ]
+}
