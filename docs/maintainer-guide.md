@@ -74,6 +74,15 @@ Useful read-only checks include `gh api user --jq .login`, repository metadata,
 GitHub's installed-app settings when token APIs cannot establish it. Never print
 credentials or copy unredacted settings dumps into public source.
 
+## Manual owner merges
+
+The separate ref-ownership rule can show "Cannot update this protected ref"
+after every quality check has passed. The owner uses their configured
+ref-ownership bypass for a manual merge. The independent main quality ruleset
+has no bypass: required checks, resolved conversations and the exact tested
+head must still pass. Read back both rulesets before merging; do not disable
+quality rules or give an integration a bypass to clear this message.
+
 ## Validation and CI trust
 
 PR updates run `source-quality`: publication/workflow contracts, redacted bounded
