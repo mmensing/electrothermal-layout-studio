@@ -1,5 +1,7 @@
 # Electrothermal Layout Studio
 
+[![CI checks](https://github.com/mmensing/electrothermal-layout-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/mmensing/electrothermal-layout-studio/actions/workflows/ci.yml)
+
 A Windows desktop and Python/CLI application for electrical, thermal and coupled
 electrothermal analysis of GDSII/OASIS layouts. It uses thickness-averaged 2.5D
 finite elements to explore current sharing, interconnect loss, thermal paths and

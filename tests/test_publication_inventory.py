@@ -121,3 +121,48 @@ def test_source_manifest_retains_maintained_resources_and_excludes_generated_con
             "scripts/build_windows.py", "SECURITY.md", ".github/CODEOWNERS",
             "tests/fixtures/legacy_transient_e18.etl", "tests/fixtures/legacy_transient_e18.md"} <= files
     assert not any("private" in name or "mockups" in name or "__pycache__" in name or "HANDOFF" in name or name.startswith(".git/") for name in files)
+
+
+@pytest.mark.parametrize("destination, expected", [
+    ("etlayout-0.4.0.dev0.dist-info/direct_url.json", False),
+    ("numpy-2.5.4.dist-info/direct_url.json", False),
+    ("Package.DIST-INFO\\DIRECT_URL.JSON", False),
+    ("etlayout-0.4.0.dev0.dist-info/METADATA", True),
+    ("etlayout-0.4.0.dev0.dist-info/WHEEL", True),
+    ("etlayout-0.4.0.dev0.dist-info/RECORD", True),
+    ("etlayout-0.4.0.dev0.dist-info/licenses/LICENSE", True),
+    ("etlayout-0.4.0.dev0.dist-info/licenses/direct_url.json", True),
+    ("examples/etlayout.dist-info/direct_url.json", True),
+    ("etlayout/data/direct_url.json", True),
+    ("direct_url.json", True),
+])
+def test_installed_metadata_omits_only_origin_sidecar(destination, expected):
+    resources = load("packaging/resources.py", "publication_metadata_policy")
+    assert resources.distributable_metadata(destination) is expected
+
+
+def test_filtered_metadata_copy_preserves_identity_notices_and_resources(tmp_path):
+    import shutil
+
+    resources = load("packaging/resources.py", "publication_metadata_copy_policy")
+    source, delivered = tmp_path / "installed", tmp_path / "delivered"
+    originals = {
+        "etlayout.dist-info/direct_url.json": b'{"url":"file:///local-source"}',
+        "etlayout.dist-info/METADATA": b"Name: etlayout\nVersion: 0.4.0.dev0\n",
+        "etlayout.dist-info/WHEEL": b"Root-Is-Purelib: true\n",
+        "etlayout.dist-info/RECORD": b"record contents",
+        "etlayout.dist-info/licenses/LICENSE": b"license contents",
+        "etlayout/data/direct_url.json": b"application resource",
+    }
+    for name, data in originals.items():
+        path = source / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(data)
+        if resources.distributable_metadata(name):
+            target = delivered / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, target)
+    assert not (delivered / "etlayout.dist-info/direct_url.json").exists()
+    assert {path.relative_to(delivered).as_posix(): path.read_bytes()
+            for path in delivered.rglob("*") if path.is_file()} == {
+                name: data for name, data in originals.items() if name != "etlayout.dist-info/direct_url.json"}

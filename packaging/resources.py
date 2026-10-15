@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 """Shared distribution policy for maintained resources and source archives."""
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 EXCLUDED_DIRECTORIES = frozenset({
     '__pycache__', '.pytest_cache', '.artifacts', 'verification', 'mockups',
@@ -54,3 +54,14 @@ def synchronize_resources(root, bundle, directory):
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(path, destination)
     return allowed
+
+
+def distributable_metadata(destination):
+    """Omit installed PEP 610 origins; preserve application resources and notices.
+
+    PyInstaller expands copied distribution metadata to top-level .dist-info
+    destinations before adding its _internal runtime directory.
+    """
+    parts = PurePosixPath(str(destination).replace("\\", "/")).parts
+    return not (len(parts) == 2 and parts[0].lower().endswith(".dist-info")
+                and parts[1].lower() == "direct_url.json")
