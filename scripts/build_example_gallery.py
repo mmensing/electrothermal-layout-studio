@@ -360,66 +360,179 @@ def _number(value, unit=""):
     return f"{value:.4g}{' ' + unit if unit else ''}"
 
 
+GUI_EXERCISES = {
+    "E1": ("Open Metrics & loss budget and compare the resistance with the uniform-strip value in the reference details.",
+           "A smooth voltage drop along the straight strip; the fixed-temperature resistance follows its length, width and thickness.",
+           "Use Parameter sweep… to vary the drain voltage in DC electrical mode. Does the resistance stay constant while Joule power rises?"),
+    "E2": ("Zoom into the inside bend, then enable Show vectors in Appearance to follow current around it.",
+           "Current bunches at the reentrant corner and redistributes through the taper.",
+           "Save a copy and use Edit layout to widen the neck. Does an averaged loading measure improve when the mesh is refined?"),
+    "E3": ("Compare both branch widths and their common access buses before inspecting the current map.",
+           "The wider route carries more current, but shared access resistance also affects the division.",
+           "Change one branch in a project-owned layout copy. How much does current sharing change without changing total delivered current?"),
+    "E4": ("Switch Layer between m1 and m2; use Fit layer after each switch to follow the finite interlayer transfer.",
+           "Each sheet has its own potential distribution, joined through the declared via footprint.",
+           "Change contact refinement in Mesh & checks. Which voltage drops remain stable as that region is resolved?"),
+    "E5": ("Zoom into the repeated via footprints and compare the two sheet layers at the same operating point.",
+           "Transfer is distributed across the array; distance from the feed can make individual vias load unequally.",
+           "Would moving the physical feed change loading more than adding another row of vias? Keep planar metal density distinct from normal via current density."),
+    "E6": ("Inspect the sense_a and sense_b terminal values in Quantitative results as well as the sheet potential.",
+           "The floating sense electrodes have zero net current, while their equipotential footprints can locally perturb the film.",
+           "How does the sensed voltage differ from a two-terminal voltage that also includes the current contacts?"),
+    "E7": ("In Operating conditions, choose Electrical inputs / gate controls and inspect gate_control. Run a second gate bias and use History to compare.",
+           "The gated region changes conductance, while the documented ungated edges still provide a bypass path.",
+           "Compare the response with E16. Does every source-to-drain path cross a gate-controlled region?"),
+    "E8": ("Inspect the source_metal current map, then compare the layer thicknesses with E7 in Layers & materials.",
+           "The thinner access metal changes routing resistance and current crowding while retaining the same illustrative channel law.",
+           "Which part of the voltage drop comes from routing, and which from the channel? Compare at equal delivered current before calling a layout better."),
+    "E9": ("Inspect the sic layer's electrical model in Layers & materials, then run its fixed-temperature electrical calculation.",
+           "An effective doped-SiC resistive sheet with finite contacts; this example has no transistor gate or junction model.",
+           "How does changing mobility affect sheet resistance? For a distributed MOSFET on-state load, continue with E23 or E24."),
+    "E10": ("Switch Layer between the metal and substrate, then compare Temperature with Temperature rise when a reservoir reference is available.",
+           "Heat spreads laterally in the substrate while the configured stack and backside boundary set the thermal path.",
+           "Change the backside condition in Operating conditions. Which layer changes most, and why is it misleading to inspect only the metal?"),
+    "E11": ("Inspect the heater temperature, then switch to the substrate and look beyond the meander footprint.",
+           "Bends concentrate electrical loading, while the effective interface and substrate spread the deposited heat.",
+           "Vary current with Parameter sweep… and compare temperature and resistance. Keep the configured prescribed heat input when reproducing the nominal project."),
+    "E12": ("Switch Layer among m1, m2 and m3, using Fit layer to follow the two via banks and the middle riser.",
+           "Current transfers vertically twice; a map of one metal level does not describe loading in the others.",
+           "Draw a profile through a transfer region and compare it with a finer mesh. Can you separate a persistent bottleneck from a corner peak?"),
+    "E13": ("Inspect the narrow ligaments around slots and diamond holes; preview the mesh to check that voids stay empty.",
+           "Current detours around genuine holes, concentrating in the remaining conducting paths.",
+           "Compare a physically averaged hotspot with the largest element value while refining near a hole. Which conclusion is stable?"),
+    "E14": ("Inspect arm_br and the floating midpoint terminal values in Quantitative results.",
+           "A differential bridge signal caused by unequal effective sheet resistances, with no mechanical strain calculation.",
+           "Change one arm's thickness in a copied setup. How do bridge imbalance and total power respond?"),
+    "E15": ("Choose the shared substrate layer and inspect both heat-source neighborhoods on one temperature scale.",
+           "Overlapping heat-spreading fields and warming outside the driven meanders; narrow temperature ranges need distinct tick labels.",
+           "Change one configured heat input and compare saved runs at a common manual range. Does the unpowered neighborhood still warm?"),
+    "E16": ("Inspect the four channel stripes, then vary gate_control through Operating conditions and compare the channel maps.",
+           "Every intended conducting path crosses a gate-controlled region, avoiding E7/E8's edge bypass.",
+           "Compare gate-bias response with E7, then move to E21 for long fingers. The numerical conductance floor is not an off-state leakage prediction."),
+    "E17": ("Open Time, waveform & initial-state settings… in Operating conditions, inspect Timing and Waveforms, then run and open Time history.",
+           "Uniform prescribed heating and cooling with thermal storage; the field can be nearly uniform even while the time history changes strongly.",
+           "Use Time-step convergence… to compare peak temperature and pulse energy. Does a shorter integration step resolve the pulse edges?"),
+    "E18": ("Inspect the current waveform, run, then select retained times and use Time history to view temperature and Stored energy.",
+           "Joule heating during current pulses, thermal delay and cooling between pulses, with temperature-dependent electrical feedback.",
+           "Change the pulse plateau or cooling interval in Waveforms, then refine time. This models thermal dynamics, not electromagnetic switching losses."),
+    "E19": ("Compare heater, substrate and unpowered receiver layers, then inspect their Time history scopes.",
+           "A delayed receiver temperature peak after a prescribed heat pulse transfers through the shared structure.",
+           "Change an interface thermal parameter and compare the receiver's peak time as well as its maximum temperature."),
+    "E20": ("Inspect all metal levels and the Analysis Contacts and Loss budget tables.",
+            "Branching sheet currents and unequal via transfer under localized physical feeds.",
+            "Compare routing choices at equal delivered current, then check mesh sensitivity and the configured model limits."),
+    "E21": ("Inspect channel sheet current, then the source_rdl metal map and the Devices table.",
+            "Finite feed/contact resistance creates finger loading and source-potential differences across fully gated paths.",
+            "Compare single, dual or distributed feeds at fixed active width, current and thermal environment."),
+    "E22": ("Compare bank groups and shared redistribution, then inspect substrate temperature.",
+            "Electrical sharing and thermal interaction across hierarchical HEMT banks; hierarchy does not reduce FEM cost.",
+            "Move only the feed landing in a controlled variant and compare bank current per active width."),
+    "E23": ("Inspect source/collector current and the Analysis Loss budget table.",
+            "A distributed SiC on-state load with local current sharing and separate device/interconnect losses.",
+            "Compare source collection choices at fixed active area, delivered current and reservoir conditions."),
+    "E24": ("Inspect collection metal, macrocell groups and the passive Kelvin-sense measurement.",
+            "Local sheet voltages determine macrocell sharing and sense error under localized feeds.",
+            "Compare bond, clip and bump footprints without changing active area or requested service."),
+}
+
+
 def write_markdown(records, output, markdown, examples):
+    from etlayout.power_examples import FAMILIES
+    from etlayout.visualization.sampling import DISPLAY_FIELD_LABELS
+    from etlayout.workflow import ANALYSES
+
     asset = lambda name: _relative(output / name, markdown.parent)  # noqa: E731
-    lines = ["# Example gallery", "", f"{len(records)} runnable examples, from analytical checks to multilayer devices. "
-             "Each preview pairs actual prepared geometry with a computed field. Open an ETL project to retain "
-             "materials, boundary conditions and saved sweeps; GDSII and OASIS contain geometry only.", "",
-             "All devices are synthetic teaching configurations. Results are deterministic for the recorded mesh; "
-             "no experimental uncertainty or process calibration is claimed. Current peaks at ideal corners need "
-             "a mesh-convergence study. Field scales and panel extents vary and are explicitly labeled. "
-             "SVG previews retain vector geometry, axes and text; only the finite-element field is rasterized "
-             "at twice the intended display resolution to keep downloads compact.", "",
-             "## Choose an example", "", "| Example | Focus | Level | Preview mode |",
-             "|---|---|---|---|"]
+    full_catalog = {record["name"] for record in records} == set(ROUTINE_EXAMPLES)
+    power_guide = _relative(ROOT / "docs/power-examples.md", markdown.parent)
+    labels = {(analysis.solver_mode, analysis.transient): analysis.label for analysis in ANALYSES}
+    count = len(records) + (len(FAMILIES) if full_catalog else 0)
+    lines = ["# Explore the examples", "",
+             "See current crowd around a bend, follow heat into a substrate, or watch a device cool between pulses. "
+             f"The library contains {count} runnable {'reference ' if full_catalog else ''}examples with configured "
+             "geometry, materials, connections and operating conditions. These walkthroughs use the desktop controls.", "",
+             "## Open your first example", "",
+             "1. In **File → Ready-to-run examples**, choose an example by its stable ID below. "
+             "Opening prepares the project; it does not start a simulation.",
+             "2. Use **Save project as…** to keep your own project. Review the visible **Analysis type**; "
+             "the gallery's analysis column states the mode used for its recorded picture.",
+             "3. Follow **Layout & region → Layers & materials → Contacts & connections → Operating conditions**. "
+             "The example already supplies these inputs; inspect them before changing anything.",
+             "4. In **Mesh & checks**, select **Run validation**, inspect the Issues drawer, then "
+             "**Generate / update mesh**. **Run → Run analysis** starts the background calculation. "
+             "F6, F7 and F5 provide the corresponding shortcuts.",
+             "5. In **Results**, select **Layer** and **Quantity**, then **Fit layer**. "
+             "Use **Appearance** for colors and range, **Metrics & loss budget** for numbers, and **History** for earlier runs.",
+             "6. Try the follow-up question for your example. **Sweeps & convergence** opens parameter, mesh and "
+             "time-step studies; **Compare saved runs…** helps inspect alternatives.", ""]
+    if full_catalog:
+        showcase = _relative(ROOT / "docs/images/showcase/workspace-overview.png", markdown.parent)
+        lines += [f"![Actual application: E12 layout and mesh in the numbered workflow]({showcase})", "",
+                  "*A real E12 workflow view. The large canvas, contextual inspector and Issues/Jobs/History drawer "
+                  "stay together while you move through the numbered stages.*", "",
+                  "## Choose a question", "", "| What do you want to understand? | Start here | Then explore |",
+                  "| --- | --- | --- |",
+                  "| How do geometry and current paths set resistance? | [E1: straight strip](#e1) | [E2: bend and taper](#e2), [E3: parallel paths](#e3) |",
+                  "| Where do multilayer routes become bottlenecks? | [E4: two metals](#e4) | [E5: via array](#e5), [E12: via ladder](#e12), [E13: perforated spreader](#e13) |",
+                  "| What does the voltage probe actually measure? | [E6: Kelvin sensing](#e6) | [E14: resistive bridge](#e14) |",
+                  "| How does a gate change the conducting channel? | [E7: illustrative HEMT](#e7) | [E8: routing resistance](#e8), [E16: fully gated stripes](#e16) |",
+                  "| How far does heat spread? | [E10: layered thermal path](#e10) | [E11: meander heater](#e11), [E15: thermal crosstalk](#e15) |",
+                  "| What happens between pulses? | [E17: heating and cooling](#e17) | [E18: pulsed conductor](#e18), [E19: delayed receiver heating](#e19) |",
+                  f"| How do larger power structures share current? | [E20–E24: power guide]({power_guide}) | [GaN fingers and banks]({power_guide}#e21), [SiC source collection]({power_guide}#e24) |", ""]
+    lines += ["## All examples", "", "| Example | Focus | Level | Gallery analysis |", "| --- | --- | --- | --- |"]
     for record in records:
         info = record["catalog"]
-        operation = "transient " if record.get("transient") else ""
-        lines.append(f"| [{info['id']} · {info['title']}](#{info['id'].lower()}) | {info['category']} | "
-                     f"{info['level']} | {operation}{record['mode']} |")
-    from etlayout.power_examples import FAMILIES
-    if {record["name"] for record in records} == set(ROUTINE_EXAMPLES):
-        lines[2] = ("24 runnable reference examples. The first 19 previews show computed fields; "
-                    "five larger [power families](power-examples.md) have separate measured benchmark "
-                    "receipts and actual-application views. Generation does not launch simulations. "
-                    "ETL projects retain physical setup; GDSII/OASIS contain geometry only.")
+        label = labels[(record["mode"], bool(record.get("transient")))]
+        lines.append(f"| [{info['id']} · {info['title']}](#{info['id'].lower()}) | {info['category']} | {info['level']} | {label} |")
+    if full_catalog:
         for name in FAMILIES:
             info = example_info(name)
-            lines.append(f"| [{info.id} · {info.title}](power-examples.md#reference-projects) | "
-                         f"{info.category} | {info.level} | electrothermal |")
-    lines += ["", "## Run locally", "", "Run these commands from the repository root after installation. "
-              "The reference environment is Windows 11 with Python 3.12. Other platforms are unverified.", "", "```powershell",
-              r".\.venv\Scripts\python.exe -m etlayout gui examples/E11_serpentine_heater.etl",
-              r".\.venv\Scripts\python.exe -m etlayout solve examples/E11_serpentine_heater.etl --mode electrothermal --output results/E11",
-              r".\.venv\Scripts\python.exe -m etlayout sweep examples/E11_serpentine_heater.etl --output results/E11-sweep",
-              "```", "", "The desktop **File → Ready-to-run examples** menu opens the same configurations. "
-              "The per-example solve command below reproduces the preview mode; the saved sweep is a separate experiment.", ""]
+            lines.append(f"| [{info.id} · {info.title}]({power_guide}#{info.id.lower()}) | "
+                         f"{info.category} | {info.level} | Coupled DC electrothermal |")
+    lines += ["", "## Read the pictures, then run your own project", "",
+              "Each scientific preview pairs actual prepared geometry with a recorded computed field. "
+              "All devices are synthetic teaching configurations; deterministic calculations do not supply "
+              "experimental uncertainty or process calibration. A converged solve still needs a mesh study "
+              "before comparing sensitive peaks. Field scales and panel extents differ between pictures.", "",
+              "The recorded preview details below retain their original operating points, diagnostics and "
+              "numerical provenance. Some were calculated with earlier solver versions; the manifest records "
+              "those identities. They are illustrations, not fresh validation of a newly opened project. "
+              "Current application screenshots are labeled separately.", "",
+              "ETL projects retain the physical setup and saved sweeps. GDSII/OASIS downloads contain geometry only. "
+              "SVG previews retain vector geometry, axes and text; only the finite-element field is rasterized "
+              "at twice the intended display resolution.", ""]
     for record in records:
         info, name = record["catalog"], record["name"]
+        action, observation, question = GUI_EXERCISES[info["id"]]
+        field_label, field_unit = DISPLAY_FIELD_LABELS[info["field"]]
+        analysis = labels[(record["mode"], bool(record.get("transient")))]
         field_alt = (f" and {info['field'].replace('_', ' ')} on {info['layer']}"
                      if record.get("result") else " only (no solve)")
         lines += [f"<a id=\"{info['id'].lower()}\"></a>", f"## {info['id']} · {info['title']}", "",
                   f"**{info['level']} · {info['category']}.** {info['learning_goal']}", "",
-                  f"[![{info['title']}: prepared geometry{field_alt}]({asset(name + '.png')})]"
-                  f"({asset(name + '.svg')})", ""]
+                  f"[![{info['title']}: prepared geometry{field_alt}]({asset(name + '.png')})]({asset(name + '.svg')})", "",
+                  f"**In the GUI:** choose **{analysis}**, then in Results select layer `{info['layer']}` "
+                  f"and **{field_label} ({field_unit})**. {action}", "",
+                  f"**Look for:** {observation}", "", f"**Try next:** {question}", ""]
         downloads = [f"[{label}]({_relative(examples / (name + ext), markdown.parent)})"
-                     for label, ext in [("Open project (.etl)", ".etl"), ("GDSII", ".gds"), ("OASIS", ".oas")]]
+                     for label, ext in [("Project (.etl)", ".etl"), ("GDSII", ".gds"), ("OASIS", ".oas")]]
+        lines += [" · ".join([*downloads, f"[Vector preview]({asset(name + '.svg')})"]), "",
+                  "<details>", "<summary>Recorded inputs, model limits and numerical details</summary>", ""]
         layers = "; ".join(f"`{layer['id']}` ({layer['material']}, {_number(layer['thickness_m'] * 1e6, 'µm')})"
                            for layer in record["physical_layers"])
-        lines += [" · ".join([*downloads, f"[SVG preview]({asset(name + '.svg')})"]), "",
-                  f"**Operating point:** {record['bias_summary']}. Preview mode: **{record['mode']}**.", "",
-                  f"**Physical layers:** {layers}.", "",
-                  f"**Saved sweep:** {record['sweep_summary']}", "",
+        mode = ("transient " if record.get("transient") else "") + record["mode"]
+        lines += [f"**Recorded operating point:** {record['bias_summary']}. Preview mode: **{mode}**.", "",
+                  f"**Physical layers:** {layers}.", "", f"**Saved sweep:** {record['sweep_summary']}", "",
+                  "The saved sweep is a separate experiment; review the selected parameter, values and analysis "
+                  "in **Parameter sweep…** before starting it.", "",
                   f"**Physical scope:** {info['physical_scope']} {record['notes']}", ""]
         if record.get("transient"):
             transient = record["transient"]
             lines += [f"**Transient setup:** stop {_number(transient['stop_time'], 's')}; "
                       f"maximum step {_number(transient['time_step'], 's')}; saved output interval "
                       f"{_number(transient['output_interval'], 's')}. {record['waveform_summary']} "
-                      "The field preview shows the final accepted time; the saved project opens the full time workflow.", ""]
+                      "The field preview shows the final accepted time; use Time history to inspect the full run.", ""]
         if record.get("result"):
-            result = record["result"]
-            metrics = result["metrics"]
+            result, metrics = record["result"], record["result"]["metrics"]
             temperature_label = "maximum temperature at final time" if record.get("transient") else "overall maximum temperature"
             summaries = [_number(metrics[key], METRIC_UNITS.get(key, "")) + " " + label
                          for key, label in [("effective_resistance", "effective resistance"),
@@ -429,24 +542,28 @@ def write_markdown(records, output, markdown, examples):
             if record.get("transient"):
                 summaries.extend([_number(metrics["transient_peak_temperature"], "K") + " peak over all time steps",
                                   _number(metrics["transient_input_energy"], "J") + " integrated input heat"])
-            lines += [f"**Computed preview:** {'; '.join(summaries)}. "
+            lines += [f"**Recorded computed preview:** {'; '.join(summaries)}. "
                       f"{result['mesh_nodes']:,} nodes / {result['mesh_triangles']:,} triangles; converged. "
                       f"[Full metrics and hashes]({asset('manifest.json')}).", ""]
-            diagnostics = result["diagnostics"]
-            warnings = [d["message"] for d in diagnostics if d["severity"] in {"warning", "error"}]
+            warnings = [d["message"] for d in result["diagnostics"] if d["severity"] in {"warning", "error"}]
             if warnings:
-                lines += ["**Diagnostics:** " + " ".join(dict.fromkeys(warnings)), ""]
+                lines += ["**Recorded diagnostics:** " + " ".join(dict.fromkeys(warnings)), "",
+                          "Review current Issues after validation; a recorded warning is not permission to ignore a current blocker.", ""]
         else:
             lines += ["**Preview:** geometry only; no numerical result was generated.", ""]
-        lines += ["```powershell", rf".\.venv\Scripts\python.exe -m etlayout solve examples/{name}.etl "
-                  f"--mode {record['mode']} --output results/{info['id']}", "```", ""]
-    lines += ["## Rebuild this gallery", "", "```powershell",
+        lines += ["Optional command-line run of the current project:", "", "```powershell",
+                  rf".\.venv\Scripts\python.exe -m etlayout solve examples/{name}.etl --mode {record['mode']} --output results/{info['id']}",
+                  "```", "", "</details>", ""]
+    lines += ["## Maintaining the gallery", "", "<details>", "<summary>Advanced: deterministic generation and reproduction</summary>", "",
+              "The desktop walkthroughs above work with the existing projects. Maintainers can regenerate the "
+              "scientific previews separately:", "", "```powershell",
               r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --use-cache",
               r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --examples E11 E16 --output .artifacts/gallery-preview --markdown .artifacts/gallery-preview.md",
               "```", "", "The generator reads existing projects from `examples/` and creates missing ones. "
               "Its cache is reused only when the physics hash, solver version and source-code fingerprint match. "
               "Use `--no-solve` for explicitly labeled geometry-only previews. "
-              "The manifest records the plotted range, units, mesh, convergence, diagnostics, operating point and configuration hashes.", ""]
+              "The manifest records plotted range, units, mesh, convergence, diagnostics, operating point and configuration hashes.",
+              "", "</details>", ""]
     markdown.parent.mkdir(parents=True, exist_ok=True)
     markdown.write_text("\n".join(lines), encoding="utf-8")
 

@@ -2,11 +2,12 @@
 
 This guide describes the **0.4.0.dev0 public source edition**, retaining the
 guided Windows desktop and 0.3.1 project compatibility.
-Version 0.2.0 uses the older four-part ribbon described in
-[its historical quick start](user-guide.md). Launch the extracted
-`ElectrothermalLayoutStudio.exe`, or use `python -m etlayout gui` after installing
-the locked Windows dependencies. See [validation](validation.md) for current check commands and the
-[historical engineering notes](releases/0.3.1.md) for compatibility context.
+Install and launch from the [Windows source setup](../README.md#start-from-source-on-windows),
+then use the desktop steps below; no Python scripting is needed for the workflow.
+This public source edition does not provide a downloadable executable.
+For a visual introduction, see the [feature catalog](features.md) and
+[use-case gallery](examples.md). See [validation](validation.md) for current check
+commands and the [historical engineering notes](releases/0.3.1.md) for compatibility context.
 
 The project, save state, analysis type and working/historical setup remain visible
 above a seven-step navigator. The canvas stays in the center, editing belongs in
