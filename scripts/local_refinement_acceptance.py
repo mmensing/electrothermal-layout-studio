@@ -23,6 +23,7 @@ def main():
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QSettings, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QPushButton
@@ -38,6 +39,7 @@ def main():
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(root / "settings"))
     app = QApplication([])
     app.setStyle("Fusion")
+    prepare_desktop_fonts(app, root)
     project = make_example("E1", root / "inputs")
     imported = Path(project.layout.path)
     source_hash = hashlib.sha256(imported.read_bytes()).hexdigest()

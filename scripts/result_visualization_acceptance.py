@@ -25,8 +25,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QSettings, Qt
-    from PySide6.QtGui import QFont, QFontDatabase
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QDockWidget, QMessageBox, QTabWidget
 
@@ -42,11 +42,7 @@ def main(argv=None):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(output / "settings"))
     application = QApplication.instance() or QApplication(["result-visualization-acceptance"])
     application.setStyle("Fusion")
-    for filename in ("segoeui.ttf", "segoeuib.ttf", "segoeuisl.ttf"):
-        path = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts" / filename
-        if path.is_file():
-            QFontDatabase.addApplicationFont(str(path))
-    application.setFont(QFont("Segoe UI", 9))
+    prepare_desktop_fonts(application, output)
     window = None
     checkpoints = []
     errors = []

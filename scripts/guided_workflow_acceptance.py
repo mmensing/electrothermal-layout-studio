@@ -36,6 +36,7 @@ def main(argv=None):
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     import klayout.db as db
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QCoreApplication, QEvent, QPointF, QSettings, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QMessageBox
@@ -52,16 +53,17 @@ def main(argv=None):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(out / "settings"))
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
+    prepare_desktop_fonts(app, out)
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
     repository = Path(__file__).resolve().parents[1]
     source_digest = hashlib.sha256()
-    source_files = sorted((repository / "src").rglob("*.py")) + [Path(__file__).resolve()]
+    source_files = sorted((repository / "src").rglob("*.py")) + [Path(__file__).resolve(), Path(__file__).with_name("desktop_acceptance_support.py").resolve()]
     for source in source_files:
         source_digest.update(source.relative_to(repository).as_posix().encode("utf-8") + b"\0")
         source_digest.update(source.read_text(encoding="utf-8").encode("utf-8") + b"\0")
     receipt = {"revision": revision, "working_tree": "UX implementation under validation", "platform": platform.platform(),
                "source_tree_sha256": source_digest.hexdigest(),
-               "source_digest_scope": "Sorted src/**/*.py followed by this acceptance script; relative POSIX path NUL UTF-8 text with normalized newlines NUL",
+               "source_digest_scope": "Sorted src/**/*.py followed by this acceptance script and shared font support; relative POSIX path NUL UTF-8 text with normalized newlines NUL",
                "qpa": app.platformName(), "qt_scale_factor": args.scale, "automated": True,
                "limits": "QTest native widget interaction; no human task timings, screen-reader or physical DPI certification.",
                "captures": [], "checks": []}

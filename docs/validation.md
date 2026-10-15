@@ -104,6 +104,14 @@ Vertex-edit acceptance uses actual mouse dragging, preparation/export workers,
 Apply/Discard/Stay, Undo/Redo, an edited-layout solve and embedded reopening, plus
 visible failures and cancellation. Use `--offscreen` for that script in CI; native
 captures remain a separate visual check.
+
+Windows offscreen journeys register existing host fonts before creating the
+workspace. The shared acceptance helper writes `font-verification.json` and
+rejects invalid regular/bold fonts or missing required text and unit glyphs.
+Host font files are read without copying them into source or artifacts. Native
+runs retain their application font and font database. Inspect the resulting
+captures as well: glyph availability alone does not establish usable layout.
+
 Capture success with missing-glyph boxes is a failed visual check. Qt scale factors
 verify widget rendering, not physical-monitor DPI, mixed-monitor transitions or
 screen-reader behavior. Record available screen and actual window dimensions.

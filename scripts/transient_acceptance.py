@@ -21,8 +21,8 @@ def main():
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QSettings
-    from PySide6.QtGui import QFont, QFontDatabase
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QTabWidget
 
@@ -42,12 +42,7 @@ def main():
     settings.clear()
     app = QApplication([])
     app.setStyle("Fusion")
-    if args.offscreen:
-        for filename in ("segoeui.ttf", "segoeuib.ttf"):
-            font = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts" / filename
-            if font.is_file():
-                QFontDatabase.addApplicationFont(str(font))
-    app.setFont(QFont("Segoe UI", 9))
+    prepare_desktop_fonts(app, output)
     receipt = {"qpa": app.platformName(), "scale": args.scale, "capture": "QWidget.grab of live source app",
                "limits": "No installed-package, physical DPI, multiple-monitor or screen-reader claims.", "checkpoints": []}
     project = make_example("E18", output / "inputs")

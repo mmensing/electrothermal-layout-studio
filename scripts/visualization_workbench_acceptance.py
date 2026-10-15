@@ -33,8 +33,9 @@ def main(argv=None):
         os.environ.pop("QT_QPA_PLATFORM", None)
 
     import numpy as np
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QPoint, QPointF, QSettings, Qt
-    from PySide6.QtGui import QFont, QFontDatabase, QWheelEvent
+    from PySide6.QtGui import QWheelEvent
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QDockWidget, QLabel, QMessageBox
 
@@ -57,14 +58,7 @@ def main(argv=None):
     isolated_settings.sync()
     app = QApplication(["visualization-workbench-acceptance"])
     app.setStyle("Fusion")
-    if args.offscreen:
-        # Explicit font loading repairs the offscreen platform's font discovery;
-        # native runs use the actual native font database unmodified.
-        for filename in ("segoeui.ttf", "segoeuib.ttf", "segoeuisl.ttf"):
-            font = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts" / filename
-            if font.is_file():
-                QFontDatabase.addApplicationFont(str(font))
-    app.setFont(QFont("Segoe UI", 9))
+    prepare_desktop_fonts(app, output)
     window = comparison = None
     receipt = {"qpa": app.platformName(), "requested_scale": args.scale,
                "requested_wide_size": [1560, 980], "requested_compact_size": [1280, 800],
