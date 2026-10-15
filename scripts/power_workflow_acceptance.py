@@ -25,6 +25,7 @@ def main():
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     import psutil
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QCoreApplication, QEvent, QTimer
     from PySide6.QtGui import QFont
     from PySide6.QtTest import QTest
@@ -43,6 +44,7 @@ def main():
     project.power.ports[0].value = .01
     app = QApplication([])
     app.setStyle("Fusion")
+    prepare_desktop_fonts(app, output)
     app.setFont(QFont("Segoe UI", 9))
     execution = ExecutionSettings()
     window = PowerWorkbench(project, execution=execution)

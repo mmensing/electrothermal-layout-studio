@@ -20,6 +20,7 @@ def main():
     args = parser.parse_args()
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
@@ -28,6 +29,7 @@ def main():
 
     args.output.mkdir(parents=True, exist_ok=True)
     app = QApplication.instance() or QApplication([])
+    prepare_desktop_fonts(app, args.output)
     project = make_example("E1", args.output / "inputs")
     window = MainWindow(project, recover=False, database_path=args.output / "materials.sqlite3")
     window.recovery_path = args.output / "recovery.etl"

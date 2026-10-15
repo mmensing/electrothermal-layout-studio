@@ -28,6 +28,7 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QDialogButtonBox, QMessageBox
@@ -43,6 +44,7 @@ def main(argv=None):
     baseline = make_example("E4", output / "layouts")
     application = QApplication.instance() or QApplication(["gui_acceptance"])
     application.setStyle("Fusion")
+    prepare_desktop_fonts(application, output)
     window = MainWindow(database_path=output / "materials.sqlite3", recover=False)
     window.recovery_path = output / "recovery.etlayout"
     window.resize(1560, 980)

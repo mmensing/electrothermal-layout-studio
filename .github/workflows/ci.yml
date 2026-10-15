@@ -162,6 +162,7 @@ jobs:
           name: windows-desktop-validation
           path: |
             artifacts/desktop-*/*.json
+            artifacts/desktop-*/**/font-verification.json
             artifacts/desktop-*/**/*.png
           if-no-files-found: warn
           retention-days: 7

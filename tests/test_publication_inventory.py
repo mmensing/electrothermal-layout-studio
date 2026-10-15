@@ -109,7 +109,7 @@ def test_source_manifest_retains_maintained_resources_and_excludes_generated_con
     command.ensure_finalized()
     command.filelist = __import__("setuptools._distutils.filelist", fromlist=["FileList"]).FileList()
     command.filelist.allfiles = ["README.md", "docs/images/layout-editor.png", "docs/licensing.md",
-                                "examples/E1_straight.etl", "scripts/build_windows.py", "SECURITY.md",
+                                "examples/E1_straight.etl", "scripts/build_windows.py", "scripts/desktop_acceptance_support.py", "SECURITY.md",
                                 "tests/fixtures/legacy_transient_e18.etl", "tests/fixtures/legacy_transient_e18.md",
                                 "docs/verification/private.json", "docs/mockups/generated.png",
                                 "build/private.log", "src/etlayout/__pycache__/module.pyc",
@@ -118,7 +118,7 @@ def test_source_manifest_retains_maintained_resources_and_excludes_generated_con
     command.read_template()
     files = {Path(name).as_posix() for name in command.filelist.files}
     assert {"README.md", "docs/images/layout-editor.png", "docs/licensing.md", "examples/E1_straight.etl",
-            "scripts/build_windows.py", "SECURITY.md", ".github/CODEOWNERS",
+            "scripts/build_windows.py", "scripts/desktop_acceptance_support.py", "SECURITY.md", ".github/CODEOWNERS",
             "tests/fixtures/legacy_transient_e18.etl", "tests/fixtures/legacy_transient_e18.md"} <= files
     assert not any("private" in name or "mockups" in name or "__pycache__" in name or "HANDOFF" in name or name.startswith(".git/") for name in files)
 

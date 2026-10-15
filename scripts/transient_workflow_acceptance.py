@@ -22,6 +22,7 @@ def main():
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     import numpy as np
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QSettings
     from PySide6.QtGui import QFont
     from PySide6.QtTest import QTest
@@ -38,6 +39,7 @@ def main():
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(output / "settings"))
     app = QApplication([])
     app.setStyle("Fusion")
+    prepare_desktop_fonts(app, output)
     app.setFont(QFont("Segoe UI", 9))
     project = make_example("E19", output / "inputs")
     project.thresholds = {"transient_peak_temperature": 301.}

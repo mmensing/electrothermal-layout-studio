@@ -83,8 +83,8 @@ def main():
         os.environ.pop("QT_QPA_PLATFORM", None)
     os.environ["QT_SCALE_FACTOR"] = str(args.scale)
     import psutil
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QCoreApplication, QEvent, QSettings, Qt, QTimer
-    from PySide6.QtGui import QFont, QFontDatabase, QRawFont
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QMenu, QPushButton
 
@@ -107,26 +107,14 @@ def main():
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(out / "settings"))
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
-    loaded_fonts = []
-    if args.offscreen:
-        # Windows' offscreen QPA does not discover installed fonts itself.
-        # Read host fonts; no licensed font assets are copied into the project.
-        for filename in ("segoeui.ttf", "segoeuib.ttf", "segoeuisl.ttf"):
-            font_path = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts" / filename
-            if font_path.is_file():
-                font_id = QFontDatabase.addApplicationFont(str(font_path))
-                loaded_fonts.extend(QFontDatabase.applicationFontFamilies(font_id))
-        app.setFont(QFont("Segoe UI", 9))
-        raw_font = QRawFont.fromFont(app.font())
-        assert raw_font.isValid() and all(raw_font.supportsCharacter(ord(char)) for char in "ETLayout0123456789µΩ²"), (
-            "Offscreen acceptance requires readable host fonts", loaded_fonts)
+    prepare_desktop_fonts(app, out)
     window = MainWindow(database_path=out / "materials.sqlite3", recover=False)
     window.autosave_timer.stop()
     window.recovery_path = out / "recovery.etl"
     window.apply_theme(False)
     window.show()
     started = time.monotonic()
-    source_files = sorted((Path(__file__).resolve().parents[1] / "src").rglob("*.py")) + [Path(__file__).resolve()]
+    source_files = sorted((Path(__file__).resolve().parents[1] / "src").rglob("*.py")) + [Path(__file__).resolve(), Path(__file__).with_name("desktop_acceptance_support.py").resolve()]
     def source_hash():
         digest = hashlib.sha256()
         for path in source_files:
@@ -134,7 +122,7 @@ def main():
             digest.update(path.read_text(encoding="utf-8").encode() + b"\0")
         return digest.hexdigest()
     receipt = dict(platform=platform.platform(), qpa=app.platformName(), offscreen=args.offscreen,
-                   loaded_font_families=sorted(set(loaded_fonts)), scale=args.scale, checks=[], captures=[], stages=[], runs=[],
+                   scale=args.scale, checks=[], captures=[], stages=[], runs=[],
                    revision=subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
                    source_tree_sha256=source_hash(),
                    failed_workflows=[], missing_results=[], rendered_results=[], phases=[], hardware=dict(logical_cpus=psutil.cpu_count(),

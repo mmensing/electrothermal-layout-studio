@@ -31,6 +31,7 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
+    from desktop_acceptance_support import prepare_desktop_fonts
     from PySide6.QtCore import QCoreApplication, QEvent, QPointF, QSettings, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QMessageBox, QProgressDialog, QPushButton
@@ -46,6 +47,7 @@ def main(argv=None):
     QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(out / "settings"))
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
+    prepare_desktop_fonts(app, out)
     project = make_example("E1", out / "inputs")
     original = deepcopy(project)
     imported = Path(project.layout.path)
@@ -61,7 +63,7 @@ def main(argv=None):
     repository = Path(__file__).resolve().parents[1]
     def source_digest():
         digest = hashlib.sha256()
-        for source in sorted((repository / "src").rglob("*.py")) + [Path(__file__).resolve()]:
+        for source in sorted((repository / "src").rglob("*.py")) + [Path(__file__).resolve(), Path(__file__).with_name("desktop_acceptance_support.py").resolve()]:
             digest.update(source.relative_to(repository).as_posix().encode() + b"\0")
             digest.update(source.read_text(encoding="utf-8").encode() + b"\0")
         return digest.hexdigest()
