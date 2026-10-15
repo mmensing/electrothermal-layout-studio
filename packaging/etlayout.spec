@@ -10,7 +10,8 @@ import runpy
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules, copy_metadata
 
 root = Path(SPECPATH).parent
-resource_files = runpy.run_path(str(root / "packaging" / "resources.py"))["resource_files"]
+resource_policy = runpy.run_path(str(root / "packaging" / "resources.py"))
+resource_files = resource_policy["resource_files"]
 datas = collect_data_files("etlayout") + copy_metadata("etlayout")
 # Experiment identities include exact numerical dependencies, including when
 # importlib.metadata executes inside the frozen optimizer.
@@ -70,7 +71,10 @@ a = Analysis(
 # and its unused libraries; verify the actual candidate with the SBOM and smoke tests.
 keep_qt_entry = runpy.run_path(str(root / "packaging" / "qt_contents.py"))["keep_qt_entry"]
 a.binaries = [entry for entry in a.binaries if keep_qt_entry(entry[0])]
-a.datas = [entry for entry in a.datas if keep_qt_entry(entry[0])]
+# pip's PEP 610 origin is installer provenance, potentially a private local URL.
+# Retain METADATA/WHEEL/RECORD and license files used for identity and attribution.
+a.datas = [entry for entry in a.datas if keep_qt_entry(entry[0])
+           and resource_policy["distributable_metadata"](entry[0])]
 pyz = PYZ(a.pure)
 gui = EXE(pyz, a.scripts, [], exclude_binaries=True, name="ElectrothermalLayoutStudio",
           debug=False, bootloader_ignore_signals=False, strip=False, upx=False, console=False)
