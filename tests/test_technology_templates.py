@@ -10,7 +10,7 @@ from dataclasses import asdict
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import pytest
-from PySide6.QtCore import QCoreApplication, QEvent, QSettings, Qt, QTimer
+from PySide6.QtCore import QCoreApplication, QEvent, Qt, QTimer
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -142,8 +142,6 @@ def test_applied_template_reproduces_real_strip_resistance_and_archive_preserves
 
 @pytest.fixture
 def window(qtbot, tmp_path):
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     project = make_example("E1", tmp_path / "example")
     w = MainWindow(project, database_path=tmp_path / "materials.sqlite3", recover=False)
     w.autosave_timer.stop()
