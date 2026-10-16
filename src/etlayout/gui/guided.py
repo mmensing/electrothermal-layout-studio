@@ -509,7 +509,8 @@ class GuidedWorkspace(QObject):
             "Import layout…": ("import", w.import_layout), "Save project": ("save", w.save),
             "Save project as…": ("save_as", w.save_as), "Duplicate project…": ("duplicate", w.duplicate_project),
             "Relink layout…": ("relink", w.relink_layout), "Exit": ("exit", w.close),
-            "Export original numerical results…": ("export_full", w.export_results),
+            "Export / share results…": ("export_share", lambda: w.share_export()),
+            "Export complete numerical bundle (confidential)…": ("export_full", w.export_results),
             "Export displayed field / region…": ("export_field", w.export_displayed_field),
             "Export map…": ("export_map", w.export_map), "Export report…": ("export_report", w.export_report),
         }
@@ -2046,11 +2047,10 @@ class GuidedWorkspace(QObject):
         menu.addSection(self.window.field_region.currentText())
         if result.metrics.get("time_s") is not None:
             menu.addSection(f"Snapshot {result.metrics['time_s']:.9g} s")
-        for _key, label, fn in (("map", "Map image…", self.window.export_map),
-                               ("field", "Displayed field / support…", self.window.export_displayed_field),
-                               ("full", "Full numerical result…", self.window.export_results),
-                               ("report", "Report…", self.window.export_report),
-                               ("project", "Selected run project archive…", self.export_run_archive),
+        for _key, label, fn in (("figure", "Share figure or report…", lambda: self.window.share_export()),
+                               ("data", "Share selected numerical data…", lambda: self.window.share_export("data")),
+                               ("archive", "Archive complete experiment (confidential)…", lambda: self.window.share_export("archive")),
+                               ("full", "Legacy complete numerical bundle (confidential)…", self.window.export_results),
                                ("candidate", "Verified candidate layout…", lambda: self.open_studies("experiments"))):
             menu.addAction(label, fn)
         menu.setTitle("Selected run " + self.window.result.configuration_hash[:12])

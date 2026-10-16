@@ -37,9 +37,10 @@ Display settings do not alter the physical model or require another solve.
 - GUI smooth fields use scalar gradients with 64 color stops; standalone plots use
   256 scalar contour intervals. Both interpolate the scalar before applying colors
   and log transforms. Their rasterization is not claimed to be pixel-identical.
-- Normal filtered exports identify `simulation.etl` as the full source archive.
-  Derived exports instead provide `difference-fields.npz`, selected CSV/VTU data and
-  paired-source metadata; they do not pretend to be another solved simulation.
+- Legacy Python `export_results` filtered calls identify `simulation.etl` as the
+  full source archive. Current GUI sharing and CLI `export --mode figure/data`
+  enforce selected FE-only payloads instead; see [export purposes](desktop-workflow.md#studies-and-exports).
+  Derived outputs retain paired-source hashes/time and never pretend to be another solve.
 
 ## Acceptance and reproducibility
 

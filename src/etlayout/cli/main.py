@@ -88,6 +88,32 @@ def parser():
             q.add_argument("--apply", metavar="PROJECT.etl", help="Explicitly save a new project with all suggested sizing; imported layout is preserved")
         if command == "time-refine":
             q.add_argument("--steps", required=True, help="Comma-separated maximum time steps in seconds; output interval remains fixed")
+    export = sub.add_parser("export", help="Explicit figure/data sharing or confidential complete experiment archive")
+    export.add_argument("project")
+    export.add_argument("--mode", required=True, choices=["figure", "data", "archive"])
+    export.add_argument("--output", "-o", required=True, help="Requested destination directory; no silent overwrites")
+    export.add_argument("--name", default="selection", help="Artifact basename, without a path")
+    export.add_argument("--format", action="append", dest="formats", help="Repeat PNG/PDF/SVG/HTML for figures, CSV/NPZ/VTU for data, ETL for archive")
+    export.add_argument("--layer", action="append", default=[], help="Repeat explicitly selected layer IDs")
+    export.add_argument("--field", action="append", default=[], help="Repeat selected field quantities")
+    export.add_argument("--region", default="", help="Named solved support or connected region")
+    export.add_argument("--roi", nargs=4, type=float, metavar=("XMIN", "YMIN", "XMAX", "YMAX"), help="Exact rectangle clipping in meters")
+    export.add_argument("--time", type=float, help="Seconds; nearest retained snapshot is explicitly recorded")
+    export.add_argument("--colormap", default="teal")
+    export.add_argument("--color-limits", nargs=2, type=float, metavar=("MIN", "MAX"), help="SI display range; raw numerical data remain unclipped")
+    export.add_argument("--log", action="store_true", help="Logarithmic figure colors; numerical datasets retain nonpositive values")
+    export.add_argument("--width", type=float, default=7.1, help="Figure width in inches")
+    export.add_argument("--height", type=float, default=4.8, help="Figure height in inches")
+    export.add_argument("--dpi", type=int, default=300)
+    export.add_argument("--pdf-page", choices=["A4", "A3", "Letter", "Custom"], default="A4")
+    export.add_argument("--orientation", choices=["landscape", "portrait"], default="landscape")
+    export.add_argument("--title", default="", help="Optional explicitly shared title; project name is excluded")
+    export.add_argument("--annotation", default="", help="Only this annotation is included; project notes are excluded")
+    export.add_argument("--colorbar", action=argparse.BooleanOptionalAction, default=True)
+    export.add_argument("--legend", action=argparse.BooleanOptionalAction, default=True)
+    export.add_argument("--smooth", action=argparse.BooleanOptionalAction, default=True)
+    export.add_argument("--overwrite", action="store_true", help="Explicit replacement of only the listed artifacts")
+    export.add_argument("--preview", action="store_true", help="Print exact information/file disclosure without writing exports")
     compare = sub.add_parser("compare", help="Run equivalent studies across saved projects")
     execution_arguments(compare)
     compare.add_argument("projects", nargs="+")
@@ -146,6 +172,24 @@ def main(argv=None):
             from etlayout.materials.database import MaterialDatabase
             MaterialDatabase(args.database).export_json(args.output)
             print(args.output)
+            return 0
+        if args.command == "export":
+            from etlayout.io.project import load_run_history
+            from etlayout.io.sharing import ExportRequest, FigureOptions, execute_export, preview_export
+            project, result = load_project(args.project)
+            if result is None and args.mode != "archive":
+                raise ValueError("Sharing requires saved calculated fields; run and save the project first")
+            formats = tuple(item.lower() for item in args.formats) if args.formats else {
+                "figure": ("png", "html"), "data": ("csv", "npz", "vtu"), "archive": ("etl",)}[args.mode]
+            request = ExportRequest(mode=args.mode, layers=tuple(args.layer), fields=tuple(args.field), region=args.region,
+                roi=tuple(args.roi) if args.roi else None, time_s=args.time, formats=formats, colormap=args.colormap,
+                limits=tuple(args.color_limits) if args.color_limits else None, logarithmic=args.log,
+                figure=FigureOptions(args.width, args.height, args.dpi, args.pdf_page, args.orientation,
+                    args.title, args.annotation, args.colorbar, args.legend, args.smooth), stem=args.name, overwrite=args.overwrite)
+            history = load_run_history(args.project) if args.mode == "archive" else []
+            manifest = preview_export(result, request, project=project, history=history) if args.preview else execute_export(
+                result, args.output, request, project=project, history=history)
+            print(_json_dump(manifest))
             return 0
         from etlayout.io.export import export_results, export_study
         from etlayout.simulation.execution import ExecutionSettings, execution_context, validate_execution
