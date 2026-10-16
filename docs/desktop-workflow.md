@@ -188,13 +188,69 @@ advanced parameter overrides remain available. Generated candidates still pass
 the backend protection, connectivity, equal-service and export/reimport checks.
 Do not interpret coarse feasibility as a verified improvement.
 
-**Results → Export task** offers map, displayed field/support, original numerical
-result, report and selected-run project archive routes. Check the visible run/time/support
-before exporting. The selected-run archive contains that run's original physical
-configuration and fields. **File → Save project** saves the working setup and its
-retained history instead. Original-result export preserves all original layers;
-displayed field export records the chosen support and time. Candidate-layout and passive
-multiport exports remain in their owning study/analysis task.
+**Results → Export task** and **Results → Export / share results** ask what you
+want to share. Resolve any pending draft before opening the dialog. Selection,
+figure options and file review are separate tabs; changes revoke the previous
+review. Nothing changes the working project, selected result, camera or physics.
+
+| Purpose | Included | Excluded by the backend |
+|---|---|---|
+| **Share figure or report** | Selected PNG, vector PDF/SVG or self-contained HTML; a small interpretation manifest | Source GDS/OASIS, full configuration/material database, unselected fields, project notes, history and machine paths |
+| **Share selected numerical data** | Selected CSV/NPZ/VTU, SI units, coordinates and element support, source hashes and selected-time metadata | Original layout, complete setup, unrelated layers/fields and annotations |
+| **Archive complete experiment** | Portable ETL with layout, physical configuration, materials, mesh, fields, execution metadata, annotations and retained history | Nothing implied by a cropped map: this is explicitly confidential |
+
+For a figure, choose the layer, quantity, named region and retained snapshot.
+Optionally enter an exact rectangle in µm. Review requested versus effective
+bounds: partially crossed elements are geometrically clipped, with local P1
+interpolation for nodal quantities. Unused vertices and other layers never enter
+the sharing payload. Data export retains signed vector/tensor components and
+unclipped SI values; figure log scales omit nonpositive display support only.
+The source's independent coincident/component-local values remain independent.
+
+The **Figure & report** tab contains dimensions in inches, PNG DPI, PDF A4/A3/Letter
+or custom page size and orientation, title, explicitly included annotations,
+legend/colorbar and smooth/flat nodal presentation. Quantity/unit, physical aspect,
+time, source convergence/incomplete-run warnings and fixed-range clipping remain
+visible. PDF/SVG fields and colorbars use vector paths rather than a screenshot.
+The desktop Qt canvas and Matplotlib figures use the same quantitative support and
+range conventions; their antialiasing and interpolation resolution are not claimed
+to be pixel-identical. Very small figures or long annotations can be rejected when
+scientific warnings would become unreadable; enlarge the figure or shorten notes.
+
+Choose a destination and basename in **Files & review**, select formats, then
+**Review exact contents**. The review lists every file and the information retained.
+Exports reject collisions by default; explicit replacement affects only listed
+artifacts. Files are prepared in a temporary sibling directory, removed on completion
+or failure. New-file publication is exclusive and atomic on NTFS/POSIX hardlink
+filesystems; unsupported filesystems use exclusive copying. Ordinary I/O failures
+roll back installed artifacts and restore the previous bundle. Recovery files are
+preserved if rollback itself fails. Replacements are atomic per file, not a transaction
+across the entire bundle; the manifest is written last. Existing unrelated files are
+preserved. Output file symlinks and path-containing basenames are rejected.
+
+Sharing remains a disclosure decision: selected geometry, names, coordinates and
+values can reveal your design. A sanitized figure/report is not a reproducible
+simulation archive and is not proof of mesh verification. Review the source model
+and mesh uncertainty. Titles/annotations are included only when entered explicitly;
+path-like source layer/region labels receive local aliases. HTML text escaping and
+CSP prevent active metadata, not disclosure of intentionally selected content.
+CSV protects formula-like text; numeric negatives/scientific notation stay numeric.
+
+**File → Save project** retains the working setup and history. The explicitly labeled
+**complete numerical bundle (confidential)** preserves the older comprehensive CSV,
+VTU, report and source-archive output. Legacy Python `export_results(...)`, including
+filtered calls, remains comprehensive for compatibility; it is not a sharing API.
+Candidate-layout and passive multiport exports remain in their owning studies.
+
+For optional batch use, `python -m etlayout export saved.etl --mode figure --layer
+metal --field temperature --format pdf --output figures --preview` prints a disclosure
+without writing exports; omit `--preview` to export. Use `--mode data` with repeated
+`--layer`/`--field` and CSV/NPZ/VTU formats, or `--mode archive` with no selection.
+CLI ROI/color ranges remain SI; GUI inputs use displayed units. `--time` records both
+requested and nearest retained time. Full help lists DPI/page/legend options.
+External layouts use the same fail-closed policy as other commands:
+`--allow-outside-root` authorizes outside storage, while `--allow-network` separately
+authorizes network storage. Both may be required; neither grant is persisted.
 
 ## Existing projects and migration
 
