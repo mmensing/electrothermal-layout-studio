@@ -19,6 +19,7 @@ from typing import Any, Union, get_args, get_origin, get_type_hints
 import numpy as np
 
 from etlayout import __version__
+from etlayout.io.identity import document_id
 from etlayout.io.resources import (
     ExternalResourcePolicy,
     ProjectInspection,
@@ -346,7 +347,8 @@ def estimate_project_archive(project: Project, result: SimulationResult | None =
             # Hash is always present after serialization, even for new layouts.
             saved.layout.sha256 = saved.layout.sha256 or "0" * 64
         metadata({"format": "etlayout", "schema_version": 2, "application_version": __version__,
-                  "project": saved.to_dict(), "embedded_layout": embedded})
+                  "project": saved.to_dict(), "embedded_layout": embedded,
+            "document_id": document_id(project)})
         if value is not None:
             payload, details = _result_payload(value, saved)
             arrays(list(payload.values()))
@@ -476,7 +478,8 @@ def save_project(project: Project, path: str | Path, result: SimulationResult | 
             validate_history(result, saved)
         refresh_threshold_diagnostics(result, saved)
     meta = {"format": "etlayout", "schema_version": 2, "application_version": __version__,
-            "project": saved.to_dict(), "embedded_layout": embedded}
+            "project": saved.to_dict(), "embedded_layout": embedded,
+            "document_id": document_id(project)}
     fd, temporary = tempfile.mkstemp(prefix=target.name + ".", suffix=".tmp", dir=target.parent)
     os.close(fd)
     try:
@@ -725,7 +728,7 @@ def resolve_project(inspection: ProjectInspection, *, external_policy: ExternalR
 
 def save_json(project: Project, path: str | Path) -> None:
     project_from_dict(project.to_dict())
-    Path(path).write_text(_json_dump(project.to_dict()), encoding="utf-8")
+    Path(path).write_text(_json_dump({"project": project.to_dict(), "document_id": document_id(project)}), encoding="utf-8")
 
 
 def load_run_history(path: str | Path, *, external_policy: ExternalResourcePolicy | None = None,
