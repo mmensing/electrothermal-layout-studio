@@ -3350,6 +3350,7 @@ class MainWindow(QMainWindow):
             self.settings.setValue(f"layouts/{name}/geometry", self.saveGeometry())
             self.settings.setValue(f"layouts/{name}/workflow", self.workflow_tabs.currentIndex())
             self.settings.setValue(f"layouts/{name}/guided_stage", self.guided.stage)
+            self.settings.setValue(f"layouts/{name}/panels_v1", json.dumps(self.guided.panels.capture()))
             self.settings.setValue(f"layouts/{name}/guided_panels", self.guided.splitter.saveState())
             self.settings.setValue(f"layouts/{name}/guided_drawer", self.guided.center_splitter.saveState())
             self.settings.setValue(f"layouts/{name}/drawer_visible", self.guided.drawer.isVisible())
@@ -3370,20 +3371,37 @@ class MainWindow(QMainWindow):
             if stage:
                 if not self.guided.navigate(stage):
                     return
-                self.guided.splitter.restoreState(self.settings.value(f"layouts/{name}/guided_panels"))
-                self.guided.center_splitter.restoreState(self.settings.value(f"layouts/{name}/guided_drawer"))
-                self.guided.drawer.setVisible(self.settings.value(f"layouts/{name}/drawer_visible", True, type=bool))
+                panels = self.settings.value(f"layouts/{name}/panels_v1")
+                if panels is not None:
+                    self.guided.panels.restore_state(panels)
+                else:
+                    # Older named workspaces keep their native splitter state.
+                    for splitter, key in ((self.guided.splitter, "guided_panels"),
+                                          (self.guided.center_splitter, "guided_drawer")):
+                        state = self.settings.value(f"layouts/{name}/{key}")
+                        if state is not None:
+                            try:
+                                restored = splitter.restoreState(state)
+                            except (TypeError, ValueError):
+                                restored = False
+                            if not restored:
+                                self.guided.panels.restore_default()
+                                break
+                    self.guided.panels.set_visible("drawer", self.settings.value(f"layouts/{name}/drawer_visible", True, type=bool))
             else:
                 self.workflow_tabs.setCurrentIndex(self.settings.value(f"layouts/{name}/workflow", 0, type=int))
-            self.restoreGeometry(self.settings.value(f"layouts/{name}/geometry"))
-            self.restoreState(self.settings.value(f"layouts/{name}/state"))
+            for restore, key in ((self.restoreGeometry, "geometry"), (self.restoreState, "state")):
+                state = self.settings.value(f"layouts/{name}/{key}")
+                if state is not None:
+                    try:
+                        restored = restore(state)
+                    except (TypeError, ValueError):
+                        restored = False
+                    if not restored:
+                        self.statusBar().showMessage("An older or corrupt workspace preference was ignored.", 6000)
 
     def reset_workspace_layout(self):
-        if not self.guided.resolve_draft():
-            return
-        self.guided.splitter.setSizes([250, 890, 400])
-        self.guided.center_splitter.setSizes([650, 190])
-        self.guided.drawer.setVisible(bool(self.guided.assessment.issues))
+        self.guided.panels.restore_default()
 
     def open_user_guide(self):
         from PySide6.QtCore import QUrl

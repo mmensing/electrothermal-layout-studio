@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
     QTabWidget,
     QTextEdit,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -51,6 +52,7 @@ from etlayout.gui.layout_editor import LayoutEditor
 from etlayout.gui.selection import PendingSelection
 from etlayout.gui.technology_templates import open_technology_templates
 from etlayout.gui.viewer import geometry_region
+from etlayout.gui.workspace_panels import WorkspacePanels
 from etlayout.io.project import configuration_hash, physics_hash, project_from_dict, save_project
 from etlayout.models import (
     HeatSource,
@@ -147,6 +149,7 @@ class GuidedWorkspace(QObject):
         QApplication.instance().installEventFilter(self)
         self._make_canvas_controls()
         self._build_shell()
+        self.panels = WorkspacePanels(self)
         self._build_menus()
         window.workflow_tabs = LegacyStageAdapter(self)
         window.default_workspace_state = window.saveState()
@@ -297,6 +300,7 @@ class GuidedWorkspace(QObject):
         nav_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         nav_scroll.setWidget(nav)
         nav_scroll.setMinimumWidth(200)
+        self.navigation = nav_scroll
         self.splitter.addWidget(nav_scroll)
         center = QWidget()
         center_layout = QVBoxLayout(center)
@@ -304,8 +308,17 @@ class GuidedWorkspace(QObject):
         center_layout.setSpacing(4)
         self.context = text_label("Working setup · layout geometry", "context")
         self.context.setAccessibleName("Canvas configuration and run context")
-        center_layout.addWidget(self.context)
+        workspace_row = QHBoxLayout()
+        self.left_toggle = QToolButton()
+        self.left_toggle.setAccessibleName("Toggle workflow navigation")
+        self.right_toggle = QToolButton()
+        self.right_toggle.setAccessibleName("Toggle contextual inspector")
+        workspace_row.addWidget(self.left_toggle)
+        workspace_row.addWidget(self.context, 1)
+        workspace_row.addWidget(self.right_toggle)
+        center_layout.addLayout(workspace_row)
         self.center_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.center_splitter.setChildrenCollapsible(False)
         center_layout.addWidget(self.center_splitter, 1)
         self.canvas_tabs = QTabWidget()
         self.canvas_tabs.setDocumentMode(True)
@@ -574,11 +587,28 @@ class GuidedWorkspace(QObject):
                                ("saved", "Saved study results", lambda: self.show_page(w.study_panel, "Study results"))):
             self.register("studies." + key, label, fn, self.menus["Studies"], action=w.power_action if key == "routing" else None)
         self.register("view.fit", "Fit layout", w.view.fit_all, self.menus["View"], "Home")
-        self.register("view.selection", "Fit selection", w.view.fit_selection, self.menus["View"])
+        self.register("view.selection", "Fit selection / ROI", self.fit_selection_or_roi, self.menus["View"], "Shift+Home")
         self.register("view.crop", "Draw view crop", lambda: self.begin_selection("view_crop"), self.menus["View"])
         self.register("view.clear_crop", "Clear view crop", w.clear_display_roi, self.menus["View"])
         self.register("view.browser", "Hierarchy / layers / nets", lambda: self.show_page(w.design_dock.widget(), "Model browser"), self.menus["View"])
-        self.register("view.drawer", "Issues / jobs / history", self.toggle_drawer, self.menus["View"], "Ctrl+J")
+        self.menus["View"].addSeparator()
+        panel_actions = {}
+        for name, label, shortcut in (("left", "Workflow navigation", "Ctrl+Shift+L"),
+                                      ("right", "Contextual inspector", "Ctrl+Shift+R"),
+                                      ("drawer", "Issues / jobs / history", "Ctrl+J")):
+            panel_actions[name] = self.register("view." + ("drawer" if name == "drawer" else name + "_panel"),
+                label, lambda name=name: self.panels.toggle(name), self.menus["View"], shortcut)
+        panel_actions["left"].setIconText("Workflow")
+        panel_actions["right"].setIconText("Inspector")
+        self.left_toggle.setDefaultAction(panel_actions["left"])
+        self.left_toggle.setText("Workflow")
+        self.right_toggle.setDefaultAction(panel_actions["right"])
+        self.right_toggle.setText("Inspector")
+        self.register("view.focus_canvas", "Focus layout canvas", self.panels.focus_canvas,
+                      self.menus["View"], "Ctrl+Shift+F")
+        maximize = self.register("view.maximize_canvas", "Maximize canvas / restore panels", self.panels.maximize_canvas,
+                                self.menus["View"], "Ctrl+Shift+M")
+        self.panels.bind_actions(panel_actions, maximize)
         self.menus["View"].addAction(w.dark_action)
         for action in w.workspace_actions:
             if "workspace layout" in action.text():
@@ -595,6 +625,7 @@ class GuidedWorkspace(QObject):
         self.navigate("results" if self.window.result else "layout", force=True)
         if not self.assessment.issues:
             self.drawer.hide()
+        self.panels.restore_preferences()
 
     def project_replaced(self):
         """Retire presentation evidence belonging to the previous document."""
@@ -630,12 +661,24 @@ class GuidedWorkspace(QObject):
         if hasattr(self, "zoom"):
             self.zoom.setText(f"{self.window.view.transform().m11():.3g} px/µm")
 
+    def fit_selection_or_roi(self):
+        if self.window.view.scene().selectedItems():
+            self.window.view.fit_selection()
+        elif self.window.project.display_roi or self.window.project.roi:
+            region = self.window.project.display_roi or self.window.project.roi
+            bounds = resolve_region(region, self.window.masks,
+                                    self.window.geometry.domain if self.window.geometry else None).bounds
+            x0, y0, x1, y1 = bounds
+            self.window.view.fitInView(QRectF(x0 * 1e6, -y1 * 1e6, (x1 - x0) * 1e6, (y1 - y0) * 1e6),
+                                       Qt.AspectRatioMode.KeepAspectRatio)
+        else:
+            self.window.view.fit_all()
+
     def toggle_drawer(self):
-        self.drawer.setVisible(not self.drawer.isVisible())
+        self.panels.toggle("drawer")
 
     def open_drawer(self, index=0):
-        self.drawer.show()
-        self.drawer.setCurrentIndex(index)
+        self.panels.open_drawer(index)
 
     def show_page(self, widget, title):
         if self.canvas_tabs.indexOf(widget) < 0:
@@ -1358,7 +1401,7 @@ class GuidedWorkspace(QObject):
                 self.canvas_tabs.setCurrentIndex(index)
                 break
         self.drawer.setCurrentIndex(state.get("drawer", 3))
-        self.drawer.setVisible(state.get("drawer_visible", True))
+        self.panels.set_visible("drawer", state.get("drawer_visible", True))
 
     def edit_settings(self, key):
         if not self.resolve_draft():

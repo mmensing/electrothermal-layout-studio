@@ -164,3 +164,16 @@ runtimes. Distinguish source tests, desktop acceptance, packaged execution and
 clean-machine validation. Timings are host observations, not portable assertions
 or guaranteed speedups. Keep raw logs, coverage and repeated captures in artifacts;
 maintained docs contain the contracts and reproducible commands.
+
+
+## Collapsible workspace checks
+
+`python scripts/workspace_panels_acceptance.py --offscreen --output artifacts/desktop-workspace`
+solves the configured synthetic E19 multilayer transient, then checks all panel
+controls, keyboard focus, compact/full-HD windows, both themes, long names and
+unchanged scientific identity, frame, range and camera. Repeat with `--scale 1.25`,
+`--scale 1.5` and `--scale 2` for Qt application scaling. Omit `--offscreen` for
+native Windows checks. The shared font verification rejects unreadable glyphs;
+inspect the actual PNGs before treating captures as visual evidence. These checks
+do not establish physical monitor DPI, mixed-monitor restoration, assistive
+technology support or clean-machine packaged behavior.
