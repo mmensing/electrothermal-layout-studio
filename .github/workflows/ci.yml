@@ -151,7 +151,7 @@ jobs:
           $journeys = @('gui_acceptance', 'visualization_workbench_acceptance', 'workflow_ui_acceptance', 'reporting_performance_acceptance', 'transient_acceptance', 'transient_workflow_acceptance', 'power_workflow_acceptance', 'guided_workflow_acceptance', 'local_refinement_acceptance', 'power_examples_desktop_acceptance', 'layout_editor_acceptance', 'readability_acceptance')
           $journeys += 'workspace_panels_acceptance'
           $failedJourneys = @()
-          $journeys += 'export_acceptance'
+          $journeys += 'export_acceptance', 'archive_history_acceptance'
           foreach ($journey in $journeys) {
             python "scripts/$journey.py" --offscreen --output "artifacts/desktop-$journey"
             if ($LASTEXITCODE -ne 0) { $failedJourneys += $journey }

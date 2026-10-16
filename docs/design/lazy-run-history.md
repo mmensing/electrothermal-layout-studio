@@ -1,217 +1,280 @@
-# RFC: metadata-first run history
+# Metadata-first run history
 
-Status: **design only; no lazy reader or cache is enabled by this change**.
-Depends on immutable atomic saving and the [content-addressed archive proposal](content-addressed-archives.md).
-The existing eager readers and archive versions remain authoritative. This proposal
-changes storage access, not physical models, convergence or acceptance criteria.
+**Status: implemented, explicitly opt-in for schema-3 projects.** The archive
+contract is documented in [content-addressed archives](content-addressed-archives.md).
+Schema-1/2 archives and legacy JSON keep their existing eager behavior. Opening
+an older project does not convert it, and the default writer/recovery format
+remains schema 2. Storage access does not change physical models or acceptance
+criteria.
 
-## Why a separate implementation review is needed
+## Using the application
 
-`load_run_history` currently decodes each nested run through `load_project`.
-`RunHistoryPanel.set_results` expects real `SimulationResult` objects and walks mesh,
-transient snapshots and retained arrays to describe history. Inspection, comparisons,
-`history_field_limits`, local traces, exports and transient initialization likewise
-expect materialized component-local fields. A proxy substituted into that dataclass
-would conceal I/O, failures and partial validation inside numerical code.
+1. Create a portable schema-3 copy with **File → Save content-addressed copy…**.
+   Keep the original project when evaluating the format.
+2. In **Edit → Archive and history settings…**, enable **Open schema-3 history
+   on demand**. This applies to the next project opening. The array-cache default
+   is 256 MiB; the desktop setting accepts 16–8,192 MiB.
+3. Reopen that copy. History lists immutable records and stored scalar summaries
+   before numerical fields are loaded. Stored convergence is labelled separately
+   from validated loaded fields; a catalog is not a mesh-verification certificate.
+4. Inspect a run or choose an exact stored transient time. Loading happens in a
+   worker and preserves the previous usable view until the requested fields pass
+   validation. The issue drawer explains corruption, missing support, resource
+   approval or cache-budget failures.
+5. Return to the working setup to restore its project and view. Historical
+   inspection never applies another run's configuration to the working document.
 
-The archive benchmark described in the prerequisite RFC measures the current writer
-and eager reader on real solved synthetic fields at 1, 10 and 50 retained records.
-Those measurements are the baseline, **not evidence of lazy-loading performance**.
-Repeated references are storage stress, not independent simulations. See the measured
-matrix and reproduction command there; raw archives/logs remain disposable artifacts.
-An implementation must repeat the same matrix before claiming an improvement.
+The History drawer reports resident/pinned payload bytes, cache budget, active
+reads and hit/miss counts. Its tooltip includes the next allocation estimate,
+private disk-copy size and any explicitly approved over-budget use. These
+numbers describe the array cache, not process RSS. Reducing the budget evicts
+unpinned objects; an active view remains valid. A selection that cannot fit asks
+for explicit temporary over-budget approval or cancellation.
 
-A single fresh-process sample of the shared-layout/mesh workload measured:
+## Explicit Python interfaces
 
-| Total retained records | Current-result open (s) | Additional eager history (s) | Sampled peak process-tree RSS (MiB) |
-|---:|---:|---:|---:|
-| 1 | 0.303 | 0.013 | 109.1 |
-| 10 | 0.424 | 2.772 | 202.9 |
-| 50 | 1.006 | 14.651 | 639.1 |
+The public compatibility functions remain eager:
 
-These are separate reader calls, not a measured GUI startup or a lazy prototype.
-The one-record history call has no historical payload. RSS includes imports, the
-input pool, integrity/equality checks, save and load; it is not attributable solely
-to opening. OS storage caches were not flushed and there is one replicate, so no
-uncertainty interval or speedup is established. The prerequisite RFC records the
-Python/NumPy/host configuration, varied-content/transient matrix and exact workload.
+```python
+project, current = load_project(path)
+history = load_run_history(path)
+```
 
-## Current metadata-inspection measurements
+They return ordinary mutable `SimulationResult` objects with independent buffers
+between retained runs. They do not substitute proxies or perform hidden I/O on
+attribute access.
 
-The bounded two-stage inspector was also measured on the unchanged original
-archives, in separate fresh processes with `np.load` blocked. It still reads the
-whole selected container and recursively inspects ZIP/NPZ headers; this is **not**
-a lazy reader or a claim of zero payload I/O. The inspected source is the bounded
-reader in commit `0d47bc1`; its resource module is unchanged in the subsequent
-widget-fixture-only commit.
+The separate `etlayout.io.history_store` API exposes a closable `ResultStore`:
 
-| Workload | Records | Stage-one inspection (s) | Sampled process-tree RSS (MiB) | Native runtime peak WS (MiB) |
-|---|---:|---:|---:|---:|
-| Shared E1 | 1 | 0.023 | 47.8 | 49.4 |
-| Shared E1 | 10 | 0.293 | 73.7 | 81.9 |
-| Shared E1 | 50 | 1.591 | 177.8 | 251.3 |
-| E19, 101 frames | 1 | 0.102 | 53.4 | 49.6 |
-| E19, 101 frames | 10 | 1.941 | 110.7 | 142.7 |
-| E19, 101 frames | 50 | 11.389 | 557.8 | 555.4 |
+```python
+from etlayout.io.history_store import open_history_catalog
 
-One observation per row; OS filesystem caches were not flushed. The 10 ms sampled
-process tree includes launcher/import costs and can miss brief allocations. Native
-peak working set covers the runtime process and is a different measure, so neither
-column is substituted for the other. Each run stayed within a 3 GiB/120 s guard.
-The six metadata runs exclude geometry preparation and array materialization.
-They show why the future manifest/lease reader must avoid retaining and repeatedly
-decompressing complete nested history just to populate a list. They do not establish
-startup gains for a future implementation or a numerical performance improvement.
+with open_history_catalog(path, cache_bytes=256 * 1024**2) as store:
+    for record in store.history:
+        print(record.run_id, record.mode, record.available)
+    with store.acquire(store.current_run_id) as result:
+        # A complete, validated SimulationResult; arrays are immutable.
+        use_result(result)
+```
 
-A small-file regression test also bounds individual reads to 1 MiB while retaining
-the aggregate archive limit. An input byte limit must not itself become a temporary
-allocation of that size; measure allocations as well as on-disk archive bytes.
+`store.records` contains the current record first, when present, followed by the
+original ordered historical records. `store.history` excludes the current
+record. Repeated identical runs remain distinct records. `RunRecord.run_id`
+(the `id` alias is also available) is a storage identity; configuration and
+physics hashes keep their existing scientific meanings.
 
-## Proposed explicit interfaces
+`store.acquire_frame(run_id, index)` returns the exact stored frame and mesh,
+with no nested transient history attached. It does not claim that unloaded
+frames were validated. `store.acquire(run_id)` materializes the complete run,
+including its original transient times, every retained snapshot and accepted
+step rows. Both return explicit leases; closing a lease releases its pins.
+The convenience `materialize`/`frame` methods return real results with automatic
+pins; use `release_result(result)` or release the last reference to end them.
 
-Keep `load_project(path, ...) -> (Project, SimulationResult | None)` and
-`load_run_history(path, ...) -> list[SimulationResult]` eager and compatible by default.
-Add a separate `open_history_catalog(inspection, policy)` operation and a closable
-`ResultStore`. No project JSON attribute can turn on filesystem or network access.
-The store inherits resource approvals from the inspected archive, never from a run.
-The current security inspector retains complete selected-container bytes and validates
-nested NPZ headers. That API is not already a low-memory lazy reader. A subsequent
-implementation must introduce an integrity-checked manifest/reader-lease path without
-reintroducing metadata-driven external reads or authorization/version races; benchmark
-that path separately from today's metadata inspection.
+Records are immutable metadata: original configuration/physics identities,
+mode, elapsed time, diagnostics, execution summary, field/support keys, exact
+stored times, completion status and expanded-array estimates. Their mappings
+cannot be edited in place. `configuration_copy()` returns an isolated ordinary
+model dictionary when an explicit comparison needs one. Record summaries never
+replace the authoritative numerical arrays.
 
-A lightweight immutable run record contains:
+## Ownership, cancellation and trust
 
-- Stable run identity, original configuration/physics identities and verified
-  configuration content; distinguish these from the document/session/revision UUIDs.
-- Mode, elapsed time, software/execution provenance, stored convergence/validation
-  status, diagnostic summary and small, schema-validated scalar metrics.
-- Available layer/field keys, support kind, units, component-local field version,
-  mesh/object digests and estimated expanded sizes.
-- Transient stored times, completion/stop reason and snapshot availability, without
-  reconstructing every frame. Summary metadata must not contain arbitrary HTML.
+Catalog opening copies and hashes the explicitly selected archive into a bounded
+private **disk** snapshot using 1 MiB chunks. The maximum compressed copy is
+2,000,000,000 bytes. It then validates the central directory, manifests, JSON
+objects, dependency graph and declared logical materialization budgets. It does
+not read/decompress NPY field payloads. Copying the complete compressed file is
+real I/O and disk consumption; metadata-first does not mean zero I/O or zero
+memory. Each numerical object is hash/header/support checked before exposure.
 
-Proposed `store.materialize(run_id)` returns a normal validated `SimulationResult`.
-`store.frame(run_id, index)` requests the exact stored frame and the shared mesh.
-Later field-specific reads require an explicit typed field view; they must never
-pretend a partial field mapping is a complete result. Numerical/analysis consumers
-continue receiving complete validated objects until individually migrated.
-Both interfaces are explicit, cancellable operations with no property-triggered I/O.
+The private generation prevents pathname races: later Save As, atomic
+replacement, rename or deletion of the original cannot redirect an active
+reader. The store identifies its generation with the SHA-256 of those exact
+copied bytes, not a document name or physical hash. Source-generation leases
+for saves keep the copy alive until the last associated save finishes. Closing
+cancels view reads, waits for the owned active read, closes file handles and
+cleans its disposable copy when generation leases are released.
 
-List display must distinguish **stored convergence** from **validated loaded fields**.
-A valid catalog is not proof of intact numerical payloads or mesh verification.
-Hash/schema failures make the affected run unavailable with an actionable issue;
-do not substitute zero arrays, a neighboring frame, or the latest working setup.
+The existing external-resource policy remains authoritative. Catalog creation
+reads no declared external layout. Resolving a layout requires the same explicit
+local-root, outside-root, network/junction and hash/relink review as an eager
+opening. An object reference grants no filesystem/network authority. A previously
+reviewed inspection must match the copied generation. Unknown future schemas
+fail closed; damaged objects make dependent runs unavailable with diagnostics,
+without fabricated fields or a neighbouring-frame fallback.
 
-## Opening, file ownership and cancellation
+Each GUI request carries document epoch, selected record identity and a monotonic
+request generation. Only a matching completion can replace the display. Draft
+Apply/Discard/Stay resolution precedes historical inspection and transitions;
+Stay submits no new request. Rapid selection, cancellation, project changes and
+closing invalidate late completions. Failure leaves the previous usable fields
+and working setup intact.
 
-Use metadata/object manifests from the new schema. Validate entry names, duplicate
-members, schema, object kinds, dependency references and declared expansion budgets
-before any array allocation. Each array is hash-checked and shape/dtype/support-checked
-before becoming visible. A missing object invalidates its dependent run independently.
-Legacy archives remain eager initially; displaying them does not silently rewrite them.
+## Cache and complete consumers
 
-GUI acquisition runs in existing worker infrastructure. Each request carries document
-epoch, selected run ID and a monotonic request generation. Only a matching completion
-may replace the displayed historical context. Resolve pending Apply/Discard/Stay before
-starting inspection; Stay creates no request and changes no selection/history context.
-Returning to the working project restores its setup and camera, without applying a
-historical configuration. Cancellation or failure preserves the previous usable view.
+The application-local LRU counts each unique immutable NumPy payload buffer once,
+including meshes shared by multiple results. The NPY header is not retained as
+uncounted backing storage. The budget excludes Python metadata, temporary read
+buffers, the private disk copy and other application/process allocations; it is
+not an operating-system memory limit. Pinned views/comparisons cannot be evicted.
+`store.clear()` removes unpinned payload and does not change physics identity.
+No global cross-project cache, network store or telemetry is introduced.
 
-A store must pin an immutable archive generation while readers are active. Reopening
-a path after Save As/replacement is unsafe even if its name or physical hash is unchanged.
-On Windows, investigate a read handle allowing atomic replacement with identity checks;
-on POSIX, pin the original inode/handle. Require native replacement/deletion tests before
-adopting either strategy. A bounded private read-copy is an explicit fallback with disk
-cost and cleanup disclosure, not an invisible full RAM copy. A separate ZipFile/stream
-per worker avoids mutable shared seek state. Close waits for leases or cancels reads,
-then releases handles, arrays and disposable read copies. No network fetch or extraction
-of metadata-supplied paths is permitted.
+Complete archive Save/Export captures source-generation references to every
+retained run, including those never browsed. The save worker copies only reachable
+verified objects and validates complete physical support one run at a time.
+Selected numerical/figure exports keep their existing disclosure/filtering
+policy. They cannot pull in the complete source graph merely because it is
+reachable. An explicit legacy copy is rejected before publication if schema 2
+cannot preserve its typed values.
 
-## Bounded cache and observability
+Comparison, continuation, whole-history limits, local traces and reports require
+complete validated supports. The GUI requests those full results explicitly
+instead of passing partial field mappings into numerical code. Local transient
+traces offer a **Load complete time history…** action when only a frame is
+loaded. Whole-history display choices must scan the requested history; displaying
+one frame never silently stands in for all stored times. Existing weak-reference
+extrema caches remain derived-value caches, distinct from this payload cache.
 
-Start with an application-local byte budget, proposed 256 MiB, adjustable within a
-validated range. This is a proposed default for evaluation, not a measured optimum.
-Use LRU eviction by archive-generation/object digest and representation identity;
-layer, field, frame and support semantics are part of a field-view key. Count owned
-NumPy storage once by immutable object identity, including shared meshes. Reuse the
-immutable bytes-backed array contract from asynchronous saving.
+## Validation and measurement method
 
-Active views, comparison pairs and save/continuation snapshots acquire leases. Pinned
-objects cannot be evicted. If one required result exceeds the budget, disclose the
-required size and offer explicit temporary over-budget use or cancellation; do not
-silently load unlimited history. Report cache resident/pinned bytes, hit/miss counts,
-active reads and estimated next allocation. This differs from process RSS and from the
-existing retained-Python-memory estimate. No telemetry leaves the machine.
+Focused tests cover metadata-only reads, external-resource denial before reads,
+exact eager/lazy numerical and typed-metadata equality, malformed/corrupt objects,
+distinct ordered records, immutable sharing, leases, eviction/reload, budgets,
+cancellation and native Windows replacement/deletion. GUI regressions cover
+Apply/Discard/Stay, rapid selections/frames, stale completions, return to working
+context, partial-browse complete saves/exports, and visible errors. Existing
+analytical, conservation, transient continuation and scientific acceptance tests
+remain required.
 
-Invalidate by archive generation, not document name or mutable object address. Closing
-a project releases unpinned entries; removing a history row affects the current document
-manifest, not another session's recovery or an unrelated on-disk archive. Saved immutable
-objects remain reachable by outstanding save/read leases until completion. Cache clearing
-must not change the physical hash or accepted scientific values.
+Run the opt-in performance matrix from a source checkout:
 
-## Consumer migration
+```powershell
+python scripts/benchmark_archive_history.py --output artifacts/archive-history --formats 2 3 --repeats 3 --reader-phases eager lazy-startup lazy-full
+```
 
-| Consumer | First safe behavior | Later selective behavior |
-|---|---|---|
-| History list/configuration comparison | Catalog only; no mesh allocation | None required |
-| Historical inspection/maps | Full selected run in worker | Exact field view after support validation |
-| Transient time navigation | Selected run initially eager | Exact requested frame, bounded prefetch of one adjacent frame |
-| Two-run comparison | Materialize both, validate compatibility | Request corresponding supports; pin both during comparison |
-| Whole-history color limits/local traces | Explicit cancellable scan | Validated per-frame reductions, exact existing weighting |
-| Figure/selected-data export | Materialize selected run/frame | Use same export backend on validated selected support |
-| Complete archive save/export | Immutable reader leases/object references | Copy verified referenced objects without changing identity |
-| Initial-state continuation | Full required temperature/support/time validation | No approximate/interpolated substitute |
-| CLI/Python | Existing eager functions | Explicit catalog/store context manager |
+Use `--inputs-from` to reuse the exact solved input archive bytes. `--runtime-root`
+selects a separately frozen checkout, which must also be selected through
+`PYTHONPATH`; receipts record runtime revision and harness revision/hash. Each
+observation has its own process, sampled process-tree RSS and unchanged 3 GiB /
+600 s guard. Resource-limited or failed readers remain failed receipts, and other
+independent requested reader modes still run. The command returns nonzero if
+any observation fails.
 
-The existing weak-reference extrema cache remains a derived-value cache. Do not count it
-as an array cache or use its scalars as proof that unloaded frames passed validation.
-No history-wide option may silently use only the displayed frame to reduce memory.
+The matrix uses 1/10/50 total records with shared layout/mesh, varied meshes,
+varied layouts and all 101 retained E19 transient frames. Repeated entries cycle
+through a genuinely solved pool; they are not independent experiments. Report
+catalog-plus-exact-first-selection time separately from full eager opening and
+sequential complete lazy materialization. Warm selection and post-eviction
+selection measure the application cache; the operating-system filesystem cache
+is not flushed. Process RSS and cache payload bytes remain separate measures.
+Three observations support medians and observed ranges, not a confidence interval.
+Python API timing is not evidence of GUI heartbeat latency or packaged-build
+performance. Keep detailed archives/logs in disposable artifacts outside Git.
 
-## Migration and rollout gates
+## Measured source comparisons
 
-1. Merge/review recovery, async saving and archive contracts; keep default eager APIs.
-2. Add catalog and reader leases behind an explicit local opt-in on the new archive
-   schema, with a safe eager fallback. Unknown future formats fail closed.
-3. Migrate history listing and one selected-run worker path. Keep comparison, reports,
-   continuation and numerical analysis eager until their individual gates pass.
-4. Introduce bounded frame/object caching, cancellation, byte accounting and cache UI.
-5. Run the full equivalence/performance matrix, then evaluate enabling the GUI option
-   by default. Retain eager CLI/Python behavior unless separately versioned.
+Measured on 16 October 2026 using Windows 11 build 26200, CPython 3.12.14,
+NumPy 2.5.4, 8 physical / 16 logical AMD64 CPUs and 31.2 GiB RAM. The pinned
+schema-2 source baseline was `4a464593`; the measured schema-3 runtime was
+`7ce0f09d`, with harness SHA-256
+`a9a5276f5c138f4c4f552670646d441f16bbeb3f0a41a9356d53e06c4841113d`.
+Inputs were copied byte-for-byte from the same actually solved pool; no solver
+was substituted or rerun to obtain a storage improvement.
 
-No automatic project migration, schema bump, metadata rewrite, user-facing cache option
-or runtime feature is implemented by this RFC. Existing .etl/.etlayout/JSON files retain
-their current interpretation. Subsequent work must document opt-in writer compatibility
-and provide a source-preserving migration path and rollback/export to legacy format.
+The baseline completed 36 save/reopen and 36 separate eager-reader observations;
+the schema-3 matrix completed 36 save/reopen and 108 separate reader observations.
+Every reopened record/frame passed independent complete typed equality. All
+observations stayed within the unchanged sampled 3 GiB RSS / 600 s limits.
+Each row below has three fresh-process observations. Time and RSS values are
+**median [observed minimum–maximum]**; archive sizes are medians. MiB means
+2²⁰ bytes. These are observed ranges, not confidence intervals.
 
-## Required acceptance tests for the implementation
+The save/reopen baseline was an ordinary-workstation run with brief disclosed
+Qt/functionality overlaps. Reader-only baseline and candidate windows had no
+known concurrent local numerical/desktop suites. All observations were retained;
+OS filesystem caches were not flushed. Expected pool fingerprints were cached
+before timing in the newer harness, while every actual loaded value was still
+checked independently. Save/open timers exclude preparation and fingerprinting;
+whole-process wall times therefore are not directly comparable across harnesses.
 
-These are **planned tests**, not results asserted by this documentation PR:
+A later portable-frame follow-up (`8ad3d8b`) resolves matching-SHA frame source
+paths and checks frame/run provenance. That correctness change is outside this
+measured revision; these values must not be described as a complete timing matrix
+of the final follow-up commit.
 
-- Instrument archive reads: catalog creation opens no field payload; failed resource
-  authorization causes zero reads of declared external files, including UNC/junctions.
-- Compare eager/lazy arrays bit-for-bit, dtypes, mesh/local indices, configuration and
-  physics hashes, diagnostics and all stored transient times for shared/different meshes.
-- Run analytical E1, multilayer local-field, conservation, measurement, saved-state
-  continuation and existing transient regressions unchanged through both access paths.
-- Inject missing/corrupt hashes, bad array headers, wrong component support, duplicate
-  objects, unknown schemas and decompression bombs. Isolate affected runs and preserve
-  the prior working context; no tolerance relaxation or fallback numerical data.
-- Use actual Qt Apply/Discard/Stay, rapid A/B/history/frame changes, project close,
-  cancellation and Save As during reads. Late completions cannot overwrite newer context.
-- Assert bounded bytes/leases, shared-mesh accounting, eviction/reload equality, close
-  cleanup and deterministic cache invalidation, including two application processes.
-- Save/export after a partial browse must include every retained run intended for the
-  complete archive, with exact original support; selected-data export stays filtered.
-- Native Windows replacement/deletion, startup recovery and reopen must work with an
-  active reader. Do not infer handle behavior from POSIX or offscreen-only checks.
-- Repeat 1/10/50-record shared/mixed-layout/mesh and 101-frame transient workloads in
-  fresh processes. Measure catalog opening, selected first frame, warm/cold navigation,
-  full eager materialization, report/export time, peak process-tree RSS, cache bytes,
-  archive bytes and GUI heartbeat gaps. Report cold/warm storage and hardware/versions.
+| Storage workload | Records | Schema-2 eager ready (s) | Schema-3 eager ready (s) | Schema-3 first selection (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Shared layout / mesh | 1 | 0.904 [0.731–1.088] | 0.796 [0.784–0.804] | 0.775 [0.757–0.780] |
+| Shared layout / mesh | 10 | 5.532 [4.983–5.706] | 3.152 [3.142–3.345] | 0.894 [0.837–0.914] |
+| Shared layout / mesh | 50 | 28.2 [28.1–29.0] | 13.9 [13.7–13.9] | 0.975 [0.969–1.089] |
+| Same layout, varied mesh | 1 | 0.856 [0.792–0.892] | 0.827 [0.765–0.827] | 0.781 [0.776–0.822] |
+| Same layout, varied mesh | 10 | 5.267 [5.132–5.380] | 3.181 [3.158–3.227] | 0.841 [0.841–0.914] |
+| Same layout, varied mesh | 50 | 28.1 [28.0–30.4] | 13.8 [13.7–13.9] | 0.994 [0.988–0.996] |
+| Varied layouts / meshes | 1 | 0.847 [0.770–0.967] | 0.767 [0.755–0.806] | 0.767 [0.752–0.900] |
+| Varied layouts / meshes | 10 | 13.0 [12.9–13.8] | 6.952 [6.928–7.253] | 0.951 [0.862–4.366] |
+| Varied layouts / meshes | 50 | 69.4 [66.6–74.1] | 34.5 [33.6–35.9] | 1.058 [1.006–1.090] |
+| 101-frame E19 | 1 | 1.336 [1.232–1.379] | 1.463 [1.454–1.601] | 0.207 [0.195–0.225] |
+| 101-frame E19 | 10 | 18.1 [16.9–20.2] | 8.097 [7.978–8.279] | 0.326 [0.309–0.340] |
+| 101-frame E19 | 50 | 113.9 [111.4–120.3] | 39.0 [38.4–39.4] | 0.937 [0.851–0.951] |
 
-Require lower startup memory and practical first-interaction improvement on the largest
-shared-history cases without unacceptable single-run regression. Define numerical
-performance gates from repeated baseline distributions before implementation review;
-do not invent a speedup from metadata-only timing or compare different retained content.
-Physical values, provenance, conservation and scientific acceptance must remain identical.
+Eager readiness is `load_project` plus `load_run_history`, excluding independent
+comparison. First-selection readiness includes the full compressed private disk
+copy/catalog and one complete exact stored frame for E19, or one complete run
+otherwise. It is not complete transient materialization and does not certify
+unloaded frames. This is Python storage timing, not a GUI heartbeat measurement.
+
+Sampled **reader-process-tree** RSS at 50 retained records is separate from cache
+payload accounting. Imports and comparison are included; the save/input-pool
+process is not reused for this table.
+E19 eager schema-3 RSS was higher than schema 2; lower selected-view RSS
+depends on on-demand access. Disk deduplication alone does not lower eager RAM.
+
+| Storage workload | Schema-2 eager RSS (MiB) | Schema-3 eager RSS (MiB) | Schema-3 first-selection RSS (MiB) |
+| --- | ---: | ---: | ---: |
+| Shared layout / mesh | 734.7 [733.2–735.0] | 636.3 [635.9–637.2] | 99.0 [98.6–99.0] |
+| Same layout, varied mesh | 731.9 [731.2–732.6] | 637.4 [636.1–638.3] | 99.0 [98.1–99.1] |
+| Varied layouts / meshes | 1806.8 [1805.3–1808.1] | 1330.5 [1329.8–1333.4] | 98.2 [97.7–99.3] |
+| 101-frame E19 | 1884.4 [1882.0–1895.4] | 1973.9 [1972.3–1974.5] | 64.5 [64.5–64.7] |
+
+At 50 records the same-store warm selection and explicit release/clear/reload
+checks retained exact values. All 36 first-selection observations increased cache
+hits on warm reacquisition, cleared resident/pinned payload after release, and
+reloaded exact fields within the configured budget. Cold cache here means
+application LRU eviction, not a flushed operating-system filesystem cache.
+
+| Storage workload | Warm selection (s) | After eviction (s) | Full lazy scan + verification (s) | Full-scan RSS (MiB) |
+| --- | ---: | ---: | ---: | ---: |
+| Shared layout / mesh | 0.230 [0.215–0.234] | 0.269 [0.266–0.270] | 12.5 [12.5–12.9] | 111.2 [110.5–112.6] |
+| Same layout, varied mesh | 0.229 [0.218–0.238] | 0.263 [0.262–0.270] | 12.3 [12.2–12.4] | 122.9 [121.6–123.6] |
+| Varied layouts / meshes | 0.224 [0.214–0.241] | 0.272 [0.251–0.273] | 30.7 [30.1–30.8] | 184.0 [179.8–184.4] |
+| 101-frame E19 | 0.022 [0.022–0.023] | 0.025 [0.023–0.025] | 84.1 [82.3–84.3] | 181.6 [180.3–182.9] |
+
+The complete sequential lazy scan includes independent typed comparison of every
+actual run and all 101 E19 frames per retained run. Its duration is deliberately
+not compared as an I/O-only speedup with eager readiness. It remains a useful
+end-to-end completeness/resource observation; cache leases are released between
+runs.
+
+The preregistered adoption targets at 50 records were: archive bytes at most
+20% of the baseline median; first-selection time at most 50% of the fastest
+baseline eager reader; and first-selection RSS at most 60% of the smallest
+baseline eager RSS. At one and 50 records, save/eager time targets were the
+baseline minimum plus `max(0.15 s, 25% of that minimum)`. Correctness, cache
+accounting and the resource ceilings remained hard requirements.
+
+All size, startup, RSS, eager-reader and cache conditions passed. Three
+single-record save targets failed; the bounds were not changed:
+
+| Target | Observed median (s) | Upper bound (s) |
+| --- | ---: | ---: |
+| shared/1 save overhead bound | 0.917 | 0.864 |
+| varied-mesh/1 save overhead bound | 0.949 | 0.886 |
+| transient/1 save overhead bound | 2.072 | 1.389 |
+
+On-demand history remains opt-in pending broader workloads. Synthetic repeated pools do
+not establish a universal speedup or a benefit for fifty unrelated analyses.
+Small projects may pay container/validation overhead; a single selected result
+can exceed the local cache budget. Native source verification does not certify
+a frozen package, clean machine, live network share or mixed-monitor setup.

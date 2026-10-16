@@ -550,7 +550,8 @@ class GuidedWorkspace(QObject):
         for key, label, fn, shortcut, action in (
             ("edit.undo", "Undo", w.undo, QKeySequence.StandardKey.Undo, w.undo_action),
             ("edit.redo", "Redo", w.redo, QKeySequence.StandardKey.Redo, w.redo_action),
-            ("edit.preferences", "Execution settings…", w.edit_execution_settings, None, w.execution_action)):
+            ("edit.preferences", "Execution settings…", w.edit_execution_settings, None, w.execution_action),
+            ("edit.history", "Archive and history settings…", w.edit_history_settings, None, w.history_settings_action)):
             self.register(key, label, fn, self.menus["Edit"], shortcut, action)
         for stage in STAGES[:4]:
             self.register("model." + stage.key, stage.title, lambda key=stage.key: self.navigate(key), self.menus["Model"])
@@ -784,6 +785,8 @@ class GuidedWorkspace(QObject):
             if self.stage in self.stage_buttons:
                 self.stage_buttons[self.stage].setChecked(True)
             return False
+        if stage != "results":
+            self.window.history_workflow.loader.cancel()
         if self.pending_purpose == "editor" and self.selection_banner.isVisible():
             # Explicit Apply/Cancel and forced refreshes retire the owning
             # inspector, so its selection session cannot outlive that page.
@@ -2060,6 +2063,9 @@ class GuidedWorkspace(QObject):
             from etlayout.models import SimulationError
             from etlayout.power.analysis import _validate_result_context
             for candidate in reversed(self.window.run_history):
+                from etlayout.gui.history_workflow import is_record
+                if is_record(candidate):
+                    continue
                 try:
                     _validate_result_context(self.document.project, candidate)
                     retained = candidate

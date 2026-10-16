@@ -87,12 +87,19 @@ run independently. This change improves responsiveness and integrity, not compre
 or history deduplication; immutable ownership has a measured memory cost.
 
 
-## Archive storage design work
+## Archive storage and on-demand history
 
-The [content-addressed archive RFC](design/content-addressed-archives.md) measures
-the current nested schema-2 writer with one, ten and fifty retained records and
-proposes an opt-in object format. It is design-only: deduplication and lazy
-history are not enabled. The opt-in `scripts/benchmark_archive_history.py`
-harness calculates synthetic reference inputs and measures the existing
-immutable-snapshot writer, eager reopening and process-tree RSS. Use new artifact
-directories and keep its generated archives/logs outside source control.
+[Content-addressed archives](design/content-addressed-archives.md) are implemented
+as an explicit schema-3 option. [Metadata-first history](design/lazy-run-history.md)
+is separately enabled through **Edit → Archive and history settings…** for
+schema-3 opening. Schema 2 remains the default writer and recovery format; its
+historical worker measurements above are not schema-3 performance results.
+
+The opt-in `scripts/benchmark_archive_history.py` harness measures schema-2/3
+storage and explicit eager/lazy reader phases on the same solved input archives.
+Report complete eager opening separately from catalog plus first selection,
+complete lazy materialization, warm selection and post-eviction selection. Cache
+payload bytes, private disk-copy bytes and process-tree RSS are distinct measures.
+The linked format/history documents define the measurement and validation method;
+no universal size or speed improvement is implied. Use new artifact directories
+and keep generated archives/logs outside source control.

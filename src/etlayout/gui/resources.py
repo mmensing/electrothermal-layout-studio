@@ -130,7 +130,7 @@ class ResourceReviewDialog(QDialog):
         return ExternalResourcePolicy(allow_network=self.network.isChecked(), approved_resources=approved)
 
 
-def open_reviewed_project(path, parent=None, *, policy=None):
+def open_reviewed_project(path, parent=None, *, policy=None, lazy=False, cache_bytes=256 * 1024**2):
     """Resolve exactly the inspected container, including its historical resources."""
     policy = policy or ExternalResourcePolicy()
     try:
@@ -152,7 +152,7 @@ def open_reviewed_project(path, parent=None, *, policy=None):
             approved_resources=policy.approved_resources,
         )
         inspection = inspect_project(path, allow_network_container=True)
-    return resolve_reviewed_project(inspection, parent, policy=policy)
+    return resolve_reviewed_project(inspection, parent, policy=policy, lazy=lazy, cache_bytes=cache_bytes)
 
 
 def review_layout_relink(project, location, source, parent=None):
@@ -164,10 +164,22 @@ def review_layout_relink(project, location, source, parent=None):
     )
 
 
-def resolve_reviewed_project(inspection, parent=None, *, policy=None):
+def resolve_reviewed_project(inspection, parent=None, *, policy=None, lazy=False, cache_bytes=256 * 1024**2):
     policy = policy or ExternalResourcePolicy()
     while True:
         try:
+            if (lazy and inspection.metadata.get("schema_version") == 3
+                    and not inspection.relinked and not inspection.discard_stale_result):
+                from etlayout.io.history_store import open_history_catalog
+                store = open_history_catalog(inspection, external_policy=policy, cache_bytes=cache_bytes)
+                try:
+                    project = store.resolve_project()
+                except BaseException:
+                    store.close()
+                    raise
+                project._history_store = store
+                project._resource_history = []
+                return project, None
             project, result = resolve_project(inspection, external_policy=policy)
             history = (
                 []

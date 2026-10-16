@@ -77,6 +77,7 @@ class RunHistoryPanel(QWidget):
     inspect_requested = Signal(object)
     compare_requested = Signal(object)
     remove_requested = Signal(object)
+    cancel_requested = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -97,14 +98,30 @@ class RunHistoryPanel(QWidget):
             button = QPushButton(label)
             button.clicked.connect(callback)
             row.addWidget(button)
+        self.cancel_read = QPushButton("Cancel history read")
+        self.cancel_read.setAccessibleName("Cancel loading recorded fields")
+        self.cancel_read.clicked.connect(self.cancel_requested)
+        self.cancel_read.hide()
+        row.addWidget(self.cancel_read)
         layout.addLayout(row)
         self.results = []
 
     def set_results(self, results):
+        selected = {getattr(item, "run_id", id(item)) for item in self.selected()}
         self.results = list(results)
         self.memory_summary.setText(f"{len(self.results)} retained runs · estimated memory {retained_result_bytes(self.results) / 1024**2:.1f} MiB")
         self.list.clear()
         for index, result in enumerate(results):
+            from etlayout.gui.history_workflow import is_record
+            if is_record(result):
+                status = "Unavailable" if not result.available else "Stored converged" if result.converged else "Stored not converged"
+                time = f" · {len(result.times)} saved frames" if result.times else ""
+                item = QListWidgetItem(f"{index + 1}. {result.name} · {result.mode}{time} · {status}\n"
+                    f"{result.estimated_bytes / 1024**2:.1f} MiB logical arrays · {result.elapsed_seconds:.3g} s · {result.configuration_hash[:12]}")
+                item.setToolTip(result.error or "Stored metadata only. Numerical arrays are loaded and validated when requested. Convergence is the recorded status, not a new verification.")
+                self.list.addItem(item)
+                item.setSelected(result.run_id in selected)
+                continue
             config = result.configuration
             mode = config.get("solver", {}).get("mode", "analysis")
             status = "Converged" if result.converged else "Not converged"
@@ -115,6 +132,19 @@ class RunHistoryPanel(QWidget):
                                    f"{len(result.mesh.triangles):,} triangles · {retained_result_bytes([result]) / 1024**2:.1f} MiB · {result.elapsed_seconds:.3g} s · {result.configuration_hash[:12]}")
             item.setToolTip("Exact recorded configuration and numerical fields; saved with the project.")
             self.list.addItem(item)
+            item.setSelected(id(result) in selected)
+
+    def set_loading(self, busy):
+        self.cancel_read.setVisible(busy)
+
+    def set_cache_stats(self, stats):
+        self.memory_summary.setText(
+            f"{len(self.results)} retained records · cache {stats.resident_bytes / 1024**2:.1f}/{stats.budget_bytes / 1024**2:.0f} MiB · "
+            f"pinned {stats.pinned_bytes / 1024**2:.1f} MiB · reads {stats.active_reads} · hits/misses {stats.hits}/{stats.misses}")
+        self.memory_summary.setToolTip(
+            f"Unique resident array buffers, not process RSS. Next selection estimate: {stats.estimated_next_bytes / 1024**2:.1f} MiB. "
+            f"Pinned private archive copy: {stats.private_copy_bytes / 1024**2:.1f} MiB on disk. "
+            f"Temporary over-budget use: {stats.over_budget_bytes / 1024**2:.1f} MiB.")
 
     def selected(self):
         return [self.results[self.list.row(item)] for item in self.list.selectedItems()]

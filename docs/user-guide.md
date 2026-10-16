@@ -142,7 +142,10 @@ opens the right Display settings tab, preserving map height. It offers every-ste
 whole-device traces or retained-field traces for the selected
 layer/region and map probe. Click the trace to select the nearest map frame. Local
 traces can miss peaks between retained fields; whole-run temperature warnings
-remain visible while inspecting cooler frames.
+remain visible while inspecting cooler frames. With [on-demand history](#on-demand-history-for-schema-3-projects),
+whole-device scalar charts use recorded metadata. **Load complete time history…**
+explicitly loads the retained fields needed for local traces; selecting one map
+time loads only that exact stored frame and its shared support.
 
 **Solve → Studies / start…** groups **Time-step convergence…**, **Start from saved
 state…** and **Resume saved transient…**. A warm start begins at zero time with a
@@ -313,11 +316,11 @@ and then open untrusted identifiers in a spreadsheet.
 
 ## Recorded runs and result compatibility
 
-**Simulation → Inspect run history** opens the **Run history** tab. Each entry shows its
+**Results → Inspect saved runs** opens the **Run history** tab. Each entry shows its
 mode, convergence state, mesh size, duration and configuration hash. Select **Inspect run**
 or double-click an entry to view its recorded design and fields. The **READ-ONLY RUN**
 banner identifies this context: editing and new calculations are disabled, and exports
-use the inspected run's recorded configuration. **Simulation → Compare run configuration…**
+use the inspected run's recorded configuration. **Results → Compare run configuration…**
 shows configuration differences from the current project, with numeric values in SI.
 Use **Return to current project** to restore the editable design and its undo history,
 as well as layer, region, field, palette, range, difference context and viewport. Each
@@ -325,12 +328,50 @@ inspected run retains its own view choices during the session. These presentatio
 do not change the physics configuration or require another solve.
 Select multiple history entries with Ctrl-click to compare them. Saved project archives
 retain the history, each run's configuration and its embedded layout source.
-The history panel shows estimated retained memory and can remove selected runs.
+The history panel shows retained-data estimates and can remove selected runs.
 Saving checks the expanded archive size, including all retained runs and nested
 arrays, before replacing the destination. A rejected save preserves the previous
 file. Remove unneeded saved runs, or rerun with a longer saved-field interval and
 remove the superseded larger run before saving. Changing the interval affects
 future solves; it does not thin fields already retained in a result.
+
+### On-demand history for schema-3 projects
+
+First create **File → Save content-addressed copy…**. Then open **Edit → Archive
+and history settings…**, enable **Open schema-3 history on demand**, and reopen
+that copy. The choice applies to the next opening. Schema-1/2 archives and legacy
+JSON retain their eager opening behavior; opening never converts the source.
+
+Schema-3 opening copies the selected compressed archive to an immutable private
+**disk** snapshot, checks its metadata, and lists runs before their numerical
+fields are read. The current result or a selected historical run loads in a
+cancellable worker. A stored convergence badge describes the original calculation;
+it does not certify unloaded fields or mesh verification. Selecting a transient
+time loads the exact stored frame, with no interpolation or neighbouring-frame
+substitution. Failed or cancelled reads preserve the previous usable view, and
+the Issues drawer explains failures.
+
+The array-cache default is **256 MiB**, adjustable from **16 to 8,192 MiB** in the
+same settings dialog. The History drawer reports unique resident and pinned array
+payload bytes, cache budget and active reads. These figures are not process RSS:
+Python metadata, temporary buffers, other application allocations and the private
+disk snapshot are separate. Active views and comparisons pin their arrays. The
+cache evicts only unpinned arrays; a selection needing more than its budget asks
+for explicit temporary over-budget approval or cancellation.
+
+Whole-device scalar charts can use recorded metadata before all fields load.
+Local traces, whole-history color limits, comparisons and complete numerical
+exports explicitly load the complete supports they need. **Load complete time
+history…** requests the retained transient fields. A selected figure or numerical
+export keeps its stated layer, support and time scope.
+
+**Save** and **Archive complete experiment** retain every remaining run, including
+runs and frames never browsed. Their workers hold source-generation leases and
+verify the required archive objects; closing a view cannot remove a save's source.
+Progress and cancellation remain available. Cancelling before atomic publication
+preserves the previous durable archive. The private copy is released after its
+readers and save/export leases close. See the [history contract](design/lazy-run-history.md)
+for ownership and validation details.
 
 Physical edits, such as geometry, material properties or boundary conditions, invalidate
 the current calculation and prepare fresh geometry. Presentation and annotation changes,

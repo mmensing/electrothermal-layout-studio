@@ -213,6 +213,7 @@ def test_real_gui_review_then_export_preserves_working_physics(experiment, qtbot
     assert not dialog.export_button.isEnabled()
     dialog.review()
     dialog.perform_export()
+    qtbot.waitUntil(lambda: dialog.archive_job is None, timeout=30000)
     assert dialog.exported["mode"] == mode and dialog.result() == dialog.DialogCode.Accepted
     assert physics_hash(project) == identity
     assert result.configuration_hash == configuration_hash(project)
