@@ -10,10 +10,13 @@ import os
 import re
 import struct
 import tempfile
+import threading
 import uuid
 import zipfile
+from contextlib import ExitStack, contextmanager
 from copy import deepcopy
 from dataclasses import dataclass, fields
+from functools import wraps
 from pathlib import Path, PurePosixPath
 
 import numpy as np
@@ -64,7 +67,8 @@ def _ref(digest):
     return {"$ref": digest}
 
 
-def _references(value, depth=0):
+def _references(value, depth=0, cancel=None):
+    _checkpoint(cancel)
     if depth > 64:
         raise SimulationError("Object metadata exceeds its nesting budget")
     if isinstance(value, dict):
@@ -75,10 +79,10 @@ def _references(value, depth=0):
             yield digest
         else:
             for item in value.values():
-                yield from _references(item, depth + 1)
+                yield from _references(item, depth + 1, cancel)
     elif isinstance(value, list):
         for item in value:
-            yield from _references(item, depth + 1)
+            yield from _references(item, depth + 1, cancel)
 
 
 def _array_header(array):
@@ -122,6 +126,7 @@ def _typed(value, collector, depth=0):
 
 
 def _untyped(value, reader, loader, cancel, depth=0):
+    _checkpoint(cancel if cancel is not None else reader._opening_cancel)
     if depth > 64:
         raise SimulationError("Typed metadata exceeds its nesting budget")
     if value is None or type(value) in (bool, int, str):
@@ -183,6 +188,14 @@ def _checkpoint(cancel=None):
         raise SaveCancelled("Archive operation cancelled; the previous project was preserved")
 
 
+def _batched(operation):
+    @wraps(operation)
+    def wrapped(self, *args, **kwargs):
+        with self._batch():
+            return operation(self, *args, **kwargs)
+    return wrapped
+
+
 class _Collector:
     def __init__(self, cancel=None):
         self.index, self.payloads, self.sources = {}, {}, {}
@@ -232,6 +245,15 @@ class _Collector:
         return "objects/sha256/" + digest + self.index[digest]["suffix"]
 
     def write(self, archive, progress=None):
+        # A complete save can copy from several pinned generations. Each reader
+        # owns one independent stream on this worker for the bounded operation.
+        readers = {id(payload[0]): payload[0] for payload in self.payloads.values() if isinstance(payload, tuple)}
+        with ExitStack() as sessions:
+            for reader in readers.values():
+                sessions.enter_context(reader._batch())
+            self._write_objects(archive, progress)
+
+    def _write_objects(self, archive, progress=None):
         for number, (digest, record) in enumerate(self.index.items()):
             _checkpoint(self.cancel)
             calculated, payload = hashlib.sha256(), self.payloads[digest]
@@ -356,7 +378,7 @@ class ArchiveV3Reader:
     Generation pinning belongs to the caller. ResultStore supplies an immutable
     private disk copy; eager APIs supply ProjectInspection's selected bytes.
     """
-    def __init__(self, path_or_bytes, *, source_path=None, policy=None):
+    def __init__(self, path_or_bytes, *, source_path=None, policy=None, cancel=None):
         self._data = path_or_bytes if isinstance(path_or_bytes, bytes) else None
         self.path = None if self._data is not None else Path(path_or_bytes)
         self.source = Path(source_path) if source_path is not None else (self.path or Path("project.etlayout"))
@@ -365,26 +387,58 @@ class ArchiveV3Reader:
             from etlayout.io.resources import _canonical_checked
             self.path = _canonical_checked(self.path.absolute(), network=self.policy.allow_network)
         self.closed = False
+        self._sessions = threading.local()
+        self._opening_cancel = cancel
         self._json_objects, self._index, self._records, self._errors = {}, {}, {}, {}
         self._object_errors = {}
         self._checked_descriptors = {}
         self._catalog_metadata = {}
         try:
+            from etlayout.io.archive_directory import inspect_directory
+            byte_limit, _, entry_limit = _limits()
+            inspect_directory(self._data if self._data is not None else self.path,
+                              max_bytes=byte_limit, max_entries=entry_limit, cancel=self._opening_cancel)
+            _checkpoint(self._opening_cancel)
             self._inspect()
         except (zipfile.BadZipFile, KeyError, ValueError, TypeError, OverflowError, OSError, EOFError, RecursionError) as error:
             if isinstance(error, SimulationError):
                 raise
             raise SimulationError(f"Invalid content-addressed archive: {error}") from error
+        finally:
+            # View/open cancellation must never revoke a later independent save
+            # generation lease. This callback belongs only to construction.
+            self._opening_cancel = None
 
+    @contextmanager
+    def _batch(self):
+        if self.closed:
+            raise SimulationError("Archive reader is closed")
+        if getattr(self._sessions, "archive", None) is not None:
+            yield
+            return
+        with zipfile.ZipFile(io.BytesIO(self._data) if self._data is not None else self.path) as archive:
+            self._sessions.archive = archive
+            try:
+                yield
+            finally:
+                self._sessions.archive = None
+
+    @contextmanager
     def _zip(self):
         if self.closed:
             raise SimulationError("Archive reader is closed")
-        return zipfile.ZipFile(io.BytesIO(self._data) if self._data is not None else self.path)
+        active = getattr(self._sessions, "archive", None)
+        if active is not None:
+            yield active
+        else:
+            with zipfile.ZipFile(io.BytesIO(self._data) if self._data is not None else self.path) as archive:
+                yield archive
 
     def _read(self, name, cancel=None):
         return b"".join(self._member_chunks(name, cancel))
 
     def _member_chunks(self, name, cancel=None):
+        cancel = self._opening_cancel if cancel is None else cancel
         with self._zip() as archive, archive.open(name) as stream:
             remaining = archive.getinfo(name).file_size
             while remaining:
@@ -420,6 +474,7 @@ class ArchiveV3Reader:
     def object_name(self, digest):
         return "objects/sha256/" + digest + self._index[digest]["suffix"]
 
+    @_batched
     def _inspect(self):
         byte_limit, metadata_limit, entry_limit = _limits()
         with self._zip() as archive:
@@ -431,6 +486,7 @@ class ArchiveV3Reader:
             if total > byte_limit:
                 raise SimulationError("Unique archive objects exceed the decompressed byte budget")
             for item in members:
+                _checkpoint(self._opening_cancel)
                 name = item.filename
                 if ("\\" in name or ":" in name or ".." in PurePosixPath(name).parts or PurePosixPath(name).is_absolute()
                         or item.is_dir() or item.flag_bits & 1 or item.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)
@@ -453,6 +509,7 @@ class ArchiveV3Reader:
         if not isinstance(index, dict) or len(index) + 2 > entry_limit:
             raise SimulationError("Invalid object index or entry budget")
         for digest, record in index.items():
+            _checkpoint(self._opening_cancel)
             if not isinstance(digest, str) or not _DIGEST.fullmatch(digest) or not isinstance(record, dict):
                 raise SimulationError("Invalid archive-local object address")
             kind, suffix = record.get("kind"), record.get("suffix")
@@ -487,13 +544,14 @@ class ArchiveV3Reader:
         if set(names) - expected:
             raise SimulationError("Unindexed archive member")
         for digest, record in index.items():
+            _checkpoint(self._opening_cancel)
             try:
                 if self.object_name(digest) in lengths and (lengths[self.object_name(digest)] != record["bytes"]
                         or compression[self.object_name(digest)] != zipfile.ZIP_DEFLATED):
                     raise SimulationError("Indexed object length/compression disagrees with its ZIP member")
                 if record["kind"] == "json" and self.object_name(digest) in lengths:
                     data = _parse(self._object_bytes(digest))
-                    if sorted(set(_references(data))) != sorted(record["references"]):
+                    if sorted(set(_references(data, cancel=self._opening_cancel))) != sorted(record["references"]):
                         raise SimulationError("Object graph references disagree with hashed metadata")
                     self._json_objects[digest] = data
             except SimulationError as error:
@@ -508,6 +566,7 @@ class ArchiveV3Reader:
             raise SimulationError("Invalid current run identity")
         roots = []
         for record in runs["records"]:
+            _checkpoint(self._opening_cancel)
             if not isinstance(record, dict) or set(record) != {"id", "descriptor", "summary"}:
                 raise SimulationError("Invalid run record")
             identity = record["id"]
@@ -535,6 +594,7 @@ class ArchiveV3Reader:
             roots.append(digest)
         active, seen = set(), set()
         def visit(digest, depth=0):
+            _checkpoint(self._opening_cancel)
             if depth > 16:
                 raise SimulationError("Object graph exceeds its nesting budget")
             if digest in active:
@@ -554,6 +614,7 @@ class ArchiveV3Reader:
         logical_entries = 2
         def cost(digest, depth=0):
             nonlocal logical_bytes, logical_entries
+            _checkpoint(self._opening_cancel)
             if depth > 16:
                 raise SimulationError("Object graph exceeds its nesting budget")
             if digest not in index or self.object_name(digest) not in lengths:
@@ -566,9 +627,10 @@ class ArchiveV3Reader:
             if logical_bytes > byte_limit or logical_entries > entry_limit:
                 raise SimulationError("Logical materialization exceeds its byte/entry budget")
             if record["kind"] == "json":
-                for ref in _references(self._json_objects[digest]):
+                for ref in _references(self._json_objects[digest], cancel=self._opening_cancel):
                     cost(ref, depth + 1)
         for identity, record in self._records.items():
+            _checkpoint(self._opening_cancel)
             try:
                 cost(record["descriptor"]["$ref"])
                 self._descriptor(identity)
@@ -583,6 +645,7 @@ class ArchiveV3Reader:
             "entries": len(members), "logical_entries": logical_entries}
         output = []
         for identity, record in self._records.items():
+            _checkpoint(self._opening_cancel)
             details = deepcopy(record)
             details["available"], details["error"] = identity not in self._errors, self._errors.get(identity, "")
             details["estimated_bytes"] = sum(self.array_info(digest)["nbytes"] for digest in self.required_arrays(identity)) if details["available"] else 0
@@ -870,6 +933,7 @@ class ArchiveV3Reader:
             return "layout"
         return run_id + ":layout"
 
+    @_batched
     def materialize(self, run_id, *, array_loader=None, cancel=None, resolve_sources=True):
         _checkpoint(cancel)
         self.required_arrays(run_id)
@@ -931,6 +995,7 @@ class ArchiveV3Reader:
         return {"times_s": deepcopy(self._records[run_id]["summary"].get("times_s", [])),
                 "rows": deepcopy(rows), "completed": transient["completed"]}
 
+    @_batched
     def frame(self, run_id, index, *, array_loader=None, cancel=None):
         self.required_arrays(run_id, index)
         descriptor = self._descriptor(run_id)
@@ -956,6 +1021,7 @@ class ArchiveV3Reader:
         result._stored_frame_time = times[index]
         return result
 
+    @_batched
     def verify_all(self, *, cancel=None, materialize=True):
         for digest, record in self._index.items():
             _checkpoint(cancel)
