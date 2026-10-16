@@ -1,14 +1,22 @@
 # RFC: content-addressed experiment archives
 
-**Status: design only.** The shipped writer remains schema 2. This RFC adds a
-reproducible measurement harness and proposes an opt-in schema 3; it does not
-implement deduplication, lazy history, a migration or a new default. Review after
-immutable saving and recovery ownership have stabilized. Lazy history is a
-separate follow-up and must not be reported as delivered by this proposal.
+**Status: implemented as an explicit schema-3 option.** Schema 2 remains the default,
+including automatic recovery. Use `save_project(..., archive_format=3)`, **File →
+Save content-addressed copy…**, or `etlayout archive-convert` to choose the new
+container. Existing eager reader APIs remain compatible. This document is the
+maintained format contract and measurement method; on-demand history is a
+[separate consumer layer](lazy-run-history.md).
+
+The implementation preserves typed metadata and exact numeric array bytes,
+stores only reachable archive-local objects, verifies completed temporary files,
+and rejects ambiguous legacy conversions. Complete saves can copy pinned stored
+run references without retaining the entire decoded history, but physical
+validation still materializes one complete run at a time. Deduplication improves
+storage reuse; it does not accelerate the physical solver.
 
 ## Problem and measured baseline
 
-The current writer stores one complete `results/arrays.npz` plus independent
+The schema-2 writer stores one complete `results/arrays.npz` plus independent
 `runs/run_XXXX.etl` archives. Every retained entry embeds its own source layout,
 mesh, material/configuration snapshot and fields. Transient frames already share
 one mesh within a run, but another retained run repeats that run's complete
@@ -227,7 +235,7 @@ confidential notes, layouts or unrelated process/material snapshots merely becau
 objects are reachable from an original run. No network storage, telemetry,
 third-party dependency or binary-publication-policy change is needed.
 
-## Acceptance tests before enabling a writer
+## Verification requirements
 
 - Legacy schema-1/2/JSON fixtures retain exact fields, component-local support,
   thresholds, run order, source/document identities and compatibility diagnoses.
@@ -251,13 +259,14 @@ third-party dependency or binary-publication-policy change is needed.
   actual values and uncertainty; do not infer a speedup from duplicate hashes.
   Preserve the single-run case and cases with little repeated content.
 
-## Implementation checkpoints and alternatives
+## Rollout and alternatives
 
-First specify/validate the manifest and canonical codecs; then add a streaming
-object collector and guarded reader behind the opt-in flag. Follow with legacy
-migration/downgrade, atomic-worker/recovery tests, and only then benchmark review
-and a default-format decision. Keep each checkpoint independently reviewable and
-retain an immediate schema-2 fallback until all compatibility gates pass.
+The reviewed object collector, guarded reader, explicit migration and legacy-copy
+checks are implemented behind the format option. A default-format change remains
+a separate decision based on repeated measurements and compatibility evidence.
+Opening an old project never rewrites it, and ordinary schema-2 saving remains
+available. Unsupported typed metadata in an exact downgrade is an actionable
+failure rather than a silent conversion.
 
 A smaller alternative is caching immutable compressed payload during a save;
 that can reduce serialization work without changing storage semantics, but still
@@ -268,4 +277,4 @@ that is not justified by these measurements.
 
 Lazy history should build on the reviewed object/reference contract. It requires
 its own metadata catalog, bounded cache, corruption policy, mutable-API adapter
-and consumer migration. This RFC deliberately makes no lazy-startup claim.
+and consumer migration. Archive-only measurements do not establish lazy-startup performance.
