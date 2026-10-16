@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import threading
+import uuid
 from copy import deepcopy
 from dataclasses import dataclass, fields, is_dataclass
 from pathlib import Path
@@ -91,9 +92,23 @@ class SaveSnapshot:
     history: tuple[SimulationResult, ...]
     document_id: str
     revision: int
+    archive_format: int = 2
+    source_lease: object = None
+    verify_exact: bool = False
+
+    def release_sources(self):
+        if self.source_lease is not None:
+            self.source_lease.close()
 
     @classmethod
-    def capture(cls, project, result=None, history=None, *, revision=0):
+    def capture(cls, project, result=None, history=None, *, revision=0, archive_format=2, source_lease=None):
+        if type(archive_format) is not int or archive_format not in (2, 3):
+            raise SimulationError("Archive format must be 2 or 3")
+        history = tuple(history or ())
+        if archive_format == 3:
+            for run in (result, *history):
+                if isinstance(run, SimulationResult) and not getattr(run, "_storage_run_id", None):
+                    run._storage_run_id = str(uuid.uuid4())
         require_resources(project)  # Pure state check; never authorize or open a resource.
         identity = document_id(project)
         # Persisted model fields only: runtime inspection/history caches must not
@@ -102,10 +117,11 @@ class SaveSnapshot:
         persisted._document_id = identity
         # Isolate every mutable metadata container. Share only buffers backed by
         # immutable bytes, not merely arrays whose own write flag is clear.
-        graph = (persisted, result, tuple(history or ()))
+        graph = (persisted, result, history)
         memo = {id(array): _immutable_array(array) for array in _arrays(graph)}
         saved_project, saved_result, saved_history = deepcopy(graph, memo)
-        return cls(saved_project, saved_result, saved_history, identity, revision)
+        return cls(saved_project, saved_result, saved_history, identity, revision, archive_format, source_lease,
+                   archive_format == 2 and getattr(project, "_archive_format", 2) == 3)
 
 
 class SaveOrder:

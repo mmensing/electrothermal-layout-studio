@@ -430,3 +430,31 @@ through-thickness gradients. HEMT output is an analytical resistive charge-contr
 it excludes drift diffusion, velocity saturation, trapping, breakdown and field-plate
 electrostatics. Check [physical models](physics.md), [numerics](numerics.md), and
 [validation](validation.md), then calibrate inputs and assess mesh sensitivity for your use.
+
+
+## Portable archive format choice
+
+Ordinary **Save project as…** writes the existing schema-2 portable archive.
+**File → Save content-addressed copy…** explicitly chooses schema 3: identical
+layout, mesh and field payloads are stored once within that file, while each
+recorded run keeps its own ordered identity, exact setup and scientific metadata.
+The file remains self-contained; it does not depend on a shared object directory.
+Normal Save retains the chosen container format. Automatic recovery remains schema 2.
+
+Schema 3 changes storage, not the solver, numerical precision, mesh verification or
+model validity. Older ETLayout versions may not understand it. Keep the original
+file when trying the new format, or use **Save legacy-compatible copy…** to create
+a schema-2 copy. Merely opening a project never converts or rewrites it. Figure and
+selected-data sharing still exclude the source archive and unselected fields;
+complete project copies remain confidential engineering data.
+
+For scripted, verified conversion to a **new, nonexistent destination**:
+
+```console
+etlayout archive-convert experiment.etl experiment-v3.etlayout --archive-format 3
+etlayout archive-convert experiment-v3.etlayout experiment-legacy.etlayout --archive-format 2
+```
+
+Conversion preserves the current result and every retained run, then checks a full
+reopen. It refuses to overwrite an existing destination. External resource grants
+are still explicit; a format choice never authorizes a declared file or network path.

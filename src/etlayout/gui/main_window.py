@@ -824,6 +824,8 @@ class MainWindow(QMainWindow):
             ("Import layout…", self.import_layout, "Ctrl+I"),
             ("Save project", self.save, QKeySequence.StandardKey.Save),
             ("Save project as…", self.save_as, QKeySequence.StandardKey.SaveAs),
+            ("Save content-addressed copy…", lambda: self.save_as(archive_format=3), None),
+            ("Save legacy-compatible copy…", lambda: self.save_as(archive_format=2), None),
             ("Duplicate project…", self.duplicate_project, None),
             ("Relink layout…", self.relink_layout, None),
             ("Export / share results…", lambda: self.share_export(), None),
@@ -3211,25 +3213,29 @@ class MainWindow(QMainWindow):
             return self.save_as()
         return self._queue_save(path)
 
-    def save_as(self):
+    def save_as(self, *, archive_format=2):
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
         context = self.inspection_context
         project = context["project"] if context else self.project
         current_path = context["path"] if context else self.path
         suggested = Path(current_path).with_suffix(".etlayout") if current_path else Path(project.name + ".etlayout")
-        path, _ = QFileDialog.getSaveFileName(self, "Save project", str(suggested), "Electrothermal project (*.etlayout)")
+        caption = "Save content-addressed project (schema 3)" if archive_format == 3 else "Save project"
+        path, _ = QFileDialog.getSaveFileName(self, caption, str(suggested), "Electrothermal project (*.etlayout)")
         if not path:
             return False
         destination = Path(path)
         if not destination.suffix:
             destination = destination.with_suffix(".etlayout")
-        return self._queue_save(destination)
+        return self._queue_save(destination, archive_format=archive_format)
 
-    def _queue_save(self, path, *, recovery=False):
+    def _queue_save(self, path, *, recovery=False, archive_format=None):
+        project = self.inspection_context["project"] if self.inspection_context else self.project
+        archive_format = 2 if recovery else (archive_format or getattr(project, "_archive_format", 2))
         candidates = ([self.save_job.request] if self.save_job else []) + self._save_queue
         for request in candidates:
             if (request.epoch == self.document_epoch and request.snapshot.revision == self.document_revision
+                    and request.snapshot.archive_format == archive_format
                     and (request.recovery_store is not None) == recovery
                     and (recovery or request.destination.absolute() == Path(path).absolute())):
                 self.statusBar().showMessage("This document revision is already queued for saving")
@@ -3239,7 +3245,8 @@ class MainWindow(QMainWindow):
                 raise SimulationError("JSON is a metadata format. Choose a .etlayout destination for the portable project archive.")
             project = self.inspection_context["project"] if self.inspection_context else self.project
             result = self.inspection_context["result"] if self.inspection_context else self.result
-            snapshot = SaveSnapshot.capture(project, result, self.run_history, revision=self.document_revision)
+            snapshot = SaveSnapshot.capture(project, result, self.run_history, revision=self.document_revision,
+                                            archive_format=archive_format)
             store = self._recovery_owner() if recovery else None
             self._save_sequence += 1
             request = SaveRequest(snapshot, Path(path), self.document_epoch, self._save_sequence, store,
@@ -3310,6 +3317,8 @@ class MainWindow(QMainWindow):
                     self.inspection_context["path"] = request.destination
                 else:
                     self.path = request.destination
+            working = self.inspection_context["project"] if self.inspection_context else self.project
+            working._archive_format = snapshot.archive_format
             if snapshot.revision == self.document_revision:
                 if self.inspection_context:
                     self.inspection_context["dirty"] = False
