@@ -3,9 +3,12 @@
 import hashlib
 import importlib.util
 import json
+import struct
 from pathlib import Path
 
+import pefile
 import pytest
+from test_windows_runtime import pe_fixture
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location('component_inventory', ROOT / 'scripts/create_sbom.py')
@@ -72,3 +75,23 @@ def test_stale_incomplete_or_unsupported_component_review_fails(reviewed, change
     path.write_text(json.dumps(value))
     with pytest.raises(ValueError):
         inventory.reviewed_native_fonts(path, native, fonts, artifact)
+
+
+def test_dll_inventory_does_not_stop_at_the_import_symbol_budget(monkeypatch):
+    # Two real import descriptors model the large Qt-before-CRT import ordering.
+    data = bytearray(pe_fixture('Qt6Gui.dll'))
+    struct.pack_into('<II', data, 0x98 + 112 + 8, 0x2000, 60)
+    struct.pack_into('<5I', data, 0x414, 0x2070, 0, 0, 0x2090, 0x20A0)
+    struct.pack_into('<Q', data, 0x470, 0x20E0)
+    struct.pack_into('<Q', data, 0x4A0, 0x20E0)
+    data[0x490:0x49D] = b'MSVCP140.dll\0'
+    data[0x4E0:0x4E7] = b'\0\0name\0'
+    monkeypatch.setattr(pefile, 'MAX_IMPORT_SYMBOLS', 2)
+    full_symbols = pefile.PE(data=bytes(data), fast_load=True)
+    try:
+        full_symbols.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY['IMAGE_DIRECTORY_ENTRY_IMPORT']])
+        assert [entry.dll for entry in full_symbols.DIRECTORY_ENTRY_IMPORT] == [b'Qt6Gui.dll']
+    finally:
+        full_symbols.close()
+    # The observable dependency inventory must still include the later CRT DLL.
+    assert inventory.native_details(bytes(data))['imports'] == ['MSVCP140.dll', 'Qt6Gui.dll']

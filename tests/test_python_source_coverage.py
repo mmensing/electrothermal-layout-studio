@@ -6,7 +6,7 @@ import marshal
 from pathlib import Path
 
 import pytest
-from PyInstaller.archive.writers import CArchiveWriter
+from PyInstaller.archive.writers import CArchiveWriter, ZlibArchiveWriter
 from test_embedded_fonts import frozen_module
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -83,3 +83,54 @@ def test_outer_bootstrap_membership_is_inspected_without_code_execution(tmp_path
     monkeypatch.setattr(marshal, "loads", lambda *_args: pytest.fail("Code unmarshal forbidden"))
     modules, gap = inventory.frozen_modules(tmp_path)
     assert gap is None and modules == ["PIL.ImageFont", "pyi_rth_new_hook"]
+
+
+@pytest.mark.parametrize("module", ["rich._unicode_data.unicode17-0-0", "rich._unicode_data.unicode4-1-0"])
+def test_dynamic_inner_module_names_retain_the_explicit_root_owner(catalog, module):
+    path, data = catalog
+    data["sources"].append({"id": "rich-source"})
+    data["python_module_sources"]["rich"] = ["rich-source"]
+    path.write_text(json.dumps(data))
+    rows, gaps = inventory.python_source_coverage([module])
+    assert not gaps and rows == [{"root": "rich", "source_ids": ["rich-source"], "module_count": 1}]
+
+
+@pytest.mark.parametrize("module", ["rich..unicode", "rich._data/escape", "rich._data\\escape",
+    "rich._data.\x00payload", "rich._data.-leading", "-rich._data.unicode17-0-0"])
+def test_dynamic_names_still_reject_unsafe_or_ambiguous_identities(catalog, module):
+    rows, gaps = inventory.python_source_coverage([module])
+    assert not rows and gaps
+
+
+@pytest.mark.parametrize("unknown", [False, True])
+def test_frozen_application_record_is_not_an_unlisted_third_party(catalog, tmp_path, monkeypatch, unknown):
+    path, data = catalog
+    root = path.parents[1]
+    for name in ("DEPENDENCIES.json", "pyproject.toml", "packaging/binary-publication-policy.json"):
+        (root / name).write_bytes((ROOT / name).read_bytes())
+    data["sources"].append({"id": "rich-source"})
+    data["python_module_sources"]["rich"] = ["rich-source"]
+    path.write_text(json.dumps(data))
+    candidate = tmp_path / "candidate"
+    candidate.mkdir()
+    names = ["etlayout.cli", "rich._unicode_data.unicode17-0-0"]
+    if unknown:
+        names.append("unlisted_vendor.module")
+    pyz = tmp_path / "members.pyz"
+    ZlibArchiveWriter(str(pyz), [(name, name + ".py", "PYMODULE") for name in names],
+                      {name: compile("raise RuntimeError('Never executed')", name + ".py", "exec") for name in names})
+    for name in ("etlayout.exe", "ElectrothermalLayoutStudio.exe"):
+        CArchiveWriter(str(candidate / name), [("PYZ.pyz", str(pyz), False, "z")], "python312.dll")
+    # Model installed-wheel RECORD ownership; an editable install may have no
+    # per-module RECORD entries. Archive membership is parsed from actual bytes.
+    monkeypatch.setattr(inventory, "distribution_evidence", lambda: (
+        {"etlayout.cli": {"etlayout"}, names[1]: {"rich"}, "unlisted_vendor.module": {"unlisted-vendor"}}, {}))
+    result = inventory.create(candidate, "frozen", tmp_path / "inventory")
+    assert "etlayout" not in {row["name"] for row in result["shipped_runtime_dependencies"]}
+    assert "rich" in {row["name"] for row in result["shipped_runtime_dependencies"]}
+    non_native_gaps = [row for row in result["unresolved_review_items"] if "path" not in row]
+    assert not any(row.get("component") == "etlayout" for row in non_native_gaps)
+    if unknown:
+        assert {row["component"] for row in non_native_gaps} == {"unlisted_vendor", "unlisted-vendor"}
+    else:
+        assert non_native_gaps == []

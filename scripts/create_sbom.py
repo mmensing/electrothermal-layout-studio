@@ -91,7 +91,8 @@ def native_details(data):
     try:
         pe = pefile.PE(data=data, fast_load=True)
         pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"],
-                                              pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_RESOURCE"]])
+                                              pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_RESOURCE"]],
+                                  import_dllnames_only=True)
         imports = sorted(item.dll.decode("ascii", errors="replace")
                          for item in getattr(pe, "DIRECTORY_ENTRY_IMPORT", []))
         version = None
@@ -327,7 +328,9 @@ def python_source_coverage(modules):
                 mapping[name] = identities
         counts = {}
         for module in modules:
-            if not isinstance(module, str) or not module or not all(part.isidentifier() for part in module.split(".")):
+            if (not isinstance(module, str) or not module or not module.split(".")[0].isidentifier()
+                    or not all(part.isidentifier() or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", part)
+                               for part in module.split("."))):
                 raise ValueError("Invalid frozen Python module identity")
             name = module.split(".")[0]
             counts[name] = counts.get(name, 0) + 1
@@ -613,6 +616,8 @@ def create(artifact, kind, output, component_review=None):
                            "hashes": [{"alg": "SHA-256", "content": sha}]})
     dependencies = []
     for name in sorted(shipped):
+        if name == normalized(project["name"]):
+            continue  # The application is represented by the SBOM metadata component.
         item = declared.get(name)
         if item is None:
             unresolved.append({"component": name, "reason": "Shipped package absent from dependency catalog"})

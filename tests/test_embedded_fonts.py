@@ -90,7 +90,7 @@ def test_real_pyz_bytes_inventory_binds_both_executables_without_unmarshalling(e
 def test_frozen_sbom_separates_embedded_payloads_from_standalone_fonts(embedded_case, tmp_path):
     root, candidate, _installed, _catalog, _source = embedded_case
     (root / "DEPENDENCIES.json").write_text(json.dumps({"dependencies": [], "native_components": []}))
-    (root / "pyproject.toml").write_text('[project]\nversion="0.4.0"\nlicense="MPL-2.0"\n')
+    (root / "pyproject.toml").write_text('[project]\nname="etlayout"\nversion="0.4.0"\nlicense="MPL-2.0"\n')
     (root / "packaging/binary-publication-policy.json").write_text(json.dumps({"publication_allowed": False}))
     output = tmp_path / "inventory"
     result = inventory.create(candidate, "frozen", output)
