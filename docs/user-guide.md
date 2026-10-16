@@ -409,7 +409,14 @@ verification, and the [guided workflow](desktop-workflow.md) for current control
 
 ## Workspace and offline help
 
-Arrange and resize the docks, then use **View → Save workspace layout…** to keep a named
+Use **Workflow** and **Inspector** above the canvas to hide or restore either side;
+the status strip below the canvas restores Issues/Jobs/History. **View** provides
+checkable toggles, **Focus layout canvas**, **Maximize canvas / restore panels**,
+and explicit **Fit selection / ROI**. See the [workspace shortcuts](desktop-workflow.md)
+for keyboard access. Visibility and splitter sizes are remembered locally between
+launches and preserve drafts, field choices, transient time, zoom and pan.
+
+Resize visible panels, then use **View → Save workspace layout…** to keep a named
 arrangement. **Restore workspace layout…** recalls it; **Reset workspace layout** restores
 the default arrangement. Workspace layouts are stored locally. **View → Dark theme**
 switches the application palette. **Help → Open user guide** opens this bundled guide

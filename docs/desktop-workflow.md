@@ -12,10 +12,42 @@ commands and the [historical engineering notes](releases/0.3.1.md) for compatibi
 The project, save state, analysis type and working/historical setup remain visible
 above a seven-step navigator. The canvas stays in the center, editing belongs in
 the right inspector, and Issues, Jobs, Logs and History share a collapsible drawer.
-Use **Ctrl+1–7** to change steps and **Ctrl+J** to toggle the drawer. Splitters let
-the canvas and inspector share available space; resizing is preferable to reducing
-font size. The light theme uses blue interaction controls; dark mode is
-under View.
+Use **Ctrl+1–7** to change steps. The **Workflow** and **Inspector** buttons above
+the canvas independently hide and restore either side; the issues/status strip
+below it restores the drawer. These small controls remain visible with all panels
+hidden. **View** offers the same checkable actions:
+
+| Workspace action | Shortcut |
+| --- | --- |
+| Workflow navigation | Ctrl+Shift+L |
+| Contextual inspector | Ctrl+Shift+R |
+| Issues / jobs / history drawer | Ctrl+J |
+| Focus layout canvas | Ctrl+Shift+F |
+| Maximize canvas / restore previous panels | Ctrl+Shift+M |
+| Fit selected geometry, otherwise view crop / simulation ROI | Shift+Home |
+| Fit complete layout | Home |
+
+Splitters resize visible panels; **View → Reset workspace layout** restores the
+three panels and their default proportions. Panel visibility and sizes persist
+between launches in application-local settings, along with named workspace
+layouts. If a reopened workspace has all panels hidden, Maximize / restore shows
+the defaults; otherwise it recalls the current session’s previous panel mix.
+Corrupt or older preferences recover to the default arrangement. They are never serialized into the physical project or used in its scientific hash.
+
+Hiding an inspector preserves its unapplied draft. If it contained keyboard focus,
+focus moves to the canvas. Panel actions preserve the selected run, field, layer,
+region, transient snapshot, color range and camera; they do not run the solver or
+fit the view. Use an explicit Fit command when needed. Issues and Jobs actions can
+reopen the drawer for an actionable diagnostic without changing the result.
+The light theme uses blue interaction controls; dark mode is under View.
+
+![Native Windows expanded canvas with a solved multilayer thermal transient](images/desktop/canvas-focus.png)
+
+*Actual E19 substrate temperature at 400 µs, with Viridis and a manually chosen
+302.2–302.4 K range. All three panels are hidden; the Workflow, Inspector and
+issues/status controls remain available. Fit was requested explicitly for this
+illustration. This native Windows capture is not physical-DPI or mixed-monitor
+certification.*
 
 ## Opening projects and resource trust
 
