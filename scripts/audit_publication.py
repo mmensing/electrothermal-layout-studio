@@ -11,18 +11,19 @@ import argparse
 import base64
 import bz2
 import codecs
-import gzip
 import hashlib
 import io
 import json
 import lzma
 import re
+import runpy
 import struct
 import tarfile
 import tempfile
 import warnings
 import xml.etree.ElementTree as ET
 import zipfile
+import zlib
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
@@ -42,7 +43,7 @@ _PATTERNS = {
     'secret_assignment': re.compile(r'''(?i)\b(?:password|passwd|api_key|access_token|client_secret|auth_token)\s*[:=]\s*["']([^"'\s]{12,})["']'''),
     'authenticated_url': re.compile(r'https?://[^\s/:@]+:[^\s/@]+@[^\s]+'),
     'personal_path': re.compile(r'(?i)(?:[A-Z]:[\\/]+(?:Users|Documents and Settings)[\\/]+|/(?:home|Users)/)[^\s"\x27<>]+'),
-    'email': re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
+    'email': re.compile(r'(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'),
     'private_address': re.compile(r'\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3})\b'),
 }
 
@@ -92,6 +93,7 @@ class PublicationAudit:
 
     def text(self, name: str, value: str, *, line_offset: int = 0):
         for kind, pattern in _PATTERNS.items():
+            line_cursor, line_number = 0, line_offset + 1
             for match in pattern.finditer(value):
                 matched = match.group(0)
                 if kind == 'email':
@@ -102,7 +104,11 @@ class PublicationAudit:
                         continue
                 if kind == 'private_address' and any(int(part) > 255 for part in matched.split('.')):
                     continue
-                self.finding(name, kind, matched, line=line_offset + value.count('\n', 0, match.start()) + 1)
+                # Matches are ordered. Count each intervening newline once per
+                # pattern instead of rescanning a huge prefix for every finding.
+                line_number += value.count('\n', line_cursor, match.start())
+                line_cursor = match.start()
+                self.finding(name, kind, matched, line=line_number)
         folded = value.casefold()
         for forbidden in self.forbidden_text:
             if forbidden in folded:
@@ -447,10 +453,17 @@ class _ArtifactReader:
 
 class _ArtifactXZ:
     """XZ decompression with an explicit dictionary and output memory bound."""
-    def __init__(self, stream, limits):
+    def __init__(self, stream, limits, reject_trailing=None):
         self.stream, self.limits = stream, limits
-        self.decoder = lzma.LZMADecompressor(memlimit=limits.lzma_memory_bytes)
+        self.decoder = lzma.LZMADecompressor(format=lzma.FORMAT_XZ, memlimit=limits.lzma_memory_bytes)
         self.ended = False
+        self.reject_trailing = reject_trailing
+
+    def _trailing(self):
+        if self.reject_trailing is not None:
+            self.reject_trailing()
+            raise _ArtifactStop('Use one XZ stream; concatenated/trailing data are unsupported')
+        raise ValueError('Unexpected trailing XZ stream')
 
     def read(self, count):
         if count < 0 or count > self.limits.chunk_bytes:
@@ -460,10 +473,10 @@ class _ArtifactXZ:
             if self.decoder.eof:
                 # XZ stream padding is zero; concatenated/hidden streams fail closed.
                 if any(self.decoder.unused_data):
-                    raise ValueError('Unexpected trailing XZ stream')
+                    self._trailing()
                 while trailing := self.stream.read(self.limits.chunk_bytes):
                     if any(trailing):
-                        raise ValueError('Unexpected trailing XZ stream')
+                        self._trailing()
                 self.ended = True
                 break
             data = self.stream.read(self.limits.chunk_bytes) if self.decoder.needs_input else b''
@@ -473,19 +486,106 @@ class _ArtifactXZ:
         return bytes(result)
 
 
+class _ArtifactBZIP2:
+    """One CRC-checked BZIP2 stream with finite output and no ignored tail."""
+    def __init__(self, stream, limits, reject_trailing):
+        self.stream, self.limits = stream, limits
+        self.decoder = bz2.BZ2Decompressor()
+        self.ended = False
+        self.reject_trailing = reject_trailing
+
+    def read(self, count):
+        if count < 0 or count > self.limits.chunk_bytes:
+            raise ValueError('Unbounded BZIP2 read')
+        result = bytearray()
+        while len(result) < count and not self.ended:
+            if self.decoder.eof:
+                if any(self.decoder.unused_data):
+                    self.reject_trailing()
+                    raise _ArtifactStop('Use one BZIP2 stream; concatenated/trailing data are unsupported')
+                while trailing := self.stream.read(self.limits.chunk_bytes):
+                    if any(trailing):
+                        self.reject_trailing()
+                        raise _ArtifactStop('Use one BZIP2 stream; concatenated/trailing data are unsupported')
+                self.ended = True
+                break
+            data = self.stream.read(self.limits.chunk_bytes) if self.decoder.needs_input else b''
+            if not data and self.decoder.needs_input:
+                raise ValueError('Truncated BZIP2 stream')
+            result.extend(self.decoder.decompress(data, max_length=count - len(result)))
+        return bytes(result)
+
+    def close(self):
+        # The caller reuses the compressed seekable input for its second pass.
+        pass
+
+
+class _ArtifactGZIP:
+    """One CRC-checked GZIP stream with bounded output and no hidden headers.
+
+    zlib stops at the first stream, unlike gzip.GzipFile's transparent member
+    concatenation. Zero transport padding is allowed; another stream or any
+    other trailing bytes fail closed instead of hiding uninspected metadata.
+    """
+    def __init__(self, stream, limits, reject_trailing):
+        self.stream, self.limits = stream, limits
+        self.decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        self.pending = b''
+        self.ended = False
+        self.reject_trailing = reject_trailing
+
+    def _finish(self):
+        if any(self.decoder.unused_data):
+            self.reject_trailing()
+            raise _ArtifactStop('Use one GZIP stream; concatenated streams/trailing data are unsupported')
+        while trailing := self.stream.read(self.limits.chunk_bytes):
+            if any(trailing):
+                self.reject_trailing()
+                raise _ArtifactStop('Use one GZIP stream; concatenated streams/trailing data are unsupported')
+        self.ended = True
+
+    def read(self, count):
+        if count < 0 or count > self.limits.chunk_bytes:
+            raise ValueError('Unbounded GZIP read')
+        result = bytearray()
+        while len(result) < count and not self.ended:
+            if self.decoder.eof:
+                self._finish()
+                break
+            data = self.pending or self.stream.read(self.limits.chunk_bytes)
+            self.pending = b''
+            block = self.decoder.decompress(data, max_length=count - len(result))
+            self.pending = self.decoder.unconsumed_tail
+            result.extend(block)
+            if not data and not block and not self.decoder.eof:
+                raise ValueError('Truncated GZIP stream')
+        return bytes(result)
+
+    def close(self):
+        # The caller owns and reuses the seekable compressed source between passes.
+        pass
+
+
 class ArtifactAudit(PublicationAudit):
     """Stream explicitly selected release artifacts, never enabling publication."""
     KINDS = {'binary-candidate', 'third-party-source'}
     _STRUCTURED = {'.json', '.svg', '.gds', '.oas', '.oasis', '.png', '.jpg',
                    '.jpeg', '.webp', '.gif', '.tif', '.tiff', '.bmp', '.ico'}
     _NATIVE = {'.exe', '.dll', '.pyd', '.so', '.dylib', '.msi', '.msix', '.appx', '.lib', '.a'}
+    _TEXT_SOURCE = {'.py', '.pyi', '.c', '.h', '.cpp', '.hpp', '.cc', '.cxx', '.f',
+                    '.f90', '.txt', '.rst', '.md', '.xml', '.in', '.cmake', '.toml',
+                    '.yml', '.yaml'}
 
     def __init__(self, *, artifact_kind, limits=None, **kwargs):
         super().__init__(**kwargs)
         if artifact_kind not in self.KINDS:
             raise ValueError('Select an explicit supported release artifact kind')
         self.artifact_kind = artifact_kind
-        self.limits = limits or ArtifactLimits()
+        # Large corresponding-source collections retain thousands of mandatory
+        # upstream copyright/contact strings. Their private review is still exact
+        # and finite; binary candidates and ordinary source policy keep old caps.
+        self.limits = (limits if limits is not None else ArtifactLimits(findings=20_000)
+                       if artifact_kind == 'third-party-source' else ArtifactLimits())
         self._logical_bytes = 0
         self._members = 0
 
@@ -523,9 +623,9 @@ class ArtifactAudit(PublicationAudit):
             seen.setdefault(parent, 'implicit')
         seen[canonical] = 'directory' if directory else 'file'
 
-    def _stream_text(self, name, stream, size, prefix=b'', *, native=False):
+    def _stream_text(self, name, stream, size, prefix=b'', *, native=False, font=False):
         decoders = [codecs.getincrementaldecoder('utf8')('replace')]
-        if native:
+        if native or font:
             decoders += [codecs.getincrementaldecoder(encoding)('replace')
                          for encoding in ('utf-16-le', 'utf-16-be')]
         tails = [''] * len(decoders)
@@ -537,7 +637,7 @@ class ArtifactAudit(PublicationAudit):
         def scan(data, final=False):
             for index, decoder in enumerate(decoders):
                 text = decoder.decode(data, final=final)
-                if native:
+                if native or font:
                     text = re.sub(r'[^\x20-\x7e\n\r\t]', '\n', text)
                 combined = tails[index] + text
                 # Unbounded printable tokens could hide a regex terminator beyond
@@ -546,7 +646,7 @@ class ArtifactAudit(PublicationAudit):
                    for match in re.finditer(r'[\x20-\x7e]+', combined)):
                     self.finding(name, 'artifact_text_window_budget')
                     raise _ArtifactStop('Artifact text exceeds its bounded scan window')
-                self.text(name + ('!native-string' if native else ''), combined,
+                self.text(name + ('!native-string' if native else '!font-string' if font else ''), combined,
                           line_offset=offsets[index])
                 retained = combined[-self.limits.overlap_chars:]
                 offsets[index] += combined[:-len(retained)].count('\n') if retained else combined.count('\n')
@@ -570,7 +670,17 @@ class ArtifactAudit(PublicationAudit):
         if len(prefix) != min(size, 8):
             raise ValueError('Truncated artifact member')
         suffix = Path(name).suffix.lower()
-        native = suffix in self._NATIVE or prefix.startswith(
+        leaf = PurePosixPath(name.replace('!', '/')).name.casefold()
+        # COPYING.LIB is the conventional LGPL text, not an import library.
+        # A directory called licenses cannot exempt an arbitrary native .lib;
+        # only actual notice filenames qualify, and native magic always wins.
+        library_notice = (suffix == '.lib' and _notice_path(name)
+                          and re.fullmatch(r'(?:copying|license|licence)(?:[._-].*)?', leaf) is not None)
+        # Qt's qmake build configuration uses the exact Info.plist.lib filename
+        # for an XML property-list template. Validate the complete bounded XML
+        # before accepting this source-data spelling of the native .lib suffix.
+        plist_template = leaf == 'info.plist.lib' and prefix.startswith(b'<?xml')
+        native = (suffix in self._NATIVE and not library_notice and not plist_template) or prefix.startswith(
             (b'MZ', b'\x7fELF', b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf',
              b'\xcf\xfa\xed\xfe', b'\xce\xfa\xed\xfe', b'!<arch>\n'))
         is_zip = prefix.startswith((b'PK\x03\x04', b'PK\x05\x06')) or suffix in {'.zip', '.whl', '.etl', '.npz'}
@@ -602,11 +712,57 @@ class ArtifactAudit(PublicationAudit):
                 temporary.seek(0)
                 if is_zip:
                     self._zip(name, temporary, depth)
+                elif prefix.startswith(b'\x1f\x8b') and not name.lower().endswith(('.tar.gz', '.tgz')):
+                    self._raw_compressed(name, temporary, size, depth, kind='gzip')
+                elif prefix.startswith(b'BZh') and not name.lower().endswith(('.tar.bz2', '.tbz2', '.tbz')):
+                    self._raw_compressed(name, temporary, size, depth, kind='bzip2')
+                elif prefix.startswith(b'\xfd7zXZ\x00') and not name.lower().endswith(('.tar.xz', '.txz')):
+                    self._raw_compressed(name, temporary, size, depth, kind='xz')
                 else:
                     self._tar(name, temporary, size, depth, prefix)
             return
         if prefix.startswith((b'7z\xbc\xaf\x27\x1c', b'Rar!\x1a\x07', b'MSCF')):
             self.finding(name, 'unsupported_compressed_artifact')
+            return
+        if not native and (suffix in self._TEXT_SOURCE or library_notice or plist_template):
+            # Real generated source can have a long printable line (for example
+            # Pygments' Cocoa symbol table). Scan the complete bounded text so a
+            # credential/URL cannot hide a terminator beyond a streaming window.
+            # Native and larger/unknown payloads retain their finite stream guard.
+            if size > MAX_ITEM_BYTES:
+                self.finding(name, 'text_item_budget')
+                return
+            data = bytearray(prefix)
+            remaining = size - len(prefix)
+            while remaining:
+                part = stream.read(min(remaining, self.limits.chunk_bytes))
+                if not part:
+                    raise ValueError('Truncated ordinary source text')
+                data.extend(part)
+                remaining -= len(part)
+                self.counts['streamed_bytes'] += len(part)
+            if (library_notice or plist_template) and any(byte < 32 and byte not in {9, 10, 12, 13} for byte in data):
+                self.finding(name, 'binary_payload_in_license_notice' if library_notice else 'binary_payload_in_plist_template')
+                return
+            if plist_template:
+                if b'<!ENTITY' in data.upper():
+                    self.finding(name, 'plist_entity_declaration')
+                    return
+                try:
+                    document = ET.fromstring(data)
+                    if document.tag != 'plist':
+                        raise ValueError('Expected an XML property-list root')
+                    for element in document.iter():
+                        self.text(name + '!plist-text', element.text or '')
+                        self.text(name + '!plist-text', element.tail or '')
+                        for key, value in element.attrib.items():
+                            self.text(name + '!plist-attribute', key)
+                            self.text(name + '!plist-attribute', value)
+                except (ValueError, ET.ParseError) as exc:
+                    self.finding(name, 'invalid_plist_template', type(exc).__name__)
+                    return
+            self.counts['bounded_text_bytes'] += size
+            self.text(name, data.decode('utf8', 'replace'))
             return
         if not native and suffix in self._STRUCTURED:
             if size > MAX_ITEM_BYTES:
@@ -622,7 +778,7 @@ class ArtifactAudit(PublicationAudit):
                 remaining -= len(part)
             super().bytes(name, bytes(data), depth)
         else:
-            self._stream_text(name, stream, size, prefix, native=native)
+            self._stream_text(name, stream, size, prefix, native=native, font=suffix in {'.ttf', '.otf'})
 
     def _zip(self, name, stream, depth):
         from etlayout.io.archive_directory import inspect_directory
@@ -667,9 +823,11 @@ class ArtifactAudit(PublicationAudit):
         raw.seek(0)
         compressed = None
         if prefix.startswith(b'\x1f\x8b'):
-            compressed = gzip.GzipFile(fileobj=raw)
+            compressed = _ArtifactGZIP(raw, self.limits, lambda: self.finding(
+                name, 'unsupported_gzip_concatenation_or_trailing_data'))
         elif prefix.startswith(b'BZh'):
-            compressed = bz2.BZ2File(raw)
+            compressed = _ArtifactBZIP2(raw, self.limits, lambda: self.finding(
+                name, 'unsupported_bzip2_concatenation_or_trailing_data'))
         elif prefix.startswith(b'\xfd7zXZ\x00'):
             compressed = _ArtifactXZ(raw, self.limits)
         reader = _ArtifactReader(compressed or raw,
@@ -689,7 +847,14 @@ class ArtifactAudit(PublicationAudit):
                             raise ValueError('Hidden trailing TAR payload')
                     return
                 member = tarfile.TarInfo.frombuf(header, 'utf8', 'strict')
+                # Inspect raw bytes and parsed fields before PAX/GNU overrides.
+                # Even unused NUL padding and overridden link/owner fields can
+                # contain credentials; a generic owner disposition cannot clear them.
+                self.text(name + '!tar-raw-header', header.decode('utf8', 'replace'))
                 self.text(name + '!tar-header-name', member.name)
+                self.text(name + '!tar-header-linkname', member.linkname)
+                self.text(name + '!tar-header-uname', member.uname)
+                self.text(name + '!tar-header-gname', member.gname)
                 if member.uname not in {'', 'root'} or member.gname not in {'', 'root'}:
                     self.finding(name + '!' + member.name, 'archive_owner_metadata')
                 entries += 1
@@ -705,6 +870,7 @@ class ArtifactAudit(PublicationAudit):
                         if long_name is not None:
                             raise ValueError('Repeated GNU TAR long name')
                         long_name = data.rstrip(b'\0').decode('utf8')
+                        self.text(name + '!gnu-longname', long_name)
                     else:
                         attributes = {}
                         cursor = 0
@@ -730,8 +896,8 @@ class ArtifactAudit(PublicationAudit):
                             raise ValueError('Sparse TAR entries are unsupported')
                         (global_pax if member.type == tarfile.XGLTYPE else pending).update(attributes)
                     continue
-                if member.type not in {tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE}:
-                    raise ValueError('TAR links/special entries are unsupported')
+                if member.type not in {tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE, tarfile.LNKTYPE}:
+                    raise ValueError('TAR symlinks/special entries are unsupported')
                 attributes = {**global_pax, **pending}
                 effective_name = attributes.get('path', long_name or member.name)
                 effective_size = attributes.get('size', str(member.size))
@@ -740,8 +906,8 @@ class ArtifactAudit(PublicationAudit):
                 effective_size = int(effective_size)
                 if effective_size > self.limits.member_bytes:
                     raise ValueError('TAR member exceeds budget')
-                if member.isdir() and effective_size:
-                    raise ValueError('TAR directory has unexpected payload')
+                if (member.isdir() or member.islnk()) and effective_size:
+                    raise ValueError('TAR directory/hardlink has unexpected payload')
                 start = reader.position
                 yield effective_name, effective_size, member, attributes, reader
                 consumed = reader.position - start
@@ -757,7 +923,7 @@ class ArtifactAudit(PublicationAudit):
     def _gzip_metadata(self, name, stream):
         stream.seek(0)
         header = stream.read(10)
-        if len(header) != 10 or header[2] != 8 or header[3] & 0xe0:
+        if len(header) != 10 or header[:2] != b'\x1f\x8b' or header[2] != 8 or header[3] & 0xe0:
             raise ValueError('Invalid GZIP header')
         remaining = self.limits.metadata_bytes
         if header[3] & 4:
@@ -788,19 +954,75 @@ class ArtifactAudit(PublicationAudit):
                 value.extend(byte)
             self.text(name + '!gzip-' + label, value.decode('utf8', 'replace'))
 
+    def _raw_compressed(self, name, stream, size, depth, *, kind):
+        """Inspect real decoded standalone data, including CRC and finite tails."""
+        self.counts['archives'] += 1
+        if kind == 'gzip':
+            self._gzip_metadata(name, stream)
+        elif kind not in {'bzip2', 'xz'}:
+            raise ValueError('Unsupported raw compression kind')
+        stream.seek(0)
+        ceiling = min(self.limits.member_bytes, self.limits.expanded_bytes,
+                      max(1, size) * self.limits.ratio)
+        decoder = {'gzip': _ArtifactGZIP, 'bzip2': _ArtifactBZIP2, 'xz': _ArtifactXZ}[kind]
+        decoded = decoder(stream, self.limits, lambda: self.finding(
+            name, f'unsupported_{kind}_concatenation_or_trailing_data'))
+        with tempfile.TemporaryFile() as plain:
+            count = 0
+            while True:
+                block = decoded.read(min(self.limits.chunk_bytes, ceiling - count + 1))
+                if not block:
+                    break
+                count += len(block)
+                if count > ceiling:
+                    self.finding(name, 'archive_size_budget')
+                    raise _ArtifactStop('Expanded compressed data exceeds budget')
+                plain.write(block)
+            suffix = {'gzip': '.gz', 'bzip2': '.bz2', 'xz': '.xz'}[kind]
+            member_name = name[:-len(suffix)] if name.lower().endswith(suffix) else name + '.decoded'
+            self._reserve(member_name, count)
+            plain.seek(0)
+            self._inspect(member_name, plain, count, depth + 1)
+
     def _tar(self, name, stream, size, depth, prefix):
         self.counts['archives'] += 1
         if prefix.startswith(b'\x1f\x8b'):
             self._gzip_metadata(name, stream)
-        seen = {}
+        seen, regular, links = {}, set(), {}
         for member_name, member_size, member, attributes, _payload in self._tar_entries(name, stream, size, prefix):
             self._name(member_name, seen, directory=member.isdir())
             self._reserve(name + '!' + member_name, member_size)
+            self.text(name + '!' + member_name + '!filename', member_name)
+            key = member_name.replace('\\', '/').casefold()
+            if member.isreg():
+                regular.add(key)
+            elif member.islnk():
+                target = attributes.get('linkpath', member.linkname).replace('\\', '/')
+                parts = target.split('/')
+                if (not target or target.startswith('/') or any(part == '..' or ':' in part for part in parts)):
+                    raise ValueError('Unsafe TAR hardlink target')
+                target = '/'.join(part for part in parts if part not in {'', '.'})
+                if not target:
+                    raise ValueError('Empty TAR hardlink target')
+                self.text(name + '!' + member_name + '!link-target', target)
+                links[key] = target.casefold()
             if attributes.get('uname', member.uname) not in {'', 'root'} or attributes.get('gname', member.gname) not in {'', 'root'}:
                 self.finding(name + '!' + member_name, 'archive_owner_metadata')
             self.json_strings(name + '!' + member_name + '!pax-metadata', attributes)
+        # An alias adds no hidden content: its complete regular target is scanned
+        # below. Never extract/follow a link against the host filesystem.
+        for key in links:
+            current, visited = key, set()
+            while current in links:
+                if current in visited or len(visited) >= 64:
+                    raise ValueError('Cyclic or excessive TAR hardlink chain')
+                visited.add(current)
+                current = links[current]
+            if current not in regular:
+                raise ValueError('TAR hardlink target is missing or not a regular file')
+        self.counts['hardlink_aliases'] += len(links)
         for member_name, member_size, member, _attributes, payload in self._tar_entries(name, stream, size, prefix):
-            if not member.isdir():
+            if member.isreg():
                 self._inspect(name + '!' + member_name, payload, member_size, depth + 1)
 
     def artifact(self, root):
@@ -833,7 +1055,7 @@ class ArtifactAudit(PublicationAudit):
         except _ArtifactStop:
             return
         except (OSError, ValueError, RuntimeError, EOFError, ImportError, tarfile.TarError,
-                zipfile.BadZipFile, lzma.LZMAError) as exc:
+                zipfile.BadZipFile, lzma.LZMAError, zlib.error) as exc:
             self.finding(root.name, 'artifact_read_error', type(exc).__name__)
 
     def report(self, **_kwargs):
@@ -850,6 +1072,7 @@ def main(argv=None):
     parser.add_argument('--output', type=Path, help='Write redacted JSON report; keep failed reports private')
     parser.add_argument('--artifact-kind', choices=sorted(ArtifactAudit.KINDS),
                         help='Explicit bounded streaming release-candidate/source-asset inspection; no publication clearance')
+    parser.add_argument('--reviewed-findings', type=Path, help='Private exact-asset review; only evidenced benign findings, never structural/credential failures')
     parser.add_argument('--source', action='store_true', help='Exclude generated caches/builds/venvs; omit for a complete publication/export check')
     parser.add_argument('--forbid-text', action='append', default=[], help='Additional confidential literal, supplied locally and never echoed')
     parser.add_argument('--allow-email', action='append', default=[], help='Individually reviewed address that is required public attribution')
@@ -858,6 +1081,26 @@ def main(argv=None):
         parser.error('The input does not exist')
     if args.artifact_kind and args.source:
         parser.error('Release artifact inspection and source exclusions are separate modes')
+    if args.reviewed_findings and (not args.artifact_kind or not args.root.is_file()):
+        parser.error('Reviewed findings require an explicit release-artifact file scope')
+    artifact_before = None
+    if args.reviewed_findings:
+        if args.root.is_symlink() or args.root.is_junction():
+            parser.error('Reviewed artifacts must be ordinary files, without links or junctions')
+        declared_size = args.root.stat().st_size
+        if declared_size > ArtifactLimits().compressed_bytes:
+            parser.error('Reviewed artifact exceeds the finite compressed-byte budget')
+        digest = hashlib.sha256()
+        inspected_bytes = 0
+        with args.root.open('rb') as stream:
+            for block in iter(lambda: stream.read(1024**2), b''):
+                inspected_bytes += len(block)
+                if inspected_bytes > declared_size:
+                    parser.error('Reviewed artifact changed size during bounded prehash')
+                digest.update(block)
+        if inspected_bytes != declared_size:
+            parser.error('Reviewed artifact changed size during bounded prehash')
+        artifact_before = digest.hexdigest()
     options = dict(forbidden_text=args.forbid_text, allowed_emails=args.allow_email)
     if args.artifact_kind:
         if args.output and args.root.is_dir() and args.output.resolve().is_relative_to(args.root.resolve()):
@@ -868,6 +1111,14 @@ def main(argv=None):
         audit = PublicationAudit(**options)
         audit.tree(args.root, source=args.source, output=args.output)
     report = audit.report(source=args.source)
+    if args.reviewed_findings:
+        apply_review = runpy.run_path(str(Path(__file__).parents[1] / 'packaging/publication_review.py'))['apply_review']
+        try:
+            report = apply_review(report, args.root, args.reviewed_findings, artifact_kind=args.artifact_kind,
+                                  scanner_file=Path(__file__), artifact_sha256_before=artifact_before)
+        except (ValueError, OSError, KeyError, TypeError):
+            audit.finding(args.root.name, 'review_validation_error')
+            report = audit.report()
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(report, indent=2) + '\n', encoding='utf8')

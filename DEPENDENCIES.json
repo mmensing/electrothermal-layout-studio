@@ -83,7 +83,7 @@
       "scope": "runtime-environment",
       "license_expression": "GPL-2.0-or-later",
       "upstream_urls": [],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "modifications": "Publication build replaces the SDK DLL with an independently source-built 4.15.2 DLL and unchanged source wrapper using the committed recipe; unused external/static and restrictive optional modules excluded as documented by native provenance.",
       "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
       "exception": "Limited named-library permission in Gmsh LICENSE.txt; not a blanket application-linking exception"
     },
@@ -148,7 +148,7 @@
         "Forum, https://discourse.matplotlib.org/",
         "Donate, https://numfocus.org/donate-to-matplotlib"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "modifications": "Publication build excludes unused sample_data and optional legacy AFM/pdfcorefonts metrics only. All 40 TrueType fonts, required notices, styles and library code retained.",
       "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
     },
     {
@@ -188,7 +188,7 @@
         "tracker, https://github.com/numpy/numpy/issues",
         "release notes, https://numpy.org/doc/stable/release"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "modifications": "Publication build changes selected unsigned native consumers from private hashed MSVC import DLL names to canonical system-runtime names and updates PE checksums. Code, import symbols and sections unchanged; exact hashes/patch recipe in artifact provenance.",
       "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
     },
     {
@@ -216,7 +216,7 @@
       "name": "pillow",
       "version": "12.3.0",
       "scope": "runtime-environment",
-      "license_expression": "MIT-CMU",
+      "license_expression": "MIT-CMU AND LicenseRef-DotColon-Aileron AND LicenseRef-Adobe-DEC-Courier",
       "upstream_urls": [
         "Release notes, https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
         "Changelog, https://github.com/python-pillow/Pillow/releases",
@@ -227,7 +227,25 @@
         "Source, https://github.com/python-pillow/Pillow"
       ],
       "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "bundled_data_licenses": [
+        {
+          "name": "Aileron default-font subset embedded in PIL.ImageFont",
+          "license_expression": "LicenseRef-DotColon-Aileron",
+          "attribution": "Sora Sagano / Dot Colon; embedded name-table record: No Rights Reserved.",
+          "upstream": "https://dotcolon.net/fonts/aileron/",
+          "notice": "packaging/license-texts/Pillow-embedded-font-notices.txt",
+          "modified_by_project": false
+        },
+        {
+          "name": "courB08 default bitmap font embedded in PIL.ImageFont",
+          "license_expression": "LicenseRef-Adobe-DEC-Courier",
+          "attribution": "Copyright 1984, 1987 Adobe Systems, Inc.; Portions Copyright 1988 Digital Equipment Corporation.",
+          "upstream": "Pillow 12.3.0 Tests/images/courB08.bdf; https://github.com/python-pillow/Pillow/tree/12.3.0/Tests/images",
+          "notice": "packaging/license-texts/Pillow-embedded-font-notices.txt",
+          "modified_by_project": false
+        }
+      ]
     },
     {
       "name": "platformdirs",
@@ -317,13 +335,21 @@
       "name": "pyqtgraph",
       "version": "0.14.0",
       "scope": "runtime-environment",
-      "license_expression": "MIT",
+      "license_expression": "MIT AND CC-BY-4.0",
       "upstream_urls": [
         "Documentation, https://pyqtgraph.readthedocs.io",
         "Source, https://github.com/pyqtgraph/pyqtgraph"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "modifications": "Publication build removes only three Inkscape export-filename attributes from a hash-checked generated copy of icons/icons.svg; artwork and notices preserved. CET data unchanged.",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "bundled_data_licenses": [
+        {
+          "name": "CET colormap data",
+          "license_expression": "CC-BY-4.0",
+          "attribution": "Peter Kovesi / ColorCET; Good Colour Maps: How to Design Them (2015), arXiv:1509.03700",
+          "modified": false
+        }
+      ]
     },
     {
       "name": "pyside6",
@@ -508,7 +534,7 @@
         "Documentation, https://shapely.readthedocs.io/",
         "Repository, https://github.com/shapely/shapely"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "modifications": "Publication build changes selected unsigned native consumers from private hashed MSVC import DLL names to canonical system-runtime names and updates PE checksums. Code, import symbols and sections unchanged; exact hashes/patch recipe in artifact provenance.",
       "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
     },
     {
@@ -579,56 +605,88 @@
       "name": "Gmsh bundled native code",
       "version": "4.15.2",
       "license_expression": "GPL-2.0-or-later",
-      "review": "Inspect exact Gmsh native build and bundled Netgen/METIS/OpenCASCADE/FLTK/etc.; linking exception limited to named combinations"
+      "review": "Use exact source-built feature list/native hash and source manifest. Retain GPL2-or-later, named-library exception, built contrib notices and scoped TetGen/BR/Blossom permissions. Untangle/HLBFGS/ICFS and uncertain unused HXT duplicate are excluded; full source archive is not blindly redistributed."
     },
     {
       "name": "GEOS",
       "version": "3.14.1",
-      "license_expression": "LGPL-2.1-or-later",
+      "license_expression": "LGPL-2.1-only",
       "source": "https://libgeos.org/",
-      "review": "Shapely wheel native DLLs independently inventoried; exact corresponding source required"
+      "review": "Conservative LGPL2.1 section6(a) source/relink route for GEOS3.14.1 alongside GPL3 combined terms; original generic LGPL source grants and COPYING2.1 retained, no unsupported later-version grant inferred. Exact GEOS/Shapely source, build instructions and four-consumer MSVC modification record accompany the release."
     },
     {
       "name": "NumPy OpenBLAS/LAPACK",
       "version": "OpenBLAS 0.3.34.106.0 ILP64",
       "license_expression": "BSD-3-Clause AND BSD-3-Clause-Open-MPI AND (GPL-3.0-or-later WITH GCC-exception-3.1)",
       "source": "https://github.com/OpenMathLib/OpenBLAS",
-      "review": "Wheel version/configuration measured; exact native revision and static-runtime sources not yet established"
+      "review": "Distinct NumPy ILP64 and SciPy LP64 builds; exact public source IDs, commits, static-runtime configuration and notices are bound by the release native/source manifests, not the Python package version alone.",
+      "source_revision": "446c436e10450c348169808f1a6b3fae0925c9f7",
+      "recipe_revision": "78fc0eaf6de71d92fd98f74f7e5bfa356a2f83e3"
     },
     {
       "name": "SciPy OpenBLAS/LAPACK",
       "version": "OpenBLAS 0.3.31.dev LP64",
       "license_expression": "BSD-3-Clause AND BSD-3-Clause-Open-MPI AND (GPL-3.0-or-later WITH GCC-exception-3.1)",
       "source": "https://github.com/OpenMathLib/OpenBLAS",
-      "review": "Distinct from NumPy ILP64 DLL; exact development revision and static-runtime sources not yet established"
+      "review": "Distinct NumPy ILP64 and SciPy LP64 builds; exact public source IDs, commits, static-runtime configuration and notices are bound by the release native/source manifests, not the Python package version alone.",
+      "source_revision": "5ffbf38b41a1fe494d038efcb09cf22f4d527c22",
+      "recipe_revision": "db637abddcd6abb7fcb63be7fbe418deeb4729db"
     },
     {
       "name": "Qt",
       "version": "6.12.0",
-      "license_expression": "NOASSERTION",
+      "license_expression": "GPL-3.0-only",
       "source": "https://code.qt.io/qt",
-      "review": "Resolve each actually shipped module, plugin and embedded third-party component; virtual keyboard open-source option is GPL-3.0-only"
+      "review": "Selected GPL3 offer for qualifying Qt6.12/PySide6 modules in combined distribution. Exact module/plugin source and independent embedded-code notices remain required. QML/Quick/Pdf/WebEngine/VirtualKeyboard are excluded; actual inventory controls."
     },
     {
       "name": "Matplotlib fonts",
       "version": "From Matplotlib 3.11.2 wheel",
-      "license_expression": "NOASSERTION",
+      "license_expression": "Bitstream-Vera AND LicenseRef-Arev-Fonts AND OFL-1.1 AND LicenseRef-BaKoMa",
       "source": "https://matplotlib.org/stable/project/license.html",
-      "review": "Individually inventory DejaVu, STIX, Computer Modern and PDF core font assets and retain wheel notices"
+      "review": "Retain exact wheel bytes for 14 DejaVu,17 STIX,8 BaKoMa Computer Modern,1 LastResortHE TTF fonts. Full Matplotlib/DejaVu/STIX notices contain per-family terms, copyright and conversion disclosures. Optional AFM metrics and PDF corefonts not shipped."
     },
     {
       "name": "CPython",
       "version": "3.12.14",
       "license_expression": "Python-2.0",
       "source": "https://www.python.org/downloads/source/",
-      "review": "Includes PSF/history notices and separately licensed native libraries"
+      "review": "Exact python-build-standalone3.12.14 build and recipe commit, unstripped inspected runtime, dependency sources and licenses are recorded in release provenance. Separate native components retain their own licenses."
     },
     {
-      "name": "Microsoft runtime DLLs",
-      "version": "Per-file version in candidate SBOM",
+      "name": "Microsoft Visual C++ runtime prerequisite",
+      "version": "Official supported x64 system runtime; installed separately",
       "license_expression": "LicenseRef-Microsoft-Redistributable",
       "source": "https://learn.microsoft.com/visualstudio/releases/2022/redistribution",
-      "review": "Verify exact redistributable origin, permitted files and terms; not MPL"
+      "review": "Publication build removes all app-local Microsoft redistributable copies and redirects four hashed consumers to canonical installed system-runtime names. Native dependency checks and prerequisite documentation required; no Microsoft runtime binaries shipped."
+    },
+    {
+      "name": "Pillow AVIF codecs",
+      "version": "libavif1.4.2;AOM3.14.1;dav1d1.5.3;libyuv644251f252a84bf8ce91ff0aca86a9b16b069ab8",
+      "license_expression": "BSD-2-Clause AND BSD-3-Clause AND AOMPL-1.0",
+      "source": "https://github.com/python-pillow/Pillow/tree/12.3.0",
+      "review": "Runtime codec_versions and exact Windows recipe identify static inputs. Preserve Pillow combined notices plus supplemental AOM/dav1d/libyuv copyright and patent grants; exact source archive hashes in release manifest."
+    },
+    {
+      "name": "Pillow native image and font libraries",
+      "version": "FreeType2.14.3;HarfBuzz14.2.1;lcms2-2.19.1;JPEG-turbo3.1.4.1;PNG1.6.58;WebP1.6.0;OpenJPEG2.5.4;TIFF4.7.1;Brotli1.2.0;XZ5.8.3;zlib-ng2.3.3",
+      "license_expression": "FTL AND MIT AND IJG AND BSD-3-Clause AND Libpng AND BSD-2-Clause AND Zlib AND 0BSD",
+      "source": "https://github.com/python-pillow/Pillow/tree/12.3.0",
+      "review": "Actual wheel reports and matching Windows recipe bound native inputs. Retain full Pillow combined license, including source copyright and exact per-component terms. This wheel does not enable Raqm."
+    },
+    {
+      "name": "GCC static runtime for source-built Gmsh",
+      "version": "16.2.0",
+      "license_expression": "GPL-3.0-or-later WITH GCC-exception-3.1",
+      "source": "https://gcc.gnu.org/",
+      "review": "GCC-only eligible compilation, static libgcc/libstdc++/OpenMP; exact source and runtime copyright/license notices retained. General-purpose compiler is not shipped."
+    },
+    {
+      "name": "MinGW-w64 static runtime for source-built Gmsh",
+      "version": "14.0.0",
+      "license_expression": "LicenseRef-MinGW-w64-runtime",
+      "source": "https://www.mingw-w64.org/",
+      "review": "Retain complete COPYING.MinGW-w64-runtime notice, including component permissions, from exact w64devkit2.10.1 toolchain. Not Microsoft redistributable code."
     }
   ]
 }

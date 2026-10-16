@@ -1,0 +1,75 @@
+Pillow 12.3.0 embedded default-font notices
+==========================================
+
+Aileron subset embedded in PIL.ImageFont.load_default
+----------------------------------------------------
+Designer/manufacturer identified by the embedded font: Sora Sagano.
+Embedded font family/style: Aileron Regular; name-table version 1.102.
+Copyright name-table record: No Rights Reserved.
+
+Pillow distributes a limited-character subset in src/PIL/ImageFont.py.
+The embedded font bytes are unchanged by Electrothermal Layout Studio.
+Decoded subset: 12,676 bytes
+SHA-256: 69853909b940023570964e29cffe30da95aea8de3627736b5cd15ab30143169f
+
+Author's permission source: https://dotcolon.net/fonts/aileron/
+The following original permission and disclaimer are retained verbatim:
+
+Aileron is No Rights Reserved.
+
+ドットコロンのフォントはWebサイトや印刷物、ロゴタイプなどへの使用はもちろん、改変・再配布等も自由に行って頂いてかまいません。 商標登録が必要なものに関しても同様です。ただし、ドットコロンのフォントは無保証です。インストールや使用方法に関するご質問はお受けできません。 また、ドットコロンのフォントを使用したことにより何らかのトラブルが発生しても、ドットコロンは一切責任を負いません。
+
+Maintainer summary (the original permission above governs): the author permits
+use, modification and redistribution, without warranty. This is recorded as
+LicenseRef-DotColon-Aileron; no OFL or CC0 license is asserted for these bytes.
+
+Legacy courB08 bitmap embedded in PIL.ImageFont.load_default_imagefont
+----------------------------------------------------------------------
+Preferred source and original grant: Pillow 12.3.0, Tests/images/courB08.bdf.
+BDF SHA-256: 640aa41b39dd3db34a5ab18d8ae5b9f7d5e327d40b72a0ac8dc6cc18165c79ea
+The embedded descriptor is byte-identical to Tests/images/courB08.pil:
+5e85438582f0e790b6b115d1afd66fa439d9fc45875af5cc760af7034d67187a
+The embedded PNG atlas is byte-identical to Tests/images/courB08.pbm:
+afdc82adb778486c71c5cc9c6f88623b3c7e5044e80ff7b32d973663eff31ed0
+
+Reconstruction from the original BDF also yields the exact descriptor and all
+256 glyph masks/advances and bitmap pixels. The preferred BDF and serialized
+font data accompany the corresponding Pillow source. Electrothermal Layout
+Studio does not modify the embedded Pillow font bytes.
+
+Recorded license expression: LicenseRef-Adobe-DEC-Courier.
+The following original BDF header (including its complete Adobe/DEC permission
+and copyright comments) is retained verbatim:
+
+STARTFONT 2.1
+COMMENT $XConsortium: courB08.bdf,v 1.5 94/04/10 21:46:11 gildea Exp $
+COMMENT
+COMMENT  Copyright 1984, 1987 Adobe Systems, Inc.
+COMMENT  Portions Copyright 1988 Digital Equipment Corporation
+COMMENT
+COMMENT  Adobe is a registered trademark of Adobe Systems, Inc.  Permission
+COMMENT  to use these trademarks is hereby granted only in association with the
+COMMENT  images described in this file.
+COMMENT
+COMMENT  Permission to use, copy, modify, and distribute this software and
+COMMENT  its documentation for any purpose and without fee is hereby granted,
+COMMENT  provided that the above copyright notices appear in all copies and
+COMMENT  that both those copyright notices and this permission notice appear
+COMMENT  in supporting documentation, and that the names of Adobe Systems and
+COMMENT  Digital Equipment Corporation not be used in advertising or
+COMMENT  publicity pertaining to distribution of the software without
+COMMENT  specific, written prior permission.  Adobe Systems and Digital
+COMMENT  Equipment Corporation make no representations about the suitability
+COMMENT  of this software for any purpose.  It is provided "as is" without
+COMMENT  express or implied warranty.
+COMMENT
+COMMENT  ADOBE SYSTEMS AND DIGITAL EQUIPMENT CORPORATION DISCLAIM ALL
+COMMENT  WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED
+COMMENT  WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL ADOBE
+COMMENT  SYSTEMS AND DIGITAL EQUIPMENT CORPORATION BE LIABLE FOR ANY SPECIAL,
+COMMENT  INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER
+COMMENT  RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF
+COMMENT  CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
+COMMENT  CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+COMMENT
+COMMENT

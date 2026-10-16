@@ -96,19 +96,18 @@ are deliberate owner requests; candidate builds are main-only.
 All workflows are read-only. They do not push, merge, tag, publish releases or
 upload packages. Only clean privacy reports are uploaded; other evidence has
 explicit paths and short retention. Frozen validation uploads receipts, screenshots
-and manifests, not blocked executables, DLLs or ZIPs. Do not promote untrusted PR
+and manifests; publication remains an explicit local owner action. Do not promote untrusted PR
 artifacts or caches into a release, even after a successful test. Source checks,
 actual executable checks and clean-machine Windows testing are distinct scopes.
 See [validation](validation.md) and [Windows packaging](windows.md).
 
 ## Local owner-only release procedure
 
-Public binary redistribution remains blocked by
-[`packaging/binary-publication-policy.json`](../packaging/binary-publication-policy.json).
-A local candidate build is not clearance. The [licensing guide](licensing.md)
-requires exact third-party corresponding source/build information, notices,
-module/native/font evidence, the applicable MPL/GPL route and LGPL replacement/
-debugging requirements. A reviewed source-only edition can proceed independently.
+The committed [binary policy](../packaging/binary-publication-policy.json) scopes
+which source-built Windows profile may receive an owner release review. A local
+candidate build is not clearance. The [licensing guide](licensing.md) requires
+exact third-party source/build information, notices, module/native/font evidence
+and the selected MPL/GPL route. A reviewed source edition remains independent.
 Do not reuse or advertise pre-public binaries as MPL releases.
 
 1. Review and merge a real version change through the public PR workflow. Use an
@@ -124,14 +123,20 @@ Do not reuse or advertise pre-public binaries as MPL releases.
 3. Review authority again, including owner-authorized integrations and no bypass
    of quality. Authenticate using the owner's existing local GitHub CLI session.
    The helper requires login mmensing and the fixed public destination. It rejects
-   CI execution and token environment variables; do not introduce a publishing PAT.
+   CI execution and parent token environment variables; do not introduce a publishing PAT.
+   `--credential-source git` may reuse the existing owner OS credential-manager
+   session in a scoped GitHub CLI child when CLI login requires unrelated scopes.
+   It never creates/stores a new token or requests additional account grants.
 4. Place vetted assets and release notes in a local owner-controlled folder. Include
    `SHA256SUMS.json` mapping exactly each other uploaded asset filename to its hash.
    Keep an external private review manifest and hash-bound evidence outside the
    checkout. The manifest must bind the public commit/version and all assets;
    rights/privacy, notices, build information, source contents and current authority
    require explicit owner review. Binary attestations additionally require complete
-   corresponding source, native/font notices and LGPL replacement/debugging evidence.
+   corresponding source, native/font notices and runtime prerequisite evidence.
+   Set `license_route` to the committed route. The reviewed GPL/MPL section 3.3
+   profile requires `gpl_source_access`; an LGPL route instead requires actual
+   replacement/debugging evidence. Do not claim both by checking boxes.
    Attestations record a completed review; they do not themselves prove compliance.
 5. Run the default **read-only** preflight. It checks protected remote main, no
    existing tag/release, current collaborators/deploy keys and the latest trusted
@@ -198,10 +203,21 @@ This is a schema example with placeholders, not a completed review or legal clea
 
 Use actual reviewed hashes and a stable public version. The helper intentionally
 has bounded archive/asset limits; oversized source sets need a reviewed validation
-change, not an unchecked fallback. Binary reviews also set
-`corresponding_source`, `lgpl_replacement_and_debugging` and
-`native_and_font_notices` true only when supported by their exact evidence and a
-committed approved binary policy. Current policy remains false.
+change, not an unchecked fallback. Binary reviews also bind `license_route` and set `corresponding_source`,
+`native_and_font_notices`, `runtime_prerequisites` and the selected route's
+attestation true only when supported by exact evidence and a committed eligible
+profile. Ordinary source checks retain their stricter source-only limits.
+
+For a binary or third-party source asset, an optional `findings_review` references
+an evidence entry's exact name/hash. The separate private finding manifest binds
+the artifact and inspector code hashes, every redacted finding, its finite benign
+disposition and hash-bound evidence. It cannot waive tokens, live credentials,
+malformed archives, unread content or resource-limit failures. Only third-party
+source reviews may classify exact published fictional authentication examples or
+fixed test secrets using independently checked upstream test context; binary
+candidates cannot use those dispositions. Required attribution
+and public test fixtures remain intact. Changed or incomplete reviews fail closed;
+private rationales and personal details never enter public release assets.
 
 ## Account-security recommendations
 

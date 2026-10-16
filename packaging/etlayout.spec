@@ -6,6 +6,7 @@ import hashlib
 import json
 import sys
 import runpy
+import os
 
 from PyInstaller.utils.hooks import collect_data_files, collect_dynamic_libs, collect_submodules, copy_metadata
 
@@ -32,8 +33,10 @@ hiddenimports += ["matplotlib.backends.backend_svg", "matplotlib.backends.backen
 
 # gmsh's wheel puts its DLL beside site-packages, outside the import package.
 # At runtime gmsh.py looks beside its own __file__, i.e. bundle/_internal.
-gmsh_candidates = list((Path(sys.prefix) / "Lib").glob("gmsh-*.dll"))
-if not gmsh_candidates:
+gmsh_override = os.environ.get("ETLAYOUT_GMSH_LIBRARY")
+gmsh_candidates = ([Path(gmsh_override)] if gmsh_override else
+                   list((Path(sys.prefix) / "Lib").glob("gmsh-*.dll")))
+if not gmsh_candidates or any(not path.is_file() for path in gmsh_candidates):
     raise RuntimeError("Gmsh wheel DLL missing under the build environment's Lib directory")
 binaries += [(str(path), ".") for path in gmsh_candidates]
 
@@ -75,6 +78,14 @@ a.binaries = [entry for entry in a.binaries if keep_qt_entry(entry[0])]
 # Retain METADATA/WHEEL/RECORD and license files used for identity and attribution.
 a.datas = [entry for entry in a.datas if keep_qt_entry(entry[0])
            and resource_policy["distributable_metadata"](entry[0])]
+publication_assets = runpy.run_path(str(root / "packaging" / "publication_assets.py"))
+a.datas, excluded_data = publication_assets["filter_publication_data"](a.datas)
+a.datas, modified_data = publication_assets["prepare_publication_assets"](
+    a.datas, root / "build" / "publication-assets")
+asset_manifest = root / "build" / "publication-assets" / "PUBLICATION_ASSETS.json"
+asset_manifest.write_text(json.dumps({"schema_version": 1, "excluded": excluded_data,
+                                      "modified": modified_data}, indent=2) + "\n", encoding="utf-8")
+a.datas.append(("PUBLICATION_ASSETS.json", str(asset_manifest), "DATA"))
 pyz = PYZ(a.pure)
 gui = EXE(pyz, a.scripts, [], exclude_binaries=True, name="ElectrothermalLayoutStudio",
           debug=False, bootloader_ignore_signals=False, strip=False, upx=False, console=False)

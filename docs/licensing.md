@@ -35,29 +35,45 @@ KLayout publishes a Python-script/import exception covering its Python packages;
 that does not remove the GPL requirements on redistribution of KLayout itself or
 reuse of its C++ code. Keep its exception with its GPL text.
 
-## Binary publication remains blocked
+## Windows distribution route
 
-`packaging/binary-publication-policy.json` is intentionally false. Local candidate
-builds and verification are allowed. No current public binary release is promised.
-The release preflight must reject publication until an owner-reviewed compliance
-record establishes, for the exact candidate:
+The reviewed Windows profile distributes the combined application under
+**GPL-3.0-only**, using MPL section 3.3 for the original covered files. Those
+files remain available under MPL-2.0 as well. Gmsh's named-library exception and
+KLayout's Python-import exception are retained; neither is used as a general
+exemption from distributing their corresponding source.
 
-- Complete corresponding source and build/install information for bundled GPL
-  and LGPL components, including wheel patches, native subcomponents and exact
-  revisions. A metadata license string, download URL, source snapshot of only this
-  application, or passing test is insufficient.
-- Actual module/plugin/native/font contents, verbatim copyright notices, license
-  texts and applicable exceptions. All unresolved inventory entries must be
-  reviewed. Qt modules have different licenses; installed packages are not proof
-  of what a frozen artifact contains.
-- A suitable LGPL library replacement mechanism and the required debugging,
-  modification and relinking information. An onedir layout alone does not prove
-  compliance. Do not prohibit reverse engineering for debugging modifications.
-- The selected MPL/GPL larger-work distribution route and any Microsoft runtime
-  redistribution conditions.
+For actually bundled Qt/PySide/Shiboken modules, the distribution selects their
+offered GPL-3.0 option. This is different from claiming LGPL shared-library
+replacement compliance. GEOS offers LGPL-2.1-or-later; the combined distribution
+uses its permitted later-version/GPL route. Required source and notices remain
+available for all such components. Permissive dependency and font notices are
+preserved unchanged. See [the source manifest and recipes](compliance-sources.md)
+and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md).
 
-The present gaps concern distribution evidence, not removing the application's
-meshing, geometry, plotting or desktop functionality.
+A release must provide equivalent download access to exact corresponding source,
+patches and build/install information with the object code (GPL section 6(d)). An
+upstream homepage, this application's source alone, or an unfulfilled written
+offer is insufficient. Release assets include the source catalog, archives and
+build information, with exact hashes. This is a selected license route, not a
+claim of bit-identical reproducibility or an MPL-only executable.
+
+Microsoft's Visual C++ runtime is a **system prerequisite**. No Microsoft runtime
+DLL or redistributable installer is included or executed by the package. Four
+reviewed NumPy/GEOS import aliases are restored to the standard system runtime
+name; the package includes exact before/after hashes and modification notices.
+See [runtime installation and modifications](windows-runtime.md).
+
+The application uses raster desktop/plotting views. Unused optional Mesa software
+OpenGL, Matplotlib demonstration data and legacy AFM/PDF core-font metrics are
+excluded after functional checks. All supported exports retain TrueType fonts;
+these exclusions do not remove a supported visualization or calculation.
+
+[`binary-publication-policy.json`](../packaging/binary-publication-policy.json)
+records the approved profile and remaining blockers. A policy, build success or
+SBOM alone never authorizes publication. Every release additionally needs exact
+asset/privacy/native/font review, a clean tested public commit and the local
+owner preflight. Future versions or different native inputs need a fresh review.
 
 ## Reproduce the inventory
 

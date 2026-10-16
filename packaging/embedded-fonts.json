@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "purpose": "Exact font payloads embedded in Pillow source and frozen module data, additional to standalone font files. Actual artifact inventories must verify module payloads and retain the corresponding notices.",
+  "fonts": [
+    {
+      "id": "pillow-aileron-default",
+      "name": "Aileron Regular embedded subset",
+      "source_id": "pillow-12.3.0",
+      "module": "PIL.ImageFont",
+      "factory": "load_default",
+      "license_expression": "LicenseRef-DotColon-Aileron",
+      "notice_paths": [
+        "licenses/license-texts/Pillow-embedded-font-notices.txt"
+      ],
+      "source_sha256": "e9601111f8817e8387fd792b3643e709a5a11febea43cb49de1732e776ba5f60",
+      "upstream_source_sha256": "24fa5feeb91b4bf63eaad0ebba08a8161e9c889d9fd056a37c928134097b9649",
+      "payloads": [
+        {
+          "encoded_sha256": "c548006485e312aafaf58d372935ed7647674d1e61ea0402beff7d3eaf892f04",
+          "sha256": "69853909b940023570964e29cffe30da95aea8de3627736b5cd15ab30143169f",
+          "bytes": 12676
+        }
+      ]
+    },
+    {
+      "id": "pillow-courB08-bitmap",
+      "name": "courB08 embedded bitmap fallback",
+      "source_id": "pillow-12.3.0",
+      "module": "PIL.ImageFont",
+      "factory": "load_default_imagefont",
+      "license_expression": "LicenseRef-Adobe-DEC-Courier",
+      "notice_paths": [
+        "licenses/license-texts/Pillow-embedded-font-notices.txt"
+      ],
+      "source_sha256": "e9601111f8817e8387fd792b3643e709a5a11febea43cb49de1732e776ba5f60",
+      "upstream_source_sha256": "24fa5feeb91b4bf63eaad0ebba08a8161e9c889d9fd056a37c928134097b9649",
+      "payloads": [
+        {
+          "encoded_sha256": "d94947e012f9c1961e00c0c8e2604e73d139227d6910a3ff4d0fc35fd51404c6",
+          "sha256": "5e85438582f0e790b6b115d1afd66fa439d9fc45875af5cc760af7034d67187a",
+          "bytes": 5143
+        },
+        {
+          "encoded_sha256": "53fac26697049927499390dc8bfcac8285d09a6d35eb6e0b86276b2576af4116",
+          "sha256": "afdc82adb778486c71c5cc9c6f88623b3c7e5044e80ff7b32d973663eff31ed0",
+          "bytes": 1273
+        }
+      ]
+    }
+  ]
+}

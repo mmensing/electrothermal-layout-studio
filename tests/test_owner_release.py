@@ -3,6 +3,9 @@
 import importlib.util
 import io
 import json
+import stat
+import struct
+import sys
 import tarfile
 import zipfile
 from pathlib import Path
@@ -241,3 +244,358 @@ def test_unsupported_compression_is_rejected_instead_of_assumed_source(tmp_path)
     path.write_bytes(bytes.fromhex('1f8b') + b'opaque-compressed-content')
     with pytest.raises(release.ReleaseError, match='Unsupported compressed'):
         release.inspect_source_asset(path, VERSION)
+
+
+@pytest.mark.parametrize('route,attestation', [
+    ('GPL-3.0-only-with-MPL-3.3', 'gpl_source_access'),
+    ('GPL-3.0-only-with-LGPL-3.0', 'lgpl_replacement_and_debugging'),
+])
+def test_binary_distribution_route_requires_its_actual_evidence(local_review, route, attestation):
+    root, assets, manifest, review = local_review
+    review.update(kind='binary', license_route=route)
+    review['attestations'].update(corresponding_source=True, native_and_font_notices=True,
+                                 runtime_prerequisites=True)
+    policy = {'publication_allowed': True, 'license_route': route}
+    manifest.write_text(json.dumps(review))
+    with pytest.raises(release.ReleaseError, match='selected source-access'):
+        release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION, committed_policy=policy)
+    review['attestations'][attestation] = True
+    manifest.write_text(json.dumps(review))
+    release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION, committed_policy=policy)
+    policy['license_route'] = 'unreviewed route'
+    with pytest.raises(release.ReleaseError, match='committed distribution'):
+        release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION, committed_policy=policy)
+
+
+def test_per_artifact_finding_review_must_be_hash_bound_private_evidence(local_review):
+    root, assets, manifest, review = local_review
+    review.update(kind='binary', license_route='GPL-3.0-only-with-MPL-3.3')
+    review['attestations'].update(corresponding_source=True, native_and_font_notices=True,
+                                 runtime_prerequisites=True, gpl_source_access=True)
+    item = review['assets'][0]
+    item['inspection_kind'] = 'binary-candidate'
+    item['findings_review'] = dict(review['evidence'][0])
+    manifest.write_text(json.dumps(review))
+    policy = {'publication_allowed': True, 'license_route': review['license_route']}
+    release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION, committed_policy=policy)
+    item['findings_review']['sha256'] = 'f' * 64
+    manifest.write_text(json.dumps(review))
+    with pytest.raises(release.ReleaseError, match='hash-bound private evidence'):
+        release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION, committed_policy=policy)
+
+
+def test_os_credential_bridge_never_stores_or_prints_credentials(tmp_path, monkeypatch, capsys):
+    from types import SimpleNamespace
+    calls = []
+    sentinel = 'synthetic-owner-session-not-a-real-token'
+
+    def run(args, **kwargs):
+        calls.append((args, {**kwargs, 'env': dict(kwargs['env'])}))
+        if args[:3] == ['git', 'credential', 'fill']:
+            return SimpleNamespace(returncode=0, stdout='username=mmensing\npassword=' + sentinel + '\n')
+        if Path(args[0]).name.casefold() in {'gh', 'gh.exe'}:
+            assert kwargs['env']['GH_TOKEN'] == sentinel
+        else:
+            assert not any(key in kwargs['env'] for key in ('GH_TOKEN', 'GITHUB_TOKEN',
+                                                            'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'))
+        return SimpleNamespace(returncode=0, stdout='owner-response', stderr='')
+
+    monkeypatch.setattr(release.subprocess, 'run', run)
+    for key in ('GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'):
+        monkeypatch.delenv(key, raising=False)
+    reader = release.reader_for(tmp_path, credential_source='git')
+    assert reader(['gh', 'api', 'user']) == 'owner-response'
+    assert reader(['gh', 'release', 'upload', 'v0.4.0', 'bounded-source.zip']) == 'owner-response'
+    assert calls[-1][1]['timeout'] == 1800
+    assert reader(['git', 'status', '--porcelain']) == 'owner-response'
+    scanner = [sys.executable, str(tmp_path / 'scripts/audit_publication.py'), '--root', 'bounded.zip']
+    assert reader(scanner) == 'owner-response'
+    assert calls[0][1]['env'].get('GH_TOKEN') is None
+    assert calls[-1][1]['timeout'] == 900
+    assert calls[-2][1]['timeout'] == 180
+    assert not list(tmp_path.iterdir())
+    assert sentinel not in capsys.readouterr().out
+
+
+@pytest.fixture
+def windows_profile(tmp_path, monkeypatch):
+    import hashlib
+    source = tmp_path / 'source'
+    (source / 'packaging').mkdir(parents=True)
+    (source / 'scripts').mkdir()
+    (source / 'docs').mkdir()
+    # Execute the maintained builder's real source-selection function, with a
+    # small ordinary checkout. No source-map behavior is mocked here.
+    for name in ('scripts/build_windows.py', 'packaging/resources.py'):
+        (source / name).write_bytes((ROOT / name).read_bytes())
+    (source / 'docs/purpose.md').write_text('An independently fingerprinted user document.\n')
+    gmsh = b'exact source-built test DLL'
+    catalog = {'compiled_native': [{'id': 'gmsh', 'sha256': hashlib.sha256(gmsh).hexdigest()}],
+               'runtime_python': {'version': '3.12.14'}}
+    catalog_path = source / 'packaging/third-party-sources.json'
+    catalog_path.write_text(json.dumps(catalog))
+    catalog_hash = release.sha256(catalog_path)
+    profile = {'audited_source_profile': True, 'source_catalog_sha256': catalog_hash, **catalog}
+    policy = {'version': VERSION, 'platform': 'windows-x64', 'source_catalog_sha256': catalog_hash,
+              'native_outputs': {'_internal/gmsh-4.15.dll': hashlib.sha256(gmsh).hexdigest()}}
+    path = tmp_path / 'ElectrothermalLayoutStudio-0.4.0-windows-x64.zip'
+    source_hashes, code_hashes = release.source_fingerprints(source)
+    manifest = {'version': VERSION, 'git_head': COMMIT, 'source_sha256': source_hashes,
+                'code_sha256': code_hashes,
+                'verification': {'performed': True, 'checks': [
+                    {'name': name, 'exit_code': 0} for name in sorted(release.REQUIRED_NATIVE_CHECKS)]}}
+    files = {'SOURCE_BUILD_PROVENANCE.json': json.dumps(profile).encode(),
+             'BUILD_MANIFEST.json': json.dumps(manifest).encode(),
+             'WINDOWS_RUNTIME_MODIFICATIONS.json': b'{"microsoft_runtime_files_bundled":false,"installer_bundled_or_executed":false}',
+             '_internal/gmsh-4.15.dll': gmsh}
+    monkeypatch.setattr(release, 'ROOT', source)
+    return path, policy, files, source, profile, manifest
+
+
+def write_windows_profile(fixture):
+    path, _policy, files, _source, profile, manifest = fixture
+    files['BUILD_MANIFEST.json'] = json.dumps(manifest).encode()
+    files['SOURCE_BUILD_PROVENANCE.json'] = json.dumps(profile).encode()
+    with zipfile.ZipFile(path, 'w') as archive:
+        for name, data in files.items():
+            archive.writestr('ElectrothermalLayoutStudio/' + name, data)
+    return path
+
+
+@pytest.mark.parametrize('change', [
+    'none', 'stock', 'native', 'runtime_copy', 'optional_data', 'catalog', 'old_commit',
+    'skip_tests', 'failed_check', 'duplicate_check', 'missing_check', 'source_drift', 'code_drift',
+    'verification_type', 'boolean_exit', 'unsafe_path', 'policy_version', 'policy_platform',
+])
+def test_windows_release_profile_checks_actual_archive_bytes(windows_profile, change):
+    path, policy, files, source, profile, manifest = windows_profile
+    if change == 'stock':
+        profile['audited_source_profile'] = False
+    elif change == 'catalog':
+        profile['source_catalog_sha256'] = 'f' * 64
+    elif change == 'native':
+        files['_internal/gmsh-4.15.dll'] = b'changed'
+    elif change == 'runtime_copy':
+        files['_internal/vcruntime140.dll'] = b'forbidden copy'
+    elif change == 'optional_data':
+        files['_internal/matplotlib/mpl-data/fonts/afm/unused.afm'] = b'not used'
+    elif change == 'old_commit':
+        manifest['git_head'] = 'b' * 40
+    elif change == 'skip_tests':
+        manifest['verification']['performed'] = False
+    elif change == 'failed_check':
+        manifest['verification']['checks'][0]['exit_code'] = 1
+    elif change == 'duplicate_check':
+        manifest['verification']['checks'][-1] = manifest['verification']['checks'][0]
+    elif change == 'missing_check':
+        manifest['verification']['checks'].pop()
+    elif change == 'source_drift':
+        (source / 'docs/purpose.md').write_text('Changed after building.\n')
+    elif change == 'code_drift':
+        manifest['code_sha256'] = {}
+    elif change == 'verification_type':
+        manifest['verification'] = []
+    elif change == 'boolean_exit':
+        manifest['verification']['checks'][0]['exit_code'] = False
+    elif change == 'unsafe_path':
+        files['../outside.txt'] = b'not a contained candidate member'
+    elif change == 'policy_version':
+        policy['version'] = '0.4.1'
+    elif change == 'policy_platform':
+        policy['platform'] = 'linux-x64'
+    write_windows_profile(windows_profile)
+    if change == 'none':
+        release.inspect_windows_profile(path, policy, VERSION, COMMIT)
+    else:
+        with pytest.raises(release.ReleaseError):
+            release.inspect_windows_profile(path, policy, VERSION, COMMIT)
+
+
+def test_windows_profile_bounds_directory_before_zipinfo_allocation(windows_profile, monkeypatch):
+    path = write_windows_profile(windows_profile)
+    data = bytearray(path.read_bytes())
+    end = data.rfind(b'PK\x05\x06')
+    struct.pack_into('<HH', data, end + 8, 65_535, 65_535)
+    path.write_bytes(data)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError('Profile attempted ZipInfo allocation before directory preflight')
+
+    monkeypatch.setattr(release.zipfile, 'ZipFile', forbidden)
+    with pytest.raises(release.ReleaseError, match='central-directory'):
+        release.inspect_windows_profile(path, windows_profile[1], VERSION, COMMIT)
+
+
+def test_windows_profile_streams_native_payload_without_archive_read(windows_profile, monkeypatch):
+    path = write_windows_profile(windows_profile)
+    original = zipfile.ZipExtFile.read
+
+    def bounded_read(stream, count=-1):
+        assert count >= 0
+        if stream.name.endswith('.dll'):
+            assert count <= 1024**2
+        return original(stream, count)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError('Whole native/provenance archive.read allocation is forbidden')
+
+    monkeypatch.setattr(release.zipfile.ZipExtFile, 'read', bounded_read)
+    monkeypatch.setattr(release.zipfile.ZipFile, 'read', forbidden)
+    release.inspect_windows_profile(path, windows_profile[1], VERSION, COMMIT)
+
+
+@pytest.fixture
+def corresponding_sources(windows_profile):
+    import hashlib
+    _path, _policy, _files, root, _profile, _manifest = windows_profile
+    (root / 'packaging/license-texts').mkdir(parents=True)
+    (root / 'packaging/license-texts/GPL-3.0.txt').write_bytes((ROOT / 'packaging/license-texts/GPL-3.0.txt').read_bytes())
+    (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').write_bytes(
+        (ROOT / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes())
+    assets = root.parent / 'complete-source'
+    assets.mkdir()
+    sources, contents, grouped = [], {}, {}
+    for index in range(3):
+        filename = f'component-{index}-source.tar.gz'
+        name = f'ETLayout-{VERSION}-corresponding-source-group-{index % 2}.zip'
+        data = f'independently hashed component {index}'.encode()
+        entry = {'id': f'component-{index}', 'filename': filename, 'bytes': len(data),
+                 'sha256': hashlib.sha256(data).hexdigest(), 'bundle_path': 'archives/' + filename,
+                 'source_bundle': name}
+        sources.append(entry)
+        contents[entry['bundle_path']] = data
+        grouped.setdefault(name, []).append(entry)
+    catalog = {'sources': sources, 'source_bundle_parts': [
+        {'filename': name, 'component_ids': [entry['id'] for entry in entries]}
+        for name, entries in grouped.items()]}
+    catalog_bytes = json.dumps(catalog).encode()
+    (root / 'packaging/third-party-sources.json').write_bytes(catalog_bytes)
+    source, code = release.source_fingerprints(root)
+    manifest = {'version': VERSION, 'git_head': COMMIT, 'source_sha256': source, 'code_sha256': code}
+    application = {'etlayout/' + name: (root / name).read_bytes() for name in source}
+    application['etlayout/SOURCE_MANIFEST.json'] = json.dumps(manifest).encode()
+    envelopes = {f'etlayout-{VERSION}-source.zip': application}
+    for name, entries in grouped.items():
+        index = {'schema_version': 1, 'source_bundle': name,
+                 'source_catalog_sha256': hashlib.sha256(catalog_bytes).hexdigest(),
+                 'sources': [{key: entry[key] for key in ('id', 'filename', 'bytes', 'sha256')}
+                             for entry in sorted(entries, key=lambda entry: entry['id'])]}
+        envelopes[name] = {entry['bundle_path']: contents[entry['bundle_path']] for entry in entries}
+        envelopes[name].update({'README.md': b'Complete component source beside the binary.\n',
+            'SOURCE_CATALOG.json': catalog_bytes, 'SOURCE_INDEX.json': json.dumps(index).encode(),
+            'licenses/GPL-3.0.txt': (root / 'packaging/license-texts/GPL-3.0.txt').read_bytes(),
+            'licenses/Pillow-embedded-font-notices.txt':
+                (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes()})
+    inspections = {name: {'inspection_kind': 'source' if name.startswith('etlayout-') else 'third-party-source'}
+                   for name in envelopes}
+    return root, assets, envelopes, inspections
+
+
+def write_corresponding_sources(fixture):
+    _root, assets, envelopes, _inspections = fixture
+    paths = []
+    for name, entries in envelopes.items():
+        path = assets / name
+        with zipfile.ZipFile(path, 'w') as archive:
+            for member, data in entries.items():
+                archive.writestr(member, data)
+        paths.append(path)
+    return paths
+
+
+@pytest.mark.parametrize('change', ['none', 'missing_application', 'application_kind', 'application_bytes',
+    'application_commit', 'missing_part', 'part_kind', 'missing_archive', 'archive_hash', 'archive_size',
+    'extra_archive', 'part_catalog', 'part_index', 'gpl_text', 'font_notice', 'missing_font_notice', 'unsafe_member'])
+def test_binary_corresponding_source_gate_requires_complete_exact_assets(corresponding_sources, change):
+    root, _assets, envelopes, inspections = corresponding_sources
+    app = f'etlayout-{VERSION}-source.zip'
+    part = next(name for name in envelopes if name != app)
+    inner = next(name for name in envelopes[part] if name.startswith('archives/'))
+    if change == 'missing_application':
+        del envelopes[app]
+    elif change == 'application_kind':
+        inspections[app]['inspection_kind'] = 'third-party-source'
+    elif change == 'application_bytes':
+        envelopes[app]['etlayout/docs/purpose.md'] = b'Wrong application source.'
+    elif change == 'application_commit':
+        data = json.loads(envelopes[app]['etlayout/SOURCE_MANIFEST.json'])
+        data['git_head'] = 'b' * 40
+        envelopes[app]['etlayout/SOURCE_MANIFEST.json'] = json.dumps(data).encode()
+    elif change == 'missing_part':
+        del envelopes[part]
+    elif change == 'part_kind':
+        inspections[part]['inspection_kind'] = 'source'
+    elif change == 'missing_archive':
+        del envelopes[part][inner]
+    elif change == 'archive_hash':
+        envelopes[part][inner] = b'x' * len(envelopes[part][inner])
+    elif change == 'archive_size':
+        envelopes[part][inner] += b'x'
+    elif change == 'extra_archive':
+        envelopes[part]['archives/uncatalogued.tar.gz'] = b'Not catalogued.'
+    elif change == 'part_catalog':
+        envelopes[part]['SOURCE_CATALOG.json'] = b'{}'
+    elif change == 'part_index':
+        envelopes[part]['SOURCE_INDEX.json'] = b'{}'
+    elif change == 'gpl_text':
+        envelopes[part]['licenses/GPL-3.0.txt'] = b'Not the required license text.'
+    elif change == 'font_notice':
+        envelopes[part]['licenses/Pillow-embedded-font-notices.txt'] = b'Incomplete permission.'
+    elif change == 'missing_font_notice':
+        del envelopes[part]['licenses/Pillow-embedded-font-notices.txt']
+    elif change == 'unsafe_member':
+        envelopes[part]['../outside.tar.gz'] = b'Unsafe.'
+    paths = write_corresponding_sources(corresponding_sources)
+    if change == 'none':
+        assert release.inspect_corresponding_sources(root, paths, inspections, VERSION, COMMIT) is None
+    else:
+        with pytest.raises(release.ReleaseError):
+            release.inspect_corresponding_sources(root, paths, inspections, VERSION, COMMIT)
+
+
+def test_corresponding_source_bounds_directory_before_zipinfo_allocation(corresponding_sources, monkeypatch):
+    paths = write_corresponding_sources(corresponding_sources)
+    path = next(path for path in paths if path.name.startswith('ETLayout-'))
+    data = bytearray(path.read_bytes())
+    end = data.rfind(b'PK\x05\x06')
+    struct.pack_into('<HH', data, end + 8, 65_535, 65_535)
+    path.write_bytes(data)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError('Source gate allocated ZipInfo before bounded directory preflight')
+
+    monkeypatch.setattr(release.zipfile, 'ZipFile', forbidden)
+    with pytest.raises(release.ReleaseError, match='central-directory'):
+        with release._corresponding_source_zip(path):
+            pass
+
+
+def test_corresponding_source_streams_archives_without_whole_member_read(corresponding_sources, monkeypatch):
+    paths = write_corresponding_sources(corresponding_sources)
+    original = zipfile.ZipExtFile.read
+
+    def bounded_read(stream, count=-1):
+        assert count >= 0
+        if stream.name.startswith('archives/'):
+            assert count <= 1024**2
+        return original(stream, count)
+
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError('Whole archive.read allocation is forbidden')
+
+    monkeypatch.setattr(release.zipfile.ZipExtFile, 'read', bounded_read)
+    monkeypatch.setattr(release.zipfile.ZipFile, 'read', forbidden)
+    release.inspect_corresponding_sources(corresponding_sources[0], paths, corresponding_sources[3], VERSION, COMMIT)
+
+
+@pytest.mark.parametrize('mode', [stat.S_IFIFO, stat.S_IFCHR, stat.S_IFSOCK])
+def test_corresponding_source_envelope_rejects_special_unix_file_modes(tmp_path, mode):
+    path = tmp_path / 'corresponding-source.zip'
+    member = zipfile.ZipInfo('archives/component-source.tar.gz')
+    member.create_system = 3
+    member.external_attr = (mode | 0o644) << 16
+    with zipfile.ZipFile(path, 'w') as archive:
+        archive.writestr(member, b'Exact bytes cannot legitimize a special file.')
+    with pytest.raises(release.ReleaseError):
+        with release._corresponding_source_zip(path):
+            pass

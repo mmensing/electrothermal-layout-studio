@@ -49,7 +49,7 @@ def collect(destination, include_build_tools=False):
         records.append({"name": name, "version": distribution.version, "scope": declared["scope"],
                         "license_expression": declared["license_expression"], "notice_files": found,
                         "upstream_urls": declared["upstream_urls"],
-                        "complete_corresponding_source_supplied": False,
+                        "corresponding_source_evaluated": False,
                         "notice_review": "Unreviewed collection; native and Qt subcomponents require independent review"})
     for name in ("LICENSE", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json"):
         shutil.copyfile(ROOT / name, root / name)
@@ -69,4 +69,4 @@ if __name__ == "__main__":
     parser.add_argument("destination", nargs="?", default="artifacts/licenses")
     parser.add_argument("--include-build-tools", action="store_true")
     args = parser.parse_args()
-    print(f"Collected {len(collect(args.destination, args.include_build_tools))} installed-package notice records; binary publication remains blocked")
+    print(f"Collected {len(collect(args.destination, args.include_build_tools))} installed-package notice records; exact artifact/source review is separate")

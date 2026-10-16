@@ -1,14 +1,27 @@
 {
   "schema_version": 1,
-  "publication_allowed": false,
-  "edition": "source-only",
+  "publication_allowed": true,
+  "edition": "reviewed-windows-profile",
   "candidate_builds_allowed": true,
-  "blockers": [
-    "Establish exact corresponding source, modifications and reproducible build/install information for every bundled GPL/LGPL/native component.",
-    "Complete Qt module/plugin/embedded-third-party and native/font notice review against exact candidate file hashes.",
-    "Verify LGPL shared-library replacement and debugging/relinking information for exact frozen candidate.",
-    "Verify Microsoft runtime redistribution origin/terms and exact included files.",
-    "Review candidate license route including MPL section 3.3 and Gmsh GPL larger-work requirements."
+  "version": "0.4.0",
+  "platform": "windows-x64",
+  "license_route": "GPL-3.0-only-with-MPL-3.3",
+  "source_catalog_sha256": "51a1ec336b13dca91a2cacd16d4cae9f4aee4a2aa91c49e9d1ac054b522c8b21",
+  "native_outputs": {
+    "_internal/gmsh-4.15.dll": "d0925dca151a1c34b7c291241ab20026312c24510eedeae2c466aa643bf24192",
+    "_internal/python312.dll": "53d38ecd2d9f4e19ac9328a715d1155e3e183473845e15d0044342909fc718a0",
+    "_internal/numpy/_core/_multiarray_umath.cp312-win_amd64.pyd": "df490c3b84e96e6916d29fb704e380607c4f8fa25ffacb59cd0f22e459f6e984",
+    "_internal/numpy/fft/_pocketfft_umath.cp312-win_amd64.pyd": "ca5f483e96f628f14589202f8ff9ed7a8d8fd1e0014d489eecf85219d96328d3",
+    "_internal/Shapely.libs/geos-bf067cd6ff74ee0ad5f3ff52c7ef08c9.dll": "ac236e44bae28eed03ebedf598bf7d6d5dd593a7e67d2326670582155d1a38ac",
+    "_internal/Shapely.libs/geos_c-6dd9fd915eef8a7928285416bef1e666.dll": "cbc0586d6fcb34f40c8a939236deba053b27f5f180b8d261b60eab6fafc63430"
+  },
+  "conditions": [
+    "Only this exact source-built native/Python profile may undergo owner release review; stock-wheel candidates are ineligible.",
+    "Complete matching application and four corresponding-source parts, retained notices, build/install/relink inputs and source access must accompany the binary.",
+    "Retain LGPL library grants and satisfy the documented complete-source/relink route; GPL status alone does not discharge those obligations.",
+    "No Microsoft runtime DLLs or installer may be bundled; use the official supported x64 v14 system prerequisite.",
+    "Exact protected public main CI, all 25 native checks, extracted-folder validation and complete hash-bound artifact/privacy/native/font review must pass.",
+    "A build, SBOM or this policy alone never authorizes publication. The owner-local release preflight must validate the exact final assets and current authority."
   ],
-  "approval": "A future owner-reviewed PR may update this policy with immutable evidence; a build or upstream URL does not clear it."
+  "approval": "Version-scoped source/license profile only. Final artifact evidence and owner-only release preflight remain mandatory; no CI publishing permissions or automatic release are granted."
 }
