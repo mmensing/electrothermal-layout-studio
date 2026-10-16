@@ -375,3 +375,120 @@ def test_identical_current_external_source_uses_one_explicit_root_approval(speci
         saved = reader.materialize(reader.current_run_id)
         assert saved.physics_hash == result.physics_hash
         np.testing.assert_array_equal(saved.fields["a"]["temperature"], result.fields["a"]["temperature"])
+
+
+@pytest.mark.parametrize("phase", ["objects", "catalog"])
+def test_opening_cancellation_checks_metadata_and_graph_before_arrays(specimen, tmp_path, monkeypatch, phase):
+    from etlayout.io import archive_v3
+    project, result = specimen
+    target = tmp_path / "cancel-open.etl"
+    project_io.save_project(project, target, result, history=[result] * 3, archive_format=3)
+    cancelled = False
+    original = archive_v3._parse
+    def observed(raw):
+        nonlocal cancelled
+        value = original(raw)
+        if isinstance(value, dict) and (phase == "objects" and "typed_codec" in value
+                                      or phase == "catalog" and "record_codec" in value):
+            cancelled = True
+        return value
+    monkeypatch.setattr(archive_v3, "_parse", observed)
+    def forbidden(*args, **kwargs):
+        pytest.fail("Opening cancellation must not load numerical arrays")
+    monkeypatch.setattr(ArchiveV3Reader, "read_array", forbidden)
+    with pytest.raises(SaveCancelled, match="cancelled"):
+        ArchiveV3Reader(target, cancel=lambda: cancelled)
+    assert cancelled
+    target.unlink()  # Native Windows: cancelled reads retained no file handle.
+
+
+def test_opening_cancel_callback_is_not_retained_by_completed_reader(specimen, tmp_path):
+    project, result = specimen
+    target = tmp_path / "independent-read.etl"
+    project_io.save_project(project, target, result, archive_format=3)
+    cancelled = False
+    with ArchiveV3Reader(target, cancel=lambda: cancelled) as reader:
+        cancelled = True
+        assert reader._opening_cancel is None
+        saved = reader.materialize(reader.current_run_id)
+        np.testing.assert_array_equal(saved.fields["a"]["temperature"], result.fields["a"]["temperature"])
+
+
+def test_zip_directory_is_parsed_once_per_catalog_and_materialization(specimen, tmp_path, monkeypatch):
+    project, result = specimen
+    target = tmp_path / "batched.etl"
+    project_io.save_project(project, target, result, history=[result] * 5, archive_format=3)
+    opened = []
+    real = zipfile.ZipFile
+    class ObservedZip(real):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            opened.append(self)
+    monkeypatch.setattr(zipfile, "ZipFile", ObservedZip)
+    with ArchiveV3Reader(target) as reader:
+        assert len(opened) == 1 and all(item.fp is None for item in opened)
+        loaded = reader.materialize(reader.current_run_id)
+        assert len(opened) == 2 and all(item.fp is None for item in opened)
+        np.testing.assert_array_equal(loaded.fields["a"]["temperature"], result.fields["a"]["temperature"])
+        reader.verify_all()
+        assert len(opened) == 3 and all(item.fp is None for item in opened)
+        with pytest.raises(SaveCancelled):
+            reader.materialize(reader.current_run_id, cancel=lambda: True)
+        assert len(opened) == 4 and all(item.fp is None for item in opened)
+
+
+def test_concurrent_materializations_own_separate_zip_streams(specimen, tmp_path, monkeypatch):
+    import threading
+    from concurrent.futures import ThreadPoolExecutor
+
+    project, result = specimen
+    target = tmp_path / "concurrent.etl"
+    project_io.save_project(project, target, result, archive_format=3)
+    with ArchiveV3Reader(target) as reader:
+        barrier, opened = threading.Barrier(2), []
+        real_zip = zipfile.ZipFile
+        mesh = reader._mesh
+        class ObservedZip(real_zip):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                opened.append((threading.get_ident(), self))
+        def simultaneous(*args):
+            barrier.wait(timeout=5)
+            return mesh(*args)
+        monkeypatch.setattr(zipfile, "ZipFile", ObservedZip)
+        monkeypatch.setattr(reader, "_mesh", simultaneous)
+        with ThreadPoolExecutor(max_workers=2) as workers:
+            futures = [workers.submit(reader.materialize, reader.current_run_id) for _ in range(2)]
+            first, second = (future.result(timeout=10) for future in futures)
+        assert len(opened) == 2 and len({owner for owner, _ in opened}) == 2
+        assert all(archive.fp is None for _, archive in opened)
+        assert not np.shares_memory(first.mesh.points, second.mesh.points)
+        assert first.mesh.points.tobytes() == second.mesh.points.tobytes()
+        assert first.fields["a"]["temperature"].tobytes() == second.fields["a"]["temperature"].tobytes()
+    replacement = tmp_path / "moved.etl"
+    target.replace(replacement)  # Native Windows handle-release check.
+    replacement.unlink()
+
+
+def test_streaming_save_reuses_each_source_directory_for_the_operation(specimen, tmp_path, monkeypatch):
+    from etlayout.io.archive_v3 import StoredRunReference
+
+    project, result = specimen
+    source, target = tmp_path / "source.etl", tmp_path / "copy.etl"
+    project_io.save_project(project, source, result, history=[result] * 4, archive_format=3)
+    class Token:
+        closed = False
+    with ArchiveV3Reader(source) as reader:
+        references = [StoredRunReference(record["id"], "test-generation", reader, Token()) for record in reader.records]
+        opened = []
+        real = zipfile.ZipFile
+        class ObservedZip(real):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, **kwargs)
+                opened.append(self)
+        monkeypatch.setattr(zipfile, "ZipFile", ObservedZip)
+        project_io.save_project(project, target, references[0], history=references[1:], archive_format=3)
+        # One output writer, one source stream, one finished catalog, one final
+        # physical verification stream, independent of object/run count.
+        assert len(opened) == 4 and all(archive.fp is None for archive in opened)
+    assert len(project_io.load_run_history(target)) == 4

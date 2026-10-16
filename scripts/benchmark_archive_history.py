@@ -235,9 +235,13 @@ def run_case(output, family, count, archive_format=2, replicate=1):
     manifests = json.loads((output / "inputs.json").read_text(encoding="utf-8"))
     pool = [load_project(output / record["file"]) for record in manifests[family]]
     project, result = pool[0]
-    require(result is not None, "A solved input lost its result")
+    require(all(value is not None for _, value in pool), "A solved input lost its result")
     history = [pool[(index + 1) % len(pool)][1] for index in range(count - 1)]
-    expected = [result_digest(value) for value in [result, *history]]
+    # The input pool is exclusively owned here. Repeated references do not need
+    # repeated expected hashing; every independently reopened record below is
+    # still checked completely, including every frame and typed metadata member.
+    pool_digests = [result_digest(value) for _, value in pool]
+    expected = [pool_digests[0], *[pool_digests[(index + 1) % len(pool)] for index in range(count - 1)]]
     frame_digests = ([result_digest(frame) for frame in result.transient.snapshots]
                      if result.transient else [])
     before = configuration_hash(project)
