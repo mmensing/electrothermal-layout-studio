@@ -55,6 +55,8 @@ from etlayout import __version__
 from etlayout.geometry.prepare import resolve_region
 from etlayout.gui.field_scale import FieldScaleControl
 from etlayout.gui.forms import ModelDialog, region_summary
+from etlayout.gui.history_opening import HistoryOpener
+from etlayout.gui.history_workflow import HistoryWorkflow, is_record
 from etlayout.gui.inputs import parse_number
 from etlayout.gui.jobs import ComputeJob
 from etlayout.gui.plots import CrossSectionPanel, ProfilePanel, StudyPanel
@@ -313,6 +315,11 @@ class MainWindow(QMainWindow):
             self.execution_settings = ExecutionSettings.from_dict(json.loads(self.settings.value("execution", "{}")))
         except (SimulationError, TypeError, ValueError):
             self.execution_settings = ExecutionSettings()
+        self.history_lazy_enabled = self.settings.value("history/lazy", False, type=bool)
+        try:
+            self.history_cache_mib = max(16, min(8192, int(self.settings.value("history/cache_mib", 256))))
+        except (TypeError, ValueError):
+            self.history_cache_mib = 256
         self.database = MaterialDatabase(database_path)
         self.project = project or Project()
         if not self.project.materials:
@@ -347,6 +354,16 @@ class MainWindow(QMainWindow):
         self.hierarchy_queue = []
         self.geometry_generation = 0
         self.run_history = [result] if result else []
+        self.history_workflow = HistoryWorkflow(self)
+        self.history_opener = HistoryOpener(self)
+        self.history_opener.loaded.connect(self._catalog_opened)
+        self.history_opener.review_required.connect(self._catalog_review)
+        self.history_opener.legacy.connect(self._catalog_legacy)
+        self.history_opener.failed.connect(self._catalog_failed)
+        self.history_opener.busy_changed.connect(self._catalog_busy)
+        self._pending_catalog = None
+        self._catalog_review_restore = None
+        self._catalog_revision = 0
         self.inspection_context = None
         self._before_physics = None
         self._autosave_error = ""
@@ -599,7 +616,7 @@ class MainWindow(QMainWindow):
         self.history_range = QCheckBox("Use range across saved times")
         self.history_range.setAccessibleName("Automatic color range across saved transient times")
         self.history_range.setToolTip("Keep one automatic color scale for this layer, field and region through the saved history. Manual limits take precedence.")
-        self.history_range.toggled.connect(self.update_overlay)
+        self.history_range.toggled.connect(self.history_range_changed)
         self.appearance_layout.addWidget(self.history_range)
         self.appearance_layout.addStretch()
         self.display_tabs.addTab(appearance, "Appearance")
@@ -753,11 +770,14 @@ class MainWindow(QMainWindow):
         self.study_panel.compare_requested.connect(self.compare_maps_dialog)
         self.analysis_tabs.addTab(self.study_panel, "Studies")
         self.history_panel = RunHistoryPanel()
+        self.history_panel.cancel_requested.connect(self.history_workflow.cancel)
+        self.history_panel.cancel_requested.connect(self.cancel_catalog)
         self.history_panel.inspect_requested.connect(self.inspect_result)
         self.history_panel.compare_requested.connect(self.compare_history)
         self.history_panel.remove_requested.connect(self.remove_history)
         self.analysis_tabs.addTab(self.history_panel, "Run history")
         self.time_history = TimeHistoryPanel()
+        self.time_history.scan_requested.connect(self.history_workflow.full)
         self.time_history.time_selected.connect(self.time_navigation.select_time)
         self.display_tabs.addTab(self.time_history, "Time history")
         self.diagnostics = QTreeWidget()
@@ -868,6 +888,7 @@ class MainWindow(QMainWindow):
         self.power_action = self.action("Routing & optimization", self.open_power_workbench)
         self.dark_action = self.action("Dark theme", self.apply_theme, checkable=True)
         self.execution_action = self.action("Execution settings…", self.edit_execution_settings)
+        self.history_settings_action = self.action("Archive and history settings…", self.edit_history_settings)
         self.acknowledge_action = self.action("Acknowledge reviewed clipped boundaries", self.acknowledge_boundaries, checkable=True)
         self.workspace_actions = [self.action(title, callback) for title, callback in (
             ("Save workspace layout…", self.save_workspace_layout),
@@ -891,6 +912,19 @@ class MainWindow(QMainWindow):
             self.execution_settings = dialog.settings
             self.settings.setValue("execution", json.dumps(asdict(self.execution_settings)))
             self.statusBar().showMessage("Execution settings saved for subsequent jobs on this computer.", 6000)
+
+    def edit_history_settings(self):
+        from etlayout.gui.history_loading import HistorySettingsDialog
+        dialog = HistorySettingsDialog(self.history_lazy_enabled, self.history_cache_mib, self)
+        if dialog.exec():
+            self.history_lazy_enabled = dialog.enabled.isChecked()
+            self.history_cache_mib = dialog.cache_mib.value()
+            self.settings.setValue("history/lazy", self.history_lazy_enabled)
+            self.settings.setValue("history/cache_mib", self.history_cache_mib)
+            if self.history_workflow.store:
+                self.history_workflow.store.set_budget(self.history_cache_mib * 1024**2)
+                self.history_workflow.refresh()
+            self.statusBar().showMessage("History settings saved on this computer; opening mode applies to the next project.", 6000)
 
     def build_workflow_ribbon(self):
         from etlayout.gui.guided import GuidedWorkspace
@@ -962,6 +996,7 @@ class MainWindow(QMainWindow):
         physical_change = self._before_physics != physics_hash(self.project)
         self._before_physics = None
         if physical_change:
+            self.history_workflow.new_result()
             self.clear_analysis("Project changed. Run analysis to compute fields for this configuration.", clear_studies=True)
         if not mesh_changed:
             self.mesh = old_mesh
@@ -1682,7 +1717,7 @@ class MainWindow(QMainWindow):
             return None
         if not settings.initial_state_digest:
             raise ValueError("The saved initial state has not been bound to a completed run. Choose its archive again using Solve → Studies / start.")
-        candidates = ([self.result] if self.result else []) + list(reversed(self.run_history))
+        candidates = ([self.result] if self.result else []) + [run for run in reversed(self.run_history) if not is_record(run)]
         from etlayout.models import SimulationError
         from etlayout.simulation.sweep import resolve_study_initial_state
         for run in candidates:
@@ -1790,6 +1825,8 @@ class MainWindow(QMainWindow):
         if getattr(self.project, "_resource_unresolved", False) and operation != "import":
             self.error("Unresolved resources", "Review project resources or relink the layout before computation.")
             return
+        self.cancel_catalog()
+        self.history_workflow.loader.cancel()
         if self.prepare_job:
             # Finish binding source identity before taking the run snapshot.
             # Keep one CPU budget rather than overlapping geometry and solve.
@@ -2034,6 +2071,7 @@ class MainWindow(QMainWindow):
             return
         if self.inspection_context:
             self.return_to_project()
+        self.history_workflow.new_result()
         self.result = result
         self.remember_result(result)
         self.render_result(result)
@@ -2048,6 +2086,8 @@ class MainWindow(QMainWindow):
         self.history_panel.set_results(self.run_history)
 
     def inspect_result(self, result):
+        if is_record(result):
+            return self.history_workflow.inspect(result)
         power = getattr(getattr(self, "guided", None), "power", None)
         if self.job or (power and power.job):
             self.log("Wait for the active computation to finish before changing the inspected run.")
@@ -2085,6 +2125,7 @@ class MainWindow(QMainWindow):
             return False
         if self.result:
             self._run_view_states[id(self.result)] = self.capture_view_state()
+        self.history_workflow.loader.cancel()
         context, self.inspection_context = self.inspection_context, None
         self.clear_analysis()
         self.project, self.result, self.path = context["project"], context["result"], context["path"]
@@ -2097,6 +2138,7 @@ class MainWindow(QMainWindow):
         if context.get("workspace"):
             self.guided.restore_context(context["workspace"])
         self.restore_view_state(context["view_state"])
+        self.history_workflow.returned()
         self.set_running(False)
 
     def capture_view_state(self):
@@ -2166,14 +2208,26 @@ class MainWindow(QMainWindow):
         if len(results) < 2:
             self.error("Select two runs", "Select two or more runs in Run history using Ctrl-click, then choose Compare selected.")
             return
+        if any(is_record(result) for result in results):
+            return self.history_workflow.compare(results)
         from etlayout.gui.comparison import MapComparisonDialog
-        MapComparisonDialog([(run_caption(result), result) for result in results], self).exec()
+        dialog = MapComparisonDialog([(run_caption(result), result) for result in results], self)
+        try:
+            dialog.exec()
+        finally:
+            for view in dialog.views:
+                view.show_field(None, "", "")
+            for timeline in dialog.time_navigations:
+                timeline.set_result(None)
+            dialog.results = []
+            dialog.deleteLater()
 
     def remove_history(self, results):
         if self.job:
             return
         if QMessageBox.question(self, "Remove recorded runs", f"Remove {len(results)} selected run(s) from this project's history? Current result fields remain available.") != QMessageBox.StandardButton.Yes:
             return
+        self.history_workflow.loader.cancel()
         self.run_history = [result for result in self.run_history if not any(result is selected for selected in results)]
         self.history_panel.set_results(self.run_history)
         if self.inspection_context:
@@ -2192,7 +2246,7 @@ class MainWindow(QMainWindow):
                 self.show_analysis_page(self.history_panel)
                 self.log("Select a recorded run, then choose Compare run configuration.")
                 return
-            baseline, candidate = self.project.to_dict(), selected[0].configuration
+            baseline, candidate = self.project.to_dict(), (selected[0].configuration_copy() if is_record(selected[0]) else selected[0].configuration)
         rows = configuration_changes(baseline, candidate)
         dialog = QDialog(self)
         dialog.setWindowTitle("Current project → recorded run · configuration changes")
@@ -2245,7 +2299,7 @@ class MainWindow(QMainWindow):
         headlines = []
         for key, title, unit in [("effective_resistance", resistance_name, "Ω"), ("total_current", "Total current", "A"),
                                  ("electrical_power", "Electrical power", "W"),
-                                 ("temperature_max", "Selected-time peak temperature" if run.transient else "Overall peak temperature", "K")]:
+                                 ("temperature_max", "Selected-time peak temperature" if run.transient or self.history_workflow.record and self.history_workflow.record.times else "Overall peak temperature", "K")]:
             if key in result.metrics:
                 headlines.append(f"{title}: {engineering(result.metrics[key], unit)}")
         current_ref = result.metrics.get("resistance_current_terminal", "")
@@ -2276,7 +2330,20 @@ class MainWindow(QMainWindow):
             return self.transient_frame or self.result.transient.snapshots[-1]
         return self.result
 
+    def history_range_changed(self, checked):
+        record = self.history_workflow.record
+        if (checked and record and record.times and self.result and not self.result.transient
+                and not self.legend_scale.lock.isChecked()):
+            self.history_range.blockSignals(True)
+            self.history_range.setChecked(False)
+            self.history_range.blockSignals(False)
+            self.history_workflow.full("range")
+            return
+        self.update_overlay()
+
     def select_snapshot(self, index):
+        if self.history_workflow.record and self.history_workflow.record.times and not (self.result and self.result.transient):
+            return self.history_workflow.frame(index)
         if not self.result or not self.result.transient or not 0 <= index < len(self.result.transient.snapshots):
             return
         self.transient_frame = self.result.transient.snapshots[index]
@@ -2420,7 +2487,7 @@ class MainWindow(QMainWindow):
         self.key_metrics.setText(("Original run metrics (not differences): " if self.view_mode.currentData() == "difference" else "")
                                  + self._original_key_metrics)
         self.selection_statistics.clear()
-        self.history_range.setVisible(bool(self.result and self.result.transient))
+        self.history_range.setVisible(bool(self.result and (self.result.transient or self.history_workflow.record and self.history_workflow.record.times)))
         self.history_range.setEnabled(self.view_mode.currentData() == "original")
         try:
             if field and self.legend_scale.details and self.legend_scale.details["field"] != field:
@@ -3054,6 +3121,14 @@ class MainWindow(QMainWindow):
     def set_project(self, project, result=None, path=None, history=None):
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
+        incoming_store = project.__dict__.pop("_history_store", None)
+        if not self.history_workflow.close():
+            if incoming_store:
+                incoming_store.close()
+            self.statusBar().showMessage("History read is still stopping; retry this transition after the worker stops.")
+            return False
+        self.history_opener.cancel()
+        self._drop_pending_catalog()
         self.cancel_geometry()
         self.inspection_context = None
         self.inspection_bar.hide()
@@ -3073,7 +3148,8 @@ class MainWindow(QMainWindow):
         self.undo_history.clear()
         self.redo_history.clear()
         self.dirty = False
-        self.run_history = list(history or [])
+        self.run_history = list(incoming_store.records) if incoming_store else list(history or [])
+        self.history_workflow.attach(incoming_store)
         # Resource review hands history to the GUI once; do not hide old arrays
         # in Project snapshots, undo records or future compute-process inputs.
         project.__dict__.pop("_resource_history", None)
@@ -3094,10 +3170,13 @@ class MainWindow(QMainWindow):
         self.set_running(False)
         if result:
             self.show_result(result)
+        elif incoming_store:
+            self.history_workflow.open_current()
 
-    def load_project_data(self, path, *, external_policy=None):
+    def load_project_data(self, path, *, external_policy=None, lazy=False):
         from etlayout.gui.resources import open_reviewed_project
-        opened = open_reviewed_project(path, self, policy=external_policy)
+        opened = open_reviewed_project(path, self, policy=external_policy, lazy=lazy,
+                                       cache_bytes=self.history_cache_mib * 1024**2)
         if opened is None:
             raise SimulationError("Project opening cancelled; the current project was retained")
         return opened
@@ -3113,6 +3192,13 @@ class MainWindow(QMainWindow):
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return
         from etlayout.gui.resources import resolve_reviewed_project
+        if (inspection.archive_data is None and inspection.metadata.get("schema_version") == 3
+                and getattr(inspection, "_archive_sha256", None)):
+            self._catalog_revision = self.document_revision
+            self._catalog_review_restore = self.project
+            self.history_opener.submit(inspection.source, self.document_epoch,
+                                       cache_bytes=self.history_cache_mib * 1024**2, inspection=inspection)
+            return
         try:
             opened = resolve_reviewed_project(inspection.for_project(self.project), self)
             if opened is None:
@@ -3142,12 +3228,157 @@ class MainWindow(QMainWindow):
         if not isinstance(path, (str, Path)):
             path, _ = QFileDialog.getOpenFileName(self, "Open project", "", "Electrothermal projects (*.etl *.etlayout *.etproj *.zip);;All files (*)")
         if path:
+            if self.history_lazy_enabled:
+                self._catalog_revision = self.document_revision
+                self._drop_pending_catalog()
+                self.history_opener.submit(path, self.document_epoch, policy=external_policy,
+                                           cache_bytes=self.history_cache_mib * 1024**2)
+                self.statusBar().showMessage("Opening archive metadata in a worker; the current project remains available…")
+                return
             try:
-                project, result = self.load_project_data(path, external_policy=external_policy)
+                project, result = self.load_project_data(path, external_policy=external_policy, lazy=False)
                 self.set_project(project, result, path, getattr(project, "_resource_history", []))
                 self.log("Opened project metadata" if getattr(project, "_resource_unresolved", False) else "Opened project")
             except Exception as error:
                 self.error("Cannot open project", error)
+
+    def cancel_catalog(self):
+        self.history_opener.cancel()
+        self._drop_pending_catalog()
+        if self._save_continuation == self._apply_pending_catalog:
+            self._save_continuation = None
+
+    def _catalog_busy(self, busy):
+        self.history_panel.set_loading(busy or bool(self.history_workflow.loader.jobs))
+
+    def _drop_pending_catalog(self):
+        self._catalog_review_restore = None
+        pending, self._pending_catalog = self._pending_catalog, None
+        if pending and pending[3] is not None:
+            pending[3].close()
+
+    def _catalog_opened(self, request, project, store):
+        self._accept_catalog(request, project, None, store)
+
+    def _accept_catalog(self, request, project, result, store=None):
+        current = self.history_opener.request
+        if request.epoch != self.document_epoch or current is None or request.generation != current.generation:
+            if store:
+                store.close()
+            return
+        power = getattr(self.guided, "power", None)
+        if self.job or (power and power.job) or not self.guided.resolve_draft():
+            if store:
+                store.close()
+            return
+        self._pending_catalog = (request, project, result, store)
+        self._apply_pending_catalog()
+
+    def _apply_pending_catalog(self):
+        if self._pending_catalog and any(job.isRunning() for job in self.history_workflow.loader.jobs):
+            self.history_workflow.loader.cancel()
+            QTimer.singleShot(25, self._apply_pending_catalog)
+            return
+        if self._pending_catalog is None:
+            return
+        # A read cancelled above can finish after another draft or edit was made.
+        # Recheck the transition at its commit point, not just when metadata arrived.
+        power = getattr(self.guided, "power", None)
+        if self.job or (power and power.job) or not self.guided.resolve_draft():
+            self._drop_pending_catalog()
+            return
+        continuation = self._apply_pending_catalog
+        if self._catalog_review_restore is not self.project and self.document_revision != self._catalog_revision:
+            if not self.confirm_discard(continuation):
+                if self._save_continuation != continuation:
+                    self._drop_pending_catalog()
+                return
+            self._catalog_revision = self.document_revision
+        pending, self._pending_catalog = self._pending_catalog, None
+        request, project, result, store = pending
+        current = self.history_opener.request
+        if request.epoch != self.document_epoch or current is None or request.generation != current.generation:
+            if store:
+                store.close()
+            return
+        restore = None
+        if self._catalog_review_restore is self.project:
+            self._catalog_review_restore = None
+            if store is None and getattr(project, "_resource_unresolved", False):
+                return
+            restore = (self.dirty, self.undo_history, self.redo_history,
+                       self.capture_view_state(), self.guided.capture_context())
+            working = self.project
+            working.layout = project.layout
+            working._resource_unresolved = False
+            working.__dict__.pop("_resource_inspection", None)
+            if store:
+                working._history_store = store
+            project = working
+        if self.set_project(project, result, request.path, getattr(project, "_resource_history", [])) is False:
+            if store:
+                store.close()
+            return
+        if restore:
+            self._dirty, self.undo_history, self.redo_history, view, workspace = restore
+            self.guided.restore_context(workspace)
+            self.restore_view_state(view)
+            if store:
+                self.history_workflow.open_current()
+            self.update_title()
+        self.log("Opened metadata-first archive; recorded fields load on demand" if store else "Opened project")
+
+    def _catalog_legacy(self, request):
+        if request.epoch != self.document_epoch:
+            return
+        try:
+            project, result = self.load_project_data(request.path, external_policy=request.policy)
+            self._accept_catalog(request, project, result)
+        except Exception as error:
+            self._catalog_failed(request, error)
+
+    def _catalog_review(self, request, inspection, error):
+        if request.epoch != self.document_epoch:
+            return
+        from etlayout.gui.resources import ResourceReviewDialog, resolve_reviewed_project
+        from etlayout.io.resources import ExternalResourcePolicy
+        if inspection is None:
+            if getattr(error, "reason", "") != "network":
+                self._catalog_failed(request, error)
+                return
+            if QMessageBox.question(self, "Network project location",
+                    "Allow network access for this selected project container? Referenced outside-root resources still need their own approval.",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+                return
+            policy = ExternalResourcePolicy(allow_outside_root=request.policy.allow_outside_root,
+                allow_network=True, approved_resources=request.policy.approved_resources)
+            self.history_opener.submit(request.path, request.epoch, policy=policy, cache_bytes=request.cache_bytes)
+            return
+        dialog = ResourceReviewDialog(inspection, error, self)
+        try:
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                return
+            if dialog.action == "unresolved":
+                self._accept_catalog(request, inspection.unresolved_project(), None)
+            elif dialog.action == "relink":
+                policy = ExternalResourcePolicy(allow_network=dialog.network.isChecked(),
+                                                approved_resources=frozenset({"layout"}))
+                opened = resolve_reviewed_project(dialog.inspection, self, policy=policy)
+                if opened:
+                    self._accept_catalog(request, *opened)
+            else:
+                self.history_opener.submit(request.path, request.epoch, policy=dialog.policy(),
+                                           cache_bytes=request.cache_bytes, inspection=inspection)
+        except Exception as failure:
+            self._catalog_failed(request, failure)
+        finally:
+            dialog.deleteLater()
+
+    def _catalog_failed(self, request, error):
+        if request.epoch == self.document_epoch:
+            self._catalog_review_restore = None
+            self.history_workflow.issue("Opening the selected project failed: " + str(error))
 
     def import_layout(self, path=None):
         if self.model_locked():
@@ -3240,13 +3471,15 @@ class MainWindow(QMainWindow):
                     and (recovery or request.destination.absolute() == Path(path).absolute())):
                 self.statusBar().showMessage("This document revision is already queued for saving")
                 return True
+        source_owner = None
         try:
             if not recovery and Path(path).suffix.lower() == ".json":
                 raise SimulationError("JSON is a metadata format. Choose a .etlayout destination for the portable project archive.")
             project = self.inspection_context["project"] if self.inspection_context else self.project
             result = self.inspection_context["result"] if self.inspection_context else self.result
-            snapshot = SaveSnapshot.capture(project, result, self.run_history, revision=self.document_revision,
-                                            archive_format=archive_format)
+            result, history, source_owner = self.history_workflow.save_inputs(project, result, self.run_history)
+            snapshot = SaveSnapshot.capture(project, result, history, revision=self.document_revision,
+                                            archive_format=archive_format, source_lease=source_owner)
             store = self._recovery_owner() if recovery else None
             self._save_sequence += 1
             request = SaveRequest(snapshot, Path(path), self.document_epoch, self._save_sequence, store,
@@ -3256,6 +3489,9 @@ class MainWindow(QMainWindow):
                 self._latest_manual_save = request.sequence
             # One latest pending manual revision and one latest recovery revision.
             # An active worker is never fed live state or retargeted in place.
+            for old in self._save_queue:
+                if (old.recovery_store is None) == (store is None):
+                    old.snapshot.release_sources()
             self._save_queue = [old for old in self._save_queue
                                 if (old.recovery_store is None) != (store is None)]
             self._save_queue.append(request)
@@ -3266,6 +3502,8 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage("Latest project revision queued for saving")
             return True
         except Exception as error:
+            if source_owner:
+                source_owner.close()
             if recovery:
                 self._save_failed(None, str(error), recovery=True)
             else:
@@ -3334,6 +3572,8 @@ class MainWindow(QMainWindow):
     def _save_failed(self, request, message, recovery=False):
         self._save_success = False
         self._save_continuation = None
+        if not recovery and (request is None or request.recovery_store is None):
+            self._drop_pending_catalog()
         if recovery or (request is not None and request.recovery_store is not None):
             self.recovery_status.setText("Recovery failed — save your project")
             self.recovery_status.setToolTip(message)
@@ -3344,6 +3584,7 @@ class MainWindow(QMainWindow):
             self.error("Cannot save project", message)
 
     def _save_cancelled(self, request, message):
+        self._drop_pending_catalog()
         self._save_success = False
         self._save_continuation = None
         self.log(message)
@@ -3359,6 +3600,9 @@ class MainWindow(QMainWindow):
             self._start_next_save()
 
     def cancel_saving(self):
+        self._drop_pending_catalog()
+        for request in self._save_queue:
+            request.snapshot.release_sources()
         self._save_queue.clear()
         self._save_continuation = None
         if self.save_job:
@@ -3554,6 +3798,8 @@ class MainWindow(QMainWindow):
                 self.error("Invalid project metadata", error)
 
     def export_results(self):
+        if self.history_workflow.record and self.history_workflow.record.times and self.result and not self.result.transient:
+            return self.history_workflow.full("bundle")
         if self.result is None:
             self.error("No results", "Run an analysis first.")
             return
@@ -3590,10 +3836,20 @@ class MainWindow(QMainWindow):
             limits=limits,
             logarithmic=self.log_scale.isChecked() if mode == "figure" else False, formats=formats,
             figure=FigureOptions(smooth=self.smooth_field.isChecked()))
-        dialog = ExportDialog(self.project, self.result, self, history=self.run_history,
-                              displayed=self.display_result or self.view_source_result(), initial=initial)
-        if dialog.exec() and dialog.exported:
-            self.log("Exported " + dialog.exported["scope"] + " to " + dialog.directory.text())
+        dialog = None
+        try:
+            dialog = ExportDialog(self.project, self.result, self, history=self.run_history,
+                                  displayed=self.display_result or self.view_source_result(), initial=initial,
+                                  archive_provider=lambda: self.history_workflow.export_inputs(self.result, self.run_history))
+            if dialog.exec() and dialog.exported:
+                self.log("Exported " + dialog.exported["scope"] + " to " + dialog.directory.text())
+        finally:
+            if dialog is not None:
+                dialog.release_archive_sources()
+                dialog.run_result = dialog.displayed = dialog.archive_result = None
+                dialog.history = []
+                dialog.archive_history = []
+                dialog.deleteLater()
 
     def export_displayed_field(self):
         self.share_export("data")
@@ -3725,6 +3981,15 @@ class MainWindow(QMainWindow):
             event.ignore()
             return
         if not self.confirm_discard(self.close):
+            event.ignore()
+            return
+        if not self.history_opener.shutdown():
+            self.statusBar().showMessage("Archive opening is still stopping. Close again after it finishes.")
+            event.ignore()
+            return
+        self._drop_pending_catalog()
+        if not self.history_workflow.close():
+            self.statusBar().showMessage("History read is still stopping. Close again after it finishes.")
             event.ignore()
             return
         self.cancel_geometry()

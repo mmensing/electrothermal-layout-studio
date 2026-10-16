@@ -299,9 +299,12 @@ snapshots get their own project IDs. Apply asks for confirmation and creates one
 undoable transaction. The project's notes retain template provenance. A technology
 mapping is separate from a mesh/solver preset and does not establish readiness.
 
-This workflow round introduces no new project schema. The existing loader still
-accepts schema 1 and 2 archives and writes schema 2 using its established migration
-and identity handling. Previously assigned layers, sources, ports, interfaces,
+The physical project model retains its existing schema and identity handling.
+Archive schemas 1 and 2 remain readable; schema 2 is the default writer and
+recovery format. **File → Save content-addressed copy…** explicitly chooses the
+schema-3 container, and **Edit → Archive and history settings…** can enable its
+[on-demand run history](user-guide.md#on-demand-history-for-schema-3-projects).
+Previously assigned layers, sources, ports, interfaces,
 waveforms and stored results remain model data; the safer display-only default
 applies to new imports and does not remap an existing project's physical sheets.
 The analysis selector uses the existing solver mode and transient-enabled fields.

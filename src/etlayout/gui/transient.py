@@ -597,24 +597,35 @@ class TimeNavigation(QWidget):
         self.hide()
 
     def set_result(self, result):
+        history = result.transient if result else None
+        self._set_times(history.times if history else (), result.metrics if history else {},
+                        present=history is not None)
+
+    def set_record(self, record, index=None):
+        """Navigate exact stored indices without manufacturing a numerical result."""
+        self._set_times(record.times if record else (), record.metrics if record else {},
+                        present=bool(record and record.times), index=index, stored=True)
+
+    def _set_times(self, times, metrics, *, present, index=None, stored=False):
         self._drag_timer.stop()
         self._pending_index = None
         self.slider.blockSignals(True)
-        history = result.transient if result else None
-        self.times = history.times if history else np.array([])
-        self.peak_time = result.metrics.get("transient_peak_time") if history else None
+        self.times = np.asarray(times)
+        self.peak_time = metrics.get("transient_peak_time") if present else None
         self.peak_button.setEnabled(self.peak_time is not None)
-        peak_scope = "Segment peak" if history and result.metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
+        peak_scope = "Segment peak" if present and metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
         self.peak_button.setText("Segment peak" if peak_scope == "Segment peak" else "Peak")
         self.peak_button.setAccessibleName(f"Jump to {peak_scope.lower()} temperature time")
         if self.peak_time is not None:
             retained = bool(np.any(np.isclose(self.times, self.peak_time, rtol=1e-10, atol=0)))
             self.peak_button.setToolTip(f"{peak_scope} at {engineering(self.peak_time, 's')}. " +
-                                       ("Its field is retained." if retained else "Peak field was not retained; selects the nearest retained time."))
+                                       ("Its field is retained." if retained else "Peak field was not retained; selects the nearest retained time.") +
+                                       (" Stored metadata; a selected field is validated when loaded." if stored else ""))
         self.slider.setRange(0, max(0, len(self.times) - 1))
-        self.slider.setValue(max(0, len(self.times) - 1))
+        selected = len(self.times) - 1 if index is None else index
+        self.slider.setValue(max(0, min(selected, len(self.times) - 1)))
         self.slider.blockSignals(False)
-        self.setVisible(history is not None)
+        self.setVisible(present)
         self.update_label()
 
     def update_label(self):
@@ -663,10 +674,13 @@ class TimeNavigation(QWidget):
 
 class TimeHistoryPanel(QWidget):
     time_selected = Signal(float)
+    scan_requested = Signal(str)
 
     def __init__(self, parent=None):
         super().__init__(parent)
         self.result = None
+        self.record = None
+        self.record_metadata = {}
         self.selected_time = 0.
         self.layer = ""
         self.region = ""
@@ -698,6 +712,13 @@ class TimeHistoryPanel(QWidget):
         export = QPushButton("Export time history…")
         export.clicked.connect(self.export_history)
         row.addRow(export)
+        self.load_history = QPushButton("Load local history…")
+        self.load_history.setAccessibleName("Load complete saved fields for this local time history")
+        self.load_history.setToolTip("Explicitly load and validate this run's saved fields in a cancellable worker. "
+                                    "The local cache budget applies.")
+        self.load_history.clicked.connect(lambda: self.scan_requested.emit("trace"))
+        self.load_history.hide()
+        row.addRow(self.load_history)
         layout.addLayout(row)
         self.plot = HistoryPlot()
         self.plot.setLabel("bottom", "Time", units="s")
@@ -707,11 +728,42 @@ class TimeHistoryPanel(QWidget):
         self.cursor = None
 
     def set_result(self, result):
+        self.record = None
+        self.record_metadata = {}
         self.probe = None
         self.layer, self.region = "", ""
         self.result = result if result and result.transient else None
         self.selected_time = float(self.result.transient.times[-1]) if self.result else 0.
         self.refresh()
+
+    def set_record(self, record, metadata=None):
+        """Show stored scalar history; local fields require an explicit scan."""
+        self.record = record if record and record.times else None
+        self.record_metadata = metadata if metadata is not None else (record.transient_metadata if record else {})
+        self.result = None
+        self.probe = None
+        self.layer, self.region = "", ""
+        self.selected_time = float(self.record.times[-1]) if self.record else 0.
+        self.refresh()
+
+    def context(self):
+        return {"layer": self.layer, "region": self.region, "probe": self.probe,
+                "scope": self.scope_selector.currentData(), "quantity": self.metric_selector.currentData(),
+                "selected_time": self.selected_time}
+
+    def restore_context(self, context):
+        """Restore view choices after an explicitly requested full worker load."""
+        self.layer = context.get("layer", "")
+        self.region = context.get("region", "")
+        self.probe = context.get("probe")
+        self.selected_time = context.get("selected_time", self.selected_time)
+        self.scope_selector.blockSignals(True)
+        self.scope_selector.setCurrentIndex(max(0, self.scope_selector.findData(context.get("scope", "global"))))
+        self.scope_selector.blockSignals(False)
+        self.metric_selector.blockSignals(True)
+        self.metric_selector.setCurrentIndex(max(0, self.metric_selector.findData(context.get("quantity"))))
+        self.metric_selector.blockSignals(False)
+        self.scope_changed()
 
     def set_context(self, layer, region="", probe=None):
         layer, region = layer or "", region or ""
@@ -732,7 +784,7 @@ class TimeHistoryPanel(QWidget):
         self.refresh()
 
     def plot_clicked(self, event):
-        if self.result is None or event.button() != Qt.MouseButton.LeftButton:
+        if (self.result is None and self.record is None) or event.button() != Qt.MouseButton.LeftButton:
             return
         if self.plot.plotItem.vb.sceneBoundingRect().contains(event.scenePos()):
             point = self.plot.plotItem.vb.mapSceneToView(event.scenePos())
@@ -743,16 +795,24 @@ class TimeHistoryPanel(QWidget):
         self.cursor = None
         self.trace_times = np.array([])
         self.trace_values = np.array([])
-        if self.result is None:
+        self.load_history.hide()
+        if self.result is None and self.record is None:
             self.description.setText("Run transient operation to inspect the time history.")
             return
-        history = self.result.transient
+        history = self.result.transient if self.result is not None else None
+        metadata = self.record_metadata if self.record is not None else {}
+        rows = history.rows if history else metadata.get("rows", ())
         key, unit = self.metric_selector.currentData()
         self.plot.setLabel("left", self.metric_selector.currentText(), units=unit)
         scope = self.scope_selector.currentData()
         if scope == "global":
-            times = [row["time_s"] for row in history.rows]
-            values = [row.get(key, np.nan) for row in history.rows]
+            if not rows:
+                self.description.setText("Stored step summaries are unavailable. Load the complete history to inspect this trace.")
+                self.load_history.setText("Load complete time history…")
+                self.load_history.show()
+                return
+            times = [row["time_s"] for row in rows]
+            values = [row.get(key, np.nan) for row in rows]
             context = "All accepted steps"
         else:
             if not self.layer:
@@ -763,6 +823,11 @@ class TimeHistoryPanel(QWidget):
                 return
             if scope == "probe" and self.probe is None:
                 self.description.setText("Click a probe on the map, then inspect its temperature history.")
+                return
+            if self.record is not None:
+                self.description.setText("Local history fields are not loaded. Load this run's saved fields to calculate the selected trace.")
+                self.load_history.setText("Load local history…")
+                self.load_history.show()
                 return
             times, values = local_history(self.result, self.layer, region=self.region,
                                          reduction="maximum" if key == "temperature_max" else "mean",
@@ -779,9 +844,17 @@ class TimeHistoryPanel(QWidget):
                                       pen=pg.mkPen("#6F6F6F", style=Qt.PenStyle.DashLine))
         self.plot.addItem(self.cursor)
         self.plot.sync_palette()
-        self.description.setText(f"{'Completed' if history.completed else 'Incomplete'} · {len(history.snapshots)} saved fields\n{context}")
-        self.description.setToolTip(f"{len(history.rows) - 1} accepted integration steps. Click the trace to select the nearest retained field. "
-                                    "Whole-device histories include every accepted step; local histories sample retained fields only.")
+        if history:
+            status = "Completed" if history.completed else "Incomplete"
+            count = len(history.snapshots)
+        else:
+            status = "Stored completed" if metadata.get("completed", False) else "Stored incomplete"
+            count = len(self.record.times)
+            context += " · numerical fields not loaded"
+        self.description.setText(f"{status} · {count} saved fields\n{context}")
+        self.description.setToolTip(f"{len(rows) - 1} accepted integration steps. Click the trace to select the nearest retained field. "
+                                    "Whole-device histories include every accepted step; local histories sample retained fields only. " +
+                                    ("Stored summaries do not validate unloaded numerical fields." if self.record is not None else ""))
         self.plot.setToolTip("Click the trace to select the nearest saved field on the map.")
 
     def select_time(self, time_s):
@@ -790,6 +863,9 @@ class TimeHistoryPanel(QWidget):
             self.cursor.setValue(time_s)
 
     def export_history(self):
+        if self.record is not None:
+            self.scan_requested.emit("export")
+            return
         if self.result is None:
             return
         if self.scope_selector.currentData() != "global":

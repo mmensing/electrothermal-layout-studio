@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QScrollArea,
     QSpinBox,
@@ -35,6 +36,7 @@ from etlayout.io.sharing import (
     execute_export,
     preview_export,
 )
+from etlayout.models import SimulationError
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.palettes import COLORMAPS
 from etlayout.visualization.support import region_options
@@ -42,11 +44,20 @@ from etlayout.visualization.units import display_unit, to_display, to_si
 
 
 class ExportDialog(QDialog):
-    def __init__(self, project, result, parent=None, *, history=None, displayed=None, initial=None):
+    def __init__(self, project, result, parent=None, *, history=None, displayed=None, initial=None,
+                 archive_result=None, archive_provider=None):
         super().__init__(parent)
         self.project, self.run_result = project, result
+        self.archive_result = archive_result if archive_result is not None else result
         self.displayed = displayed or result
         self.history = list(history or [])
+        self.archive_history = self.history
+        self._archive_provider = archive_provider
+        self._archive_owner = None
+        self._archive_ready = archive_provider is None
+        self.archive_job = None
+        self._archive_outcome = None
+        self._close_after_export = False
         self.reviewed = None
         self.exported = None
         self.setWindowTitle("Export / share results")
@@ -171,6 +182,22 @@ class ExportDialog(QDialog):
         self.preview.setOpenExternalLinks(False)
         review_layout.addWidget(self.preview, 1)
         self.tabs.addTab(review_page, "Files && review")
+        self.export_status = QLabel()
+        self.export_status.setTextFormat(Qt.TextFormat.PlainText)
+        self.export_status.setWordWrap(True)
+        layout.addWidget(self.export_status)
+        progress_row = QHBoxLayout()
+        self.export_progress = QProgressBar()
+        self.export_progress.setRange(0, 1000)
+        self.export_progress.setAccessibleName("Complete archive export progress")
+        self.export_progress.hide()
+        progress_row.addWidget(self.export_progress, 1)
+        self.cancel_export = QPushButton("Cancel export")
+        self.cancel_export.setAccessibleName("Cancel complete archive export")
+        self.cancel_export.clicked.connect(lambda checked=False: self.cancel_archive_export())
+        self.cancel_export.hide()
+        progress_row.addWidget(self.cancel_export)
+        layout.addLayout(progress_row)
         buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel)
         self.export_button = buttons.addButton("Export reviewed files", QDialogButtonBox.ButtonRole.AcceptRole)
         self.export_button.setEnabled(False)
@@ -299,13 +326,47 @@ class ExportDialog(QDialog):
                 self.orientation.currentText(), self.title.text(), self.annotations.toPlainText(), self.colorbar.isChecked(), self.legend.isChecked(), self.smooth.isChecked()),
             stem=self.stem.text(), overwrite=self.overwrite.isChecked())
 
+    def _prepare_archive_sources(self):
+        if self._archive_ready:
+            return
+        archived, retained, owner = self._archive_provider()
+        try:
+            self.archive_history = list(retained)
+            self.archive_result = archived
+            self._archive_owner = owner
+            self._archive_ready = True
+        except BaseException:
+            if owner is not None:
+                owner.close()
+            raise
+
+    def release_archive_sources(self):
+        """Release only the archive generation acquired by this export dialog."""
+        owner, self._archive_owner = self._archive_owner, None
+        if self._archive_provider is not None:
+            self._archive_ready = False
+            self.archive_history = []
+            self.archive_result = None
+        if owner is not None:
+            owner.close()
+
+    def history_for(self, mode):
+        if mode == "archive":
+            self._prepare_archive_sources()
+            return self.archive_history
+        return []
+
     def source(self, mode):
-        return self.run_result if mode == "archive" or self.displayed.configuration.get("visualization", {}).get("kind") != "difference" else self.displayed
+        if mode == "archive":
+            self._prepare_archive_sources()
+            return self.archive_result
+        return self.run_result if self.displayed.configuration.get("visualization", {}).get("kind") != "difference" else self.displayed
 
     def review(self):
         try:
             request = self.request()
-            manifest = preview_export(self.source(request.mode), request, project=self.project, history=self.history)
+            manifest = preview_export(self.source(request.mode), request, project=self.project,
+                                      history=self.history_for(request.mode))
             lines = [manifest["scope"], "", manifest["disclosure"], "", "Files to include:"]
             lines.extend("  • " + name for name in manifest["files"])
             if request.mode == "archive":
@@ -331,17 +392,125 @@ class ExportDialog(QDialog):
             self.reviewed = (request, self.directory.text())
             self.export_button.setEnabled(bool(self.directory.text().strip()))
             self.tabs.setCurrentIndex(2)
-        except (ValueError, OSError) as error:
+        except (ValueError, OSError, SimulationError) as error:
             self.preview.setPlainText(str(error))
             self.invalidate_review()
 
     def perform_export(self):
+        if self.archive_job is not None:
+            return
         try:
             request = self.request()
             if self.reviewed != (request, self.directory.text()):
                 raise ValueError("Review the current export contents before writing files")
+            if request.mode == "archive":
+                self.start_archive_export(request)
+                return
             self.exported = execute_export(self.source(request.mode), self.directory.text(), request,
-                                           project=self.project, history=self.history)
+                                           project=self.project, history=self.history_for(request.mode))
             self.accept()
-        except (ValueError, OSError) as error:
+        except (ValueError, OSError, SimulationError) as error:
             QMessageBox.warning(self, "Export failed", str(error))
+
+    def start_archive_export(self, request):
+        from etlayout.gui.archive_export import ArchiveExportJob
+        from etlayout.io.saving import SaveSnapshot
+
+        result = self.source("archive")
+        history = self.history_for("archive")
+        owner = self._archive_owner
+        snapshot = SaveSnapshot.capture(self.project, result, history,
+            archive_format=getattr(self.project, "_archive_format", 2), source_lease=owner)
+        job = ArchiveExportJob(snapshot, self.directory.text(), request, self)
+        self.archive_job = job
+        # Ownership now belongs to the worker's immutable snapshot, including
+        # cancellation/failure paths. Closing the view cannot unpin its source.
+        self._archive_owner = None
+        if self._archive_provider is not None:
+            self._archive_ready = False
+            self.archive_result = None
+            self.archive_history = []
+        self._archive_outcome = None
+        self._close_after_export = False
+        self.mode_combo.setEnabled(False)
+        self.tabs.setEnabled(False)
+        self.export_button.setEnabled(False)
+        self.export_progress.setValue(0)
+        self.export_progress.show()
+        self.cancel_export.show()
+        self.cancel_export.setEnabled(True)
+        self.export_status.setText("Exporting the complete archive in a background worker…")
+        job.progress.connect(self.archive_progress)
+        job.exported.connect(lambda manifest: self.archive_outcome("success", manifest))
+        job.failed.connect(lambda message: self.archive_outcome("failed", message))
+        job.cancelled.connect(lambda message: self.archive_outcome("cancelled", message))
+        job.finished.connect(self.archive_finished)
+        try:
+            job.start()
+        except BaseException:
+            self.archive_job = None
+            snapshot.release_sources()
+            self.mode_combo.setEnabled(True)
+            self.tabs.setEnabled(True)
+            self.export_progress.hide()
+            self.cancel_export.hide()
+            self.invalidate_review()
+            job.deleteLater()
+            raise
+
+    def archive_progress(self, fraction, message):
+        self.export_progress.setValue(round(max(0., min(1., fraction)) * 1000))
+        self.export_status.setText(message)
+
+    def archive_outcome(self, kind, value):
+        self._archive_outcome = kind, value
+
+    def archive_finished(self):
+        job, self.archive_job = self.archive_job, None
+        job.deleteLater()
+        self.mode_combo.setEnabled(True)
+        self.tabs.setEnabled(True)
+        self.export_progress.hide()
+        self.cancel_export.hide()
+        kind, value = self._archive_outcome or ("failed", "Archive worker exited without a result")
+        self._archive_outcome = None
+        if kind == "success":
+            self.exported = value
+            self.export_status.setText("Complete archive exported and verified.")
+            self.accept()
+            return
+        self.invalidate_review()
+        self.export_status.setText(value)
+        self.preview.setPlainText(("Archive export cancelled: " if kind == "cancelled" else "Archive export failed: ") + value)
+        self.tabs.setCurrentIndex(2)
+        if self._close_after_export:
+            self.reject()
+
+    def cancel_archive_export(self, *, close=False):
+        if self.archive_job is not None:
+            self._close_after_export = self._close_after_export or close
+            self.archive_job.cancel()
+            self.cancel_export.setEnabled(False)
+            self.export_status.setText("Cancellation requested; waiting for the archive worker to stop safely…")
+
+    def reject(self):
+        if self.archive_job is not None:
+            self.cancel_archive_export(close=True)
+            return
+        super().reject()
+
+
+    def done(self, result):
+        if self.archive_job is not None:
+            self.cancel_archive_export(close=True)
+            return
+        self.release_archive_sources()
+        super().done(result)
+
+    def closeEvent(self, event):
+        if self.archive_job is not None:
+            self.cancel_archive_export(close=True)
+            event.ignore()
+            return
+        self.release_archive_sources()
+        super().closeEvent(event)

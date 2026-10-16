@@ -42,12 +42,14 @@ remain serial. Device laws remain the documented 2.5D
 research models; see [physics](physics.md) for excluded effects and calibration.
 
 
-Proposed storage work is documented in the
-[content-addressed archive RFC](design/content-addressed-archives.md). Its measured
-baseline and compatibility/acceptance plan do not implement a new archive schema
-or lazy history. Existing portable archives remain on the current writer until a
-separate implementation passes those gates.
+[Content-addressed archives](design/content-addressed-archives.md) are implemented
+as an explicit schema-3 option. Schema 2 remains the default writer and recovery
+format; older archives and the public compatibility loading APIs remain eager.
 
-The separate [lazy-history RFC](design/lazy-run-history.md) maps metadata-first
-listing, explicit result access, bounded caches and consumer migration. It is
-also design-only: eager loading remains the supported runtime behavior.
+[Metadata-first history](design/lazy-run-history.md) is an opt-in schema-3 desktop
+mode with worker-based opening and exact-frame loading, bounded immutable array
+caching, explicit cache leases and complete saves/exports of unloaded records.
+Enable it through **Edit → Archive and history settings…** for the next opening.
+The [user guide](user-guide.md#on-demand-history-for-schema-3-projects) explains
+cache limits, disk snapshots and explicit complete-history consumers. Storage
+changes do not establish mesh verification or alter numerical acceptance.

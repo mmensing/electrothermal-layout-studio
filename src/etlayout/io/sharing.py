@@ -422,13 +422,25 @@ def _publish_artifacts(root, staging, names, overwrite):
         raise
 
 
-def execute_export(result, directory: str | Path, request: ExportRequest, *, project=None, history=None):
+def execute_export(result, directory: str | Path, request: ExportRequest, *, project=None, history=None,
+                   progress=None, cancel=None):
     """Write only planned files, with exclusive creation and rollback on IO errors.
 
     Whole-directory replacement is not atomic. The interpretation manifest is
     withdrawn while replacing an old bundle and published last; ordinary failures
     restore previously valid output. Recovery files survive rollback failure.
     """
+    def checkpoint(fraction, message):
+        if cancel is not None and cancel():
+            from etlayout.io.saving import SaveCancelled
+            raise SaveCancelled("Archive export cancelled; previously published artifacts were preserved")
+        if progress is not None:
+            progress(fraction, message)
+        if cancel is not None and cancel():
+            from etlayout.io.saving import SaveCancelled
+            raise SaveCancelled("Archive export cancelled; previously published artifacts were preserved")
+
+    checkpoint(0., "Preparing reviewed export")
     manifest, datasets = _plan(result, request, project, history)
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
@@ -447,7 +459,9 @@ def execute_export(result, directory: str | Path, request: ExportRequest, *, pro
     preserve_staging = False
     try:
         if request.mode == "archive":
-            save_project(project, staging / manifest["files"][0], result, history=history)
+            save_project(project, staging / manifest["files"][0], result, history=history,
+                         archive_format=getattr(project, "_archive_format", 2), cancel=cancel,
+                         progress=lambda fraction, message: checkpoint(.05 + .85 * fraction, message))
         elif request.mode == "data":
             for data, entry in zip(datasets, manifest["datasets"], strict=True):
                 _write_data(data, entry["files"], staging)
@@ -473,7 +487,12 @@ def execute_export(result, directory: str | Path, request: ExportRequest, *, pro
         for path in paths:
             if path.is_symlink() or path.exists() and not request.overwrite:
                 raise FileExistsError("Export destination changed during rendering; no replacement authorized")
+        checkpoint(.95, "Publishing reviewed export artifacts")
         _publish_artifacts(root, staging, manifest["files"], request.overwrite)
+        # Publication is the transaction's commit point. A later cancellation
+        # cannot truthfully turn an already published bundle into a cancellation.
+        if progress is not None:
+            progress(1., "Reviewed export complete")
     except ExportRecoveryError:
         preserve_staging = True
         raise

@@ -50,6 +50,7 @@ do not change your physical setup.
 | **Power-interconnect analysis** | Inspect device groups, via/port loading, contact loss, source-potential spread and passive multiport exports. | [Explore GaN and SiC feeds](docs/power-examples.md). |
 | **Studies and constrained routing** | Run parameter sweeps, mesh/time studies and bounded routing experiments; check equal service and mesh-verified finalists. | [Compare alternatives fairly](docs/POWER_ROUTING.md). |
 | **Portable work and reporting** | Choose PNG/PDF/SVG figures or standalone reports, selected CSV/NPZ/VTU data, or a complete ETL experiment with embedded layout and retained runs. | [Save a result you can reopen](docs/handbook/first-calculation.md). |
+| **On-demand run history** | Opt in to schema-3 metadata-first opening, inspect exact saved frames in background workers, and manage a bounded array cache while complete saves retain unloaded runs. | [Choose archive and history settings](docs/user-guide.md#on-demand-history-for-schema-3-projects). |
 
 [The full feature catalog](docs/features.md) explains where to find each tool,
 what it produces and what its result does—and does not—establish.

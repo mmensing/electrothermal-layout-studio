@@ -88,9 +88,13 @@ def main():
             QTest.keyClicks(dialog.stem, "-checked")
             assert not dialog.export_button.isEnabled()
             dialog.review()
+            def completed():
+                if dialog.exported is None or dialog.archive_job is not None:
+                    errors.append("The export dialog accepted before its durable worker result")
+                else:
+                    exports.append(dialog.exported)
+            dialog.accepted.connect(completed)
             QTest.mouseClick(dialog.export_button, Qt.MouseButton.LeftButton)
-            assert dialog.exported is not None
-            exports.append(dialog.exported)
         except BaseException as error:
             errors.append(str(error))
             dialog.reject()
@@ -107,10 +111,11 @@ def main():
             QTest.qWait(30)
         window.guided.navigate("results")
         capture(window, "00-source-results")
-        for item in ("figure", "data", "archive"):
+        for index, item in enumerate(("figure", "data", "archive")):
             mode[0] = item
             window.share_export(item)
             assert not errors, errors
+            assert len(exports) == index + 1, "The modal closed without a completed export"
         from PySide6.QtCore import QSize
         from PySide6.QtPdf import QPdfDocument
         pdf = QPdfDocument()

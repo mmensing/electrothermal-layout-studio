@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 """Cross-reader benchmark isolation requires the explicit phase-two history store."""
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -26,6 +27,10 @@ def test_real_reader_failure_does_not_suppress_independent_modes(tmp_path, monke
         return observe(command, prefix, **budgets)
     monkeypatch.setattr(benchmark, "observe", inject_reader_process_exit)
     target = tmp_path / "measurements"
+    # main is normally a standalone process; restore its owned-temp environment
+    # changes when exercising the real CLI orchestrator inside this test process.
+    for name in ("TEMP", "TMP"):
+        monkeypatch.setenv(name, os.environ.get(name, str(tmp_path)))
     runtime = Path(etlayout.__file__).resolve().parents[2]
     code = benchmark.main(["--output", str(target), "--inputs-from", str(source), "--runtime-root", str(runtime),
                            "--families", "shared", "--counts", "1", "--formats", "3", "--repeats", "1",
