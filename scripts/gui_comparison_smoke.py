@@ -18,6 +18,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    from desktop_acceptance_support import isolate_acceptance_settings
     from PySide6.QtCore import QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QDialogButtonBox, QLineEdit, QMessageBox
@@ -28,6 +29,7 @@ def main(argv=None):
     from etlayout.io.export import export_study
     root = Path(args.output).resolve()
     root.mkdir(parents=True, exist_ok=True)
+    isolate_acceptance_settings(root)
     application = QApplication([])
     application.setStyle("Fusion")
     first = make_example("E1", root / "examples")
