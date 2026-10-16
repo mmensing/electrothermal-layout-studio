@@ -74,21 +74,24 @@ def _style():
         "axes.spines.top": False, "axes.spines.right": False, "axes.linewidth": .7,
         "axes.edgecolor": "#6F6F6F", "text.color": "#111111", "axes.labelcolor": "#404040",
         "xtick.color": "#404040", "ytick.color": "#404040", "figure.facecolor": "white",
-        "axes.facecolor": "white", "savefig.facecolor": "white", "svg.fonttype": "none"})
+        "axes.facecolor": "white", "savefig.facecolor": "white", "svg.fonttype": "none", "text.usetex": False})
 
 
 def export_field_plot(result: SimulationResult, layer: str, field: str, path: str | Path,
                       logarithmic: bool = False, *, region: str = "", colormap: str = "teal",
-                      limits=None, provenance=None):
+                      limits=None, provenance=None, figure_options=None, resolution_scale=None):
     _style()
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap, LogNorm, Normalize
     from matplotlib.tri import Triangulation
     support = field_support(result, layer, field, region=region, logarithmic=logarithmic)
+    precision_scale = support.resolution_scale if resolution_scale is None else float(resolution_scale)
+    if not np.isfinite(precision_scale) or precision_scale < 0:
+        raise ValueError("Display resolution scale must be finite and nonnegative")
     cmap = get_colormap(colormap)
     provenance = provenance or result.configuration.get("visualization", {})
     selected = display_limits(support.limits, limits=limits, logarithmic=logarithmic,
-                              colormap=colormap, provenance=provenance, resolution_scale=support.resolution_scale)
+                              colormap=colormap, provenance=provenance, resolution_scale=precision_scale)
     if not len(support.indices) or selected is None:
         return None
     # Never retain unused global points: matplotlib otherwise includes unrelated
@@ -109,7 +112,11 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
     log_roundoff = logarithmic and np.log10(low) == np.log10(high)
     norm = Normalize(0., 1., clip=True) if log_roundoff else (LogNorm if logarithmic else Normalize)(vmin=low, vmax=high, clip=True)
     aspect = float(np.ptp(xy[:, 0]) / max(np.ptp(xy[:, 1]), 1e-30))
-    fig, ax = plt.subplots(figsize=(5.2, 6.2) if aspect < .6 else (7.1, 4.8), layout="constrained")
+    target = Path(path)
+    if figure_options is not None:
+        figure_options.validate()
+    size = figure_options.size_inches(target.suffix.lower()) if figure_options else ((5.2, 6.2) if aspect < .6 else (7.1, 4.8))
+    fig, ax = plt.subplots(figsize=size, layout="constrained")
     automatic = support.limits
     below, above = automatic[0] < low, automatic[1] > high
     extend = "both" if below and above else "min" if below else "max" if above else "neither"
@@ -129,11 +136,16 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
             levels = fractions
         plotted = ax.tricontourf(tri, values, levels=levels, cmap=cmap, norm=norm,
                                  extend=extend)
-        plotted.set_rasterized(True)
+        plotted.set_rasterized(not (figure_options is not None and target.suffix.lower() in {".pdf", ".svg"}))
     else:
         values = (support.values - low) / (high - low) if log_roundoff else support.values
         plotted = ax.tripcolor(tri, facecolors=values, shading="flat", cmap=cmap, norm=norm,
-                               rasterized=True)
+                               rasterized=not (figure_options is not None and target.suffix.lower() in {".pdf", ".svg"}))
+    if figure_options is not None:
+        # Avoid PDF/SVG viewer antialias seams looking like a false mesh overlay.
+        plotted.set_edgecolor("face")
+        plotted.set_linewidth(.05)
+        plotted.set_antialiased(False)
     name, unit = FIELD_LABELS.get(field, (field.replace("_", " ").capitalize(), FIELD_UNITS.get(field, "")))
     si_unit = unit
     unit = display_unit(unit)
@@ -144,21 +156,41 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
         from etlayout.visualization.timing import difference_time_label
         timing = difference_time_label(provenance)
         time_label = "\n" + timing if timing else ""
-    ax.set(title=f"{name} · {layer}" + (f" · {region}" if region else "") + time_label,
-           xlabel="x (µm)", ylabel="y (µm)", aspect="equal")
-    bar = fig.colorbar(plotted, ax=ax, shrink=.85, pad=.04, panchor=False,
-                       extend=extend)
-    if constant:
-        bar.set_ticks([selected[0]])
-    elif log_roundoff:
-        bar.set_ticks([0., 1.], labels=[f"{to_display(low, si_unit):.17g}", f"{to_display(high, si_unit):.17g}"])
-    if not log_roundoff:
-        ticks = bar.get_ticks()
-        bar.set_ticks(ticks, labels=distinct_labels(to_display(value, si_unit) for value in ticks))
-    bar.set_label(f"{name} ({unit})" + (" · constant" if constant else "") + (" · log scale" if logarithmic else ""))
+    title = f"{name} ({unit}) · {layer}" + (f" · {region}" if region else "") + time_label
+    if figure_options is not None and figure_options.title:
+        title = figure_options.title + time_label
+    if figure_options is not None:
+        import textwrap
+        title = textwrap.fill(title, width=max(25, int(size[0] * 11)))
+    ax.set(title=title, xlabel="x (µm)", ylabel="y (µm)", aspect="equal")
+    if figure_options is None or figure_options.colorbar:
+        shrink = min(.85, .85 * size[0] / (aspect * size[1])) if figure_options is not None and aspect > 3 else .85
+        bar = fig.colorbar(plotted, ax=ax, shrink=shrink, pad=.04, panchor=False, extend=extend)
+        if figure_options is not None and aspect > 3 and not constant and not log_roundoff:
+            middle = np.exp((np.log(low) + np.log(high)) / 2) if logarithmic else low / 2 + high / 2
+            bar.set_ticks([low, middle, high])
+        if figure_options is not None and target.suffix.lower() in {".pdf", ".svg"} and bar.solids is not None:
+            bar.solids.set_rasterized(False)
+        if constant:
+            bar.set_ticks([selected[0]])
+        elif log_roundoff:
+            bar.set_ticks([0., 1.], labels=[f"{to_display(low, si_unit):.17g}", f"{to_display(high, si_unit):.17g}"])
+        if not log_roundoff:
+            ticks = bar.get_ticks()
+            bar.set_ticks(ticks, labels=distinct_labels(to_display(value, si_unit) for value in ticks))
+        bar.set_label(f"{name} ({unit})" + (" · constant" if constant else "") + (" · log scale" if logarithmic else ""))
+    elif figure_options is not None:
+        # Quantity and units remain visible even if both optional decorations are hidden.
+        ax.set_xlabel(f"x (µm) · {name} ({unit})")
     notes = []
-    if (limits is None and not logarithmic and support.resolution_scale and
-            support.limits[1] - support.limits[0] <= 8 * np.finfo(float).eps * support.resolution_scale):
+    if figure_options is not None:
+        notes.append("2.5D effective-sheet result; review model calibration and mesh uncertainty in the manifest")
+        if figure_options.legend:
+            notes.append(f"{name} ({unit}) · {layer}")
+        if figure_options.annotations:
+            notes.append(figure_options.annotations)
+    if (limits is None and not logarithmic and precision_scale and
+            support.limits[1] - support.limits[0] <= 8 * np.finfo(float).eps * precision_scale):
         notes.append("Temperature-rise variation is at floating-point resolution of absolute temperature; automatic scale padded, raw values preserved")
     if limits is not None:
         notes.append("Manual color range; values outside limits are clipped")
@@ -172,16 +204,36 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
         notes.append("Snapshot from incomplete transient run")
     if notes:
         import textwrap
-        note = textwrap.fill(" · ".join(notes), width=85 if aspect < .6 else 110)
+        wrap = max(25, int(size[0] * 14)) if figure_options is not None else (85 if aspect < .6 else 110)
+        note = textwrap.fill(" · ".join(notes), width=wrap)
+        lines = note.count("\n") + 1
+        if figure_options is not None and lines > max(3, int(size[1] * 72 * .32 / 9)):
+            plt.close(fig)
+            raise ValueError("Annotations and scientific warnings need more figure height; enlarge the figure or shorten annotations")
         fig.text(.5, .01, note, ha="center", fontsize=8)
-        footer = .065 if "\n" in note else .045
+        footer = ((lines * 9 + 8) / (size[1] * 72)) if figure_options is not None else (.065 if "\n" in note else .045)
         fig.get_layout_engine().set(rect=(0, footer, 1, 1 - footer))
     if not result.converged:
         ax.text(.02, .98, "NOT CONVERGED", transform=ax.transAxes, va="top", color="#B5473C")
-    target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(target, dpi=200)
-    plt.close(fig)
+    metadata = None
+    if figure_options is not None:
+        if target.suffix.lower() == ".pdf":
+            metadata = {"Creator": "Electrothermal Layout Studio", "Producer": "Electrothermal Layout Studio",
+                        "CreationDate": None, "ModDate": None, "Title": figure_options.title or "Selected field"}
+        elif target.suffix.lower() == ".svg":
+            metadata = {"Date": None, "Creator": "Electrothermal Layout Studio", "Title": figure_options.title or "Selected field"}
+        else:
+            metadata = {"Software": "Electrothermal Layout Studio", "Title": figure_options.title or "Selected field"}
+    try:
+        if figure_options is not None:
+            from matplotlib import rc_context
+            with rc_context({"svg.hashsalt": "ElectrothermalLayoutStudio", "pdf.fonttype": 42, "text.parse_math": False}):
+                fig.savefig(target, dpi=figure_options.dpi, metadata=metadata)
+        else:
+            fig.savefig(target, dpi=200, metadata=metadata)
+    finally:
+        plt.close(fig)
     if target.suffix.lower() == ".svg":
         target.write_text("\n".join(line.rstrip() for line in target.read_text(encoding="utf-8").splitlines()) + "\n", encoding="utf-8")
     return target
