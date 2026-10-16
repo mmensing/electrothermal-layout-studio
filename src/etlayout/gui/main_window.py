@@ -3100,11 +3100,38 @@ class MainWindow(QMainWindow):
         return opened
 
     def review_project_resources(self):
+        if self.model_locked():
+            self.log("Return to the working setup and finish the active job before reviewing its resources.")
+            return
         inspection = getattr(self.project, "_resource_inspection", None)
-        if inspection is not None:
-            self.open_project(inspection.source)
-        else:
+        if inspection is None:
             self.relink_layout()
+            return
+        if hasattr(self, "guided") and not self.guided.resolve_draft():
+            return
+        from etlayout.gui.resources import resolve_reviewed_project
+        try:
+            opened = resolve_reviewed_project(inspection.for_project(self.project), self)
+            if opened is None:
+                return
+            project, result = opened
+            was_dirty = self.dirty
+            self.project, self.result = project, result
+            self.mesh = result.mesh if result else None
+            for run in getattr(project, "_resource_history", []):
+                self.remember_result(run)
+            if result:
+                self.remember_result(result)
+            self.refresh_project(preserve_view=True)
+            if result:
+                self.render_result(result)
+            self.dirty = was_dirty
+            self.set_running(False)
+            self.update_title()
+            self.log("Project resources remain unresolved" if getattr(project, "_resource_unresolved", False)
+                     else "Resolved resources for the current edited project")
+        except Exception as error:
+            self.error("Cannot review project resources", error)
 
     def open_project(self, path=None, *, external_policy=None):
         if not self.confirm_discard(lambda: self.open_project(path, external_policy=external_policy)):
