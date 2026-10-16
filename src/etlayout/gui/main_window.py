@@ -3301,31 +3301,47 @@ class MainWindow(QMainWindow):
             if store:
                 store.close()
             return
-        restore = None
         if self._catalog_review_restore is self.project:
             self._catalog_review_restore = None
             if store is None and getattr(project, "_resource_unresolved", False):
                 return
-            restore = (self.dirty, self.undo_history, self.redo_history,
-                       self.capture_view_state(), self.guided.capture_context())
             working = self.project
-            working.layout = project.layout
+            inspection = getattr(working, "_resource_inspection", None)
+            declared = inspection.project.layout if inspection else None
+            if declared and (working.layout.path != declared.path or working.layout.sha256 != declared.sha256):
+                if store:
+                    store.close()
+                self.history_workflow.issue(
+                    "The layout source declaration changed during resource review. "
+                    "Use File → Relink layout to review the new source; the working setup was retained.")
+                return
+            if not self.history_workflow.close():
+                if store:
+                    store.close()
+                return
+            # Resource approval updates the existing document rather than replacing
+            # it: cell/instance choices, undo, studies and view context stay owned.
+            view, workspace = self.capture_view_state(), self.guided.capture_context()
+            working.layout.path, working.layout.sha256 = project.layout.path, project.layout.sha256
             working._resource_unresolved = False
             working.__dict__.pop("_resource_inspection", None)
             if store:
-                working._history_store = store
-            project = working
+                working._archive_format = store.archive_format
+                self.run_history = list(store.records)
+                self.history_workflow.attach(store)
+            self.refresh_project(preserve_view=True)
+            self.guided.restore_context(workspace)
+            self.restore_view_state(view)
+            self.set_running(False)
+            if store:
+                self.history_workflow.open_current()
+            self.update_title()
+            self.log("Resolved resources for the current edited project")
+            return
         if self.set_project(project, result, request.path, getattr(project, "_resource_history", [])) is False:
             if store:
                 store.close()
             return
-        if restore:
-            self._dirty, self.undo_history, self.redo_history, view, workspace = restore
-            self.guided.restore_context(workspace)
-            self.restore_view_state(view)
-            if store:
-                self.history_workflow.open_current()
-            self.update_title()
         self.log("Opened metadata-first archive; recorded fields load on demand" if store else "Opened project")
 
     def _catalog_legacy(self, request):

@@ -281,7 +281,14 @@ def test_reviewed_resources_keep_the_edited_working_document(guided_window, qtbo
     window.set_project(working, None, source)
     working.name = "edited metadata retained while reviewing resources"
     window.dirty = True
-    undo = window.undo_history
+    undo, redo = window.undo_history, window.redo_history
+    undo.append(deepcopy(working))
+    redo.append(deepcopy(working))
+    working.layout.instance_path = [7, 3]
+    working.layout.dbu_um = .002
+    from etlayout.simulation.sweep import SweepRow
+    retained_studies = [SweepRow(.02, result)]
+    window.studies = retained_studies
     view = window.capture_view_state()
     window._catalog_revision = window.document_revision
     window._catalog_review_restore = working
@@ -289,6 +296,9 @@ def test_reviewed_resources_keep_the_edited_working_document(guided_window, qtbo
     qtbot.waitUntil(lambda: window.history_workflow.store is not None and not window.history_opener.jobs
                     and not window.history_workflow.loader.jobs, timeout=30000)
     assert window.project is working and window.project.name.startswith("edited metadata")
-    assert window.dirty and window.undo_history is undo
+    assert window.dirty and window.undo_history is undo and len(undo) == 1
+    assert window.redo_history is redo and len(redo) == 1
+    assert window.project.layout.instance_path == [7, 3] and window.project.layout.dbu_um == .002
+    assert window.studies is retained_studies
     assert not getattr(window.project, "_resource_unresolved", False)
     assert window.capture_view_state()["transform"] == view["transform"]

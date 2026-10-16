@@ -91,6 +91,7 @@ class HistoryWorkflow:
     def compare(self, records):
         if not self.store or not self.guard():
             return False
+        self.window.cancel_catalog()
         self.pending_comparison = list(records)
         self.loader.submit(self.store, self.window.document_epoch,
                            [item.run_id for item in records if is_record(item)], purpose="compare")
