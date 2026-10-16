@@ -7,6 +7,7 @@ inside it. Authorization is local to this opening operation, not a saved grant.
 
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -323,10 +324,32 @@ def inspect_project(
                     ),
                 )
             )
-            return ProjectInspection(source, project, resources, metadata=metadata)
+            inspection = ProjectInspection(source, project, resources, metadata=metadata)
+            inspection._source_sha256 = hashlib.sha256(raw).hexdigest()
+            return inspection
         inspect_archive_size(source, _archive_data=raw)
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
             metadata = json.loads(archive.read("project.json"))
+            if isinstance(metadata, dict) and metadata.get("schema_version") == 3:
+                from etlayout.io.archive_v3 import ArchiveV3Reader
+                with ArchiveV3Reader(raw, source_path=source) as reader:
+                    project = deepcopy(reader.project)
+                    resources = []
+                    embedded = metadata.get("embedded_layout")
+                    if embedded or project.layout.path:
+                        resources.append(classify_resource(embedded or project.layout.path, source, embedded=bool(embedded),
+                            key=_prefix + "layout", expected_sha256=project.layout.sha256))
+                    for record in reader.records:
+                        if not record["available"]:
+                            continue  # Unavailable rows confer no resource authority.
+                        descriptor = reader._descriptor(record["id"])
+                        setup = descriptor["project"]["layout"]
+                        embedded_ref = descriptor["layout"]
+                        location = reader.object_name(embedded_ref["$ref"]) if embedded_ref else setup["path"]
+                        if location:
+                            resources.append(classify_resource(location, source, embedded=bool(embedded_ref),
+                                key=_prefix + record["id"] + ":layout", expected_sha256=setup["sha256"]))
+                    return ProjectInspection(source, project, tuple(resources), raw, metadata)
             if (
                 not isinstance(metadata, dict)
                 or metadata.get("format") != "etlayout"

@@ -384,6 +384,21 @@ def inspect_archive_size(path, *, _archive_data=None) -> dict:
     Nested run archives share the outer budget. NPY header shapes are checked
     against their actual member sizes, preventing tiny payloads claiming huge arrays.
     """
+    # Inspect the bounded root only to dispatch. The v3 reader validates the
+    # complete directory/object graph before any array allocation.
+    try:
+        with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else path) as container:
+            if "project.json" in container.namelist():
+                root_info = container.getinfo("project.json")
+                if root_info.file_size > MAX_METADATA_BYTES:
+                    raise SimulationError("Project metadata exceeds its byte budget")
+                root = json.loads(container.read(root_info))
+                if isinstance(root, dict) and root.get("schema_version") == 3:
+                    from etlayout.io.archive_v3 import ArchiveV3Reader
+                    with ArchiveV3Reader(_archive_data if _archive_data is not None else path, source_path=path) as reader:
+                        return dict(reader.size)
+    except (zipfile.BadZipFile, ValueError, EOFError, OSError) as error:
+        raise SimulationError(f"Cannot inspect project archive: {error}") from error
     used = metadata_bytes = entries = 0
 
     def inspect(source, depth=0, npz=False):
@@ -441,7 +456,17 @@ def inspect_archive_size(path, *, _archive_data=None) -> dict:
 
 def save_project(project: Project, path: str | Path, result: SimulationResult | None = None,
                  embed_layout: bool = True, history: list[SimulationResult] | None = None,
-                 *, progress=None, cancel=None, commit=None) -> None:
+                 *, progress=None, cancel=None, commit=None, archive_format: int = 2, verify_exact: bool = False) -> None:
+    if type(archive_format) is not int or archive_format not in (2, 3):
+        raise SimulationError("Unsupported archive format; choose 2 (legacy) or 3 (content-addressed)")
+    if archive_format == 3:
+        if Path(path).suffix.lower() == ".json":
+            raise SimulationError("JSON is metadata only; choose .etl or .etlayout for a project archive")
+        from etlayout.io.archive_v3 import save_archive
+        return save_archive(project, path, result, embed_layout=embed_layout, history=history,
+                            progress=progress, cancel=cancel, commit=commit)
+    from etlayout.io.archive_v3 import materialized_legacy_inputs
+    result, history = materialized_legacy_inputs(result, history)
     target = Path(path)
     if target.suffix.lower() == ".json":
         raise SimulationError("JSON is a metadata format. Use save_json for JSON metadata or choose .etlayout for a project archive.")
@@ -536,6 +561,10 @@ def save_project(project: Project, path: str | Path, result: SimulationResult | 
                         digest.update(chunk)
                 if digest.hexdigest() != saved.layout.sha256:
                     raise SimulationError("Source layout changed during saving; the previous project was preserved")
+        if verify_exact:
+            checkpoint(.94, "Verifying exact legacy-format compatibility")
+            from etlayout.io.archive_v3 import verify_legacy_snapshot
+            verify_legacy_snapshot(temporary, saved, result, history, cancel=cancel)
         with Path(temporary).open("r+b") as durable:
             durable.flush()
             os.fsync(durable.fileno())
@@ -677,6 +706,18 @@ def resolve_project(inspection: ProjectInspection, *, external_policy: ExternalR
     policy = external_policy or ExternalResourcePolicy()
     source, _archive_data = inspection.source, inspection.archive_data
     project = deepcopy(inspection.project)
+    project._archive_format = inspection.metadata.get("schema_version", 2) if _archive_data is not None else 2
+    if inspection.metadata.get("schema_version") == 3 and _archive_data is not None:
+        from etlayout.io.archive_v3 import ArchiveV3Reader
+        with ArchiveV3Reader(_archive_data, source_path=source, policy=policy) as reader:
+            project = reader._setup(project.to_dict(), inspection.metadata.get("embedded_layout"))
+            if inspection.relinked or inspection.discard_stale_result or reader.current_run_id is None:
+                return project, None
+            result = reader.materialize(reader.current_run_id)
+            if physics_hash(project, resolve_layout=False) != result.physics_hash:
+                raise SimulationError("Saved result configuration does not match project physical setup")
+            refresh_threshold_diagnostics(result, project)
+            return project, result
     if _archive_data is None:
         if project.layout.path:
             location, digest = resolve_layout(inspection, policy)
@@ -783,6 +824,13 @@ def load_run_history(path: str | Path, *, external_policy: ExternalResourcePolic
             inspected = inspect_project(source, allow_network_container=(external_policy or ExternalResourcePolicy()).allow_network)
             source, _archive_data = inspected.source, inspected.archive_data
         inspect_archive_size(source, _archive_data=_archive_data)
+        with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as container:
+            metadata = json.loads(container.read("project.json"))
+        if metadata.get("schema_version") == 3:
+            from etlayout.io.archive_v3 import ArchiveV3Reader
+            with ArchiveV3Reader(_archive_data if _archive_data is not None else source, source_path=source,
+                                 policy=external_policy) as reader:
+                return [reader.materialize(record["id"]) for record in reader.records if record["id"] != reader.current_run_id]
         with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as archive:
             for name in sorted(n for n in archive.namelist() if n.startswith("runs/run_") and n.endswith(".etl")):
                 _, result = load_project(source, external_policy=external_policy, _archive_data=archive.read(name),
@@ -793,3 +841,10 @@ def load_run_history(path: str | Path, *, external_policy: ExternalResourcePolic
         return history
     except (zipfile.BadZipFile, KeyError, OSError) as exc:
         raise SimulationError(f"Cannot load run history: {exc}") from exc
+
+
+def migrate_project(source, destination, *, archive_format=3, external_policy=None, progress=None, cancel=None):
+    """Explicit source-preserving migration with exact typed verification."""
+    from etlayout.io.archive_v3 import migrate_project as migrate
+    return migrate(source, destination, archive_format=archive_format, external_policy=external_policy,
+                   progress=progress, cancel=cancel)

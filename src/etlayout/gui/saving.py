@@ -55,6 +55,8 @@ class SaveJob(QThread):
             options = {"history": list(snapshot.history), "progress": self.progress.emit,
                        "cancel": self._cancel.is_set,
                        "archive_format": 2 if request.recovery_store is not None else snapshot.archive_format}
+            if snapshot.verify_exact:
+                options["verify_exact"] = True
             if request.recovery_store is not None:
                 def writer(project, path, result, history=None):
                     save_project(project, path, result, **{**options, "history": history})
@@ -75,3 +77,5 @@ class SaveJob(QThread):
             self.cancelled.emit(request, str(error))
         except Exception as error:
             self.failed.emit(request, str(error))
+        finally:
+            snapshot.release_sources()
