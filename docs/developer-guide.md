@@ -177,3 +177,36 @@ Its read-only token cannot publish a release. Public binary redistribution stays
 blocked until the separate compliance gate is satisfied. Owner publication is
 local, manual and staged through an inspected draft; no automatic mirror, tag
 trigger, package publisher or long-lived publishing token is used.
+
+## Project resource API
+
+`inspect_project(path)` parses the selected container and returns `ProjectInspection`
+without probing referenced layouts. `resolve_project(inspection, external_policy=...)`
+resolves that exact metadata/container. `load_project(path)` preserves its two-value
+return contract and composes those stages with a local-project-root default.
+`ExternalResourcePolicy` supplies distinct `allow_outside_root`, `allow_network`, and
+per-resource approval keys. A trusted caller may supply `allowed_root` for an explicitly
+selected artifact workspace; optimization uses this bounded scope for its retained
+source and candidate JSON. It does not grant network access or arbitrary outside files.
+Never infer approval from saved project metadata.
+`load_run_history` applies the same policy to every historical resource. Geometry and
+simulation entry points reject projects deliberately left unresolved by the GUI.
+
+The CLI `etlayout project-info PROJECT` prints metadata/resource declarations without
+opening referenced files. Calculation, validation and power commands fail closed;
+use `--allow-outside-root` deliberately for files outside the project directory and
+`--allow-network` separately for network locations. These flags also apply to the GUI
+launcher and comparison/initial-state inputs. `project-info --allow-network PROJECT`
+permits reading a network project container, without resolving its referenced files.
+A Python caller that previously loaded JSON with absolute external references must
+now supply the corresponding explicit policy. Portable embedded archives need no grant.
+
+Archive schemas 1 and 2 remain readable. Unsafe member names, symlink entries, unknown
+versions, aggregate expansion budgets and invalid declared layout hashes are rejected.
+Configuration/result identity checks hash stored metadata without probing its declared
+paths; authorized current layout content remains independently verified.
+
+Direct `export_finalist` calls using candidate JSON outside its source directory must
+supply `resource_policy=ExternalResourcePolicy(allowed_root=experiment_directory)`.
+The shared GUI/CLI workflow derives this bounded grant from the user-selected
+experiment directory, never from a saved history declaration alone.

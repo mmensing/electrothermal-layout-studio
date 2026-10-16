@@ -5,6 +5,7 @@ from copy import deepcopy
 import pytest
 from test_power_optimization import example
 
+from etlayout.io.resources import ExternalResourcePolicy
 from etlayout.models import MeasurementSpec, ObjectiveSpec, SimulationError, SupportSelector
 from etlayout.optimization import _update_pareto, export_finalist, ranking_rows, run_experiment
 
@@ -90,7 +91,8 @@ def test_failed_export_reevaluation_removes_obsolete_refined_frontier(tmp_path):
     # strictly positive gain beyond its export difference with this evidence.
     comparison = candidate["verification"]["baseline_comparison"]["loss"]
     comparison["gain"] = comparison["required_gain"] = 0.
-    report = export_finalist(project, history, candidate_id, tmp_path / "recheck")
+    report = export_finalist(project, history, candidate_id, tmp_path / "recheck",
+                             resource_policy=ExternalResourcePolicy(allowed_root=tmp_path / "search"))
     assert report["status"] == "verification_failed"
     assert all(record["scenarios"][0]["converged"] for record in report["formats"].values())
     assert candidate["export_status"] == "verification_failed"
