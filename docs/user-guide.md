@@ -1,7 +1,7 @@
 # Desktop quick start — 0.2.0
 
 This historical guide describes **version 0.2.0** and its four-part ribbon.
-For the current 0.3.1 desktop, use the [guided workflow](desktop-workflow.md) and
+For the current 0.4.0 desktop, use the [guided workflow](desktop-workflow.md) and
 [layout editor guide](layout-editor.md). This older ribbon is retained only as a compatibility reference. Install the current
 source edition using the [README](../README.md#start-from-source-on-windows);
 no historical binary is advertised as a public MPL release.
@@ -19,23 +19,29 @@ drawer to recover map space. [Bundled offline Help](../src/etlayout/data/user-gu
 is the concise packaged control reference; the [handbook](handbook/README.md)
 explains physics and reproducible calculations.
 
-## First calculation
+## First calculation with the current 0.4.0 controls
 
-1. Choose **File → Ready-to-run examples → E1 · Straight conductor**. This opens a real copper
+This walkthrough uses the current seven-stage workspace. The later ribbon
+references describe the historical interface; use the linked guided workflow
+for current equivalents.
+
+1. Choose **File → Ready-to-run examples → Fundamentals → E1 · Straight conductor**. This opens a real copper
    conductor with a 2 µm thickness, source reference and 0.02 V drain condition.
-2. Choose **Simulation → Validate geometry & connectivity** (F6). Inspect the Validation
-   and Nets tabs. Double-click a reported object or net to locate its geometry.
-3. Choose **Generate mesh** (F7), then turn on **Mesh** to inspect element boundaries.
-4. In **Solve**, select **electrical** and **Steady**, then press **Run** (F5). The worker reports progress;
-   **Cancel** or Shift+F5 stops an active calculation.
-5. Select **Result layer** and **Result field** directly above the canvas. Choose
-   **Potential (V)** or **Volumetric current density (A/m²)**. **Vectors** adds current
-   directions for vector quantities. The legend states units and range.
-6. Check Results: resistance is approximately 0.084 Ω, current 0.238095 A, and loss
-   0.00476190 W. Review residuals and current/power balance, not only the convergence label.
-7. Select **Probe** and click a location. Select **Profile**, then draw a line; inspect the
-   Line profiles tab. **Cross-section** draws a cut through actual geometry and z positions.
-8. Use **File → Save project as** to retain the complete setup and calculated result.
+2. In **Mesh & checks**, select **Run validation** (F6). Inspect the Issues drawer
+   and use **Locate** to inspect reported geometry.
+3. Select **Generate / update mesh** (F7). After solving, **Results → Appearance → Show mesh**
+   overlays the selected layer's mesh.
+4. Select **DC electrical** in the header, open **Run**, and select **Run analysis** (F5).
+   The Jobs drawer reports progress; **Cancel computation** or Shift+F5 stops a calculation.
+5. In the **Results & analysis** inspector, choose **Layer** `metal` and **Quantity**
+   **Potential (V)** or **Volumetric current density (mA/µm²)**. **Appearance → Show vectors**
+   adds directions for vector quantities. The legend states units and range.
+6. Open **Metrics & loss budget**: resistance is approximately 0.084 Ω, current 0.238095 A,
+   and loss 0.00476190 W. Review current/power balance, not only the convergence label.
+7. Select **Place result probe** and click a location. **Results → Draw line profile**
+   draws a line for the **Profiles** tab. The canvas tool **Cross-section** draws a cut
+   through actual geometry and z positions.
+8. Use **File → Save project as…** to retain the complete setup and calculated result.
 
 ## Import and configure your layout
 
@@ -108,8 +114,10 @@ iteration limits and solver choice. Unconverged results remain visibly marked.
 
 Choose **Temperature**, **Temperature rise** or **Joule power density** after solving.
 **Hotspot** locates the maximum. Temperature rise uses the boundary/reference temperature
-recorded with the solve. Sheet power density is W/m², sheet current A/m, and volumetric
-current density A/m²; these quantities are not interchangeable.
+recorded with the solve. Current display units are W/mm² for sheet power density,
+mA/µm for sheet current and mA/µm² for volumetric current density; these quantities are
+not interchangeable. Stored inputs and raw numerical exports retain SI units W/m²,
+A/m and A/m², respectively.
 
 ## Transient and pulsed operation
 
@@ -163,7 +171,7 @@ energy accounting, examples and CLI equivalents.
 
 ## CPU execution and responsiveness
 
-Open **Settings → Simulation execution…** to set **Total CPU thread budget** and
+In the current workspace, open **Edit → Execution settings…** to set **Total CPU thread budget** and
 **Parallel study worker limit**. Both default to four, capped at the number of
 available logical CPUs. The worker limit cannot exceed the total budget. One
 run can use the native thread budget; independent sweep, design-comparison,
@@ -176,7 +184,8 @@ remain available. **Cancel** stops an active calculation and its study workers.
 CPU preferences are stored on
 this computer, apply to future jobs and do not change project physics or invalidate
 results. Supported native numerical libraries and Gmsh honor the thread limits;
-Python assembly and some sparse solves can remain serial. A larger budget does
+Eligible assembly can use worker threads; geometry work and sparse direct factorization
+can remain serial. A larger budget does
 not guarantee a faster single solve. GPU acceleration is not included.
 
 ## Inspect multiple layers and regions

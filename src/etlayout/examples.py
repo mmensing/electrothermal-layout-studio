@@ -45,9 +45,17 @@ EXAMPLE_BUILDERS = {
     **{name: ("etlayout.power_examples", "build_power_example") for name in (
         "E20_high_current_rdl", "E21_long_finger_gan", "E22_multibank_gan",
         "E23_sic_stripes", "E24_sic_cells")},
+    **{name: ("etlayout.teaching_examples", "build_teaching_example") for name in (
+        "E25_stepped_width_series", "E26_dogbone_coupon", "E27_transfer_length_coupon", "E28_t_junction_splitter",
+        "E29_annular_bus", "E30_via_daisy_chain", "E31_resistor_ladder", "E32_parallel_resistor_array")},
+    **{name: ("etlayout.device_examples", "build_device_example") for name in (
+        "E33_suspended_bridge_heater", "E34_interleaved_heater_sensor", "E35_localized_die_attach", "E36_pulsed_hotspot_neck",
+        "E37_gated_hemt_coupon", "E38_dual_bank_gan", "E39_sic_island_die", "E40_package_interposer")},
 }
-ROUTINE_EXAMPLES = tuple(name for name, (module, _) in EXAMPLE_BUILDERS.items()
-                         if module != "etlayout.power_examples")
+# Validation tiers are explicit catalog policy; moving a builder module does not
+# accidentally add engineering/transient cases to the three-mode teaching loop.
+ROUTINE_EXAMPLES = tuple(name for name, info in EXAMPLE_CATALOG.items() if info.reference_tier == "introductory")
+EXTENDED_EXAMPLES = tuple(name for name, info in EXAMPLE_CATALOG.items() if info.reference_tier == "extended")
 
 
 

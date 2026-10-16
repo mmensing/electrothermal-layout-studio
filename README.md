@@ -72,7 +72,7 @@ walkthroughs](docs/examples.md) explain how to reach and interpret these views.
 ## Your first GUI calculation
 
 After installation, launch the application and choose **File → Ready-to-run
-examples → E1 · Straight conductor**. Its configuration is already complete.
+examples → Fundamentals → E1 · Straight conductor**. Its configuration is already complete.
 
 1. Select **DC electrical** in the header. Visit **Layers & Materials** and
    **Contacts & Connections** to see the copper strip and its two terminals.
@@ -89,16 +89,21 @@ examples → E1 · Straight conductor**. Its configuration is already complete.
 The [first-calculation guide](docs/handbook/first-calculation.md) explains the
 independent analytical check. For a larger device, the [power-example guide](docs/power-examples.md)
 introduces millimeter RDL, long-finger/multi-bank GaN and SiC on-state source
-collection. All **24 reference projects** open through the same example menu;
+collection. All **40 reference projects** open through the categorized example menu;
 opening an example does not automatically start a calculation. Large cases are
-labeled before execution.
+labeled before execution. The [extended GUI walkthroughs](docs/extended-examples.md)
+add E25–E40: analytical coupons, contacts and networks, thermal experiments,
+pulsed constrictions, independently driven GaN banks, SiC active islands and
+a package interposer.
 
 ## Start from source on Windows
 
-**0.4.0.dev0 source edition · research prototype · MPL-2.0 original project source.**
-Windows 11 x64 / Python 3.12 is the validated desktop platform. This is an
-untagged public source edition; no public Windows executable or release is
-currently supplied. Install once in a clean environment, using PowerShell:
+**0.4.0 source edition · research prototype · MPL-2.0 original project source.**
+Windows 11 x64 / Python 3.12 is the validated desktop platform. Check the
+[Releases page](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for publication status. Local Windows candidates require the
+[binary compliance checks](docs/licensing.md) before redistribution.
+To run from source, install once in a clean environment using PowerShell:
 
 ```powershell
 git clone https://github.com/mmensing/electrothermal-layout-studio.git

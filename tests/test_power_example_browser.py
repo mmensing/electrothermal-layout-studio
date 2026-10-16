@@ -22,7 +22,8 @@ from etlayout.workflow import STAGES
 def test_reference_browser_opens_complete_model_and_real_port_sweep(guided_window, qtbot, name):
     window = guided_window
     menu = next(menu for menu in window.findChildren(QMenu) if menu.title() == "Ready-to-run examples")
-    action = next(action for action in menu.actions() if action.text().startswith(example_info(name).id + " ·"))
+    action = next(action for submenu in menu.findChildren(QMenu) for action in submenu.actions()
+                          if action.text().startswith(example_info(name).id + " ·"))
     assert "nominal" in action.toolTip() and "Synthetic" in action.toolTip()
     action.trigger()
     _idle(window, qtbot)

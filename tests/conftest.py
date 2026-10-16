@@ -39,3 +39,30 @@ def isolated_desktop_settings(request, monkeypatch):
     from gui_test_helpers import isolate_window_settings
 
     isolate_window_settings(monkeypatch, request.getfixturevalue("tmp_path"))
+
+
+@pytest.fixture(scope="session")
+def expanded_nominal_factory(tmp_path_factory):
+    """Solve configured extended references once; callers receive isolated copies."""
+    from copy import deepcopy
+
+    from etlayout.example_catalog import example_info
+    from etlayout.examples import EXTENDED_EXAMPLES, make_example
+    from etlayout.simulation.runner import run_project
+
+    solved = {}
+
+    def nominal(identifier):
+        name = example_info(identifier).name
+        if name not in EXTENDED_EXAMPLES:
+            raise ValueError("This fixture only caches extended reference projects")
+        if name not in solved:
+            project = make_example(name, tmp_path_factory.mktemp(example_info(name).id))
+            before = project.to_dict()
+            result = run_project(project)
+            assert project.to_dict() == before, "Nominal validation must not replace configured inputs"
+            assert result.converged, (name, result.diagnostics)
+            solved[name] = project, result
+        return deepcopy(solved[name])
+
+    return nominal

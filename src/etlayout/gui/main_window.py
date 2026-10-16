@@ -859,20 +859,19 @@ class MainWindow(QMainWindow):
         examples = files.addMenu("Ready-to-run examples")
         from etlayout.example_catalog import example_info
         from etlayout.examples import EXAMPLE_NAMES
-        for index, name in enumerate(EXAMPLE_NAMES):
-            if index in (0, 10):
-                examples.addSection("Foundations and devices" if index == 0 else "Complex structures")
+        categories = {}
+        for name in EXAMPLE_NAMES:
             info = example_info(name)
-            if info.id == "E20":
-                examples.addSection("Power engineering benchmarks · generation does not solve")
-            label = f"{name.split('_', 1)[0]} · {info.title}"
+            if info.category not in categories:
+                categories[info.category] = examples.addMenu(info.category)
+            label = f"{info.id} · {info.title}"
             action = self.action(label, lambda checked=False, example=name: self.load_example(example))
-            detail = ""
+            detail = "\n" + info.physical_scope
             if info.family:
                 from etlayout.power_examples import reference_summary
-                detail = "\n" + reference_summary(name) + "\n" + info.physical_scope
+                detail = "\n" + reference_summary(name) + detail
             action.setToolTip(info.learning_goal + detail)
-            examples.addAction(action)
+            categories[info.category].addAction(action)
         files.addSeparator()
         files.addAction(self.action("Review project resources…", self.review_project_resources))
         files.addAction(self.action("Exit", self.close, "Alt+F4"))

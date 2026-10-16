@@ -20,7 +20,7 @@ import numpy as np
 
 from etlayout import __version__
 from etlayout.example_catalog import example_info
-from etlayout.examples import EXAMPLE_NAMES, ROUTINE_EXAMPLES, make_example
+from etlayout.examples import EXAMPLE_NAMES, EXTENDED_EXAMPLES, ROUTINE_EXAMPLES, make_example
 from etlayout.geometry.prepare import prepare_geometry
 from etlayout.io.export import METRIC_UNITS
 from etlayout.io.project import configuration_hash, load_project, physics_hash, save_project
@@ -143,7 +143,8 @@ def draw_geometry(ax, project, geometry, info, labels=True):
         _shapes(ax, shape, facecolor="none", edgecolor=INK, lw=.65, linestyle="--", zorder=20)
     annotations = []
     if labels:
-        terminals = [t for t in project.terminals if t.kind in {"ground", "current", "voltage", "floating"}]
+        owners = {landing.terminal_id: port.id for port in project.power.ports for landing in port.landings}
+        terminals = [t for t in project.terminals if t.kind in {"ground", "current", "voltage", "floating", "probe"}]
         # Keep the diagram legible; all terminals and biases are listed in the catalogue record.
         terminals = sorted(terminals, key=lambda t: (t.kind == "voltage" and "bias" in t.id,
                                                     t.kind == "floating"))[:4]
@@ -153,7 +154,7 @@ def draw_geometry(ax, project, geometry, info, labels=True):
                 continue
             point = np.asarray(shape.centroid.coords[0]) * 1e6
             ax.plot(*point, marker="o", markersize=4.5, color=INK, markerfacecolor="white", zorder=30)
-            annotations.append(ax.annotate(terminal.id, point, xytext=(4, 6), textcoords="offset points",
+            annotations.append(ax.annotate(owners.get(terminal.id, terminal.id), point, xytext=(4, 6), textcoords="offset points",
                                fontsize=10, color=INK, zorder=31,
                                bbox={"facecolor": "white", "edgecolor": "none", "pad": 1, "alpha": .85}))
     _axes(ax, geometry.domain.bounds)
@@ -179,10 +180,15 @@ def _separate_labels(ax, annotations):
 
 def _fit_ticks(ax):
     """Choose tick density after equal-aspect layout has determined the actual panel width."""
-    from matplotlib.ticker import MaxNLocator
+    from matplotlib.ticker import FixedLocator, MaxNLocator
     ax.apply_aspect()
     width_inches = ax.get_position().width * ax.figure.get_figwidth()
-    if width_inches < 1.3:
+    if width_inches < .8:
+        # A genuine long finger may occupy only a few tens of pixels at equal
+        # aspect. One centered coordinate is honest and readable; two labels
+        # would overlap without conveying extra spatial resolution.
+        ax.xaxis.set_major_locator(FixedLocator([sum(ax.get_xlim()) / 2]))
+    elif width_inches < 1.3:
         ax.xaxis.set_major_locator(MaxNLocator(2, min_n_ticks=2))
 
 
@@ -252,7 +258,7 @@ def render_example(project, geometry, result, info, output):
     left = figure.add_axes((.075, .245, .365, .51))
     right = figure.add_axes((.565, .245, .365, .51))
     draw_geometry(left, project, geometry, info)
-    left.set_title("Prepared geometry", loc="left", pad=10)
+    figure.text(.075, .785, "Prepared geometry", fontsize=12, ha="left", va="bottom")
     details = None
     if result:
         plotted, details = draw_field(right, result, info)
@@ -267,7 +273,9 @@ def render_example(project, geometry, result, info, output):
         title = f"{title} · {info.layer}"
         if details["uniform"]:
             title += f"\nUniform: {details['minimum'] * details['display_scale']:.6g} {details['display_unit']}"
-        right.set_title(title, loc="left", pad=10)
+        # Equal aspect can shrink/recenter a long-finger field Axes. Keep the
+        # heading in its reserved column instead of letting it leave the canvas.
+        figure.text(.565, .785, title, fontsize=12, ha="left", va="bottom")
         bar_ax = figure.add_axes((.585, .10, .325, .022))
         low, high = plotted.norm.vmin, plotted.norm.vmax
         span = high - low
@@ -433,7 +441,85 @@ GUI_EXERCISES = {
     "E24": ("Inspect collection metal, macrocell groups and the passive Kelvin-sense measurement.",
             "Local sheet voltages determine macrocell sharing and sense error under localized feeds.",
             "Compare bond, clip and bump footprints without changing active area or requested service."),
+    "E25": ("Inspect Metrics & loss budget, then compare the two strip widths in Layout & region.",
+            "The width step adds spreading resistance above the one-dimensional series reference; the finite end feeds also dissipate power.",
+            "Run the saved fixed-temperature current sweep. Does doubling current keep resistance constant and quadruple Joule power?"),
+    "E26": ("Zoom into the neck, then open Routing & optimization → Analysis → Measurements and locate neck_loading.",
+            "The fixed physical neck window measures loading independently of the mesh-sensitive point maximum at a taper corner.",
+            "Refine the neck locally and compare averaged loading and terminal resistance before interpreting the largest element value."),
+    "E27": ("Compare the film potential with sense_a and sense_b in Quantitative results and the Analysis Contacts table.",
+            "The passive Kelvin drop excludes the current contacts; current transfers over a finite length beneath the copper electrodes.",
+            "Run the specific-contact-resistivity sweep. Which voltage drop changes, and is contact refinement still small compared with the transfer length?"),
+    "E28": ("In Operating conditions inspect External port drives, including the signed branch withdrawal, then open the Analysis Ports table.",
+            "The input supplies both returns: positive current enters the domain and the negative branch current leaves it.",
+            "Vary the branch withdrawal with the saved sweep while keeping the input fixed. Does the reference return close the current balance?"),
+    "E29": ("Preview the mesh around the central opening and compare the upper_loss and lower_loss measurements.",
+            "Current splits symmetrically around a genuine void in the copper, while the continuous substrate remains beneath it.",
+            "Save a layout copy and move only one landing. How much symmetry is lost at the same delivered current?"),
+    "E30": ("Switch among m1, m2 and m3, then inspect individual via instances in the Analysis Contacts table.",
+            "The complete delivered current crosses four banks in series; individual vias within each bank load unequally.",
+            "Compare bank totals with individual normal-current density before and after contact refinement; a signed total over several transitions can cancel opposing transfers."),
+    "E31": ("Open Quantitative results and compare tap_1, tap_2 and tap_3 with the applied end voltages.",
+            "Four equal film/contact sections produce quarter-step passive node voltages; the floating taps draw no net current.",
+            "Run the saved voltage sweep. Do the normalized tap voltages stay fixed while current and dissipated power change?"),
+    "E32": ("Open the Analysis Devices table and compare the six resistor rows, then inspect source_bus and drain_bus potential maps.",
+            "Rows farther from the same-ended feeds carry less current because both collection buses remain resistive.",
+            "Run the source-bus thickness sweep at unchanged total current. Compare row sharing, voltage spread and loss rather than assuming identical strips carry identical current."),
+    "E33": ("Compare bridge and substrate temperatures, then inspect anchor_attachment and weak_cavity_path in Contacts & connections.",
+            "Heat mainly escapes laterally through finite anchors; the weak cavity path is an explicit effective approximation.",
+            "Run the cavity heat-transfer sweep. Does the bridge or the support respond more strongly, and how sensitive is the conclusion to the effective path?"),
+    "E34": ("Compare heater, sensor and substrate layers, then inspect sensor_mean_temperature and sensor_probe_potential in Analysis Measurements.",
+            "The meanders stay electrically separate while the shared thermal path changes the weakly biased platinum sensor's temperature and voltage.",
+            "Run the heater-current sweep with sensor bias held fixed. Compare probe response with sensor temperature without treating the example as a calibrated thermometer."),
+    "E35": ("In Operating conditions locate the backside boundary; compare its partial footprint with the substrate temperature map.",
+            "Only one backside patch is attached, so lateral heat spreading moves the thermal pattern relative to the current-crowding pattern.",
+            "Run the attachment-resistance sweep at fixed electrical service. Which change comes from the boundary rather than the metal geometry?"),
+    "E36": ("Inspect Time, waveform & initial-state settings…, run the pulse train and use retained times plus Time history to follow the neck.",
+            "The neck warms during the current pulses and cools afterward; the final field can be cooler than the peak over the complete run.",
+            "Use Time-step convergence… and local neck refinement before comparing the peak temperature or the energy deposited per pulse."),
+    "E37": ("Inspect channel_a sheet current, the source/drain Contacts records and the bank_a device group; then review gate_a under gate controls.",
+            "Every conducting channel path crosses the complete gate-controlled region; localized feeds and finite ohmic contacts remain visible in the loss budget.",
+            "Run the gate-bias sweep at fixed delivered current. Compare required drain voltage and local channel field; conductance-floor current is not predicted leakage."),
+    "E38": ("Compare channel_a and channel_b with a shared manual range, then open bank_a and bank_b in the Analysis Devices table.",
+            "Independent drain drives set delivered bank service while the shared source metal and substrate create source-potential and thermal interaction.",
+            "Sweep only one bank's gate. Compare its required voltage and field with the other bank while preserving both requested currents."),
+    "E39": ("Inspect source, collector and drain layers, then compare island groups, collection vias and kelvin_potential in Analysis.",
+            "Local sheet voltages determine current division between four active islands; the distributed on-state device loss is separate from collection and feed losses.",
+            "Run the collector-thickness sweep at equal current and active area. Compare island sharing and Kelvin potential without interpreting the insulated gate drawing as an automatic gate-dependent model."),
+    "E40": ("Follow m1 → m2 → m3 and open the Analysis Contacts table beside lower_branch_current and upper_branch_current measurements.",
+            "Two lower-metal arms go around a protected opening, transfer through separate via banks and recombine before the output landing.",
+            "Run the copper-thickness study at fixed service, then refine via transfer regions before ranking branch balance or the regularized hotspot."),
 }
+
+
+def operating_point(project):
+    """Keep owned landing placeholders out of the user-facing applied bias.
+
+    Physical ports own their terminal drives. Preserve every original terminal
+    and complete landing/feed declaration separately for reproducible provenance.
+    """
+    terminals = [{"id": t.id, "kind": t.kind, "value": t.value, "layer": t.layer_id,
+                  "geometry": asdict(t.geometry), "name": t.name,
+                  "unit": "V" if t.kind in {"voltage", "ground", "gate"} else "A" if t.kind == "current" else ""}
+                 for t in project.terminals]
+    ports = [{**asdict(port), "unit": "A" if port.kind == "current" else "V" if port.kind in {"ground", "voltage"} else ""}
+             for port in project.power.ports]
+    owned = {landing.terminal_id for port in project.power.ports for landing in port.landings}
+    applied = []
+    for port in ports:
+        feeds = ", ".join(f"{landing['terminal_id']}: " +
+                          (_number(landing["resistance"], "Ω") if landing["resistance"] >= 1 else
+                           _number(landing["resistance"] * 1e3, "mΩ")) for landing in port["landings"])
+        value = _number(port["value"], port["unit"]) if port["kind"] != "floating" else "zero net current"
+        applied.append(f"{port['id']} {value} ({port['kind']} port; feeds {feeds})")
+    for terminal in terminals:
+        if terminal["id"] in owned:
+            continue
+        kind = terminal["kind"]
+        value = ("zero net current" if kind == "floating" else "passive sampling" if kind == "probe"
+                 else _number(terminal["value"], terminal["unit"]))
+        applied.append(f"{terminal['id']} {value} ({kind})")
+    return "; ".join(applied), terminals, ports
 
 
 def write_markdown(records, output, markdown, examples):
@@ -444,14 +530,19 @@ def write_markdown(records, output, markdown, examples):
     asset = lambda name: _relative(output / name, markdown.parent)  # noqa: E731
     full_catalog = {record["name"] for record in records} == set(ROUTINE_EXAMPLES)
     power_guide = _relative(ROOT / "docs/power-examples.md", markdown.parent)
+    extended_guide = _relative(ROOT / "docs/extended-examples.md", markdown.parent)
     labels = {(analysis.solver_mode, analysis.transient): analysis.label for analysis in ANALYSES}
-    count = len(records) + (len(FAMILIES) if full_catalog else 0)
-    lines = ["# Explore the examples", "",
+    count = len(EXAMPLE_NAMES)
+    coverage = (f"The library contains {count} runnable reference examples. " if full_catalog else
+                f"This gallery covers {len(records)} of the library's {count} runnable reference examples. ")
+    extended_only = {record["name"] for record in records} == set(EXTENDED_EXAMPLES)
+    title = "# From analytical coupons to power devices" if extended_only else "# Explore the examples"
+    lines = [title, "",
              "See current crowd around a bend, follow heat into a substrate, or watch a device cool between pulses. "
-             f"The library contains {count} runnable {'reference ' if full_catalog else ''}examples with configured "
-             "geometry, materials, connections and operating conditions. These walkthroughs use the desktop controls.", "",
+             + coverage + "Each project supplies configured geometry, materials, connections and operating conditions. "
+             "These walkthroughs use the desktop controls.", "",
              "## Open your first example", "",
-             "1. In **File → Ready-to-run examples**, choose an example by its stable ID below. "
+             "1. In **File → Ready-to-run examples**, open the appropriate group and choose an example by its stable ID below. "
              "Opening prepares the project; it does not start a simulation.",
              "2. Use **Save project as…** to keep your own project. Review the visible **Analysis type**; "
              "the gallery's analysis column states the mode used for its recorded picture.",
@@ -477,8 +568,30 @@ def write_markdown(records, output, markdown, examples):
                   "| How does a gate change the conducting channel? | [E7: illustrative HEMT](#e7) | [E8: routing resistance](#e8), [E16: fully gated stripes](#e16) |",
                   "| How far does heat spread? | [E10: layered thermal path](#e10) | [E11: meander heater](#e11), [E15: thermal crosstalk](#e15) |",
                   "| What happens between pulses? | [E17: heating and cooling](#e17) | [E18: pulsed conductor](#e18), [E19: delayed receiver heating](#e19) |",
-                  f"| How do larger power structures share current? | [E20–E24: power guide]({power_guide}) | [GaN fingers and banks]({power_guide}#e21), [SiC source collection]({power_guide}#e24) |", ""]
-    lines += ["## All examples", "", "| Example | Focus | Level | Gallery analysis |", "| --- | --- | --- | --- |"]
+                  f"| How do larger power structures share current? | [E20–E24: power guide]({power_guide}) | [GaN fingers and banks]({power_guide}#e21), [SiC source collection]({power_guide}#e24) |",
+                  f"| What should I explore after the foundations? | [E25–E40: extended walkthroughs]({extended_guide}) | [Contact coupons]({extended_guide}#e27), [thermal paths]({extended_guide}#e35), [device sharing]({extended_guide}#e39) |", ""]
+    if extended_only and any(record["catalog"]["id"] == "E33" for record in records):
+        desktop = _relative(ROOT / "docs/images/extended-bridge-results.png", markdown.parent)
+        lines += [f"[![Actual E33 bridge temperature results in the Windows application]({desktop})]({desktop})", "",
+                  "*Actual 0.4.0 source GUI on native Windows at 125% Qt scale, in a compact 1280 × 800 "
+                  "logical-pixel window. The selected bridge temperature map uses the project's 300 K backside "
+                  "reservoir. The solver converged; mesh verification is not established for this run. "
+                  "Open the image for full-size controls.*", ""]
+    if extended_only:
+        lines += ["## Choose the question, then inspect the physics", "",
+                  "Start with a compact coupon before moving to a device or package. Keep the supplied nominal "
+                  "inputs for the first calculation; the saved sweeps are follow-up experiments, not validation "
+                  "substitutes. Opening never starts a solve.", "",
+                  "| Question | Start here | Continue with |", "| --- | --- | --- |",
+                  "| Does the numerical result agree with a circuit limit? | [E25: series strip](#e25) | [E28: signed port currents](#e28), [E31: divider taps](#e31) |",
+                  "| How do contacts and routing change local loading? | [E27: Kelvin/contact transfer](#e27) | [E26: neck loading](#e26), [E29: annular paths](#e29), [E30: via banks](#e30), [E32: resistive access](#e32) |",
+                  "| Which thermal path controls the hotspot? | [E33: finite anchors](#e33) | [E34: thermal sensing](#e34), [E35: partial attachment](#e35), [E36: pulse cooling](#e36) |",
+                  "| How do device and package regions share current? | [E37: one gated channel](#e37) | [E38: separately driven banks](#e38), [E39: SiC active islands](#e39), [E40: package interposer](#e40) |", "",
+                  "**Read loading in its physical units.** Channel/film sheet current uses mA/µm; bulk-metal "
+                  "volumetric current density uses mA/µm². Via normal density is a separate interface quantity. "
+                  "A converged field is not automatically mesh verified, and a point corner maximum is not a "
+                  "physically averaged hotspot. Compare delivered service and the loss ledger alongside temperature.", ""]
+    lines += ["## All examples" if full_catalog else "## Examples in this walkthrough", "", "| Example | Focus | Level | Gallery analysis |", "| --- | --- | --- | --- |"]
     for record in records:
         info = record["catalog"]
         label = labels[(record["mode"], bool(record.get("transient")))]
@@ -488,15 +601,24 @@ def write_markdown(records, output, markdown, examples):
             info = example_info(name)
             lines.append(f"| [{info.id} · {info.title}]({power_guide}#{info.id.lower()}) | "
                          f"{info.category} | {info.level} | Coupled DC electrothermal |")
+        for name in EXTENDED_EXAMPLES:
+            info = example_info(name)
+            lines.append(f"| [{info.id} · {info.title}]({extended_guide}#{info.id.lower()}) | "
+                         f"{info.category} | {info.level} | See configured walkthrough |")
+    versions = {record["result"]["solver_version"] for record in records if record.get("result")}
+    provenance = (f"These previews were computed with solver {__version__} from the supplied configured projects. "
+                  "The manifest records each result's exact configuration, source hashes and diagnostics. "
+                  "They demonstrate numerical behavior under the declared assumptions, not experimental validation. "
+                  if versions == {__version__} else
+                  "The recorded preview details below retain their original operating points, diagnostics and "
+                  "numerical provenance. Some were calculated with earlier solver versions; the manifest records "
+                  "those identities. They are illustrations, not fresh validation of a newly opened project. ")
     lines += ["", "## Read the pictures, then run your own project", "",
               "Each scientific preview pairs actual prepared geometry with a recorded computed field. "
               "All devices are synthetic teaching configurations; deterministic calculations do not supply "
               "experimental uncertainty or process calibration. A converged solve still needs a mesh study "
               "before comparing sensitive peaks. Field scales and panel extents differ between pictures.", "",
-              "The recorded preview details below retain their original operating points, diagnostics and "
-              "numerical provenance. Some were calculated with earlier solver versions; the manifest records "
-              "those identities. They are illustrations, not fresh validation of a newly opened project. "
-              "Current application screenshots are labeled separately.", "",
+              provenance + "Current application screenshots are labeled separately.", "",
               "ETL projects retain the physical setup and saved sweeps. GDSII/OASIS downloads contain geometry only. "
               "SVG previews retain vector geometry, axes and text; only the finite-element field is rasterized "
               "at twice the intended display resolution.", ""]
@@ -513,6 +635,16 @@ def write_markdown(records, output, markdown, examples):
                   f"**In the GUI:** choose **{analysis}**, then in Results select layer `{info['layer']}` "
                   f"and **{field_label} ({field_unit})**. {action}", "",
                   f"**Look for:** {observation}", "", f"**Try next:** {question}", ""]
+        if info["id"] == "E39":
+            lines += ["**Review F6 validation in the GUI:** the configured reference has zero blockers and one "
+                      "electrically connected network, with two expected notices. The Source warning reports four "
+                      "disconnected polygons: these are the intended active islands, joined through eight collection "
+                      "vias and the shared Collector; vertical on-state loads connect them to the Drain. The "
+                      "Drain/Collector projected-overlap information reports that those two sheets have no direct "
+                      "electrical contact. This is intentional: current must pass from Drain through the area-specific "
+                      "on-state resistance to Source, then through the collection vias to Collector. Do not add a direct "
+                      "Drain–Collector contact: it would short the device model. Use Locate to inspect both notices "
+                      "rather than turning warnings off; they remain useful when editing the layout.", ""]
         downloads = [f"[{label}]({_relative(examples / (name + ext), markdown.parent)})"
                      for label, ext in [("Project (.etl)", ".etl"), ("GDSII", ".gds"), ("OASIS", ".oas")]]
         lines += [" · ".join([*downloads, f"[Vector preview]({asset(name + '.svg')})"]), "",
@@ -520,11 +652,19 @@ def write_markdown(records, output, markdown, examples):
         layers = "; ".join(f"`{layer['id']}` ({layer['material']}, {_number(layer['thickness_m'] * 1e6, 'µm')})"
                            for layer in record["physical_layers"])
         mode = ("transient " if record.get("transient") else "") + record["mode"]
-        lines += [f"**Recorded operating point:** {record['bias_summary']}. Preview mode: **{mode}**.", "",
+        notes = record["notes"]
+        marker = "\n\nDevice example configuration (SI):\n"
+        if marker in notes:
+            explanation, parameters = notes.split(marker, 1)
+            notes = (explanation + "\n\n**Original generator metadata (before the recorded solve):** "
+                     "The declaration below describes generation; the computed-preview record reports the "
+                     "subsequent actual calculation.\n\n```json\n" + parameters.rstrip() + "\n```")
+        point_label = "Configured baseline drives (waveforms applied during the run)" if record.get("transient") else "Recorded operating point"
+        lines += [f"**{point_label}:** {record['bias_summary']}. Preview mode: **{mode}**.", "",
                   f"**Physical layers:** {layers}.", "", f"**Saved sweep:** {record['sweep_summary']}", "",
                   "The saved sweep is a separate experiment; review the selected parameter, values and analysis "
                   "in **Parameter sweep…** before starting it.", "",
-                  f"**Physical scope:** {info['physical_scope']} {record['notes']}", ""]
+                  f"**Physical scope:** {info['physical_scope']} {notes}", ""]
         if record.get("transient"):
             transient = record["transient"]
             lines += [f"**Transient setup:** stop {_number(transient['stop_time'], 's')}; "
@@ -554,10 +694,16 @@ def write_markdown(records, output, markdown, examples):
         lines += ["Optional command-line run of the current project:", "", "```powershell",
                   rf".\.venv\Scripts\python.exe -m etlayout solve examples/{name}.etl --mode {record['mode']} --output results/{info['id']}",
                   "```", "", "</details>", ""]
+    reproduction = r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --use-cache"
+    if not full_catalog:
+        identifiers = " ".join(record["catalog"]["id"] for record in records)
+        reproduction = (r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --examples " + identifiers
+                        + " --output " + _relative(output, ROOT) + " --markdown " + _relative(markdown, ROOT)
+                        + " --use-cache --no-overview")
     lines += ["## Maintaining the gallery", "", "<details>", "<summary>Advanced: deterministic generation and reproduction</summary>", "",
               "The desktop walkthroughs above work with the existing projects. Maintainers can regenerate the "
               "scientific previews separately:", "", "```powershell",
-              r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --use-cache",
+              reproduction,
               r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --examples E11 E16 --output .artifacts/gallery-preview --markdown .artifacts/gallery-preview.md",
               "```", "", "The generator reads existing projects from `examples/` and creates missing ones. "
               "Its cache is reused only when the physics hash, solver version and source-code fingerprint match. "
@@ -599,10 +745,7 @@ def build_gallery(names, output, markdown, examples, cache_dir, *, use_cache=Fal
                 cache.with_suffix(".json").write_text(json.dumps({"physics_hash": physics_hash(project),
                     "source_fingerprint": fingerprint, "solver_version": __version__}, indent=2), encoding="utf-8")
         details = render_example(project, geometry, result, info, output / info.name)
-        terminals = [{"id": t.id, "kind": t.kind, "value": t.value, "layer": t.layer_id,
-                      "unit": "V" if t.kind in {"voltage", "ground", "gate"} else "A" if t.kind == "current" else ""}
-                     for t in project.terminals]
-        bias = "; ".join(f"{t['id']} {_number(t['value'], t['unit'])} ({t['kind']})" for t in terminals)
+        bias, terminals, ports = operating_point(project)
         sources = [{"id": h.id, "value": h.value, "kind": h.kind} for h in project.heat_sources]
         if sources:
             bias += "; prescribed heat: " + ", ".join(f"{h['id']} {_number(h['value'], 'W' if h['kind'] == 'total' else 'W/m²')}"
@@ -624,7 +767,7 @@ def build_gallery(names, output, markdown, examples, cache_dir, *, use_cache=Fal
                 waveform_summary.append(summary + " (target SI units).")
         record = {"name": info.name, "catalog": info.to_dict(), "mode": project.solver.mode,
                   "configuration_hash": configuration_hash(project), "physics_hash": physics_hash(project),
-                  "layout_sha256": project.layout.sha256, "bias_summary": bias, "terminals": terminals,
+                  "layout_sha256": project.layout.sha256, "bias_summary": bias, "terminals": terminals, "ports": ports,
                   "heat_sources": sources, "sweeps": sweeps, "sweep_summary": sweep_summary or "None.",
                   "transient": asdict(project.transient) if project.transient.enabled else None,
                   "waveform_summary": " ".join(waveform_summary),
@@ -637,6 +780,7 @@ def build_gallery(names, output, markdown, examples, cache_dir, *, use_cache=Fal
                 "solver_version": result.solver_version, "converged": result.converged,
                 "mesh_nodes": len(result.mesh.points), "mesh_triangles": len(result.mesh.triangles),
                 "metrics": _jsonable(result.metrics), "terminals": result.terminals,
+                "ports": _jsonable(result.analysis.get("ports", {})),
                 "diagnostics": [asdict(d) for d in result.diagnostics]}
         records.append(record)
         if info.level == "Advanced":

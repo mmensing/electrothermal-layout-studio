@@ -536,17 +536,22 @@ class GuidedWorkspace(QObject):
             "Export displayed field / region…": ("export_field", w.export_displayed_field),
             "Export map…": ("export_map", w.export_map), "Export report…": ("export_report", w.export_report),
         }
+        def register_examples(menu):
+            for action in list(menu.actions()):
+                if action.menu():
+                    register_examples(action.menu())
+                elif not action.isSeparator():
+                    name = action.text().split(" · ", 1)[0]
+                    self.register("example." + name, action.text(), lambda name=name: w.load_example(name),
+                                  menu, action=action)
+
         for menu in (file_menu, self.menus["Results"]):
             for action in list(menu.actions()):
                 if action.text() in file_commands:
                     key, callback = file_commands[action.text()]
                     self.register("file." + key, action.text(), callback, menu, action=action)
                 elif action.menu() and "examples" in action.text():
-                    for example in action.menu().actions():
-                        if not example.isSeparator():
-                            name = example.text().split(" · ", 1)[0]
-                            self.register("example." + name, example.text(), lambda name=name: w.load_example(name),
-                                          action.menu(), action=example)
+                    register_examples(action.menu())
         for key, label, fn, shortcut, action in (
             ("edit.undo", "Undo", w.undo, QKeySequence.StandardKey.Undo, w.undo_action),
             ("edit.redo", "Redo", w.redo, QKeySequence.StandardKey.Redo, w.redo_action),

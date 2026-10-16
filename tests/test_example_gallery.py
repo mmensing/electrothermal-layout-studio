@@ -125,3 +125,24 @@ def test_transient_gallery_discloses_time_waveform_and_uniform_scale(tmp_path):
     assert "maximum temperature at final time" in text and "peak over all time steps" in text
     svg = (output / "E17_pulsed_thermal.svg").read_text(encoding="utf-8")
     assert "2100 µs" in svg and "Uniform:" in svg
+
+@pytest.mark.parametrize("kind", ["extended", "introductory", "partial"])
+def test_actual_desktop_capture_is_scoped_to_the_extended_bridge_guide(kind, tmp_path):
+    root = _SCRIPT.parents[1]
+    manifest = root / "docs/example-gallery" / ("manifest.json" if kind == "introductory" else "extended/manifest.json")
+    records = json.loads(manifest.read_text(encoding="utf-8"))["examples"]
+    if kind == "partial":
+        records = [record for record in records if record["catalog"]["id"] == "E25"]
+    markdown = tmp_path / "guide.md"
+    gallery.write_markdown(records, manifest.parent, markdown, root / "examples")
+    text = markdown.read_text(encoding="utf-8")
+    screenshot = "extended-bridge-results.png"
+    assert (screenshot in text) == (kind == "extended")
+    if kind == "extended":
+        linked = next(target for target in re.findall(r"\]\(([^)]+)\)", text) if screenshot in target)
+        assert (markdown.parent / linked).resolve() == root / "docs/images" / screenshot
+        assert "0.4.0 source GUI on native Windows at 125% Qt scale" in text
+        assert "300 K backside" in text and "mesh verification is not established for this run" in text
+        assert "zero blockers and one electrically connected network" in text
+        assert "Do not add a direct Drain–Collector contact" in text
+        assert "rather than turning warnings off" in text
