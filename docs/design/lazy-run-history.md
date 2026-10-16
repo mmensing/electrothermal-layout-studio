@@ -36,6 +36,37 @@ to opening. OS storage caches were not flushed and there is one replicate, so no
 uncertainty interval or speedup is established. The prerequisite RFC records the
 Python/Qt/host configuration, varied-content/transient matrix and exact workload.
 
+## Current metadata-inspection measurements
+
+The bounded two-stage inspector was also measured on the unchanged original
+archives, in separate fresh processes with `np.load` blocked. It still reads the
+whole selected container and recursively inspects ZIP/NPZ headers; this is **not**
+a lazy reader or a claim of zero payload I/O. The inspected source is the bounded
+reader in commit `0d47bc1`; its resource module is unchanged in the subsequent
+widget-fixture-only commit.
+
+| Workload | Records | Stage-one inspection (s) | Sampled process-tree RSS (MiB) | Native runtime peak WS (MiB) |
+|---|---:|---:|---:|---:|
+| Shared E1 | 1 | 0.023 | 47.8 | 49.4 |
+| Shared E1 | 10 | 0.293 | 73.7 | 81.9 |
+| Shared E1 | 50 | 1.591 | 177.8 | 251.3 |
+| E19, 101 frames | 1 | 0.102 | 53.4 | 49.6 |
+| E19, 101 frames | 10 | 1.941 | 110.7 | 142.7 |
+| E19, 101 frames | 50 | 11.389 | 557.8 | 555.4 |
+
+One observation per row; OS filesystem caches were not flushed. The 10 ms sampled
+process tree includes launcher/import costs and can miss brief allocations. Native
+peak working set covers the runtime process and is a different measure, so neither
+column is substituted for the other. Each run stayed within a 3 GiB/120 s guard.
+The six metadata runs exclude geometry preparation and array materialization.
+They show why the future manifest/lease reader must avoid retaining and repeatedly
+decompressing complete nested history just to populate a list. They do not establish
+startup gains for a future implementation or a numerical performance improvement.
+
+A small-file regression test also bounds individual reads to 1 MiB while retaining
+the aggregate archive limit. An input byte limit must not itself become a temporary
+allocation of that size; measure allocations as well as on-disk archive bytes.
+
 ## Proposed explicit interfaces
 
 Keep `load_project(path, ...) -> (Project, SimulationResult | None)` and
