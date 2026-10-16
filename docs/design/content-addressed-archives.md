@@ -108,6 +108,19 @@ Fifty different operating points can have far less field reuse. Shared synthetic
 layouts are tiny (178-byte E1 GDS in this measurement); these data do not establish
 a general layout-heavy customer workload benefit.
 
+### Integration smoke after resource-review changes
+
+A later functional check used the integrated saving/resource-review candidate
+`4c51eb0`, including bounded chunked container reads. It copied the original
+solved input archives byte-for-byte and repeated shared E1 and full 101-frame
+E19 save/reopen checks with one and three total records. All four cases retained
+the checked array bytes, hashes, metrics, terminals and transient history.
+Actual RSS exhaustion, wall-time exhaustion and nonfinite budget controls failed
+as intended. This small compatibility check is separate from the original
+1/10/50-record performance table; that table was not regenerated on the later
+reader. A separate exact-file reader-allocation diagnostic is also not a new
+writer benchmark. Header inspection remains eager, not lazy history startup.
+
 ## Proposed representation
 
 Keep a self-contained ZIP and the `.etl` / `.etlayout` extensions. A versioned
