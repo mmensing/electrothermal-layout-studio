@@ -3,12 +3,12 @@
 from copy import deepcopy
 
 import pytest
-from gui_test_helpers import _answer_dialog, _fill, _idle
+from gui_test_helpers import _answer_dialog, _click, _fill, _idle
 from gui_test_helpers import guided_window as guided_window
 from gui_test_helpers import solved_e1 as solved_e1
 from PySide6.QtCore import QPointF, Qt, QTimer
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QDialogButtonBox, QTableWidgetItem
+from PySide6.QtWidgets import QApplication, QDialogButtonBox, QPushButton, QTableWidgetItem
 from shapely.geometry import box
 
 from etlayout.geometry.prepare import geometry_region, resolve_region
@@ -201,8 +201,17 @@ def test_background_geometry_failure_is_visible_and_opens_layout(guided_window, 
     assert window.geometry is None and 'Geometry preparation failed' in guided.last_error
     assert guided.drawer.currentIndex() == 0 and not guided.drawer.isHidden()
     messages = [guided.issue_table.item(row, 1).text() for row in range(guided.issue_table.rowCount())]
-    assert any('missing-maintenance.gds' in text for text in messages)
+    row = next(index for index, text in enumerate(messages) if 'Layout is missing.' in text)
+    assert 'Relink the source in the project editor.' in messages[row]
+    assert all('missing-maintenance.gds' not in text for text in messages)
+    assert 'missing-maintenance.gds' not in window.console.toPlainText()
     assert guided.last_error_stage == 'layout'
+    action = next(control for control in guided.issue_table.cellWidget(row, 3).findChildren(QPushButton)
+                  if control.text() == 'Open setup')
+    assert action.isEnabled()
+    guided.navigate('conditions')
+    _click(window, action)
+    assert guided.stage == 'layout'
 
 
 def test_pending_geometry_policy_is_independent_of_qt():
