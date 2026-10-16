@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import struct
 import zipfile
 from copy import deepcopy
 from pathlib import Path
@@ -164,7 +165,7 @@ def replace_typed_object(source, target, digest, changed):
             archive.writestr(name, data)
 
 
-@pytest.mark.parametrize('fault', ['configuration', 'configuration_hash', 'physics_hash'])
+@pytest.mark.parametrize('fault', ['configuration', 'configuration_hash', 'physics_hash', 'different_physics'])
 def test_shared_transient_configuration_checked_once_but_forged_frame_rejected(tmp_path, monkeypatch, fault):
     legacy = Path(__file__).parent / 'fixtures/legacy_transient_e18.etl'
     project, result = project_io.load_project(legacy)
@@ -181,12 +182,25 @@ def test_shared_transient_configuration_checked_once_but_forged_frame_rejected(t
         descriptor = reader._descriptor(reader.current_run_id)
         reference = descriptor['transient']['frames'][1]['metadata']['$ref']
         changed = deepcopy(reader._json_objects[reference])
-        if fault == 'configuration':
+        if fault in {'configuration', 'different_physics'}:
             configuration = next(pair for pair in changed['value']['items'] if pair[0] == 'configuration')
             original_ref = configuration[1]['object']['$ref']
             configuration[1] = deepcopy(reader._json_objects[original_ref]['value'])
-            name = next(pair for pair in configuration[1]['items'] if pair[0] == 'name')
-            name[1] = 'different content claiming the original configuration hash'
+            if fault == 'configuration':
+                name = next(pair for pair in configuration[1]['items'] if pair[0] == 'name')
+                name[1] = 'different content claiming the original configuration hash'
+            else:
+                # Self-consistent alternate physics is still not a frame of
+                # this run or mesh. Rehashing does not establish provenance.
+                alternate = deepcopy(result.transient.snapshots[1].configuration)
+                alternate['solver']['initial_temperature'] += 1.
+                solver = next(pair for pair in configuration[1]['items'] if pair[0] == 'solver')[1]
+                temperature = next(pair for pair in solver['items'] if pair[0] == 'initial_temperature')
+                temperature[1] = {'type': 'float64', 'bits': struct.pack('>d', alternate['solver']['initial_temperature']).hex()}
+                for key, expected in [('configuration_hash', original(alternate)),
+                                      ('physics_hash', project_io.physics_hash(alternate, resolve_layout=False))]:
+                    claim = next(pair for pair in changed['value']['items'] if pair[0] == key)
+                    claim[1] = expected
         else:
             claim = next(pair for pair in changed['value']['items'] if pair[0] == fault)
             claim[1] = 'f' * 64
@@ -194,7 +208,9 @@ def test_shared_transient_configuration_checked_once_but_forged_frame_rejected(t
     replace_typed_object(source, target, reference, changed)
     with ArchiveV3Reader(target) as reader:
         assert not reader.records[0]['available']
-        expected = 'physics hash does not match' if fault == 'physics_hash' else 'configuration content does not match its hash'
+        expected = ('Transient frame configuration differs from its run setup' if fault == 'different_physics'
+                    else 'physics hash does not match' if fault == 'physics_hash'
+                    else 'configuration content does not match its hash')
         assert expected in reader.records[0]['error']
 
 

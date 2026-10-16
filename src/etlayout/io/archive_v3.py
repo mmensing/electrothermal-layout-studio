@@ -373,6 +373,13 @@ def _describe(setup, value, collector, target, embed_layout):
     return saved, layout, collector.json(descriptor)
 
 
+def _relocate_result_layout(result, project):
+    """Resolve a copied configuration only to its own hash-identified source."""
+    layout = result.configuration.get("layout", {})
+    if layout.get("sha256") and layout["sha256"] == project.layout.sha256:
+        layout["path"] = project.layout.path
+
+
 class ArchiveV3Reader:
     """Metadata-first object graph; explicit array reads have independent ZIP streams.
 
@@ -743,8 +750,8 @@ class ArchiveV3Reader:
             raise SimulationError("Missing or unsupported run descriptor")
         if set(value) != {"run_codec", "project", "layout", "mesh", "metadata", *_GROUPS, "transient"} or not isinstance(value["mesh"], dict):
             raise SimulationError("Invalid run descriptor structure")
-        from etlayout.io.project import project_from_dict
-        project_from_dict(value["project"])
+        from etlayout.io.project import physics_hash, project_from_dict
+        project = project_from_dict(value["project"])
         if set(value["mesh"]) != {"points", "triangles", "statistics", *_MESH_GROUPS}:
             raise SimulationError("Incomplete stored mesh descriptor")
         for name in ("points", "triangles"):
@@ -774,8 +781,13 @@ class ArchiveV3Reader:
             time_info = self.array_info(transient["times"]["$ref"])
             if time_info["shape"] != [len(transient["frames"])] or np.dtype(time_info["dtype"]).kind not in "fiu":
                 raise SimulationError("Stored transient time support disagrees with its frame count")
+            parent_physics = physics_hash(project, resolve_layout=False)
             for frame in transient["frames"]:
-                self._check_fields(frame)
+                frame_metadata = self._check_fields(frame)
+                configuration = frame_metadata["configuration"]
+                if (configuration and
+                        self._checked_configurations[id(configuration)][2] != parent_physics):
+                    raise SimulationError("Transient frame configuration differs from its run setup")
         self._check_summary(record["summary"], details, value)
         self._checked_descriptors[digest] = (value, details)
         self._checked_records.add(identity)
@@ -978,13 +990,16 @@ class ArchiveV3Reader:
                 raise SimulationError("Stored result configuration differs from its run setup")
         if not result.physics_hash:
             result.physics_hash = physics_hash(result.configuration or project, resolve_layout=False)
-        if resolve_sources and result.configuration.get("layout", {}).get("sha256"):
-            result.configuration["layout"]["path"] = project.layout.path
+        if resolve_sources:
+            _relocate_result_layout(result, project)
         transient = descriptor["transient"]
         if transient is not None:
             result.transient = TransientHistory(self._array(transient["times"], array_loader, cancel),
                 [self._result(frame, mesh, array_loader, cancel) for frame in transient["frames"]],
                 self._metadata(transient["rows"], array_loader, cancel), transient["completed"])
+            if resolve_sources:
+                for frame in result.transient.snapshots:
+                    _relocate_result_layout(frame, project)
             from etlayout.io.transient import validate_history
             validate_history(result, project)
             if not np.array_equal(result.transient.times, self._records[run_id]["summary"]["times_s"]):
@@ -1037,6 +1052,7 @@ class ArchiveV3Reader:
         recorded = result.metrics.get("time_s")
         if type(recorded) not in (int, float) or not math.isfinite(recorded) or abs(recorded - times[index]) > tolerance:
             raise SimulationError("Transient frame time disagrees with its stored index")
+        _relocate_result_layout(result, project)
         result._stored_frame_time = times[index]
         return result
 

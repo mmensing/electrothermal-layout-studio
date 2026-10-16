@@ -525,3 +525,50 @@ def test_source_extension_aliases_share_payload_and_keep_source_hash(specimen, t
     assert reopened.layout.sha256 == project.layout.sha256
     assert current.configuration_hash == history[0].configuration_hash == result.configuration_hash
     assert LayoutDocument(reopened.layout.path).top_cells == ["TOP"]
+
+
+def test_portable_transient_frames_resolve_their_embedded_layout_after_original_deletion(tmp_path):
+    from etlayout.io.archive_v3 import _relocate_result_layout
+
+    legacy = Path(__file__).parent / 'fixtures' / 'legacy_transient_e18.etl'
+    project, expected = project_io.load_project(legacy)
+    original = tmp_path / ('owned-import' + Path(project.layout.path).suffix)
+    original.write_bytes(Path(project.layout.path).read_bytes())
+    raw_sha = project_io.file_hash(original)
+    project.layout.path = str(original)
+    for result in [expected, *expected.transient.snapshots]:
+        result.configuration['layout']['path'] = str(original)
+    identifiers = expected.configuration_hash, expected.physics_hash
+    target = tmp_path / 'portable.etlayout'
+    project_io.save_project(project, target, expected, history=[expected], archive_format=3)
+    with ArchiveV3Reader(target) as reader:
+        storage_ids = [record['id'] for record in reader.records]
+    original.unlink()  # Only the test-owned imported source is removed.
+    assert not original.exists()
+    with ArchiveV3Reader(target) as reader:
+        for record in reader.records:
+            frame = reader.frame(record['id'], 0)
+            path = Path(frame.configuration['layout']['path'])
+            assert path != original and path.is_file() and project_io.file_hash(path) == raw_sha
+            assert frame.configuration['layout']['sha256'] == raw_sha
+            assert (frame.configuration_hash, frame.physics_hash) == identifiers
+            assert project_io.configuration_hash(frame.configuration) == frame.configuration_hash
+            assert project_io.physics_hash(frame.configuration, resolve_layout=False) == frame.physics_hash
+            np.testing.assert_array_equal(frame.fields['metal']['temperature'], expected.transient.snapshots[0].fields['metal']['temperature'])
+        assert [record['id'] for record in reader.records] == storage_ids
+    reopened, current = project_io.load_project(target)
+    historical = project_io.load_run_history(target)
+    assert document_id(reopened) == document_id(project)
+    assert [current._storage_run_id, historical[0]._storage_run_id] == storage_ids
+    for result in [current, *historical]:
+        assert (result.configuration_hash, result.physics_hash) == identifiers
+        for frame in result.transient.snapshots:
+            assert frame.configuration['layout']['path'] == reopened.layout.path
+            assert project_io.file_hash(frame.configuration['layout']['path']) == raw_sha
+            assert (frame.configuration_hash, frame.physics_hash) == identifiers
+    # Normalization cannot bind another source, or invent a missing raw identity.
+    for sha in ['', 'f' * 64]:
+        frame = deepcopy(expected.transient.snapshots[0])
+        frame.configuration['layout'].update(path='original-unresolved-source', sha256=sha)
+        _relocate_result_layout(frame, reopened)
+        assert frame.configuration['layout']['path'] == 'original-unresolved-source'
