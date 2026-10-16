@@ -242,3 +242,23 @@ def test_explicit_parent_scope_authorizes_only_its_own_tree(tmp_path):
     with pytest.raises(ResourceAccessError) as error:
         load_project(path, external_policy=policy)
     assert error.value.reason == "outside-root"
+
+
+def test_current_metadata_review_is_a_pure_copy_with_original_resource_boundaries(tmp_path, monkeypatch):
+    path = metadata_file(tmp_path, "../private.gds")
+    inspection = inspect_project(path)
+    current = inspection.unresolved_project()
+    current.notes = "Keep this unsaved review note"
+    current._document_id = "9b3d9dd9-4f06-4fde-a966-90b3c3c5cac0"
+    calls = forbid_reference(monkeypatch, tmp_path / "private.gds")
+    reviewed = inspection.for_project(current)
+    assert calls == [] and reviewed.archive_data is inspection.archive_data
+    assert reviewed.project.notes == current.notes and inspection.project.notes == ""
+    assert reviewed.project._document_id == current._document_id
+    assert reviewed.metadata["document_id"] == current._document_id
+    assert not hasattr(reviewed.project, "_resource_unresolved")
+    assert not hasattr(reviewed.project, "_resource_inspection")
+    assert reviewed.resources == inspection.resources
+    assert not reviewed.discard_stale_result  # Notes do not change scientific identity.
+    current.solver.initial_temperature += 10.
+    assert inspection.for_project(current).discard_stale_result
