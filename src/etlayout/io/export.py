@@ -2,15 +2,20 @@
 """Configuration-linked numerical tables, VTU fields, plots and HTML reports."""
 from __future__ import annotations
 
-import csv
 import hashlib
-import html
-import re
 from pathlib import Path
 
 import numpy as np
 
 from etlayout.io.project import _json_dump, project_from_dict, save_project
+from etlayout.io.reporting import (
+    LIMITATIONS,
+    csv_dict_writer,
+    csv_writer,
+    prepare_report_context,
+    render_report,
+    safe_filename,
+)
 from etlayout.models import SimulationResult
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.formatting import distinct_labels
@@ -20,19 +25,8 @@ from etlayout.visualization.sampling import METRIC_UNITS as METRIC_UNITS
 from etlayout.visualization.support import display_limits, field_support, region_elements
 from etlayout.visualization.units import display_unit, to_display
 
-LIMITATIONS = (
-    "Thickness-averaged 2.5D sheets do not resolve full 3D thermal spreading or through-thickness gradients. "
-    "Semiconductors are resistive effective-medium models. The analytical HEMT law excludes drift diffusion, "
-    "velocity saturation, junctions, breakdown, trapping, gate leakage, and field-plate electrostatics. "
-    "Material seeds require process calibration. Peak current at ideal sharp corners is mesh-sensitive."
-)
-
-
-def _safe(name):
-    value = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(name))[:100].strip(". ") or "layer"
-    reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
-                *(f"LPT{i}" for i in range(1, 10))}
-    return "_" + value if value.split(".")[0].upper() in reserved else value
+# Compatibility aliases retained for existing Python callers.
+_safe = safe_filename
 
 
 def _filenames(specifications):
@@ -197,7 +191,7 @@ def export_profile(profile: dict, path: str | Path):
     target = Path(path)
     sampled_values = np.asarray(profile["value"], dtype=float)
     with target.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["distance_m", "x_m", "y_m", f"{profile['field']} [{profile.get('unit','')}]", "configuration_hash"])
         for d, x, y, value in zip(profile["distance_m"], profile["x_m"], profile["y_m"], sampled_values, strict=True):
             writer.writerow([d, x, y, value if np.isfinite(value) else "", profile.get("configuration_hash", "")])
@@ -228,8 +222,9 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
     if any(layer not in result.fields for layer in selected_layers):
         raise ValueError("An export layer is not present in this result")
     selected_layers = list(dict.fromkeys(selected_layers))
-    provenance = dict(provenance or result.configuration.get("visualization", {}))
-    difference = provenance.get("kind") == "difference"
+    context = prepare_report_context(result, provenance=provenance)
+    provenance = context.provenance
+    difference = context.difference
     metrics = {} if difference else result.metrics
     terminals = {} if difference else result.terminals
     selection = {"layers": selected_layers, "field": field, "region": region, "colormap": colormap,
@@ -268,14 +263,14 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
                 "archive_scope": "derived difference arrays only" if difference else "full source result"}
     (root / "results.json").write_text(_json_dump(metadata), encoding="utf-8")
     with (root / "metrics.csv").open("w", newline="", encoding="utf-8-sig") as stream:
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["metric", "value", "unit", "configuration_hash"])
         for name, value in metrics.items():
             if isinstance(value, (float, int, str, bool)):
                 writer.writerow([name, value, metric_unit(name), result.configuration_hash])
     with (root / "terminals.csv").open("w", newline="", encoding="utf-8-sig") as stream:
         keys = sorted({k for terminal in terminals.values() for k in terminal})
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["terminal"] + keys)
         for name, values in terminals.items():
             writer.writerow([name] + [values.get(k, "") for k in keys])
@@ -328,13 +323,13 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
                 difference_arrays[array_key] = selected_values
                 layer_manifest["fields"][key]["array_key"] = array_key
         with (root / filenames[layer, "nodes"]).open("w", newline="", encoding="utf-8-sig") as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             writer.writerow(["node", "x_m", "y_m", "z_m", "element", "local_vertex"] + [f"{k} [{FIELD_UNITS.get(k,'')}]" for k in nodes])
             for element in ids:
                 for vertex, node in enumerate(result.mesh.triangles[element]):
                     writer.writerow([node, *coordinates[node], element, vertex] + [values[element, vertex] for values in nodes.values()])
         with (root / filenames[layer, "elements"]).open("w", newline="", encoding="utf-8-sig") as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             element_fields, element_units = {}, {}
             for key, value in values.items():
                 if key in nodes:
@@ -383,49 +378,11 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
         if plots:
             image_files.append("transient_history.png")
     (root / "manifest.json").write_text(_json_dump(manifest), encoding="utf-8")
-    title = result.configuration.get("name", "Electrothermal simulation")
-    rows = []
-    for name, value in metrics.items():
-        if isinstance(value, (float, int)):
-            unit = metric_unit(name)
-            rows.append(f"<tr><td>{html.escape(name.replace('_', ' '))}</td><td>{to_display(value, unit):.6g}</td>"
-                        f"<td>{html.escape(display_unit(unit))}</td></tr>")
-    warnings_html = "".join(f"<li>{html.escape(d.severity + ': ' + d.message)}</li>" for d in result.diagnostics)
-    status = "Converged" if result.converged else "NOT CONVERGED — diagnostic output only"
-    if result.transient is not None:
-        status += f" · transient fields at t = {result.transient.times[-1]:.9g} s; complete history in simulation.etl"
-    elif "time_s" in result.metrics:
-        status += f" · selected snapshot at t = {result.metrics['time_s']:.9g} s"
-    if difference:
-        status = "Derived difference: current − comparison on common finite support"
-        from etlayout.visualization.timing import difference_time_label
-        timing = difference_time_label(provenance)
-        if timing:
-            status += " · " + timing
-        if not result.converged:
-            status += " · NOT CONVERGED source — diagnostic output only"
-    if provenance.get("transient_completed") is False:
-        status += " · snapshot from incomplete transient run"
     scope = ("Derived difference arrays are saved in difference-fields.npz. Original solver metrics and terminal quantities do not describe this difference and are omitted."
              if difference else "simulation.etl contains the full source result, including fields outside the exported selection.")
-    provenance_html = ("<h2>Paired-run provenance</h2><pre>" + html.escape(_json_dump(provenance)) + "</pre>"
-                       if provenance else "")
-    document = f"""<!doctype html><html lang="en"><meta charset="utf-8"><title>{html.escape(title)}</title>
-<style>body{{font:15px/1.5 Arial,sans-serif;color:#111;max-width:1000px;margin:48px auto;padding:0 24px}}
-h1,h2{{font-weight:600}}table{{border-collapse:collapse;width:100%}}td,th{{padding:7px 12px;border-bottom:1px solid #ddd;text-align:left}}
-td:nth-child(2){{text-align:right;font-variant-numeric:tabular-nums}}img{{width:48%;height:auto}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}}
-.status{{color:{'#1F6F5F' if result.converged else '#B5473C'}}}</style>
-<h1>{html.escape(title)}</h1><p class="status">{status}</p>
-<p>Solver {result.solver_version} · elapsed {result.elapsed_seconds:.3g} s · {len(result.mesh.points):,} mesh nodes · {len(result.mesh.triangles):,} triangles</p>
-<p>Configuration SHA-256: <code>{result.configuration_hash}</code></p>
-<p>{scope}</p><p>Export scope: {html.escape(selection['scope'])} · palette: {html.escape(colormap)} · {'logarithmic' if logarithmic else 'linear'} scale</p>{provenance_html}
-<h2>Results and conservation</h2><table><tr><th>Metric</th><th>Value</th><th>Unit</th></tr>{''.join(rows)}</table>
-<h2>Field maps</h2>{''.join(f'<img src="{x}" alt="{html.escape(x)}">' for x in image_files)}
-<h2>Diagnostics</h2><ul>{warnings_html or '<li>No additional diagnostics</li>'}</ul>
-<h2>Model limitations</h2><p>{LIMITATIONS}</p>
-<h2>Reproducible setup</h2><p>Configuration and export selection are captured below; manifest.json maps original layer and field IDs to their files.</p>
-<details><summary>Configuration and convergence history</summary><pre>{html.escape(_json_dump(metadata))}</pre></details>
-<p>Field values are deterministic results of this discretization. No experimental uncertainty has been estimated.</p></html>"""
+    # Embed generated PNGs so the HTML remains portable and CSP needs no file/network access.
+    images = [(root.joinpath(filename).read_bytes(), filename) for filename in image_files]
+    document = render_report(context, images=images, selection=selection, metadata=metadata, scope=scope)
     (root / "report.html").write_text(document, encoding="utf-8")
     return root / "report.html"
 
@@ -454,7 +411,7 @@ def export_study(rows, directory: str | Path, parameter: str = "parameter"):
     (root / "study.json").write_text(_json_dump(records), encoding="utf-8")
     keys = list(dict.fromkeys([parameter, "requested_value", "applied_value", "converged", "error"] + metrics + ["configuration_hash"]))
     with (root / "study.csv").open("w", newline="", encoding="utf-8-sig") as stream:
-        writer = csv.DictWriter(stream, keys)
+        writer = csv_dict_writer(stream, keys)
         writer.writeheader()
         writer.writerows(records)
     _style()
