@@ -72,7 +72,7 @@ walkthroughs](docs/examples.md) explain how to reach and interpret these views.
 ## Your first GUI calculation
 
 After installation, launch the application and choose **File → Ready-to-run
-examples → E1 · Straight conductor**. Its configuration is already complete.
+examples → Fundamentals → E1 · Straight conductor**. Its configuration is already complete.
 
 1. Select **DC electrical** in the header. Visit **Layers & Materials** and
    **Contacts & Connections** to see the copper strip and its two terminals.

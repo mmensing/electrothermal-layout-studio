@@ -9,7 +9,7 @@ using the [README instructions](../../README.md#start-from-source-on-windows).
 ## Open the experiment
 
 Launch the desktop after the one-time installation, then select **File →
-Ready-to-run examples → E1 · Straight conductor**. The project already contains the
+Ready-to-run examples → Fundamentals → E1 · Straight conductor**. The project already contains the
 layout, copper material snapshot, physical layer and terminal conditions. No
 scripting or JSON editing is needed.
 
