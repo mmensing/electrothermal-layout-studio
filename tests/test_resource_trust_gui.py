@@ -5,8 +5,9 @@ import json
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog
+from PySide6.QtCore import QCoreApplication, QEvent, Qt, QThread
+from PySide6.QtWidgets import QApplication, QDialog
+from shiboken6 import isValid
 
 from etlayout.examples import make_example
 from etlayout.gui.resources import ResourceReviewDialog, open_reviewed_project
@@ -14,6 +15,52 @@ from etlayout.io.project import physics_hash, save_project
 from etlayout.io.resources import inspect_project
 
 pytestmark = pytest.mark.desktop
+
+
+def _idle(window, qtbot):
+    from etlayout.gui.jobs import ComputeJob
+
+    def stopped():
+        if (window.prepare_job or window.job or window.hierarchy_jobs or window.hierarchy_queue
+                or getattr(window, "save_job", None) or getattr(window, "_save_queue", ())):
+            return False
+        for job in window.findChildren(ComputeJob):
+            receiver = getattr(job, "_receiver", None)
+            if not job.done or job.process.is_alive() or (receiver and receiver.is_alive()):
+                return False
+        return all(not thread.isRunning() for thread in window.findChildren(QThread))
+
+    qtbot.waitUntil(stopped, timeout=30000)
+    QApplication.processEvents()
+
+
+@pytest.fixture
+def own_widget(qtbot):
+    """One explicit owner closes widgets only after their real workers finish."""
+    from etlayout.gui.main_window import MainWindow
+
+    owned = []
+
+    def own(widget):
+        assert widget.parent() is None
+        owned.append((widget, widget.confirm_discard if isinstance(widget, MainWindow) else None))
+        return widget
+
+    yield own
+    for widget, confirm_discard in reversed(owned):
+        if isinstance(widget, MainWindow):
+            widget.autosave_timer.stop()
+            _idle(widget, qtbot)
+            widget.guided.discard_draft()
+            if widget.inspection_context:
+                widget.inspection_context["dirty"] = False
+            widget.dirty = False
+            widget.confirm_discard = confirm_discard
+        assert widget.close()
+        widget.deleteLater()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        QApplication.processEvents()
+        assert not isValid(widget)
 
 
 def external_metadata(tmp_path):
@@ -25,10 +72,9 @@ def external_metadata(tmp_path):
     return path
 
 
-def test_dialog_grants_are_per_resource_with_separate_network_opt_in(qtbot, tmp_path):
+def test_dialog_grants_are_per_resource_with_separate_network_opt_in(own_widget, tmp_path):
     inspection = inspect_project(external_metadata(tmp_path))
-    dialog = ResourceReviewDialog(inspection)
-    qtbot.addWidget(dialog)
+    dialog = own_widget(ResourceReviewDialog(inspection))
     assert not dialog.network.isChecked()
     assert dialog.table.item(0, 0).checkState() == Qt.CheckState.Unchecked
     dialog.table.item(0, 0).setCheckState(Qt.CheckState.Checked)
@@ -39,12 +85,13 @@ def test_dialog_grants_are_per_resource_with_separate_network_opt_in(qtbot, tmp_
     assert dialog.policy().allow_network
 
 
-def test_unresolved_open_preserves_metadata_and_blocks_preparation(qtbot, tmp_path, monkeypatch):
+def test_unresolved_open_preserves_metadata_and_blocks_preparation(own_widget, tmp_path, monkeypatch):
     from etlayout.gui.main_window import MainWindow
 
     path = external_metadata(tmp_path)
 
     def leave_unresolved(dialog):
+        own_widget(dialog)
         dialog.action = "unresolved"
         return QDialog.DialogCode.Accepted
 
@@ -54,8 +101,7 @@ def test_unresolved_open_preserves_metadata_and_blocks_preparation(qtbot, tmp_pa
     assert result is None and project._resource_unresolved
     assert project.layers and project.terminals
     original_hash = physics_hash(project)
-    window = MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3")
-    qtbot.addWidget(window)
+    window = own_widget(MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3"))
     window.autosave_timer.stop()
     window.recovery_path = tmp_path / "owned-recovery.etl"
     assert window.prepare_job is None
@@ -66,25 +112,26 @@ def test_unresolved_open_preserves_metadata_and_blocks_preparation(qtbot, tmp_pa
     window.changed(geometry=False)
     assert window.project.notes and physics_hash(window.project) == original_hash
     assert window.prepare_job is None
-    window.dirty = False
-    window.close()
 
 
-def test_cancelled_review_keeps_existing_document(qtbot, tmp_path, monkeypatch):
+def test_cancelled_review_keeps_existing_document(own_widget, tmp_path, monkeypatch):
     from etlayout.gui.main_window import MainWindow
 
     path = external_metadata(tmp_path)
-    monkeypatch.setattr(ResourceReviewDialog, "exec", lambda dialog: QDialog.DialogCode.Rejected)
+    def reject(dialog):
+        if dialog.parent() is None:
+            own_widget(dialog)
+        return QDialog.DialogCode.Rejected
+
+    monkeypatch.setattr(ResourceReviewDialog, "exec", reject)
     assert open_reviewed_project(path) is None
-    window = MainWindow(recover=False, database_path=tmp_path / "materials.sqlite3")
-    qtbot.addWidget(window)
+    window = own_widget(MainWindow(recover=False, database_path=tmp_path / "materials.sqlite3"))
     window.autosave_timer.stop()
     window.recovery_path = tmp_path / "owned-recovery.etl"
     original = window.project
     monkeypatch.setattr(window, "error", lambda *args: None)
     window.open_project(path)
     assert window.project is original and not window.dirty
-    window.close()
 
 
 def test_relink_is_explicit_and_does_not_mutate_original_metadata(tmp_path):
@@ -114,7 +161,7 @@ def resolved_reference(tmp_path_factory):
 
 @pytest.mark.parametrize("physical_edit", [False, True], ids=["notes-only", "physical-setting"])
 def test_review_authorizes_current_edits_against_held_archive(
-    qtbot, tmp_path, monkeypatch, resolved_reference, physical_edit
+    own_widget, qtbot, tmp_path, monkeypatch, resolved_reference, physical_edit
 ):
     from etlayout.gui.main_window import MainWindow
 
@@ -124,8 +171,7 @@ def test_review_authorizes_current_edits_against_held_archive(
     inspection = inspect_project(path)
     original_bytes = inspection.archive_data
     project = inspection.unresolved_project()
-    window = MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3")
-    qtbot.addWidget(window, before_close_func=lambda widget: setattr(widget, "dirty", False))
+    window = own_widget(MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3"))
     window.autosave_timer.stop()
     window.recovery_path = tmp_path / "owned-recovery.etl"
     window.path = path
@@ -150,7 +196,7 @@ def test_review_authorizes_current_edits_against_held_archive(
 
     monkeypatch.setattr(ResourceReviewDialog, "exec", authorize)
     window.review_project_resources()
-    qtbot.waitUntil(lambda: window.prepare_job is None, timeout=30000)
+    _idle(window, qtbot)
     assert errors == []
     assert window.project.notes == edited["notes"] and window.dirty
     assert window.project.layers[0].thickness == edited["layers"][0]["thickness"]
@@ -165,18 +211,14 @@ def test_review_authorizes_current_edits_against_held_archive(
         assert window.result is not None
         assert window.result.configuration_hash == original_result.configuration_hash
         assert window.result.physics_hash == original_result.physics_hash
-    monkeypatch.setattr(window, "confirm_discard", lambda *args, **kwargs: True)
-    window.dirty = False
-    window.close()
 
 
-def test_cancel_same_document_review_keeps_unsaved_edits_and_context(qtbot, tmp_path, monkeypatch):
+def test_cancel_same_document_review_keeps_unsaved_edits_and_context(own_widget, tmp_path, monkeypatch):
     from etlayout.gui.main_window import MainWindow
 
     inspection = inspect_project(external_metadata(tmp_path))
     project = inspection.unresolved_project()
-    window = MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3")
-    qtbot.addWidget(window, before_close_func=lambda widget: setattr(widget, "dirty", False))
+    window = own_widget(MainWindow(project, recover=False, database_path=tmp_path / "materials.sqlite3"))
     window.autosave_timer.stop()
     window.recovery_path = tmp_path / "owned-recovery.etl"
     window.before_edit()
@@ -191,6 +233,3 @@ def test_cancel_same_document_review_keeps_unsaved_edits_and_context(qtbot, tmp_
     assert window.project._resource_inspection is inspection and window.prepare_job is None
     assert window.capture_view_state() == view and window.undo_history == undo
     assert window.result is None and window.inspection_context is None
-    monkeypatch.setattr(window, "confirm_discard", lambda *args, **kwargs: True)
-    window.dirty = False
-    window.close()
