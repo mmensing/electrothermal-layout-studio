@@ -113,7 +113,91 @@ def code_fingerprint():
             if path.suffix in {".py", ".spec", ".lock", ".toml"}}
 
 
-def native_build_profile(library, descriptor, *, python_library=None):
+BOOTLOADER_MAX_BYTES = 32 * 1024**2
+
+
+def bootloader_properties(data):
+    """Bind executable code and direct imports without executing PE content."""
+    import pefile
+
+    if not isinstance(data, bytes) or not 0 < len(data) <= BOOTLOADER_MAX_BYTES:
+        raise ValueError("Bootloader PE exceeds its finite inspection budget")
+    try:
+        pe = pefile.PE(data=data, fast_load=True)
+    except pefile.PEFormatError as error:
+        raise ValueError("Invalid bootloader PE") from error
+    try:
+        if pe.FILE_HEADER.Machine != 0x8664 or not 1 <= len(pe.sections) <= 96:
+            raise ValueError("Bootloader must be a bounded x64 PE")
+        sections = [section for section in pe.sections if section.Name.rstrip(b"\0") == b".text"]
+        if (len(sections) != 1 or not 0 < sections[0].SizeOfRawData <= len(data)
+                or sections[0].PointerToRawData + sections[0].SizeOfRawData > len(data)):
+            raise ValueError("Bootloader executable section is missing or exceeds its file")
+        text = sections[0].get_data()
+        if len(text) != sections[0].SizeOfRawData:
+            raise ValueError("Truncated bootloader executable section")
+        pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"]])
+        entries = getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
+        signature = []
+        if not entries or len(entries) > 128:
+            raise ValueError("Bootloader direct imports are missing or oversized")
+        for entry in entries:
+            if not 0 < len(entry.imports) <= 8192:
+                raise ValueError("Bootloader import-symbol budget exceeded")
+            signature.append({"dll": entry.dll.decode("ascii").casefold(),
+                              "symbols": sorted((symbol.name.decode("ascii") if symbol.name else
+                                                  "#" + str(symbol.ordinal)) for symbol in entry.imports)})
+        signature.sort(key=lambda row: row["dll"])
+        if len({row["dll"] for row in signature}) != len(signature):
+            raise ValueError("Duplicate bootloader import DLL")
+        return {"text_section_sha256": hashlib.sha256(text).hexdigest(),
+                "text_section_bytes": len(text),
+                "imports": [row["dll"] for row in signature],
+                "direct_import_signature_sha256": hashlib.sha256(json.dumps(
+                    signature, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+    except pefile.PEFormatError as error:
+        raise ValueError("Invalid bootloader import data") from error
+    finally:
+        pe.close()
+
+
+def verify_frozen_bootloader(data, record):
+    """Resources and appended PYZ may change; code/direct imports must match."""
+    actual = bootloader_properties(data)
+    if any(record.get(name) != value for name, value in actual.items()):
+        raise ValueError("Frozen executable code/imports differ from the audited bootloader")
+    return actual
+
+
+def installed_bootloader_profile(catalog, proof, directory=None):
+    rows = catalog.get("compiled_bootloaders")
+    if (type(rows) is not list or len(rows) != 2 or not all(type(row) is dict for row in rows)
+            or {row.get("filename") for row in rows} != {"run.exe", "runw.exe"}
+            or proof.get("compiled_bootloaders") != rows):
+        raise ValueError("Exact paired audited bootloader evidence is required")
+    source_rows = {row["id"]: row for row in catalog["sources"]}
+    directory = Path(directory or metadata.distribution("pyinstaller").locate_file(
+        "PyInstaller/bootloader/Windows-64bit-intel"))
+    for row in rows:
+        path = directory / row["filename"]
+        recipe = ROOT / row["recipe"]
+        source = source_rows.get(row.get("source_id"), {})
+        if (row.get("version") != metadata.version("pyinstaller") or path.is_symlink() or path.is_junction()
+                or not path.is_file() or not 0 < path.stat().st_size <= BOOTLOADER_MAX_BYTES
+                or path.stat().st_size != row.get("bytes")
+                or not source or row.get("source_sha256") != source.get("sha256")
+                or recipe.is_symlink() or not recipe.resolve().is_relative_to(ROOT.resolve())
+                or not recipe.is_file() or sha256(recipe) != row.get("recipe_sha256")):
+            raise ValueError("Installed bootloader, source or recipe differs from the audited profile")
+        with path.open("rb") as stream:
+            data = stream.read(BOOTLOADER_MAX_BYTES + 1)
+        if len(data) != row["bytes"] or hashlib.sha256(data).hexdigest() != row.get("sha256"):
+            raise ValueError("Installed bootloader bytes differ from the audited profile")
+        verify_frozen_bootloader(data, row)
+    return rows
+
+
+def native_build_profile(library, descriptor, *, python_library=None, bootloader_directory=None):
     """Bind a release profile to reviewed source recipes and exact native bytes.
 
     A normal stock-wheel candidate remains useful locally. It is explicitly
@@ -140,9 +224,10 @@ def native_build_profile(library, descriptor, *, python_library=None):
             or library.name != gmsh[0]["filename"] or sha256(library) != gmsh[0]["sha256"]
             or not python_library.is_file() or sha256(python_library) != runtime["python312_dll_sha256"]):
         raise ValueError("Native library, Python runtime or build provenance differs from the audited profile")
+    bootloaders = installed_bootloader_profile(catalog, proof, bootloader_directory)
     # Copy only public catalog data. Private paths/build logs never enter a bundle.
     return {"schema_version": 1, "audited_source_profile": True,
-            "compiled_native": catalog["compiled_native"], "runtime_python": runtime,
+            "compiled_native": catalog["compiled_native"], "compiled_bootloaders": bootloaders, "runtime_python": runtime,
             "build_descriptor_sha256": sha256(descriptor),
             "source_catalog_sha256": sha256(ROOT / "packaging/third-party-sources.json")}
 
@@ -427,6 +512,17 @@ def main(argv=None):
         if (ROOT / filename).is_file():
             shutil.copy2(ROOT / filename, bundle / filename)
             shutil.copy2(ROOT / filename, bundle / "_internal" / filename)
+    if profile["audited_source_profile"]:
+        if native_build_profile(args.gmsh_library, args.native_build_manifest) != profile:
+            raise RuntimeError("Audited native build inputs changed during freezing")
+        for filename, bootloader in (("etlayout.exe", "run.exe"), ("ElectrothermalLayoutStudio.exe", "runw.exe")):
+            executable = bundle / filename
+            if executable.stat().st_size > BOOTLOADER_MAX_BYTES:
+                raise RuntimeError("Frozen executable exceeds its bootloader inspection budget")
+            with executable.open("rb") as stream:
+                data = stream.read(BOOTLOADER_MAX_BYTES + 1)
+            record = next(row for row in profile["compiled_bootloaders"] if row["filename"] == bootloader)
+            verify_frozen_bootloader(data, record)
     source = sorted(set(source_files()))
     require_source_snapshot(source_before)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True)

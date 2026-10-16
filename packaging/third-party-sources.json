@@ -8567,11 +8567,11 @@
       "id": "pyinstaller-6.22.3",
       "version": "6.22.3",
       "filename": "pyinstaller-6.22.3-etlayout-source.tar.gz",
-      "bytes": 3457770,
-      "sha256": "03e92d7b20f7f33a8be6a285a2ce96c46e628e987f8ec34f615c13de68a762d3",
+      "bytes": 3230381,
+      "sha256": "b0420ef2aff423e4719fd730056dc849e64e19918d2f1e24da27657490ab0f14",
       "url": null,
-      "license_expression": "GPL-2.0-or-later WITH Bootloader-exception",
-      "build_role": "build bootstrap source",
+      "license_expression": "(GPL-2.0-or-later WITH Bootloader-exception) AND Apache-2.0 AND Zlib",
+      "build_role": "Actual GCC-rebuilt Windows bootloader and frozen runtime helper preferred source; upstream Waf/C/zlib/manifests retained, unused vendor binaries omitted",
       "bundle_path": "archives/pyinstaller-6.22.3-etlayout-source.tar.gz",
       "upstream_input": {
         "filename": "pyinstaller-6.22.3.tar.gz",
@@ -8585,6 +8585,10 @@
         "input_sha256": "05eb2f5615503e72939a7224d68b4aff572c6b0438ee4a17d0a4b481f399362d",
         "input_filename": "pyinstaller-6.22.3.tar.gz",
         "omission_prefixes": [
+          "pyinstaller-6.22.3/PyInstaller/bootloader/Darwin-64bit/run",
+          "pyinstaller-6.22.3/PyInstaller/bootloader/Darwin-64bit/run_d",
+          "pyinstaller-6.22.3/PyInstaller/bootloader/Darwin-64bit/runw",
+          "pyinstaller-6.22.3/PyInstaller/bootloader/Darwin-64bit/runw_d",
           "pyinstaller-6.22.3/PyInstaller/bootloader/Windows-32bit-intel/run.exe",
           "pyinstaller-6.22.3/PyInstaller/bootloader/Windows-32bit-intel/run_d.exe",
           "pyinstaller-6.22.3/PyInstaller/bootloader/Windows-32bit-intel/runw.exe",
@@ -8616,7 +8620,43 @@
         "retained_regular_payloads": "unchanged",
         "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
         "change_record": "SOURCE_ARCHIVE_CHANGES.json"
-      }
+      },
+      "license_scope": "Bootloader C source retains GPL-2.0-or-later with its exact bootloader exception; runtime/bootstrap Python helpers use the upstream Apache-2.0 offer; actually compiled bundled zlib 1.3.2 retains its Zlib grant. Full original COPYING, per-file notices and supplemental zlib notice remain."
+    },
+    {
+      "id": "pyinstaller-hooks-contrib-2026.8",
+      "version": "2026.8",
+      "filename": "pyinstaller-hooks-contrib-2026.8-etlayout-source.tar.gz",
+      "bytes": 167479,
+      "sha256": "cebcdaca138c9c5f220fe1d858af94c4a11b370272a838e8b33bcb2d40b4c81d",
+      "url": null,
+      "license_expression": "GPL-2.0-or-later AND Apache-2.0",
+      "build_role": "Actual frozen pyi_rth_pyqtgraph_multiprocess runtime hook preferred source and collection-hook build inputs",
+      "bundle_path": "archives/pyinstaller-hooks-contrib-2026.8-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "pyinstaller_hooks_contrib-2026.8.tar.gz",
+        "bytes": 176955,
+        "sha256": "4d825786ad7a9b7dbcc52d612748a34562fe273461bcfd88f4d549c594bbf8f9",
+        "url": "https://files.pythonhosted.org/packages/c9/3b/fab1a12a21bf9223af012e5dd002b7d4265683d21d9fabbd0ccb347316e4/pyinstaller_hooks_contrib-2026.8.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "4d825786ad7a9b7dbcc52d612748a34562fe273461bcfd88f4d549c594bbf8f9",
+        "input_filename": "pyinstaller_hooks_contrib-2026.8.tar.gz",
+        "omission_prefixes": [],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": 0,
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      },
+      "license_scope": "Actual runtime hook under _pyinstaller_hooks_contrib/rthooks uses Apache-2.0; standard build collection hooks and other source files retain GPL-2.0-or-later. Full original aggregate license text remains."
     },
     {
       "id": "pyparsing-3.3.3",
@@ -9464,6 +9504,50 @@
       }
     },
     {
+      "id": "setuptools-84.0.0",
+      "version": "84.0.0",
+      "filename": "setuptools-84.0.0-etlayout-source.tar.gz",
+      "bytes": 1099821,
+      "sha256": "7cb5577f4c7a07b82f75560c5e26246f85584a33dee398f76c8e6528affeec4a",
+      "url": null,
+      "license_expression": "MIT AND Python-2.0 AND Apache-2.0 AND BSD-2-Clause AND LGPL-3.0-or-later",
+      "build_role": "Actual collected setuptools/_distutils_hack runtime source and complete vendored preferred source; optional source-only autocommand is LGPL-3.0-or-later, not collected runtime",
+      "bundle_path": "archives/setuptools-84.0.0-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "setuptools-84.0.0.tar.gz",
+        "bytes": 1168449,
+        "sha256": "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73",
+        "url": "https://files.pythonhosted.org/packages/6d/44/f5da03a8ef95d369145c5bb53050e7877c9f3d312e128605fd9504829143/setuptools-84.0.0.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73",
+        "input_filename": "setuptools-84.0.0.tar.gz",
+        "omission_prefixes": [
+          "setuptools-84.0.0/setuptools/cli-32.exe",
+          "setuptools-84.0.0/setuptools/cli-64.exe",
+          "setuptools-84.0.0/setuptools/cli-arm64.exe",
+          "setuptools-84.0.0/setuptools/cli.exe",
+          "setuptools-84.0.0/setuptools/gui-32.exe",
+          "setuptools-84.0.0/setuptools/gui-64.exe",
+          "setuptools-84.0.0/setuptools/gui-arm64.exe",
+          "setuptools-84.0.0/setuptools/gui.exe"
+        ],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": 0,
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      },
+      "license_scope": "Selected actual runtime subset: MIT AND Python-2.0 AND Apache-2.0 AND BSD-2-Clause. Full source also retains uncollected autocommand LGPL-3.0-or-later. Original CPython/distutils provenance and full historical Python notices remain; no relicensing of inherited code is claimed."
+    },
+    {
       "id": "shapely-2.2.0",
       "version": "2.2.0",
       "filename": "shapely-2.2.0-etlayout-source.tar.gz",
@@ -9676,6 +9760,76 @@
       }
     },
     {
+      "id": "typing-extensions-4.16.0",
+      "version": "4.16.0",
+      "filename": "typing-extensions-4.16.0-etlayout-source.tar.gz",
+      "bytes": 113410,
+      "sha256": "7af937bd4b27f5b5f985868a7f8ef7e447163b6f8357e133cda08f5c317db0a4",
+      "url": null,
+      "license_expression": "PSF-2.0",
+      "build_role": "Actual collected typing_extensions runtime preferred source",
+      "bundle_path": "archives/typing-extensions-4.16.0-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "typing_extensions-4.16.0.tar.gz",
+        "bytes": 113555,
+        "sha256": "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5",
+        "url": "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5",
+        "input_filename": "typing_extensions-4.16.0.tar.gz",
+        "omission_prefixes": [],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": 0,
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      }
+    },
+    {
+      "id": "wheel-0.48.0",
+      "version": "0.48.0",
+      "filename": "wheel-0.48.0-etlayout-source.tar.gz",
+      "bytes": 60052,
+      "sha256": "d791a5355633d506f1aa67a1835fcc8ff3d9b890f72c1c1f47e9286a8c371838",
+      "url": null,
+      "license_expression": "MIT",
+      "build_role": "Actual collected runtime wheel modules and preferred build/source inputs",
+      "bundle_path": "archives/wheel-0.48.0-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "wheel-0.48.0.tar.gz",
+        "bytes": 66471,
+        "sha256": "94800765601e9171bf5d58d066e640662842bcedcbab982b2c90787a2c987322",
+        "url": "https://files.pythonhosted.org/packages/d0/20/50ed6bdf27dec98b568a8ae25dc599f35baa3d9709f9e83fd1edb56b9a90/wheel-0.48.0.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "94800765601e9171bf5d58d066e640662842bcedcbab982b2c90787a2c987322",
+        "input_filename": "wheel-0.48.0.tar.gz",
+        "omission_prefixes": [
+          "wheel-0.48.0/tests/testdata/test-1.0-py2.py3-none-any.whl"
+        ],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": 0,
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      }
+    },
+    {
       "id": "zlib-ng-2.3.3",
       "version": "2.3.3",
       "filename": "zlib-ng-2.3.3-etlayout-source.tar.gz",
@@ -9851,11 +10005,15 @@
         "psutil-7.2.2",
         "pygments-2.21.0",
         "pyinstaller-6.22.3",
+        "pyinstaller-hooks-contrib-2026.8",
         "pyparsing-3.3.3",
         "rich-15.0.0",
+        "setuptools-84.0.0",
         "sheenbidi-3.0.0",
         "six-1.17.0",
         "tiff-4.7.1",
+        "typing-extensions-4.16.0",
+        "wheel-0.48.0",
         "zlib-ng-2.3.3"
       ]
     }
@@ -9866,24 +10024,32 @@
       "sha256": "c0f921bde83392969b1575b583f54f412a0b1b6ee196d12baafaf52125e97658"
     },
     {
-      "path": "packaging/source-recipes/gmsh-4.15.2/build-windows.ps1",
-      "sha256": "800a96eb873bc5ebe00b74afaf2d0fce3c97cb7c618597fce92b12d2f661b786"
-    },
-    {
       "path": "packaging/source-recipes/gmsh-4.15.2/README.md",
       "sha256": "864cc5b6eb1301714ceed7c80b5edbef339ad1715c5e02b22b98cfcd00d246ac"
     },
     {
-      "path": "packaging/source-recipes/klayout-0.30.12/configure_pthreads.py",
-      "sha256": "3564d986c7a8644c53767dfd51956a026ba5f53e9379e06b373414a794d058d3"
+      "path": "packaging/source-recipes/gmsh-4.15.2/build-windows.ps1",
+      "sha256": "800a96eb873bc5ebe00b74afaf2d0fce3c97cb7c618597fce92b12d2f661b786"
     },
     {
       "path": "packaging/source-recipes/klayout-0.30.12/README.md",
       "sha256": "8f565b65038a84820879de5084207dd8b6da05dcba9d63171c4ac4f9336e18f9"
     },
     {
+      "path": "packaging/source-recipes/klayout-0.30.12/configure_pthreads.py",
+      "sha256": "3564d986c7a8644c53767dfd51956a026ba5f53e9379e06b373414a794d058d3"
+    },
+    {
       "path": "packaging/source-recipes/normalize_source_archive.py",
       "sha256": "02f62cfe9ffcda25ee7aca3078d12cbe5b31e9ac570fc78fc128a1a59a9a1480"
+    },
+    {
+      "path": "packaging/source-recipes/pyinstaller-6.22.3/README.md",
+      "sha256": "b71833dce2cfb8990429a27de6838abe0b814b9ee66019267f6ab0af6be2d0bb"
+    },
+    {
+      "path": "packaging/source-recipes/pyinstaller-6.22.3/build-windows.ps1",
+      "sha256": "a7ccfb640536596cb961cd8b9a39e1ac22141094c96e7394a4f927d7dbd13ce1"
     },
     {
       "path": "packaging/source-recipes/source_archive_io.py",
@@ -9936,5 +10102,215 @@
     ],
     "verification_limit": "Original MSVC vendor wheels were not rebuilt; no vendor-byte reproducibility claim. Final frozen validation must verify separate GEOSDLL replacement and absence of runtime modification/reverseengineering restrictions.",
     "other_lgpl": "Gmsh Gmm preserves LGPL3-or-later with its GCC Runtime Library Exception3.1-or-later; full preferred source and tested Gmsh rebuild recipe are supplied. Qt/PySide/Shiboken instead select their offered GPL3-only route."
+  },
+  "compiled_bootloaders": [
+    {
+      "id": "pyinstaller-console",
+      "version": "6.22.3",
+      "filename": "run.exe",
+      "bytes": 187904,
+      "sha256": "268da085548496958bea5705e66b181bcaea1e9b3f1247acec7fa37e176e2d66",
+      "source_id": "pyinstaller-6.22.3",
+      "source_sha256": "b0420ef2aff423e4719fd730056dc849e64e19918d2f1e24da27657490ab0f14",
+      "recipe": "packaging/source-recipes/pyinstaller-6.22.3/build-windows.ps1",
+      "recipe_sha256": "a7ccfb640536596cb961cd8b9a39e1ac22141094c96e7394a4f927d7dbd13ce1",
+      "compiler": "gcc.exe (GCC) 16.2.0; w64devkit 2.10.1",
+      "runtimeflags": [
+        "-std=gnu17",
+        "-ffile-prefix-map={SOURCE}=pyinstaller-source",
+        "-fdebug-prefix-map={SOURCE}=pyinstaller-source",
+        "-fmacro-prefix-map={SOURCE}=pyinstaller-source",
+        "-static-libgcc",
+        "-Wl,--no-insert-timestamp"
+      ],
+      "text_section_sha256": "0857b5e7ec8e6559a504c374ca790a915ade50c497cfe39bef3c42651c5b2c3f",
+      "text_section_bytes": 136704,
+      "imports": [
+        "advapi32.dll",
+        "kernel32.dll",
+        "msvcrt.dll",
+        "user32.dll"
+      ],
+      "direct_import_signature_sha256": "5de9e6e6d3090d960563f31fcd35b4352636bdc4c5d5694326a5d558b609659c"
+    },
+    {
+      "id": "pyinstaller-windowed",
+      "version": "6.22.3",
+      "filename": "runw.exe",
+      "bytes": 191488,
+      "sha256": "c01e4c6fc4e67544f7a50cbecec2235f774165e735c30318b39e37c2b99669e7",
+      "source_id": "pyinstaller-6.22.3",
+      "source_sha256": "b0420ef2aff423e4719fd730056dc849e64e19918d2f1e24da27657490ab0f14",
+      "recipe": "packaging/source-recipes/pyinstaller-6.22.3/build-windows.ps1",
+      "recipe_sha256": "a7ccfb640536596cb961cd8b9a39e1ac22141094c96e7394a4f927d7dbd13ce1",
+      "compiler": "gcc.exe (GCC) 16.2.0; w64devkit 2.10.1",
+      "runtimeflags": [
+        "-std=gnu17",
+        "-ffile-prefix-map={SOURCE}=pyinstaller-source",
+        "-fdebug-prefix-map={SOURCE}=pyinstaller-source",
+        "-fmacro-prefix-map={SOURCE}=pyinstaller-source",
+        "-static-libgcc",
+        "-Wl,--no-insert-timestamp"
+      ],
+      "text_section_sha256": "57e7a01e0336ace3fe9914b2487a4b91793563e199e79b795f3ce24663d59c49",
+      "text_section_bytes": 138752,
+      "imports": [
+        "advapi32.dll",
+        "comctl32.dll",
+        "gdi32.dll",
+        "kernel32.dll",
+        "msvcrt.dll",
+        "user32.dll"
+      ],
+      "direct_import_signature_sha256": "381bca2d9b44644057cc7211470f01a6a642bbd14a441bca773b312ddefa7239"
+    }
+  ],
+  "python_module_sources": {
+    "PIL": [
+      "pillow-12.3.0"
+    ],
+    "PySide6": [
+      "pyside6-6.12.0"
+    ],
+    "_distutils_hack": [
+      "setuptools-84.0.0"
+    ],
+    "_pyi_rth_utils": [
+      "pyinstaller-6.22.3"
+    ],
+    "colorama": [
+      "colorama-0.4.6"
+    ],
+    "contourpy": [
+      "contourpy-1.4.0"
+    ],
+    "cycler": [
+      "cycler-0.12.1"
+    ],
+    "dateutil": [
+      "python-dateutil-2.9.0.post0"
+    ],
+    "etlayout": [
+      "application"
+    ],
+    "fontTools": [
+      "fonttools-4.66.1"
+    ],
+    "gmsh": [
+      "gmsh-4.15.2"
+    ],
+    "kiwisolver": [
+      "kiwisolver-1.5.1"
+    ],
+    "klayout": [
+      "klayout-0.30.12"
+    ],
+    "markdown_it": [
+      "markdown-it-py-4.2.0"
+    ],
+    "matplotlib": [
+      "matplotlib-3.11.2"
+    ],
+    "mdurl": [
+      "mdurl-0.1.2"
+    ],
+    "meshio": [
+      "meshio-5.3.5"
+    ],
+    "mpl_toolkits": [
+      "matplotlib-3.11.2"
+    ],
+    "numpy": [
+      "numpy-2.5.4"
+    ],
+    "packaging": [
+      "packaging-26.3"
+    ],
+    "platformdirs": [
+      "platformdirs-4.12.4"
+    ],
+    "psutil": [
+      "psutil-7.2.2"
+    ],
+    "pygments": [
+      "pygments-2.21.0"
+    ],
+    "pyparsing": [
+      "pyparsing-3.3.3"
+    ],
+    "pyqtgraph": [
+      "pyqtgraph-0.14.0"
+    ],
+    "rich": [
+      "rich-15.0.0"
+    ],
+    "scipy": [
+      "scipy-1.18.1"
+    ],
+    "setuptools": [
+      "setuptools-84.0.0"
+    ],
+    "shapely": [
+      "shapely-2.2.0"
+    ],
+    "shiboken6": [
+      "pyside6-6.12.0"
+    ],
+    "six": [
+      "six-1.17.0"
+    ],
+    "threadpoolctl": [
+      "threadpoolctl-3.7.0"
+    ],
+    "typing_extensions": [
+      "typing-extensions-4.16.0"
+    ],
+    "wheel": [
+      "wheel-0.48.0"
+    ]
+  },
+  "python_outer_module_sources": {
+    "frozen_entry": [
+      "application"
+    ],
+    "pyi_rth_inspect": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyi_rth_mplconfig": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyi_rth_multiprocessing": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyi_rth_pkgutil": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyi_rth_pyqtgraph_multiprocess": [
+      "pyinstaller-hooks-contrib-2026.8"
+    ],
+    "pyi_rth_pyside6": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyi_rth_setuptools": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyiboot01_bootstrap": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyimod01_archive": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyimod02_importers": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyimod03_ctypes": [
+      "pyinstaller-6.22.3"
+    ],
+    "pyimod04_pywin32": [
+      "pyinstaller-6.22.3"
+    ],
+    "struct": [
+      "cpython-3.12.14"
+    ]
   }
 }

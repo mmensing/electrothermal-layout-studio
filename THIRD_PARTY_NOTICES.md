@@ -32,8 +32,8 @@ gated per exact artifact by `packaging/binary-publication-policy.json`.
 | meshio / platformdirs | 5.3.5 / 4.12.4 | MIT | [meshio](https://github.com/nschloe/meshio), [platformdirs](https://github.com/tox-dev/platformdirs) |
 | threadpoolctl / psutil | 3.7.0 / 7.2.2 | BSD-3-Clause | [threadpoolctl](https://github.com/joblib/threadpoolctl), [psutil](https://github.com/giampaolo/psutil) |
 | CPython | 3.12.14 | Python-2.0 / PSF license history plus the exact build's SSL, compression, FFI, database and other component notices | [Source](https://www.python.org/downloads/source/) |
-| PyInstaller bootloader | 6.22.3 | GPL-2.0-or-later WITH Bootloader-exception. Build-tool source also includes Apache-2.0 parts | [License](https://pyinstaller.org/en/stable/license.html) |
-| GCC runtime / MinGW-w64 runtime | GCC 16.2.0 / MinGW-w64 14.0.0 for the source-built Gmsh | GPL-3.0-or-later WITH GCC-exception-3.1 for applicable GCC runtime files; MinGW runtime has its own permissive notices | [GCC exception](https://gcc.gnu.org/onlinedocs/libstdc++/manual/license.html), [MinGW-w64](https://www.mingw-w64.org/) |
+| PyInstaller bootloader | 6.22.3 | GPL-2.0-or-later WITH Bootloader-exception; bundled zlib is Zlib. Build-tool source also includes Apache-2.0 parts | [License](https://pyinstaller.org/en/stable/license.html) |
+| GCC runtime / MinGW-w64 runtime | GCC 16.2.0 / MinGW-w64 14.0.0 for source-built Gmsh and PyInstaller bootloaders | GPL-3.0-or-later WITH GCC-exception-3.1 for applicable GCC runtime files; MinGW runtime has its own permissive notices | [GCC exception](https://gcc.gnu.org/onlinedocs/libstdc++/manual/license.html), [MinGW-w64](https://www.mingw-w64.org/) |
 | Microsoft Visual C++ runtime | System prerequisite for the Windows package | Microsoft terms apply to the separately installed runtime. The publication build removes app-local redistributable copies; this is not an MPL component | [Runtime installation](https://learn.microsoft.com/cpp/windows/latest-supported-vc-redist) |
 
 ## Native components and build modifications
@@ -52,6 +52,12 @@ GCC Runtime Library Exception 3.1 and `GCC-runtime-notices.txt`, and the complet
 MinGW-w64 runtime notice. The compiler itself is a build tool, not an application
 runtime. The exception does not remove Gmsh's own GPL obligations.
 
+The Windows publication bootloaders are also built from the matching
+PyInstaller 6.22.3 C source with the recorded GNU toolchain. Their bundled
+zlib 1.3.2 inflate code retains Jean-loup Gailly and Mark Adler's complete
+grant in `PyInstaller-zlib-notice.txt`. Preserve that notice, the bootloader
+exception, GCC runtime exception and MinGW runtime notices together.
+
 Gmsh's general exception names Netgen, METIS, OpenCASCADE and ParaView; it is not
 a blanket permission to link arbitrary proprietary software. TetGen/BR has a
 Gmsh-specific relicensing notice. Blossom/Concorde has a separate permission for
@@ -64,7 +70,7 @@ The Windows publication build redirects four NumPy/GEOS consumers' private,
 hashed MSVC import names to their canonical system-runtime names and updates PE
 checksums. It preserves their code, import symbols and section layout; generated
 before/after hashes and patch instructions accompany the exact-source evidence.
-No Microsoft runtime binaries are redistributed in that package. Source-build
+No Microsoft runtime DLLs or installers are redistributed in that package. Source-build
 and frozen-runtime checks remain separate from clean-machine validation.
 
 For pyqtgraph, `packaging/publication_assets.py` creates a hash-checked copy of
@@ -104,6 +110,28 @@ its complete permissive grant and copyright are retained in the same notice
 file as `LicenseRef-Adobe-DEC-Courier`. `packaging/embedded-fonts.json` records
 both exact embedded payload sets. These add two font resources to the 40
 standalone TTF files; the bitmap descriptor/atlas are preserved in Pillow source.
+
+The frozen Python module inventory also includes Setuptools 84.0.0, wheel 0.48.0
+and typing_extensions 4.16.0; they are runtime contents even when also used as
+build tools. `Python-packaging-notices.txt` retains their grants and Setuptools
+vendor notices: backports.tarfile 1.2.0, importlib_metadata 8.7.1, jaraco.context
+6.1.0, jaraco.functools 4.4.0, jaraco.text 4.0.0, more_itertools 10.8.0, packaging
+26.0, tomli 2.4.0 and zipp 3.23.0. These differ from separately installed
+versions where recorded in the module/source inventory. The collected subset
+uses MIT, Apache 2.0, BSD 2-Clause and inherited Python terms; typing_extensions
+uses PSF-2.0. Distutils' CPython provenance and original Python notices remain.
+The supplied full Setuptools source additionally includes uncollected autocommand
+2.2.2 under LGPL-3.0-or-later; a package-level MIT declaration does not replace
+that grant. Complete preferred source and unmodified vendor license texts are
+supplied separately from binary module-presence evidence.
+
+The collected `pyi_rth_pyqtgraph_multiprocess` runtime hook comes from
+pyinstaller-hooks-contrib 2026.8 and is Apache-2.0, copyright (c) 2022
+PyInstaller Development Team. Standard build hooks in that separate source
+package are GPL-2.0-or-later; the grants apply by file type. Its complete
+license and this exact runtime-hook copyright/grant are retained in
+`Python-packaging-notices.txt`; PyInstaller core source is not substituted
+for this distinct component.
 
 ## Qt modules and fonts
 

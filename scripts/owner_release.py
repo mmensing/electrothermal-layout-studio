@@ -302,14 +302,33 @@ def inspect_windows_profile(path, policy, version, commit):
                 'Windows archive does not match the approved source-built profile')
         catalog = json.loads((ROOT / 'packaging/third-party-sources.json').read_text(encoding='utf-8'))
         require(profile.get('compiled_native') == catalog['compiled_native']
-                and profile.get('runtime_python') == catalog['runtime_python'],
+                and profile.get('runtime_python') == catalog['runtime_python']
+                and profile.get('compiled_bootloaders') == catalog.get('compiled_bootloaders'),
                 'Windows native/source provenance differs from the committed catalog')
+        inventory = json.loads(content('compliance/artifact-manifest.json', 8 * 1024**2))
+        require(inventory.get('kind') == 'frozen'
+                and inventory.get('unresolved_review_items') == []
+                and inventory.get('python_source_owners')
+                and inventory.get('component_review', {}).get('files'),
+                'Windows inventory must resolve Python, native and font source/notice reviews')
+        bootloaders = catalog.get('compiled_bootloaders')
+        require(type(bootloaders) is list and len(bootloaders) == 2
+                and all(type(row) is dict for row in bootloaders)
+                and {row.get('filename') for row in bootloaders} == {'run.exe', 'runw.exe'},
+                'Windows release requires both approved source-built bootloaders')
+        builder = runpy.run_path(str(ROOT / 'scripts/build_windows.py'))
+        for record in bootloaders:
+            executable = 'etlayout.exe' if record['filename'] == 'run.exe' else 'ElectrothermalLayoutStudio.exe'
+            try:
+                builder['verify_frozen_bootloader'](content(executable, 32 * 1024**2), record)
+            except ValueError as error:
+                raise ReleaseError('Windows executable bootstrap code/imports differ from the approved source build') from error
         require(type(policy.get('native_outputs')) is dict and policy['native_outputs'],
                 'Committed Windows profile must name exact native outputs')
         for name, expected in policy['native_outputs'].items():
             require(native_hash(name) == expected,
                     'Windows native bytes differ from the approved source/runtime profile')
-        require(not any(re.match(r'(?i)(?:vcruntime|msvcp|ucrtbase|vc_redist|vcredist|api-ms-win-crt-)',
+        require(not any(re.match(r'(?i)(?:vcruntime|msvcp|msvcr|concrt|vcomp|vccorlib|vcamp|ucrtbase|vc_redist|vcredist|api-ms-win-crt-)',
                                  PurePosixPath(name).name) for name in by_name),
                 'Windows archive must not redistribute Microsoft runtime copies/installers')
         require(not any('/matplotlib/mpl-data/' in name and any(part in name for part in

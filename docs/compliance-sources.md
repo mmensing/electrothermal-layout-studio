@@ -51,6 +51,15 @@ separate requirement for publishing an official artifact.
   actual compiled input separately from the delivered archive: normalization and
   six unused Eigen benchmark HTML/JavaScript omissions leave all retained compiled
   source, build and license payloads unchanged.
+- **PyInstaller 6.22.3:** the console and windowed bootloaders are built from the
+  delivered C/Waf/zlib sources using the tested
+  [GCC Windows recipe](../packaging/source-recipes/pyinstaller-6.22.3/README.md).
+  Unshipped precompiled upstream loaders are omitted. The native profile records
+  both selected loader hashes, their raw code-section hashes and complete direct
+  import signatures. Freezing may change resources and append the Python archive;
+  the final executables must retain the reviewed code and imports. GNU runtime and
+  MinGW notices remain; the Microsoft runtime is not statically linked into these
+  two loaders. This is a build-provenance change, not a change to application physics.
 - **Qt/PySide/Shiboken 6.12.0:** use the upstream GPLv3 offer for the shipped modules.
   Full QtBase, QtSvg, QtImageFormats and PySide source archives retain their bundled
   sources and build inputs. The LGPLv3 section 4 combined-work route is not the
@@ -79,6 +88,20 @@ separate requirement for publishing an official artifact.
   rendering remains available. The exact exclusions and normalized archive-header
   policy are reproducible with
   [curate_sources.py](../packaging/source-recipes/curate_sources.py).
+
+The frozen Python module archive and outer runtime hooks are audited separately
+from installed-package metadata. Collected Setuptools, Wheel and typing_extensions
+code has its own exact preferred sources and notices. Setuptools retains the
+vendored packaging 26.0 sources separately from the application's packaging 26.3
+installation, all other collected vendor code, and historical CPython/distutils
+notices. Its uncollected source-only autocommand grant is preserved without
+claiming that LGPL component ships in the executable. The collected
+`pyi_rth_pyqtgraph_multiprocess` hook belongs to pyinstaller-hooks-contrib 2026.8;
+its Apache 2.0 source and notices are supplied separately from PyInstaller's
+bootloader source. Standard build collection hooks in that same source archive
+retain their GPL 2.0-or-later terms. The catalog maps each non-standard-library module root and
+outer hook to its actual source owner; standard-library roots use the recorded
+CPython source. Imported module names alone do not establish copyright ownership.
 
 The NumPy/SciPy OpenBLAS DLLs embed libgfortran paths identifying GCC 10.3.0;
 these are separate from the rebuilt Gmsh GCC 16.2 runtime. Their exact published

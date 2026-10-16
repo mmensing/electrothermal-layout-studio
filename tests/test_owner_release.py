@@ -330,7 +330,13 @@ def windows_profile(tmp_path, monkeypatch):
         (source / name).write_bytes((ROOT / name).read_bytes())
     (source / 'docs/purpose.md').write_text('An independently fingerprinted user document.\n')
     gmsh = b'exact source-built test DLL'
+    from test_windows_runtime import pe_fixture
+    loader_bytes = pe_fixture('KERNEL32.dll')
+    builder = release.runpy.run_path(str(ROOT / 'scripts/build_windows.py'))
+    loaders = [{'filename': name, **builder['bootloader_properties'](loader_bytes)}
+               for name in ('run.exe', 'runw.exe')]
     catalog = {'compiled_native': [{'id': 'gmsh', 'sha256': hashlib.sha256(gmsh).hexdigest()}],
+               'compiled_bootloaders': loaders,
                'runtime_python': {'version': '3.12.14'}}
     catalog_path = source / 'packaging/third-party-sources.json'
     catalog_path.write_text(json.dumps(catalog))
@@ -347,7 +353,11 @@ def windows_profile(tmp_path, monkeypatch):
     files = {'SOURCE_BUILD_PROVENANCE.json': json.dumps(profile).encode(),
              'BUILD_MANIFEST.json': json.dumps(manifest).encode(),
              'WINDOWS_RUNTIME_MODIFICATIONS.json': b'{"microsoft_runtime_files_bundled":false,"installer_bundled_or_executed":false}',
-             '_internal/gmsh-4.15.dll': gmsh}
+             'compliance/artifact-manifest.json': json.dumps({'kind': 'frozen',
+                 'unresolved_review_items': [], 'python_source_owners': [{'root': 'etlayout'}],
+                 'component_review': {'files': {'_internal/gmsh-4.15.dll': {}}}}).encode(),
+             '_internal/gmsh-4.15.dll': gmsh,
+             'etlayout.exe': loader_bytes, 'ElectrothermalLayoutStudio.exe': loader_bytes}
     monkeypatch.setattr(release, 'ROOT', source)
     return path, policy, files, source, profile, manifest
 
@@ -363,7 +373,9 @@ def write_windows_profile(fixture):
 
 
 @pytest.mark.parametrize('change', [
-    'none', 'stock', 'native', 'runtime_copy', 'optional_data', 'catalog', 'old_commit',
+    'none', 'stock', 'native', 'runtime_copy', 'legacy_runtime_copy', 'optional_data', 'catalog', 'old_commit',
+    'bootloader_provenance', 'bootloader_code', 'bootloader_import', 'missing_bootloader',
+    'missing_inventory', 'unresolved_inventory', 'unowned_python', 'unreviewed_native',
     'skip_tests', 'failed_check', 'duplicate_check', 'missing_check', 'source_drift', 'code_drift',
     'verification_type', 'boolean_exit', 'unsafe_path', 'policy_version', 'policy_platform',
 ])
@@ -377,6 +389,30 @@ def test_windows_release_profile_checks_actual_archive_bytes(windows_profile, ch
         files['_internal/gmsh-4.15.dll'] = b'changed'
     elif change == 'runtime_copy':
         files['_internal/vcruntime140.dll'] = b'forbidden copy'
+    elif change == 'legacy_runtime_copy':
+        files['_internal/msvcrt.dll'] = b'Forbidden system runtime copy.'
+    elif change == 'missing_inventory':
+        del files['compliance/artifact-manifest.json']
+    elif change in {'unresolved_inventory', 'unowned_python', 'unreviewed_native'}:
+        data = json.loads(files['compliance/artifact-manifest.json'])
+        if change == 'unresolved_inventory':
+            data['unresolved_review_items'] = [{'component': 'unmapped_package'}]
+        elif change == 'unowned_python':
+            data['python_source_owners'] = []
+        else:
+            data['component_review'] = {'files': {}}
+        files['compliance/artifact-manifest.json'] = json.dumps(data).encode()
+    elif change == 'bootloader_provenance':
+        profile['compiled_bootloaders'] = []
+    elif change == 'bootloader_code':
+        changed = bytearray(files['etlayout.exe'])
+        changed[0x200] ^= 1
+        files['etlayout.exe'] = bytes(changed)
+    elif change == 'bootloader_import':
+        from test_windows_runtime import pe_fixture
+        files['ElectrothermalLayoutStudio.exe'] = pe_fixture('USER32.dll')
+    elif change == 'missing_bootloader':
+        del files['ElectrothermalLayoutStudio.exe']
     elif change == 'optional_data':
         files['_internal/matplotlib/mpl-data/fonts/afm/unused.afm'] = b'not used'
     elif change == 'old_commit':

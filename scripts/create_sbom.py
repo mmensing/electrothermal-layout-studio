@@ -211,7 +211,7 @@ def _primitive_pyz_toc(data):
     return result
 
 
-def _frozen_pyz(executable, module=None):
+def _frozen_pyz(executable, module=None, *, outer_modules=None):
     """Bound archive metadata before using the pinned reader's outer TOC."""
     from PyInstaller.archive.readers import CArchiveReader
 
@@ -252,6 +252,8 @@ def _frozen_pyz(executable, module=None):
                 raise ValueError("PyInstaller entry-count budget exceeded")
             cursor += entry_size
         archive = CArchiveReader(str(executable))  # Outer TOC only; no module unmarshal/extract.
+        if outer_modules is not None:
+            outer_modules.extend(sorted(name for name, row in archive.toc.items() if row[-1] in {"m", "M", "s"}))
         entry_offset, pyz_size, unpacked, compressed, kind = archive.toc["PYZ.pyz"]
         if (kind != "z" or compressed or pyz_size != unpacked or not 12 <= pyz_size <= PYZ_LIMIT
                 or entry_offset + pyz_size > offset):
@@ -293,10 +295,55 @@ def frozen_modules(artifact):
     if not executables:
         return [], "No frozen executable found"
     try:
-        toc, _raw, _digest = _frozen_pyz(executables[0])
-        return sorted(toc), None
+        outer = []
+        toc, _raw, _digest = _frozen_pyz(executables[0], outer_modules=outer)
+        return sorted(set(toc) | set(outer)), None
     except (ImportError, KeyError, ValueError, OSError, RuntimeError, struct.error) as error:
         return [], f"Embedded-module inspection unavailable ({type(error).__name__})"
+
+
+def python_source_coverage(modules):
+    """Require an explicit preferred-source owner for every non-stdlib code root."""
+    if not modules:
+        return [], []
+    try:
+        catalog = json.loads(_bounded_bytes(ROOT / "packaging/third-party-sources.json", 4 * 1024**2))
+        sources = {row["id"] for row in catalog["sources"]}
+        runtime = catalog["runtime_python"]["source_id"]
+        if runtime not in sources:
+            raise ValueError("Python runtime preferred source is missing")
+        mapping = {}
+        for field in ("python_module_sources", "python_outer_module_sources"):
+            entries = catalog[field]
+            if type(entries) is not dict or len(entries) > MAX_FILES:
+                raise ValueError("Frozen source-owner map exceeds its bounded schema")
+            for name, identities in entries.items():
+                if (not isinstance(name, str) or not name.isidentifier() or type(identities) is not list
+                        or not 1 <= len(identities) <= 16 or any(not isinstance(value, str) for value in identities)
+                        or len(set(identities)) != len(identities) or not set(identities) <= sources | {"application"}
+                        or ("application" in identities and name not in {"etlayout", "frozen_entry"})
+                        or (name in mapping and mapping[name] != identities)):
+                    raise ValueError("Frozen source-owner map has an invalid, missing or conflicting source")
+                mapping[name] = identities
+        counts = {}
+        for module in modules:
+            if not isinstance(module, str) or not module or not all(part.isidentifier() for part in module.split(".")):
+                raise ValueError("Invalid frozen Python module identity")
+            name = module.split(".")[0]
+            counts[name] = counts.get(name, 0) + 1
+        owners, unresolved = [], []
+        for name, count in sorted(counts.items()):
+            identities = mapping.get(name)
+            if identities is None and name in sys.stdlib_module_names:
+                identities = [runtime]
+            if identities is None:
+                unresolved.append({"component": name, "reason": "Frozen Python code lacks an explicit corresponding-source owner"})
+            else:
+                owners.append({"root": name, "source_ids": identities, "module_count": count})
+        return owners, unresolved
+    except (KeyError, TypeError, ValueError, OSError, RuntimeError) as error:
+        return [], [{"component": "Frozen Python sources", "reason":
+                     f"Preferred-source ownership inventory incomplete ({type(error).__name__})"}]
 
 
 def embedded_font_inventory(artifact, kind, modules):
@@ -512,7 +559,8 @@ def create(artifact, kind, output, component_review=None):
             ambiguous_ownership.append({"module": module, "candidate_wheel_owners": sorted(owners)})
     if kind == "frozen" and modules:
         shipped.add("pyinstaller")  # Bootloader/runtime hooks, not the build tool's whole Python package.
-    files, native, fonts, unresolved = [], [], [], []
+    python_owners, source_gaps = python_source_coverage(modules)
+    files, native, fonts, unresolved = [], [], [], list(source_gaps)
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     artifact_version, artifact_license = project["version"], project["license"]
     if kind == "frozen" and artifact.is_dir() and (artifact / "BUILD_MANIFEST.json").is_file():
@@ -624,7 +672,8 @@ def create(artifact, kind, output, component_review=None):
                "build_test_environment": [item for item in declared.values() if item["scope"] == "build-or-test"],
                "runtime_environment_not_bundled": [item for key, item in declared.items() if key not in shipped and item["scope"] == "runtime-environment"],
                "declared_dependencies_not_bundled": catalog["dependencies"] if kind != "frozen" else [],
-               "embedded_python_modules": modules, "ambiguous_record_ownership": ambiguous_ownership,
+               "embedded_python_modules": modules, "python_source_owners": python_owners,
+               "ambiguous_record_ownership": ambiguous_ownership,
                "native_files": native, "font_files": fonts,
                "native_component_catalog": catalog["native_components"],
                "unresolved_review_items": unresolved, "component_review": reviewed,
@@ -639,6 +688,9 @@ def create(artifact, kind, output, component_review=None):
                         "properties": [{"name": "etlayout:artifact-kind", "value": kind},
                                        {"name": "etlayout:binary-publication", "value": "blocked" if not policy["publication_allowed"] else "requires-owner-release-review"}]},
            "components": components}
+    if kind == "frozen":
+        bom["metadata"]["properties"].append({"name": "etlayout:python-preferred-source-owners",
+            "value": json.dumps(python_owners, sort_keys=True)})
     output.mkdir(parents=True, exist_ok=True)
     (output / "artifact-manifest.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     (output / "sbom.cdx.json").write_text(json.dumps(bom, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
