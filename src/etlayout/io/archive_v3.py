@@ -233,6 +233,7 @@ class _Collector:
         suffix = path.suffix.lower()
         if suffix not in {".gds", ".gdsii", ".oas", ".oasis"}:
             raise SimulationError("Unsupported embedded source layout format")
+        suffix = ".gds" if suffix in {".gds", ".gdsii"} else ".oas"
         if path.stat().st_size > _limits()[0]:
             raise SimulationError("Source layout exceeds the archive byte budget")
         digest = file_hash(path)

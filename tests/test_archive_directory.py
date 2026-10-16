@@ -102,3 +102,16 @@ def test_failure_and_cancellation_restore_caller_stream_position():
     with pytest.raises(SaveCancelled):
         inspect_directory(stream, cancel=cancel)
     assert stream.tell() == 9
+
+
+def test_ambiguous_signature_cannot_validate_one_directory_then_parse_another(monkeypatch):
+    raw = ordinary()
+    comment = b"prefix" + b"PK\x05\x06" + b"not-a-valid-end-record"
+    end = list(struct.unpack("<4s4H2LH", raw[-22:]))
+    end[-1] = len(comment)
+    raw = raw[:-22] + struct.pack("<4s4H2LH", *end) + comment
+    def forbidden(*args, **kwargs):
+        pytest.fail("Ambiguous end records must fail before stdlib directory allocation")
+    monkeypatch.setattr(archive_v3.zipfile, "ZipFile", forbidden)
+    with pytest.raises(SimulationError, match="Ambiguous|truncated"):
+        archive_v3.ArchiveV3Reader(raw)
