@@ -392,6 +392,7 @@ class ArchiveV3Reader:
         self._opening_cancel = cancel
         self._json_objects, self._index, self._records, self._errors = {}, {}, {}, {}
         self._object_errors = {}
+        self._json_references = {}
         self._checked_descriptors = {}
         self._checked_records = set()
         self._checked_configurations = {}
@@ -554,9 +555,13 @@ class ArchiveV3Reader:
                     raise SimulationError("Indexed object length/compression disagrees with its ZIP member")
                 if record["kind"] == "json" and self.object_name(digest) in lengths:
                     data = _parse(self._object_bytes(digest))
-                    if sorted(set(_references(data, cancel=self._opening_cancel))) != sorted(record["references"]):
+                    # Preserve actual occurrences, not only unique graph edges:
+                    # logical expansion counts every repeated field binding.
+                    references = tuple(_references(data, cancel=self._opening_cancel))
+                    if sorted(set(references)) != sorted(record["references"]):
                         raise SimulationError("Object graph references disagree with hashed metadata")
                     self._json_objects[digest] = data
+                    self._json_references[digest] = references
             except SimulationError as error:
                 self._object_errors[digest] = str(error)
         self.runs_metadata = _parse(self._read("runs.json"))
@@ -630,7 +635,7 @@ class ArchiveV3Reader:
             if logical_bytes > byte_limit or logical_entries > entry_limit:
                 raise SimulationError("Logical materialization exceeds its byte/entry budget")
             if record["kind"] == "json":
-                for ref in _references(self._json_objects[digest], cancel=self._opening_cancel):
+                for ref in self._json_references[digest]:
                     cost(ref, depth + 1)
         for identity, record in self._records.items():
             _checkpoint(self._opening_cancel)
@@ -1050,6 +1055,7 @@ class ArchiveV3Reader:
     def close(self):
         self.closed, self._data = True, None
         self._json_objects.clear()
+        self._json_references.clear()
         self._catalog_metadata.clear()
         self._checked_descriptors.clear()
         self._checked_records.clear()

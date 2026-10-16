@@ -196,3 +196,53 @@ def test_shared_transient_configuration_checked_once_but_forged_frame_rejected(t
         assert not reader.records[0]['available']
         expected = 'physics hash does not match' if fault == 'physics_hash' else 'configuration content does not match its hash'
         assert expected in reader.records[0]['error']
+
+
+def test_json_reference_walk_is_once_but_logical_cost_counts_every_occurrence(specimen, tmp_path, monkeypatch):
+    from collections import Counter
+
+    from etlayout.io import archive_v3
+
+    project, result = specimen
+    array = result.fields['a']['temperature']
+    result.fields['a'].update({'potential': array, 'temperature_rise': array})
+    result.execution['shared_buffers'] = [array] * 8
+    source = tmp_path / 'many-bindings.etlayout'
+    project_io.save_project(project, source, result, history=[result], archive_format=3)
+    calls = Counter()
+    original = archive_v3._references
+    def counted(value, *args, **kwargs):
+        if isinstance(value, dict) and 'typed_codec' in value:
+            calls[id(value)] += 1
+        yield from original(value, *args, **kwargs)
+    monkeypatch.setattr(archive_v3, '_references', counted)
+    with ArchiveV3Reader(source) as reader:
+        assert calls and set(calls.values()) == {1}
+        observed = reader.size['logical_bytes']
+        assert observed > reader.size['uncompressed_bytes']
+    # Independently reconstruct the ordered reference occurrences from ZIP JSON;
+    # counting the manifest's unique edges would miss repeated array bindings.
+    with zipfile.ZipFile(source) as archive:
+        root, runs = json.loads(archive.read('project.json')), json.loads(archive.read('runs.json'))
+        objects = root['objects']
+        def references(value):
+            if isinstance(value, dict):
+                if set(value) == {'$ref'}:
+                    yield value['$ref']
+                else:
+                    for item in value.values():
+                        yield from references(item)
+            elif isinstance(value, list):
+                for item in value:
+                    yield from references(item)
+        def cost(digest):
+            item = objects[digest]
+            payload = archive.read('objects/sha256/' + digest + item['suffix'])
+            return len(payload) + (sum(cost(ref) for ref in references(json.loads(payload)))
+                                   if item['kind'] == 'json' else 0)
+        expected = len(archive.read('project.json')) + len(archive.read('runs.json'))
+        expected += sum(cost(record['descriptor']['$ref']) for record in runs['records'])
+        assert expected == observed
+    monkeypatch.setattr(project_io, 'MAX_ARCHIVE_BYTES', expected - 1)
+    with pytest.raises(project_io.SimulationError, match='Logical materialization'):
+        ArchiveV3Reader(source)
