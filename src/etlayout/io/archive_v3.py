@@ -769,7 +769,10 @@ class ArchiveV3Reader:
             if (fortran or list(shape) != info["shape"] or dtype.str != info["dtype"] or dtype.hasobject
                     or dtype.fields is not None or len(raw) - stream.tell() != info["nbytes"]):
                 raise SimulationError("Stored NPY header disagrees with the safe object manifest")
-            return np.frombuffer(raw, dtype=dtype, count=math.prod(shape), offset=stream.tell()).reshape(shape)
+            # Cache accounting counts the owned NumPy payload exactly. Keeping
+            # the NPY header in the bytes base would retain uncounted storage.
+            payload = raw[stream.tell():]
+            return np.frombuffer(payload, dtype=dtype, count=math.prod(shape)).reshape(shape)
         except (ValueError, EOFError, TypeError, OverflowError) as error:
             raise SimulationError("Invalid stored NPY object header/payload") from error
 

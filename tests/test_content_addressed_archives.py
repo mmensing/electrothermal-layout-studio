@@ -334,3 +334,20 @@ def test_actual_legacy_transient_migrates_and_downgrades_without_changing_values
     assert actual.physics_hash == expected.physics_hash
     assert actual.transient.times.tobytes() == expected.transient.times.tobytes()
     assert actual.transient.rows == expected.transient.rows
+
+
+def test_array_bytes_base_contains_only_the_accounted_numeric_payload(specimen, tmp_path):
+    project, result = specimen
+    target = tmp_path / "accounted.etl"
+    project_io.save_project(project, target, result, archive_format=3)
+    with ArchiveV3Reader(target) as reader:
+        for digest in reader.required_arrays(reader.current_run_id):
+            array = reader.read_array(digest)
+            base = array
+            while isinstance(base, np.ndarray) and base.base is not None:
+                base = base.base
+            assert isinstance(base, bytes)
+            assert len(base) == array.nbytes == reader.array_info(digest)["nbytes"]
+            assert not array.flags.writeable
+            with pytest.raises(ValueError):
+                array.setflags(write=True)
