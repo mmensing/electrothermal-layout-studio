@@ -10,7 +10,7 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtCore import QPoint, QSettings, Qt
 from PySide6.QtTest import QTest
 from shapely.geometry import Polygon
 
@@ -30,6 +30,10 @@ def project(tmp_path):
 
 @pytest.fixture
 def window(qtbot, project, tmp_path):
+    # Desktop visibility assertions start from this test's preferences, not the
+    # user's saved collapsed panels or another test's named workspace.
+    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
+    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     window = MainWindow(project, database_path=tmp_path / "materials.sqlite3", recover=False)
     window.recovery_path = tmp_path / "recovery.etlayout"
     window.errors = []
