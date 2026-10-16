@@ -7,7 +7,6 @@ a large-signal/small-signal reduction of a nonlinear transistor.
 """
 from __future__ import annotations
 
-import csv
 import hashlib
 from copy import deepcopy
 from dataclasses import asdict
@@ -19,6 +18,7 @@ from scipy.sparse.linalg import splu
 
 from etlayout import __version__
 from etlayout.io.project import configuration_hash, physics_hash
+from etlayout.io.reporting import csv_writer
 from etlayout.models import SimulationError, checkpoint
 from etlayout.solvers.electrical import solve_state
 
@@ -212,7 +212,7 @@ def export_multiport(report, path, format='json'):
         path.write_text(_json_dump(report), encoding='utf-8')
     elif format == 'csv':
         with path.open('w', newline='', encoding='utf-8') as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             writer.writerow(['current_port / voltage_port [S]', *report['port_ids']])
             for key, row in zip(report['port_ids'], report['conductance_matrix']):
                 writer.writerow([key, *row])

@@ -2,15 +2,20 @@
 """Configuration-linked numerical tables, VTU fields, plots and HTML reports."""
 from __future__ import annotations
 
-import csv
 import hashlib
-import html
-import re
 from pathlib import Path
 
 import numpy as np
 
 from etlayout.io.project import _json_dump, project_from_dict, save_project
+from etlayout.io.reporting import (
+    LIMITATIONS,
+    csv_dict_writer,
+    csv_writer,
+    prepare_report_context,
+    render_report,
+    safe_filename,
+)
 from etlayout.models import SimulationResult
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.formatting import distinct_labels
@@ -20,19 +25,8 @@ from etlayout.visualization.sampling import METRIC_UNITS as METRIC_UNITS
 from etlayout.visualization.support import display_limits, field_support, region_elements
 from etlayout.visualization.units import display_unit, to_display
 
-LIMITATIONS = (
-    "Thickness-averaged 2.5D sheets do not resolve full 3D thermal spreading or through-thickness gradients. "
-    "Semiconductors are resistive effective-medium models. The analytical HEMT law excludes drift diffusion, "
-    "velocity saturation, junctions, breakdown, trapping, gate leakage, and field-plate electrostatics. "
-    "Material seeds require process calibration. Peak current at ideal sharp corners is mesh-sensitive."
-)
-
-
-def _safe(name):
-    value = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(name))[:100].strip(". ") or "layer"
-    reserved = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)),
-                *(f"LPT{i}" for i in range(1, 10))}
-    return "_" + value if value.split(".")[0].upper() in reserved else value
+# Compatibility aliases retained for existing Python callers.
+_safe = safe_filename
 
 
 def _filenames(specifications):
@@ -80,21 +74,24 @@ def _style():
         "axes.spines.top": False, "axes.spines.right": False, "axes.linewidth": .7,
         "axes.edgecolor": "#6F6F6F", "text.color": "#111111", "axes.labelcolor": "#404040",
         "xtick.color": "#404040", "ytick.color": "#404040", "figure.facecolor": "white",
-        "axes.facecolor": "white", "savefig.facecolor": "white", "svg.fonttype": "none"})
+        "axes.facecolor": "white", "savefig.facecolor": "white", "svg.fonttype": "none", "text.usetex": False})
 
 
 def export_field_plot(result: SimulationResult, layer: str, field: str, path: str | Path,
                       logarithmic: bool = False, *, region: str = "", colormap: str = "teal",
-                      limits=None, provenance=None):
+                      limits=None, provenance=None, figure_options=None, resolution_scale=None):
     _style()
     import matplotlib.pyplot as plt
     from matplotlib.colors import ListedColormap, LogNorm, Normalize
     from matplotlib.tri import Triangulation
     support = field_support(result, layer, field, region=region, logarithmic=logarithmic)
+    precision_scale = support.resolution_scale if resolution_scale is None else float(resolution_scale)
+    if not np.isfinite(precision_scale) or precision_scale < 0:
+        raise ValueError("Display resolution scale must be finite and nonnegative")
     cmap = get_colormap(colormap)
     provenance = provenance or result.configuration.get("visualization", {})
     selected = display_limits(support.limits, limits=limits, logarithmic=logarithmic,
-                              colormap=colormap, provenance=provenance, resolution_scale=support.resolution_scale)
+                              colormap=colormap, provenance=provenance, resolution_scale=precision_scale)
     if not len(support.indices) or selected is None:
         return None
     # Never retain unused global points: matplotlib otherwise includes unrelated
@@ -115,7 +112,11 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
     log_roundoff = logarithmic and np.log10(low) == np.log10(high)
     norm = Normalize(0., 1., clip=True) if log_roundoff else (LogNorm if logarithmic else Normalize)(vmin=low, vmax=high, clip=True)
     aspect = float(np.ptp(xy[:, 0]) / max(np.ptp(xy[:, 1]), 1e-30))
-    fig, ax = plt.subplots(figsize=(5.2, 6.2) if aspect < .6 else (7.1, 4.8), layout="constrained")
+    target = Path(path)
+    if figure_options is not None:
+        figure_options.validate()
+    size = figure_options.size_inches(target.suffix.lower()) if figure_options else ((5.2, 6.2) if aspect < .6 else (7.1, 4.8))
+    fig, ax = plt.subplots(figsize=size, layout="constrained")
     automatic = support.limits
     below, above = automatic[0] < low, automatic[1] > high
     extend = "both" if below and above else "min" if below else "max" if above else "neither"
@@ -135,11 +136,16 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
             levels = fractions
         plotted = ax.tricontourf(tri, values, levels=levels, cmap=cmap, norm=norm,
                                  extend=extend)
-        plotted.set_rasterized(True)
+        plotted.set_rasterized(not (figure_options is not None and target.suffix.lower() in {".pdf", ".svg"}))
     else:
         values = (support.values - low) / (high - low) if log_roundoff else support.values
         plotted = ax.tripcolor(tri, facecolors=values, shading="flat", cmap=cmap, norm=norm,
-                               rasterized=True)
+                               rasterized=not (figure_options is not None and target.suffix.lower() in {".pdf", ".svg"}))
+    if figure_options is not None:
+        # Avoid PDF/SVG viewer antialias seams looking like a false mesh overlay.
+        plotted.set_edgecolor("face")
+        plotted.set_linewidth(.05)
+        plotted.set_antialiased(False)
     name, unit = FIELD_LABELS.get(field, (field.replace("_", " ").capitalize(), FIELD_UNITS.get(field, "")))
     si_unit = unit
     unit = display_unit(unit)
@@ -150,21 +156,41 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
         from etlayout.visualization.timing import difference_time_label
         timing = difference_time_label(provenance)
         time_label = "\n" + timing if timing else ""
-    ax.set(title=f"{name} · {layer}" + (f" · {region}" if region else "") + time_label,
-           xlabel="x (µm)", ylabel="y (µm)", aspect="equal")
-    bar = fig.colorbar(plotted, ax=ax, shrink=.85, pad=.04, panchor=False,
-                       extend=extend)
-    if constant:
-        bar.set_ticks([selected[0]])
-    elif log_roundoff:
-        bar.set_ticks([0., 1.], labels=[f"{to_display(low, si_unit):.17g}", f"{to_display(high, si_unit):.17g}"])
-    if not log_roundoff:
-        ticks = bar.get_ticks()
-        bar.set_ticks(ticks, labels=distinct_labels(to_display(value, si_unit) for value in ticks))
-    bar.set_label(f"{name} ({unit})" + (" · constant" if constant else "") + (" · log scale" if logarithmic else ""))
+    title = f"{name} ({unit}) · {layer}" + (f" · {region}" if region else "") + time_label
+    if figure_options is not None and figure_options.title:
+        title = figure_options.title + time_label
+    if figure_options is not None:
+        import textwrap
+        title = textwrap.fill(title, width=max(25, int(size[0] * 11)))
+    ax.set(title=title, xlabel="x (µm)", ylabel="y (µm)", aspect="equal")
+    if figure_options is None or figure_options.colorbar:
+        shrink = min(.85, .85 * size[0] / (aspect * size[1])) if figure_options is not None and aspect > 3 else .85
+        bar = fig.colorbar(plotted, ax=ax, shrink=shrink, pad=.04, panchor=False, extend=extend)
+        if figure_options is not None and aspect > 3 and not constant and not log_roundoff:
+            middle = np.exp((np.log(low) + np.log(high)) / 2) if logarithmic else low / 2 + high / 2
+            bar.set_ticks([low, middle, high])
+        if figure_options is not None and target.suffix.lower() in {".pdf", ".svg"} and bar.solids is not None:
+            bar.solids.set_rasterized(False)
+        if constant:
+            bar.set_ticks([selected[0]])
+        elif log_roundoff:
+            bar.set_ticks([0., 1.], labels=[f"{to_display(low, si_unit):.17g}", f"{to_display(high, si_unit):.17g}"])
+        if not log_roundoff:
+            ticks = bar.get_ticks()
+            bar.set_ticks(ticks, labels=distinct_labels(to_display(value, si_unit) for value in ticks))
+        bar.set_label(f"{name} ({unit})" + (" · constant" if constant else "") + (" · log scale" if logarithmic else ""))
+    elif figure_options is not None:
+        # Quantity and units remain visible even if both optional decorations are hidden.
+        ax.set_xlabel(f"x (µm) · {name} ({unit})")
     notes = []
-    if (limits is None and not logarithmic and support.resolution_scale and
-            support.limits[1] - support.limits[0] <= 8 * np.finfo(float).eps * support.resolution_scale):
+    if figure_options is not None:
+        notes.append("2.5D effective-sheet result; review model calibration and mesh uncertainty in the manifest")
+        if figure_options.legend:
+            notes.append(f"{name} ({unit}) · {layer}")
+        if figure_options.annotations:
+            notes.append(figure_options.annotations)
+    if (limits is None and not logarithmic and precision_scale and
+            support.limits[1] - support.limits[0] <= 8 * np.finfo(float).eps * precision_scale):
         notes.append("Temperature-rise variation is at floating-point resolution of absolute temperature; automatic scale padded, raw values preserved")
     if limits is not None:
         notes.append("Manual color range; values outside limits are clipped")
@@ -178,16 +204,36 @@ def export_field_plot(result: SimulationResult, layer: str, field: str, path: st
         notes.append("Snapshot from incomplete transient run")
     if notes:
         import textwrap
-        note = textwrap.fill(" · ".join(notes), width=85 if aspect < .6 else 110)
+        wrap = max(25, int(size[0] * 14)) if figure_options is not None else (85 if aspect < .6 else 110)
+        note = textwrap.fill(" · ".join(notes), width=wrap)
+        lines = note.count("\n") + 1
+        if figure_options is not None and lines > max(3, int(size[1] * 72 * .32 / 9)):
+            plt.close(fig)
+            raise ValueError("Annotations and scientific warnings need more figure height; enlarge the figure or shorten annotations")
         fig.text(.5, .01, note, ha="center", fontsize=8)
-        footer = .065 if "\n" in note else .045
+        footer = ((lines * 9 + 8) / (size[1] * 72)) if figure_options is not None else (.065 if "\n" in note else .045)
         fig.get_layout_engine().set(rect=(0, footer, 1, 1 - footer))
     if not result.converged:
         ax.text(.02, .98, "NOT CONVERGED", transform=ax.transAxes, va="top", color="#B5473C")
-    target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(target, dpi=200)
-    plt.close(fig)
+    metadata = None
+    if figure_options is not None:
+        if target.suffix.lower() == ".pdf":
+            metadata = {"Creator": "Electrothermal Layout Studio", "Producer": "Electrothermal Layout Studio",
+                        "CreationDate": None, "ModDate": None, "Title": figure_options.title or "Selected field"}
+        elif target.suffix.lower() == ".svg":
+            metadata = {"Date": None, "Creator": "Electrothermal Layout Studio", "Title": figure_options.title or "Selected field"}
+        else:
+            metadata = {"Software": "Electrothermal Layout Studio", "Title": figure_options.title or "Selected field"}
+    try:
+        if figure_options is not None:
+            from matplotlib import rc_context
+            with rc_context({"svg.hashsalt": "ElectrothermalLayoutStudio", "pdf.fonttype": 42, "text.parse_math": False}):
+                fig.savefig(target, dpi=figure_options.dpi, metadata=metadata)
+        else:
+            fig.savefig(target, dpi=200, metadata=metadata)
+    finally:
+        plt.close(fig)
     if target.suffix.lower() == ".svg":
         target.write_text("\n".join(line.rstrip() for line in target.read_text(encoding="utf-8").splitlines()) + "\n", encoding="utf-8")
     return target
@@ -197,7 +243,7 @@ def export_profile(profile: dict, path: str | Path):
     target = Path(path)
     sampled_values = np.asarray(profile["value"], dtype=float)
     with target.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["distance_m", "x_m", "y_m", f"{profile['field']} [{profile.get('unit','')}]", "configuration_hash"])
         for d, x, y, value in zip(profile["distance_m"], profile["x_m"], profile["y_m"], sampled_values, strict=True):
             writer.writerow([d, x, y, value if np.isfinite(value) else "", profile.get("configuration_hash", "")])
@@ -228,8 +274,9 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
     if any(layer not in result.fields for layer in selected_layers):
         raise ValueError("An export layer is not present in this result")
     selected_layers = list(dict.fromkeys(selected_layers))
-    provenance = dict(provenance or result.configuration.get("visualization", {}))
-    difference = provenance.get("kind") == "difference"
+    context = prepare_report_context(result, provenance=provenance)
+    provenance = context.provenance
+    difference = context.difference
     metrics = {} if difference else result.metrics
     terminals = {} if difference else result.terminals
     selection = {"layers": selected_layers, "field": field, "region": region, "colormap": colormap,
@@ -268,14 +315,14 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
                 "archive_scope": "derived difference arrays only" if difference else "full source result"}
     (root / "results.json").write_text(_json_dump(metadata), encoding="utf-8")
     with (root / "metrics.csv").open("w", newline="", encoding="utf-8-sig") as stream:
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["metric", "value", "unit", "configuration_hash"])
         for name, value in metrics.items():
             if isinstance(value, (float, int, str, bool)):
                 writer.writerow([name, value, metric_unit(name), result.configuration_hash])
     with (root / "terminals.csv").open("w", newline="", encoding="utf-8-sig") as stream:
         keys = sorted({k for terminal in terminals.values() for k in terminal})
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow(["terminal"] + keys)
         for name, values in terminals.items():
             writer.writerow([name] + [values.get(k, "") for k in keys])
@@ -328,13 +375,13 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
                 difference_arrays[array_key] = selected_values
                 layer_manifest["fields"][key]["array_key"] = array_key
         with (root / filenames[layer, "nodes"]).open("w", newline="", encoding="utf-8-sig") as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             writer.writerow(["node", "x_m", "y_m", "z_m", "element", "local_vertex"] + [f"{k} [{FIELD_UNITS.get(k,'')}]" for k in nodes])
             for element in ids:
                 for vertex, node in enumerate(result.mesh.triangles[element]):
                     writer.writerow([node, *coordinates[node], element, vertex] + [values[element, vertex] for values in nodes.values()])
         with (root / filenames[layer, "elements"]).open("w", newline="", encoding="utf-8-sig") as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             element_fields, element_units = {}, {}
             for key, value in values.items():
                 if key in nodes:
@@ -383,49 +430,11 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
         if plots:
             image_files.append("transient_history.png")
     (root / "manifest.json").write_text(_json_dump(manifest), encoding="utf-8")
-    title = result.configuration.get("name", "Electrothermal simulation")
-    rows = []
-    for name, value in metrics.items():
-        if isinstance(value, (float, int)):
-            unit = metric_unit(name)
-            rows.append(f"<tr><td>{html.escape(name.replace('_', ' '))}</td><td>{to_display(value, unit):.6g}</td>"
-                        f"<td>{html.escape(display_unit(unit))}</td></tr>")
-    warnings_html = "".join(f"<li>{html.escape(d.severity + ': ' + d.message)}</li>" for d in result.diagnostics)
-    status = "Converged" if result.converged else "NOT CONVERGED — diagnostic output only"
-    if result.transient is not None:
-        status += f" · transient fields at t = {result.transient.times[-1]:.9g} s; complete history in simulation.etl"
-    elif "time_s" in result.metrics:
-        status += f" · selected snapshot at t = {result.metrics['time_s']:.9g} s"
-    if difference:
-        status = "Derived difference: current − comparison on common finite support"
-        from etlayout.visualization.timing import difference_time_label
-        timing = difference_time_label(provenance)
-        if timing:
-            status += " · " + timing
-        if not result.converged:
-            status += " · NOT CONVERGED source — diagnostic output only"
-    if provenance.get("transient_completed") is False:
-        status += " · snapshot from incomplete transient run"
     scope = ("Derived difference arrays are saved in difference-fields.npz. Original solver metrics and terminal quantities do not describe this difference and are omitted."
              if difference else "simulation.etl contains the full source result, including fields outside the exported selection.")
-    provenance_html = ("<h2>Paired-run provenance</h2><pre>" + html.escape(_json_dump(provenance)) + "</pre>"
-                       if provenance else "")
-    document = f"""<!doctype html><html lang="en"><meta charset="utf-8"><title>{html.escape(title)}</title>
-<style>body{{font:15px/1.5 Arial,sans-serif;color:#111;max-width:1000px;margin:48px auto;padding:0 24px}}
-h1,h2{{font-weight:600}}table{{border-collapse:collapse;width:100%}}td,th{{padding:7px 12px;border-bottom:1px solid #ddd;text-align:left}}
-td:nth-child(2){{text-align:right;font-variant-numeric:tabular-nums}}img{{width:48%;height:auto}}pre{{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}}
-.status{{color:{'#1F6F5F' if result.converged else '#B5473C'}}}</style>
-<h1>{html.escape(title)}</h1><p class="status">{status}</p>
-<p>Solver {result.solver_version} · elapsed {result.elapsed_seconds:.3g} s · {len(result.mesh.points):,} mesh nodes · {len(result.mesh.triangles):,} triangles</p>
-<p>Configuration SHA-256: <code>{result.configuration_hash}</code></p>
-<p>{scope}</p><p>Export scope: {html.escape(selection['scope'])} · palette: {html.escape(colormap)} · {'logarithmic' if logarithmic else 'linear'} scale</p>{provenance_html}
-<h2>Results and conservation</h2><table><tr><th>Metric</th><th>Value</th><th>Unit</th></tr>{''.join(rows)}</table>
-<h2>Field maps</h2>{''.join(f'<img src="{x}" alt="{html.escape(x)}">' for x in image_files)}
-<h2>Diagnostics</h2><ul>{warnings_html or '<li>No additional diagnostics</li>'}</ul>
-<h2>Model limitations</h2><p>{LIMITATIONS}</p>
-<h2>Reproducible setup</h2><p>Configuration and export selection are captured below; manifest.json maps original layer and field IDs to their files.</p>
-<details><summary>Configuration and convergence history</summary><pre>{html.escape(_json_dump(metadata))}</pre></details>
-<p>Field values are deterministic results of this discretization. No experimental uncertainty has been estimated.</p></html>"""
+    # Embed generated PNGs so the HTML remains portable and CSP needs no file/network access.
+    images = [(root.joinpath(filename).read_bytes(), filename) for filename in image_files]
+    document = render_report(context, images=images, selection=selection, metadata=metadata, scope=scope)
     (root / "report.html").write_text(document, encoding="utf-8")
     return root / "report.html"
 
@@ -454,7 +463,7 @@ def export_study(rows, directory: str | Path, parameter: str = "parameter"):
     (root / "study.json").write_text(_json_dump(records), encoding="utf-8")
     keys = list(dict.fromkeys([parameter, "requested_value", "applied_value", "converged", "error"] + metrics + ["configuration_hash"]))
     with (root / "study.csv").open("w", newline="", encoding="utf-8-sig") as stream:
-        writer = csv.DictWriter(stream, keys)
+        writer = csv_dict_writer(stream, keys)
         writer.writeheader()
         writer.writerows(records)
     _style()

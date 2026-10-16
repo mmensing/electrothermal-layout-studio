@@ -807,7 +807,8 @@ class MainWindow(QMainWindow):
             ("Save project as…", self.save_as, QKeySequence.StandardKey.SaveAs),
             ("Duplicate project…", self.duplicate_project, None),
             ("Relink layout…", self.relink_layout, None),
-            ("Export original numerical results…", self.export_results, None),
+            ("Export / share results…", lambda: self.share_export(), None),
+            ("Export complete numerical bundle (confidential)…", self.export_results, None),
             ("Export displayed field / region…", self.export_displayed_field, None),
             ("Export map…", self.export_map, None),
             ("Export report…", self.export_report, None),
@@ -3416,7 +3417,7 @@ class MainWindow(QMainWindow):
         if self.result is None:
             self.error("No results", "Run an analysis first.")
             return
-        directory = QFileDialog.getExistingDirectory(self, "Export original numerical results — all layers and regions")
+        directory = QFileDialog.getExistingDirectory(self, "CONFIDENTIAL complete bundle — all source fields, layout and configuration")
         if directory:
             try:
                 from etlayout.io.export import export_results
@@ -3425,24 +3426,42 @@ class MainWindow(QMainWindow):
             except Exception as error:
                 self.error("Export failed", error)
 
-    def export_displayed_field(self):
-        if self.view.overlay_item is None:
-            self.error("No displayed field", "Choose a finite field and valid color range before exporting.")
+    def share_export(self, mode="figure", *, formats=None):
+        if self.result is None:
+            self.error("No results", "Run an analysis or inspect a calculated run first.")
             return
-        directory = QFileDialog.getExistingDirectory(self, "Export displayed field and selected region")
-        if directory:
-            try:
-                from etlayout.io.export import export_results
-                export_results(self.display_result or annotated_result(self.view_source_result(), self.project, run=self.result), directory,
-                    layers=[self.field_layer.currentData()], field=self.field_combo.currentData(),
-                    region=self.field_region.currentData() or "", colormap=self.colormap_combo.currentData(),
-                    limits=self.legend_scale.validated_limits(self.log_scale.isChecked()),
-                    logarithmic=self.log_scale.isChecked(), provenance=self.displayed_provenance())
-                self.log(f"Exported displayed {self.view_mode.currentText()} field and selected region to {directory}")
-            except Exception as error:
-                self.error("Displayed-field export failed", error)
+        if hasattr(self, "guided") and not self.guided.resolve_draft():
+            return
+        if self.result is None:
+            self.error("Results invalidated", "The applied physical draft needs a new calculation. Inspect a recorded run or solve before exporting.")
+            return
+        from etlayout.gui.export_dialog import ExportDialog
+        from etlayout.io.sharing import ExportRequest, FigureOptions
+        formats = formats or {"figure": ("png", "html"), "data": ("csv", "npz", "vtu"), "archive": ("etl",)}[mode]
+        try:
+            limits = self.legend_scale.validated_limits(self.log_scale.isChecked()) if mode == "figure" and self.field_combo.currentData() else None
+            if mode == "figure" and limits is None and self.history_range.isChecked():
+                limits = self.view.field_limits
+        except ValueError as error:
+            self.error("Invalid figure range", error)
+            return
+        initial = ExportRequest(mode=mode, layers=(self.field_layer.currentData(),), fields=(self.field_combo.currentData(),),
+            region=self.field_region.currentData() or "", colormap=self.colormap_combo.currentData(),
+            limits=limits,
+            logarithmic=self.log_scale.isChecked() if mode == "figure" else False, formats=formats,
+            figure=FigureOptions(smooth=self.smooth_field.isChecked()))
+        dialog = ExportDialog(self.project, self.result, self, history=self.run_history,
+                              displayed=self.display_result or self.view_source_result(), initial=initial)
+        if dialog.exec() and dialog.exported:
+            self.log("Exported " + dialog.exported["scope"] + " to " + dialog.directory.text())
+
+    def export_displayed_field(self):
+        self.share_export("data")
 
     def export_map(self):
+        if self.result is not None and self.field_combo.currentData():
+            self.share_export("figure", formats=("png", "pdf", "svg"))
+            return
         if self.field_combo.currentData() and self.view.overlay_item is None:
             self.error("No displayed field", "Choose a finite field and valid range, or select Layout geometry before exporting.")
             return
@@ -3457,18 +3476,7 @@ class MainWindow(QMainWindow):
             self.error("Map export failed", error)
 
     def export_report(self):
-        if not self.result or self.view.overlay_item is None:
-            self.error("No displayed field", "Run a simulation and choose a valid field before exporting its report.")
-            return
-        path, _ = QFileDialog.getSaveFileName(self, "Export self-contained analysis report", "analysis-report.html", "HTML (*.html)")
-        if path:
-            try:
-                from etlayout.gui.export import export_html_report
-                export_html_report(self.project, self.display_result or self.view_source_result(), self.view, path,
-                                   self.legend.text(), provenance=self.displayed_provenance(), run=self.result)
-                self.log(f"Exported report {path}")
-            except Exception as error:
-                self.error("Report export failed", error)
+        self.share_export("figure", formats=("html",))
 
     def apply_theme(self, dark=False):
         from etlayout.gui.theme import apply_widget_theme
