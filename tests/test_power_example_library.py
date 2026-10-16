@@ -7,7 +7,14 @@ import numpy as np
 import pytest
 from shapely import union_all
 
-from etlayout.examples import EXAMPLE_BUILDERS, EXAMPLE_NAMES, ROUTINE_EXAMPLES, make_example
+from etlayout.example_catalog import EXAMPLE_CATALOG
+from etlayout.examples import (
+    EXAMPLE_BUILDERS,
+    EXAMPLE_NAMES,
+    EXTENDED_EXAMPLES,
+    ROUTINE_EXAMPLES,
+    make_example,
+)
 from etlayout.examples import rectangle as layout_rectangle
 from etlayout.geometry.layout import LayoutDocument
 from etlayout.geometry.prepare import polygon_parts, prepare_geometry, resolve_region
@@ -40,7 +47,9 @@ def nominal(request, nominal_solutions):
 
 def test_explicit_registry_keeps_small_benchmarks_out_of_engineering_three_mode_runs():
     assert set(EXAMPLE_BUILDERS) == set(EXAMPLE_NAMES)
-    assert len(ROUTINE_EXAMPLES) == 19
+    assert set(ROUTINE_EXAMPLES) == {info.name for info in EXAMPLE_CATALOG.values() if info.reference_tier == "introductory"}
+    assert set(EXTENDED_EXAMPLES) == {info.name for info in EXAMPLE_CATALOG.values() if info.reference_tier == "extended"}
+    assert not set(EXTENDED_EXAMPLES) & set(ROUTINE_EXAMPLES)
     assert not set(FAMILIES) & set(ROUTINE_EXAMPLES)
     assert EXAMPLE_BUILDERS["E19_pulsed_multilayer"][0] == "etlayout.pulsed_examples"
     assert EXAMPLE_BUILDERS["E21_long_finger_gan"][0] == "etlayout.power_examples"

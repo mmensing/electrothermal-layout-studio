@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 — extended example library
+
+- Add 16 distinct ready-to-open examples, E25–E40, spanning analytical/contact
+  coupons, routed resistor/via networks, thermal/pulsed experiments, fully gated
+  GaN, SiC on-state active islands and a millimeter package interposer.
+- Keep E1–E24 and their stable IDs. Categorize the desktop example menu and
+  separate extended nominal validation from the three-mode teaching loop.
+- Provide GUI-led use cases, actual geometry/result previews, exact configured
+  nominal checks, independent analytical references and portable GDSII/OASIS/ETL.
+- Include opt-in content-addressed archives and metadata-first history loading
+  with bounded caching, exact transient frames, complete saves and exports.
+- Keep source MPL-2.0 and runtime notices intact. Windows publication remains
+  subject to the committed binary-compliance policy and exact candidate checks.
+
 ## Public source edition — untagged
 
 - Publish an independently reviewed source snapshot under MPL-2.0 for eligible
@@ -14,7 +28,7 @@
   heat density in W/mm² and thermal gradient in K/µm. Preserve SI numerical data
   and the physical limits of migrated manual ranges.
 
-This source edition has no public release tag or binary. Historical notes below
+The initial public snapshot had no public release tag or binary. Historical notes below
 refer to pre-public application versions, not releases in this repository. Earlier
 GPL distribution rights are not revoked by this MPL source edition.
 

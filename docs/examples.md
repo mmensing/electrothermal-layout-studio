@@ -1,10 +1,10 @@
 # Explore the examples
 
-See current crowd around a bend, follow heat into a substrate, or watch a device cool between pulses. The library contains 24 runnable reference examples with configured geometry, materials, connections and operating conditions. These walkthroughs use the desktop controls.
+See current crowd around a bend, follow heat into a substrate, or watch a device cool between pulses. The library contains 40 runnable reference examples. Each project supplies configured geometry, materials, connections and operating conditions. These walkthroughs use the desktop controls.
 
 ## Open your first example
 
-1. In **File → Ready-to-run examples**, choose an example by its stable ID below. Opening prepares the project; it does not start a simulation.
+1. In **File → Ready-to-run examples**, open the appropriate group and choose an example by its stable ID below. Opening prepares the project; it does not start a simulation.
 2. Use **Save project as…** to keep your own project. Review the visible **Analysis type**; the gallery's analysis column states the mode used for its recorded picture.
 3. Follow **Layout & region → Layers & materials → Contacts & connections → Operating conditions**. The example already supplies these inputs; inspect them before changing anything.
 4. In **Mesh & checks**, select **Run validation**, inspect the Issues drawer, then **Generate / update mesh**. **Run → Run analysis** starts the background calculation. F6, F7 and F5 provide the corresponding shortcuts.
@@ -26,6 +26,7 @@ See current crowd around a bend, follow heat into a substrate, or watch a device
 | How far does heat spread? | [E10: layered thermal path](#e10) | [E11: meander heater](#e11), [E15: thermal crosstalk](#e15) |
 | What happens between pulses? | [E17: heating and cooling](#e17) | [E18: pulsed conductor](#e18), [E19: delayed receiver heating](#e19) |
 | How do larger power structures share current? | [E20–E24: power guide](power-examples.md) | [GaN fingers and banks](power-examples.md#e21), [SiC source collection](power-examples.md#e24) |
+| What should I explore after the foundations? | [E25–E40: extended walkthroughs](extended-examples.md) | [Contact coupons](extended-examples.md#e27), [thermal paths](extended-examples.md#e35), [device sharing](extended-examples.md#e39) |
 
 ## All examples
 
@@ -55,6 +56,22 @@ See current crowd around a bend, follow heat into a substrate, or watch a device
 | [E22 · Multi-bank GaN power die](power-examples.md#e22) | Power benchmarks | Engineering | Coupled DC electrothermal |
 | [E23 · SiC MOSFET on-state interconnect · stripes](power-examples.md#e23) | Power benchmarks | Engineering | Coupled DC electrothermal |
 | [E24 · SiC MOSFET on-state interconnect · macrocells](power-examples.md#e24) | Power benchmarks | Engineering | Coupled DC electrothermal |
+| [E25 · Stepped-width series reference](extended-examples.md#e25) | Analytical coupons | Starter | See configured walkthrough |
+| [E26 · Dog-bone current-crowding coupon](extended-examples.md#e26) | Analytical coupons | Intermediate | See configured walkthrough |
+| [E27 · Finite-contact transfer-length coupon](extended-examples.md#e27) | Contacts and measurements | Intermediate | See configured walkthrough |
+| [E28 · Three-terminal T-junction splitter](extended-examples.md#e28) | Routed networks | Starter | See configured walkthrough |
+| [E29 · Annular current-spreading bus](extended-examples.md#e29) | Routed networks | Intermediate | See configured walkthrough |
+| [E30 · Multilevel via daisy chain](extended-examples.md#e30) | Routed networks | Advanced | See configured walkthrough |
+| [E31 · Tapped resistive ladder](extended-examples.md#e31) | Contacts and measurements | Starter | See configured walkthrough |
+| [E32 · Parallel resistor array with resistive buses](extended-examples.md#e32) | Routed networks | Advanced | See configured walkthrough |
+| [E33 · Thermal bridge heater](extended-examples.md#e33) | Thermal experiments | Intermediate | See configured walkthrough |
+| [E34 · Interleaved heater and sensor](extended-examples.md#e34) | Thermal experiments | Advanced | See configured walkthrough |
+| [E35 · Localized backside die attachment](extended-examples.md#e35) | Thermal experiments | Advanced | See configured walkthrough |
+| [E36 · Pulsed constriction and cooling](extended-examples.md#e36) | Pulsed operation | Advanced | See configured walkthrough |
+| [E37 · Fully gated HEMT contact coupon](extended-examples.md#e37) | Device studies | Intermediate | See configured walkthrough |
+| [E38 · Independently driven GaN banks](extended-examples.md#e38) | Device studies | Advanced | See configured walkthrough |
+| [E39 · SiC on-state die with active islands](extended-examples.md#e39) | Device studies | Engineering | See configured walkthrough |
+| [E40 · Three-level package interposer](extended-examples.md#e40) | Package interconnects | Engineering | See configured walkthrough |
 
 ## Read the pictures, then run your own project
 

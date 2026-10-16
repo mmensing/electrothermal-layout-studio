@@ -216,6 +216,11 @@ def reviewed_inputs(root, assets_dir, manifest_path, commit, version, *, committ
         require(file.is_file() and not file.is_symlink() and file.resolve().parent == assets_dir.resolve(),
                 'Release assets must be ordinary local files in the reviewed asset folder')
         require(sha256(file) == item['sha256'], 'Release asset checksum changed after owner review')
+        inspection = item.get('inspection_kind', 'source')
+        require(isinstance(inspection, str) and inspection in {'source', 'binary-candidate', 'third-party-source'},
+                'Every release asset needs a supported explicit inspection kind')
+        require(kind == 'binary' or inspection == 'source',
+                'Larger release-artifact inspection is unavailable to source-only reviews')
         if kind == 'source':
             application = inspect_source_asset(file, version) or application
         resolved.append(file)
@@ -274,8 +279,15 @@ def preflight(root, assets_dir, manifest_path, *, read=None, environ=None):
     committed_policy = json.loads(read(['git', 'show', f'{commit}:packaging/binary-publication-policy.json']))
     review, assets, notes = reviewed_inputs(root, assets_dir.resolve(), manifest_path, commit, version,
                                            committed_policy=committed_policy)
+    inspections = {item['name']: item.get('inspection_kind', 'source') for item in review['assets']}
     for asset in [*assets, notes]:
-        read([sys.executable, str(root / 'scripts/audit_publication.py'), '--root', str(asset)])
+        command = [sys.executable, str(root / 'scripts/audit_publication.py'), '--root', str(asset)]
+        inspection = inspections.get(asset.name, 'source')
+        if review['kind'] == 'binary' and inspection != 'source':
+            # reviewed_inputs already enforced the unchanged committed compliance
+            # gate and binary attestations before selecting this larger inspector.
+            command += ['--artifact-kind', inspection]
+        read(command)
     return dict(repository=REPOSITORY, commit=commit, version=version, tag=tag, trusted_run=run,
                 assets=assets, notes=notes, review=review)
 

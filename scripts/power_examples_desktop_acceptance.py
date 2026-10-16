@@ -304,7 +304,8 @@ def main():
         menu = next(menu for menu in window.findChildren(QMenu) if menu.title() == "Ready-to-run examples")
         for name in FAMILIES:
             window.dirty = False
-            action = next(action for action in menu.actions() if action.text().startswith(example_info(name).id + " ·"))
+            action = next(action for submenu in menu.findChildren(QMenu) for action in submenu.actions()
+                          if action.text().startswith(example_info(name).id + " ·"))
             action.trigger()
             idle()
             assert window.project.name == name and window.geometry is not None and window.mesh is None

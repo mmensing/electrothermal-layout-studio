@@ -9,9 +9,13 @@ from __future__ import annotations
 
 import argparse
 import base64
+import bz2
+import codecs
+import gzip
 import hashlib
 import io
 import json
+import lzma
 import re
 import struct
 import tarfile
@@ -20,6 +24,7 @@ import warnings
 import xml.etree.ElementTree as ET
 import zipfile
 from collections import Counter
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 MAX_ITEM_BYTES = 32 * 1024 * 1024
@@ -85,7 +90,7 @@ class PublicationAudit:
             item['line'] = line
         self.findings.append(item)
 
-    def text(self, name: str, value: str):
+    def text(self, name: str, value: str, *, line_offset: int = 0):
         for kind, pattern in _PATTERNS.items():
             for match in pattern.finditer(value):
                 matched = match.group(0)
@@ -97,7 +102,7 @@ class PublicationAudit:
                         continue
                 if kind == 'private_address' and any(int(part) > 255 for part in matched.split('.')):
                     continue
-                self.finding(name, kind, matched, line=value.count('\n', 0, match.start()) + 1)
+                self.finding(name, kind, matched, line=line_offset + value.count('\n', 0, match.start()) + 1)
         folded = value.casefold()
         for forbidden in self.forbidden_text:
             if forbidden in folded:
@@ -380,19 +385,487 @@ class PublicationAudit:
                     counts=dict(self.counts), findings=self.findings,
                     limitations='Pattern and bounded-format checks do not establish rights, legal compliance, or absence of every secret. Required upstream license/copyright email notices and documented example addresses are retained. Review code provenance and visible image content manually.')
 
+@dataclass(frozen=True)
+class ArtifactLimits:
+    """Explicit release-only bounds; ordinary source inspection stays unchanged."""
+    compressed_bytes: int = 2 * 1024**3
+    expanded_bytes: int = 8 * 1024**3
+    member_bytes: int = 512 * 1024**2
+    members: int = 200_000
+    depth: int = 5
+    directory_bytes: int = 64 * 1024**2
+    metadata_bytes: int = 1024**2
+    ratio: int = 10_000
+    chunk_bytes: int = 1024**2
+    overlap_chars: int = 65_536
+    findings: int = 2_000
+    lzma_memory_bytes: int = 128 * 1024**2
+
+    def __post_init__(self):
+        if any(type(value) is not int or value <= 0 for value in vars(self).values()):
+            raise ValueError('Artifact limits must be finite positive integers')
+        if self.chunk_bytes > 1024**2 or self.metadata_bytes > MAX_ITEM_BYTES:
+            raise ValueError('Artifact inspection memory window exceeds its ceiling')
+
+
+class _ArtifactStop(ValueError):
+    pass
+
+
+class _ArtifactReader:
+    """Bound every decompressed read, including TAR padding and metadata."""
+    def __init__(self, stream, limit, chunk):
+        self.stream, self.limit, self.chunk = stream, limit, chunk
+        self.position = 0
+
+    def read(self, count):
+        if count < 0:
+            raise ValueError('Unbounded artifact read')
+        data = self.stream.read(min(count, self.chunk, self.limit - self.position + 1))
+        self.position += len(data)
+        if self.position > self.limit:
+            raise ValueError('Decompressed artifact exceeds its byte/ratio budget')
+        return data
+
+    def exact(self, count):
+        parts = []
+        while count:
+            part = self.read(count)
+            if not part:
+                raise ValueError('Truncated artifact payload')
+            parts.append(part)
+            count -= len(part)
+        return b''.join(parts)
+
+    def drain(self, count):
+        while count:
+            data = self.read(count)
+            if not data:
+                raise ValueError('Truncated artifact payload')
+            count -= len(data)
+
+
+class _ArtifactXZ:
+    """XZ decompression with an explicit dictionary and output memory bound."""
+    def __init__(self, stream, limits):
+        self.stream, self.limits = stream, limits
+        self.decoder = lzma.LZMADecompressor(memlimit=limits.lzma_memory_bytes)
+        self.ended = False
+
+    def read(self, count):
+        if count < 0 or count > self.limits.chunk_bytes:
+            raise ValueError('Unbounded XZ read')
+        result = bytearray()
+        while len(result) < count and not self.ended:
+            if self.decoder.eof:
+                # XZ stream padding is zero; concatenated/hidden streams fail closed.
+                if any(self.decoder.unused_data):
+                    raise ValueError('Unexpected trailing XZ stream')
+                while trailing := self.stream.read(self.limits.chunk_bytes):
+                    if any(trailing):
+                        raise ValueError('Unexpected trailing XZ stream')
+                self.ended = True
+                break
+            data = self.stream.read(self.limits.chunk_bytes) if self.decoder.needs_input else b''
+            if not data and self.decoder.needs_input:
+                raise ValueError('Truncated XZ stream')
+            result.extend(self.decoder.decompress(data, max_length=count - len(result)))
+        return bytes(result)
+
+
+class ArtifactAudit(PublicationAudit):
+    """Stream explicitly selected release artifacts, never enabling publication."""
+    KINDS = {'binary-candidate', 'third-party-source'}
+    _STRUCTURED = {'.json', '.svg', '.gds', '.oas', '.oasis', '.png', '.jpg',
+                   '.jpeg', '.webp', '.gif', '.tif', '.tiff', '.bmp', '.ico'}
+    _NATIVE = {'.exe', '.dll', '.pyd', '.so', '.dylib', '.msi', '.msix', '.appx', '.lib', '.a'}
+
+    def __init__(self, *, artifact_kind, limits=None, **kwargs):
+        super().__init__(**kwargs)
+        if artifact_kind not in self.KINDS:
+            raise ValueError('Select an explicit supported release artifact kind')
+        self.artifact_kind = artifact_kind
+        self.limits = limits or ArtifactLimits()
+        self._logical_bytes = 0
+        self._members = 0
+
+    def finding(self, name, kind, value='', *, line=None):
+        if len(self.findings) >= self.limits.findings:
+            super().finding('artifact', 'finding_budget')
+            raise _ArtifactStop('Artifact finding budget exceeded')
+        super().finding(name, kind, value, line=line)
+
+    def _reserve(self, name, size):
+        self._members += 1
+        self._logical_bytes += size
+        if self._members > self.limits.members:
+            self.finding(name, 'archive_member_budget')
+            raise _ArtifactStop('Artifact member budget exceeded')
+        if size > self.limits.member_bytes or self._logical_bytes > self.limits.expanded_bytes:
+            self.finding(name, 'archive_size_budget')
+            raise _ArtifactStop('Artifact expanded byte budget exceeded')
+
+    def _name(self, name, seen, *, directory=False):
+        normalized = name.replace('\\', '/')
+        parts = normalized.rstrip('/').split('/')
+        if (not normalized or normalized.startswith('/') or any(part.casefold() in {'', '.', '..', '.git'}
+                or ':' in part or part.rstrip(' .') != part for part in parts)):
+            self.finding(name, 'unsafe_archive_path')
+            raise _ArtifactStop('Unsafe artifact member name')
+        canonical = '/'.join(parts).casefold()
+        existing = seen.get(canonical)
+        ancestors = ['/'.join(parts[:index]).casefold() for index in range(1, len(parts))]
+        if (existing in {'file', 'directory'} or (existing == 'implicit' and not directory)
+                or any(seen.get(parent) == 'file' for parent in ancestors)):
+            self.finding(name, 'duplicate_archive_member')
+            raise _ArtifactStop('Ambiguous artifact member name')
+        for parent in ancestors:
+            seen.setdefault(parent, 'implicit')
+        seen[canonical] = 'directory' if directory else 'file'
+
+    def _stream_text(self, name, stream, size, prefix=b'', *, native=False):
+        decoders = [codecs.getincrementaldecoder('utf8')('replace')]
+        if native:
+            decoders += [codecs.getincrementaldecoder(encoding)('replace')
+                         for encoding in ('utf-16-le', 'utf-16-be')]
+        tails = [''] * len(decoders)
+        offsets = [0] * len(decoders)
+        if any(len(value) > self.limits.overlap_chars // 2 for value in self.forbidden_text):
+            self.finding(name, 'artifact_pattern_budget')
+            return
+
+        def scan(data, final=False):
+            for index, decoder in enumerate(decoders):
+                text = decoder.decode(data, final=final)
+                if native:
+                    text = re.sub(r'[^\x20-\x7e\n\r\t]', '\n', text)
+                combined = tails[index] + text
+                # Unbounded printable tokens could hide a regex terminator beyond
+                # the overlap. Reject them instead of silently assuming a clean scan.
+                if re.search(r'[\x20-\x7e]{' + str(self.limits.overlap_chars + 1) + r',}', combined):
+                    self.finding(name, 'artifact_text_window_budget')
+                    raise _ArtifactStop('Artifact text exceeds its bounded scan window')
+                self.text(name + ('!native-string' if native else ''), combined,
+                          line_offset=offsets[index])
+                retained = combined[-self.limits.overlap_chars:]
+                offsets[index] += combined[:-len(retained)].count('\n') if retained else combined.count('\n')
+                tails[index] = retained
+
+        remaining = size - len(prefix)
+        scan(prefix)
+        while remaining:
+            data = stream.read(min(remaining, self.limits.chunk_bytes))
+            if not data:
+                raise ValueError('Truncated artifact member')
+            scan(data)
+            remaining -= len(data)
+            self.counts['streamed_bytes'] += len(data)
+        scan(b'', final=True)
+
+    def _inspect(self, name, stream, size, depth):
+        self.counts['items'] += 1
+        self.text(name + '!filename', name)
+        prefix = stream.read(min(size, 8))
+        if len(prefix) != min(size, 8):
+            raise ValueError('Truncated artifact member')
+        suffix = Path(name).suffix.lower()
+        native = suffix in self._NATIVE or prefix.startswith(
+            (b'MZ', b'\x7fELF', b'\xfe\xed\xfa\xce', b'\xfe\xed\xfa\xcf',
+             b'\xcf\xfa\xed\xfe', b'\xce\xfa\xed\xfe', b'!<arch>\n'))
+        is_zip = prefix.startswith((b'PK\x03\x04', b'PK\x05\x06')) or suffix in {'.zip', '.whl', '.etl', '.npz'}
+        is_tar = (name.lower().endswith(('.tar', '.tar.gz', '.tgz', '.tar.bz2', '.tar.xz'))
+                  or prefix.startswith((b'\x1f\x8b', b'BZh', b'\xfd7zXZ\x00')))
+        if depth == 0 and not (not native and (is_zip or is_tar)):
+            self._reserve(name, size)
+        if native and self.artifact_kind == 'third-party-source':
+            self.finding(name, 'native_payload_in_source_artifact')
+            return
+        if not native and (is_zip or is_tar):
+            if depth >= self.limits.depth:
+                self.finding(name, 'nesting_budget')
+                return
+            if size > self.limits.compressed_bytes:
+                self.finding(name, 'compressed_artifact_budget')
+                return
+            # Anonymous seekable scratch storage enables bounded ZIP preflight
+            # and two-pass TAR inspection without extracting member paths.
+            with tempfile.TemporaryFile() as temporary:
+                temporary.write(prefix)
+                remaining = size - len(prefix)
+                while remaining:
+                    part = stream.read(min(remaining, self.limits.chunk_bytes))
+                    if not part:
+                        raise ValueError('Truncated compressed artifact')
+                    temporary.write(part)
+                    remaining -= len(part)
+                temporary.seek(0)
+                if is_zip:
+                    self._zip(name, temporary, depth)
+                else:
+                    self._tar(name, temporary, size, depth, prefix)
+            return
+        if prefix.startswith((b'7z\xbc\xaf\x27\x1c', b'Rar!\x1a\x07', b'MSCF')):
+            self.finding(name, 'unsupported_compressed_artifact')
+            return
+        if not native and suffix in self._STRUCTURED:
+            if size > MAX_ITEM_BYTES:
+                self.finding(name, 'structured_item_budget')
+                return
+            data = bytearray(prefix)
+            remaining = size - len(prefix)
+            while remaining:
+                part = stream.read(min(remaining, self.limits.chunk_bytes))
+                if not part:
+                    raise ValueError('Truncated structured artifact')
+                data.extend(part)
+                remaining -= len(part)
+            super().bytes(name, bytes(data), depth)
+        else:
+            self._stream_text(name, stream, size, prefix, native=native)
+
+    def _zip(self, name, stream, depth):
+        from etlayout.io.archive_directory import inspect_directory
+        inspect_directory(stream, max_bytes=self.limits.compressed_bytes,
+                          max_entries=self.limits.members,
+                          max_directory_bytes=self.limits.directory_bytes)
+        with zipfile.ZipFile(stream) as archive:
+            self.counts['archives'] += 1
+            self.text(name + '!archive-comment', archive.comment.decode('utf8', 'replace'))
+            seen = {}
+            # Complete declared-size/name/type preflight precedes decompression.
+            for member in archive.infolist():
+                member_name = name + '!' + member.filename
+                if member.orig_filename != member.filename or any(ord(char) < 32 for char in member.filename):
+                    self.finding(member_name, 'unsafe_archive_path')
+                    raise _ArtifactStop('Ambiguous artifact ZIP name')
+                self._name(member.filename, seen, directory=member.is_dir())
+                self.text(member_name + '!member-comment', member.comment.decode('utf8', 'replace'))
+                self.text(member_name + '!member-extra', member.extra.decode('utf8', 'replace'))
+                mode = (member.external_attr >> 16) & 0o170000
+                if (mode not in {0, 0o100000, 0o040000} or member.flag_bits & 1
+                        or (member.is_dir() and member.file_size)
+                        or (mode == 0o040000 and not member.is_dir())):
+                    self.finding(member_name, 'unsupported_archive_entry')
+                    raise _ArtifactStop('Unsupported artifact ZIP entry')
+                if member.compress_type not in {zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED}:
+                    self.finding(member_name, 'unsupported_archive_compression')
+                    raise _ArtifactStop('Unsupported artifact ZIP compression')
+                self._reserve(member_name, member.file_size)
+                if member.file_size > max(1, member.compress_size) * self.limits.ratio:
+                    self.finding(member_name, 'archive_ratio_budget')
+                    raise _ArtifactStop('Artifact compression ratio exceeded')
+            for member in archive.infolist():
+                if not member.is_dir():
+                    with archive.open(member) as payload:
+                        before = len(self.findings)
+                        self._inspect(name + '!' + member.filename, payload, member.file_size, depth + 1)
+                        if len(self.findings) == before and payload.read(1):
+                            raise ValueError('ZIP member exceeds its declared size')
+
+    def _tar_entries(self, name, raw, size, prefix):
+        raw.seek(0)
+        compressed = None
+        if prefix.startswith(b'\x1f\x8b'):
+            compressed = gzip.GzipFile(fileobj=raw)
+        elif prefix.startswith(b'BZh'):
+            compressed = bz2.BZ2File(raw)
+        elif prefix.startswith(b'\xfd7zXZ\x00'):
+            compressed = _ArtifactXZ(raw, self.limits)
+        reader = _ArtifactReader(compressed or raw,
+                                 min(self.limits.expanded_bytes, max(1, size) * self.limits.ratio),
+                                 self.limits.chunk_bytes)
+        global_pax, pending, long_name = {}, {}, None
+        metadata_bytes = 0
+        entries = 0
+        try:
+            while True:
+                header = reader.exact(512)
+                if not any(header):
+                    if any(reader.exact(512)):
+                        raise ValueError('Invalid TAR terminator')
+                    while trailing := reader.read(self.limits.chunk_bytes):
+                        if any(trailing):
+                            raise ValueError('Hidden trailing TAR payload')
+                    return
+                member = tarfile.TarInfo.frombuf(header, 'utf8', 'strict')
+                self.text(name + '!tar-header-name', member.name)
+                if member.uname not in {'', 'root'} or member.gname not in {'', 'root'}:
+                    self.finding(name + '!' + member.name, 'archive_owner_metadata')
+                entries += 1
+                if entries > self.limits.members:
+                    raise ValueError('TAR header count exceeds budget')
+                if member.type in {tarfile.XHDTYPE, tarfile.XGLTYPE, tarfile.GNUTYPE_LONGNAME}:
+                    metadata_bytes += member.size
+                    if member.size > self.limits.metadata_bytes or metadata_bytes > self.limits.directory_bytes:
+                        raise ValueError('TAR metadata exceeds budget')
+                    data = reader.exact(member.size)
+                    reader.drain((-member.size) % 512)
+                    if member.type == tarfile.GNUTYPE_LONGNAME:
+                        if long_name is not None:
+                            raise ValueError('Repeated GNU TAR long name')
+                        long_name = data.rstrip(b'\0').decode('utf8')
+                    else:
+                        attributes = {}
+                        cursor = 0
+                        while cursor < len(data):
+                            space = data.find(b' ', cursor)
+                            if space < 0 or space - cursor > 12:
+                                raise ValueError('Invalid PAX record')
+                            length = int(data[cursor:space])
+                            if length <= space - cursor + 2 or cursor + length > len(data):
+                                raise ValueError('Invalid PAX record size')
+                            record = data[space + 1:cursor + length]
+                            if not record.endswith(b'\n') or b'=' not in record:
+                                raise ValueError('Invalid PAX record')
+                            key, value = record[:-1].split(b'=', 1)
+                            key, value = key.decode('utf8'), value.decode('utf8')
+                            if key in attributes:
+                                raise ValueError('Duplicate PAX metadata key')
+                            self.text(name + '!pax-key', key)
+                            self.text(name + '!pax-value', value)
+                            attributes[key] = value
+                            cursor += length
+                        if any('sparse' in key.lower() for key in attributes):
+                            raise ValueError('Sparse TAR entries are unsupported')
+                        (global_pax if member.type == tarfile.XGLTYPE else pending).update(attributes)
+                    continue
+                if member.type not in {tarfile.REGTYPE, tarfile.AREGTYPE, tarfile.DIRTYPE}:
+                    raise ValueError('TAR links/special entries are unsupported')
+                attributes = {**global_pax, **pending}
+                effective_name = attributes.get('path', long_name or member.name)
+                effective_size = attributes.get('size', str(member.size))
+                if not re.fullmatch(r'\d{1,12}', effective_size):
+                    raise ValueError('Invalid TAR effective size')
+                effective_size = int(effective_size)
+                if effective_size > self.limits.member_bytes:
+                    raise ValueError('TAR member exceeds budget')
+                if member.isdir() and effective_size:
+                    raise ValueError('TAR directory has unexpected payload')
+                start = reader.position
+                yield effective_name, effective_size, member, attributes, reader
+                consumed = reader.position - start
+                if consumed > effective_size:
+                    raise ValueError('TAR member overread')
+                reader.drain(effective_size - consumed)
+                reader.drain((-effective_size) % 512)
+                pending, long_name = {}, None
+        finally:
+            if compressed is not None and not isinstance(compressed, _ArtifactXZ):
+                compressed.close()
+
+    def _gzip_metadata(self, name, stream):
+        stream.seek(0)
+        header = stream.read(10)
+        if len(header) != 10 or header[2] != 8 or header[3] & 0xe0:
+            raise ValueError('Invalid GZIP header')
+        remaining = self.limits.metadata_bytes
+        if header[3] & 4:
+            encoded_size = stream.read(2)
+            if len(encoded_size) != 2:
+                raise ValueError('Truncated GZIP extra header')
+            count = struct.unpack('<H', encoded_size)[0]
+            if count > remaining:
+                raise ValueError('GZIP metadata exceeds budget')
+            data = stream.read(count)
+            if len(data) != count:
+                raise ValueError('Truncated GZIP metadata')
+            self.text(name + '!gzip-extra', data.decode('utf8', 'replace'))
+            remaining -= count
+        for flag, label in [(8, 'filename'), (16, 'comment')]:
+            if not header[3] & flag:
+                continue
+            value = bytearray()
+            while True:
+                byte = stream.read(1)
+                if not byte:
+                    raise ValueError('Truncated GZIP metadata')
+                if byte == b'\0':
+                    break
+                remaining -= 1
+                if remaining < 0:
+                    raise ValueError('GZIP metadata exceeds budget')
+                value.extend(byte)
+            self.text(name + '!gzip-' + label, value.decode('utf8', 'replace'))
+
+    def _tar(self, name, stream, size, depth, prefix):
+        self.counts['archives'] += 1
+        if prefix.startswith(b'\x1f\x8b'):
+            self._gzip_metadata(name, stream)
+        seen = {}
+        for member_name, member_size, member, attributes, _payload in self._tar_entries(name, stream, size, prefix):
+            self._name(member_name, seen, directory=member.isdir())
+            self._reserve(name + '!' + member_name, member_size)
+            if attributes.get('uname', member.uname) not in {'', 'root'} or attributes.get('gname', member.gname) not in {'', 'root'}:
+                self.finding(name + '!' + member_name, 'archive_owner_metadata')
+            self.json_strings(name + '!' + member_name + '!pax-metadata', attributes)
+        for member_name, member_size, member, _attributes, payload in self._tar_entries(name, stream, size, prefix):
+            if not member.isdir():
+                self._inspect(name + '!' + member_name, payload, member_size, depth + 1)
+
+    def artifact(self, root):
+        root = Path(root)
+        try:
+            if not root.exists():
+                self.finding(root.name, 'missing_artifact_input')
+                return
+            if root.is_symlink() or root.is_junction():
+                self.finding(root.name, 'symlink_input')
+                return
+            candidates = [root] if root.is_file() else root.rglob('*')
+            for path in candidates:
+                name = path.name if root.is_file() else path.relative_to(root).as_posix()
+                if path.is_symlink() or path.is_junction():
+                    self.finding(name, 'symlink_input')
+                    continue
+                if not path.is_file():
+                    continue
+                size = path.stat().st_size
+                if size > self.limits.compressed_bytes:
+                    self.finding(name, 'compressed_artifact_budget')
+                    continue
+                self.counts['files'] += 1
+                if self.counts['files'] > self.limits.members:
+                    self.finding(name, 'tree_file_budget')
+                    return
+                with path.open('rb') as stream:
+                    self._inspect(name, stream, size, 0)
+        except _ArtifactStop:
+            return
+        except (OSError, ValueError, RuntimeError, EOFError, ImportError, tarfile.TarError,
+                zipfile.BadZipFile, lzma.LZMAError) as exc:
+            self.finding(root.name, 'artifact_read_error', type(exc).__name__)
+
+    def report(self, **_kwargs):
+        result = super().report()
+        result.update(mode=self.artifact_kind, limits=vars(self.limits),
+                      logical_expanded_bytes=self._logical_bytes,
+                      artifact_members=self._members)
+        return result
+
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', type=Path, default=Path('.'), help='Directory or archive to inspect')
     parser.add_argument('--output', type=Path, help='Write redacted JSON report; keep failed reports private')
+    parser.add_argument('--artifact-kind', choices=sorted(ArtifactAudit.KINDS),
+                        help='Explicit bounded streaming release-candidate/source-asset inspection; no publication clearance')
     parser.add_argument('--source', action='store_true', help='Exclude generated caches/builds/venvs; omit for a complete publication/export check')
     parser.add_argument('--forbid-text', action='append', default=[], help='Additional confidential literal, supplied locally and never echoed')
     parser.add_argument('--allow-email', action='append', default=[], help='Individually reviewed address that is required public attribution')
     args = parser.parse_args(argv)
     if not args.root.exists():
         parser.error('The input does not exist')
-    audit = PublicationAudit(forbidden_text=args.forbid_text, allowed_emails=args.allow_email)
-    audit.tree(args.root, source=args.source, output=args.output)
+    if args.artifact_kind and args.source:
+        parser.error('Release artifact inspection and source exclusions are separate modes')
+    options = dict(forbidden_text=args.forbid_text, allowed_emails=args.allow_email)
+    if args.artifact_kind:
+        if args.output and args.root.is_dir() and args.output.resolve().is_relative_to(args.root.resolve()):
+            parser.error('Keep the release inspection report outside the inspected artifact tree')
+        audit = ArtifactAudit(artifact_kind=args.artifact_kind, **options)
+        audit.artifact(args.root)
+    else:
+        audit = PublicationAudit(**options)
+        audit.tree(args.root, source=args.source, output=args.output)
     report = audit.report(source=args.source)
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

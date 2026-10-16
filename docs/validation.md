@@ -207,3 +207,30 @@ PR CI. Its [archive](design/content-addressed-archives.md) and
 [history](design/lazy-run-history.md) contracts define the solved workloads,
 complete typed equality checks, resource guards and timing boundaries. Keep raw
 archives, process logs and repeated receipts in CI/release artifacts, outside Git.
+
+
+## Expanded reference examples
+
+`python scripts/verify_extended_examples.py --output .artifacts/extended-examples`
+checks E25–E40 at their exact configured nominal inputs. It uses a fresh bounded
+process per reference, records provenance and phase timings, and checks service,
+scientific acceptance, every retained transient frame and complete schema-2/3
+result round trips. Geometry determinism, exported-layout reimport and embedded
+source reopening are independent portability checks. No geometry-only generation
+is reported as a successful simulation, and no converged case is relabeled as
+mesh verified.
+
+The complete matrix is an explicit owner/main CI step. The numerical unit suite
+shares immutable nominal results and returns deep copies to each test, while
+independent analytical/current-cut tests retain distinct physical checks. The
+catalog's `reference_tier` explicitly selects introductory three-mode tests;
+extended examples do not enter those tests merely because they have a builder.
+
+For the GUI, run `python scripts/power_examples_desktop_acceptance.py --offscreen
+--catalog --solve --workflow E25 E33 E36 E39 --output .artifacts/desktop-extended`.
+The intentionally empty `--solve` avoids the separate compact power-family loop;
+`--workflow` runs the saved nominal inputs through validation, meshing, background
+solve, results and read-only History. `--catalog` opens all 40 references through
+all seven stages. Omit `--offscreen` for native Windows and add `--scale 1.25` for
+application scaling. Inspect readable captures and font receipts. This does not
+certify clean-machine deployment or physical mixed-monitor DPI.

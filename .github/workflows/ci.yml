@@ -113,6 +113,8 @@ jobs:
           python docs/handbook/verify_walkthroughs.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python docs/handbook/verify_transient_walkthroughs.py
+      - name: Validate exact extended-example nominal projects and portable formats
+        run: python scripts/verify_extended_examples.py --output artifacts/extended-examples
       - name: Retain numerical verification evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -122,6 +124,8 @@ jobs:
             artifacts/pytest-full.xml
             artifacts/coverage.json
             artifacts/coverage.xml
+            artifacts/extended-examples/receipt.json
+            artifacts/extended-examples/*/receipt.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -157,6 +161,8 @@ jobs:
             if ($LASTEXITCODE -ne 0) { $failedJourneys += $journey }
           }
           if ($failedJourneys.Count -gt 0) { throw "Failed desktop journeys: $($failedJourneys -join ', ')" }
+      - name: Exercise the expanded catalog and representative complete workflows
+        run: python scripts/power_examples_desktop_acceptance.py --offscreen --catalog --solve --workflow E25 E33 E36 E39 --output artifacts/desktop-extended-examples
       - name: Retain readable desktop evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
