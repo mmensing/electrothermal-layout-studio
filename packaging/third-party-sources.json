@@ -229,7 +229,7 @@
       "bytes": 2035705,
       "sha256": "e333fac44217832e828bb5cd45b3b3cb65624eca402de3d1843af40a65902aa5",
       "url": null,
-      "license_expression": "MIT",
+      "license_expression": "MIT AND BSD-3-Clause AND Unicode-3.0 AND Apache-2.0",
       "build_role": "runtime package source",
       "bundle_path": "archives/fonttools-4.66.1-etlayout-source.tar.gz",
       "upstream_input": {
@@ -1285,7 +1285,8 @@
         "retained_regular_payloads": "unchanged",
         "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
         "change_record": "SOURCE_ARCHIVE_CHANGES.json"
-      }
+      },
+      "license_scope": "Source aggregate includes Adobe AGL data, Unicode tables and source-only cu2qu Apache2 code; frozen subset is recorded separately in dependency notices"
     },
     {
       "id": "freetype-2.14.3",
@@ -9435,7 +9436,7 @@
       "bytes": 231066,
       "sha256": "5de08e96de24572e8ddf7588a578c8c257ecb36e4c0b8a43a44ab24fcc9f0df4",
       "url": null,
-      "license_expression": "MIT",
+      "license_expression": "MIT AND BSD-3-Clause AND Unicode-3.0",
       "build_role": "runtime package source",
       "bundle_path": "archives/rich-15.0.0-etlayout-source.tar.gz",
       "upstream_input": {
@@ -9460,7 +9461,11 @@
         "retained_regular_payloads": "unchanged",
         "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
         "change_record": "SOURCE_ARCHIVE_CHANGES.json"
-      }
+      },
+      "derived_table_source_ids": [
+        "wcwidth-0.3.0",
+        "emoji-0.5.4"
+      ]
     },
     {
       "id": "scipy-1.18.1",
@@ -9868,6 +9873,93 @@
         "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
         "change_record": "SOURCE_ARCHIVE_CHANGES.json"
       }
+    },
+    {
+      "id": "wcwidth-0.3.0",
+      "version": "0.3.0",
+      "filename": "wcwidth-0.3.0-etlayout-source.tar.gz",
+      "bytes": 169424,
+      "sha256": "02fed742e3bfc4e206af8e097391f6ffb16de06f40df927626a1f102d0d52bb4",
+      "url": null,
+      "license_expression": "MIT AND Unicode-3.0",
+      "build_role": "Preferred source for the Unicode width tables generated into the Rich runtime; wcwidth itself is not a bundled runtime distribution",
+      "bundle_path": "archives/wcwidth-0.3.0-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "wcwidth-0.3.0.tar.gz",
+        "bytes": 172238,
+        "sha256": "af1a2fb0b83ef4a7fc0682a4c95ca2576e14d0280bca2a9e67b7dc9f2733e123",
+        "url": "https://files.pythonhosted.org/packages/38/75/2144b65e4fba12a2d9868e9a3f99db7fa0760670d064603634bef9ff1709/wcwidth-0.3.0.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "af1a2fb0b83ef4a7fc0682a4c95ca2576e14d0280bca2a9e67b7dc9f2733e123",
+        "input_filename": "wcwidth-0.3.0.tar.gz",
+        "omission_prefixes": [],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": [
+          {
+            "name": "wcwidth-0.3.0/README.rst",
+            "target": "wcwidth-0.3.0/docs/intro.rst"
+          }
+        ],
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      },
+      "generated_runtime_data": {
+        "distribution": "rich",
+        "version": "15.0.0",
+        "tables": 21,
+        "wide_zero_intervals_and_vs16": "All equal to the supplied wcwidth0.3.0 tables; historical generator environment is not asserted",
+        "upstream_generator": "packaging/source-recipes/rich-15.0.0/upstream-make-width-tables.py.txt"
+      }
+    },
+    {
+      "id": "emoji-0.5.4",
+      "version": "0.5.4",
+      "filename": "emoji-0.5.4-etlayout-source.tar.gz",
+      "bytes": 43683,
+      "sha256": "09bc2d8ffb68e7e2f66b104618447f9db806b3fdf793c8c3cdb31860478f2593",
+      "url": null,
+      "license_expression": "BSD-3-Clause AND Unicode-3.0",
+      "build_role": "Preferred source for the emoji name table generated into Rich; emoji itself is not a bundled runtime distribution",
+      "bundle_path": "archives/emoji-0.5.4-etlayout-source.tar.gz",
+      "upstream_input": {
+        "filename": "emoji-0.5.4.tar.gz",
+        "bytes": 43402,
+        "sha256": "60652d3a2dcee5b8af8acb097c31776fb6d808027aeb7221830f72cdafefc174",
+        "url": "https://files.pythonhosted.org/packages/40/8d/521be7f0091fe0f2ae690cc044faf43e3445e0ff33c574eae752dd7e39fa/emoji-0.5.4.tar.gz"
+      },
+      "source_bundle": "ETLayout-0.4.0-corresponding-source-rendering-support.zip",
+      "normalization": {
+        "recipe": "packaging/source-recipes/normalize_source_archive.py",
+        "input_sha256": "60652d3a2dcee5b8af8acb097c31776fb6d808027aeb7221830f72cdafefc174",
+        "input_filename": "emoji-0.5.4.tar.gz",
+        "omission_prefixes": [],
+        "agent_metadata_names": [
+          "AGENTS.md",
+          "CLAUDE.md",
+          "COPILOT.md"
+        ],
+        "payload_changes": [],
+        "materialized_internal_links": [],
+        "retained_regular_payloads": "unchanged",
+        "header_changes": "uid/gid/owner names and timestamps normalized; modes retained",
+        "change_record": "SOURCE_ARCHIVE_CHANGES.json"
+      },
+      "generated_runtime_data": {
+        "distribution": "rich",
+        "version": "15.0.0",
+        "entries": 3608,
+        "name_code_pairs": "Exactly equal after the supplied Rich generator transform; historical generator environment is not asserted",
+        "upstream_generator": "packaging/source-recipes/rich-15.0.0/upstream-make-emoji.py.txt"
+      }
     }
   ],
   "compiled_native": [
@@ -9981,6 +10073,7 @@
         "contourpy-1.4.0",
         "cycler-0.12.1",
         "dav1d-1.5.3",
+        "emoji-0.5.4",
         "fonttools-4.66.1",
         "freetype-2.14.3",
         "harfbuzz-14.1.0",
@@ -10013,6 +10106,7 @@
         "six-1.17.0",
         "tiff-4.7.1",
         "typing-extensions-4.16.0",
+        "wcwidth-0.3.0",
         "wheel-0.48.0",
         "zlib-ng-2.3.3"
       ]
@@ -10050,6 +10144,22 @@
     {
       "path": "packaging/source-recipes/pyinstaller-6.22.3/build-windows.ps1",
       "sha256": "a7ccfb640536596cb961cd8b9a39e1ac22141094c96e7394a4f927d7dbd13ce1"
+    },
+    {
+      "path": "packaging/source-recipes/rich-15.0.0/LICENSE.rich.txt",
+      "sha256": "deed7c17a4318158190a3ea239cc879a5a50271cebb98ae7025f48fbe58dca15"
+    },
+    {
+      "path": "packaging/source-recipes/rich-15.0.0/README.md",
+      "sha256": "5417c1036bc9fd247a31be3bd5a0a7495feaa3d9597cc8598db9c74d1b20056c"
+    },
+    {
+      "path": "packaging/source-recipes/rich-15.0.0/upstream-make-emoji.py.txt",
+      "sha256": "d8383bc47950e3e705a155d865b87ccc27a2b3e88ab19b6da129fd456d95b01b"
+    },
+    {
+      "path": "packaging/source-recipes/rich-15.0.0/upstream-make-width-tables.py.txt",
+      "sha256": "37908d0810c56ff040e9b7614392b47dc620ffdee83b5f4c3194859d4c5f2309"
     },
     {
       "path": "packaging/source-recipes/source_archive_io.py",
@@ -10242,7 +10352,9 @@
       "pyqtgraph-0.14.0"
     ],
     "rich": [
-      "rich-15.0.0"
+      "rich-15.0.0",
+      "wcwidth-0.3.0",
+      "emoji-0.5.4"
     ],
     "scipy": [
       "scipy-1.18.1"

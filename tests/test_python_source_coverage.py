@@ -113,6 +113,11 @@ def test_frozen_application_record_is_not_an_unlisted_third_party(catalog, tmp_p
     path.write_text(json.dumps(data))
     candidate = tmp_path / "candidate"
     candidate.mkdir()
+    # This actual Rich fixture also supplies its declared generated-data grants;
+    # missing-notice behavior has independent negative coverage.
+    notice = candidate / "licenses/license-texts/Generated-data-notices.txt"
+    notice.parent.mkdir(parents=True)
+    notice.write_bytes((ROOT / "packaging/license-texts/Generated-data-notices.txt").read_bytes())
     names = ["etlayout.cli", "rich._unicode_data.unicode17-0-0"]
     if unknown:
         names.append("unlisted_vendor.module")

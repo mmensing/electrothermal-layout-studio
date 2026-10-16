@@ -437,6 +437,35 @@ def embedded_font_inventory(artifact, kind, modules):
                     f"Exact embedded-font payload/source/notice review incomplete ({type(error).__name__})"}]
 
 
+def runtime_hook_alias(distribution, item, owner):
+    """Recognize relocated hooks only from their exact installed RECORD entry."""
+    prefixes = {"pyinstaller": "PyInstaller/hooks/rthooks/",
+                "pyinstaller-hooks-contrib": "_pyinstaller_hooks_contrib/rthooks/"}
+    prefix = prefixes.get(owner)
+    name = str(item).replace("\\", "/")
+    if not prefix or not name.startswith(prefix):
+        return None
+    leaf = name[len(prefix):]
+    if "/" in leaf or not leaf.startswith("pyi_rth_") or not leaf.endswith(".py") or not leaf[:-3].isidentifier():
+        return None
+    record_hash, record_size = getattr(item, "hash", None), getattr(item, "size", None)
+    if record_hash is None or record_hash.mode != "sha256" or type(record_size) is not int:
+        return None
+    try:
+        source = Path(distribution.locate_file(item))
+        base = Path(distribution.locate_file("")).resolve()
+        if (not source.resolve().is_relative_to(base)
+                or any(path.is_symlink() or path.is_junction() for path in (source, *source.parents))):
+            return None
+        content = _bounded_bytes(source, 1024**2)
+    except (OSError, RuntimeError, ValueError):
+        return None
+    encoded = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii")
+    if record_size != len(content) or record_hash.value != encoded:
+        return None
+    return leaf[:-3]
+
+
 def distribution_evidence():
     """Use RECORD ownership, not a shared top-level namespace, for split wheels."""
     modules, paths = {}, {}
@@ -451,7 +480,11 @@ def distribution_evidence():
                 module = name[:-3].replace("/", ".")
                 if module.endswith(".__init__"):
                     module = module[:-9]
-                modules.setdefault(module, set()).add(owner)
+                if not module.startswith("pyi_rth_"):
+                    modules.setdefault(module, set()).add(owner)
+                alias = runtime_hook_alias(distribution, item, owner)
+                if alias is not None:
+                    modules.setdefault(alias, set()).add(owner)
     return modules, paths
 
 
@@ -553,17 +586,20 @@ def create(artifact, kind, output, component_review=None):
     package_map = metadata.packages_distributions()
     module_owners, path_owners = distribution_evidence()
     modules, module_gap = frozen_modules(artifact) if kind == "frozen" else ([], None)
-    shipped, ambiguous_ownership = set(), []
+    shipped, ambiguous_ownership, hook_gaps = set(), [], []
     for module in modules:
         owners = module_owners.get(module, set())
         if len(owners) == 1:
             shipped.update(owners)
         elif owners:
             ambiguous_ownership.append({"module": module, "candidate_wheel_owners": sorted(owners)})
+        if module.startswith("pyi_rth_") and len(owners) != 1:
+            hook_gaps.append({"component": module, "reason":
+                "Frozen runtime hook lacks unambiguous, hash-verified installed RECORD ownership"})
     if kind == "frozen" and modules:
         shipped.add("pyinstaller")  # Bootloader/runtime hooks, not the build tool's whole Python package.
     python_owners, source_gaps = python_source_coverage(modules)
-    files, native, fonts, unresolved = [], [], [], list(source_gaps)
+    files, native, fonts, unresolved = [], [], [], [*source_gaps, *hook_gaps]
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     artifact_version, artifact_license = project["version"], project["license"]
     if kind == "frozen" and artifact.is_dir() and (artifact / "BUILD_MANIFEST.json").is_file():
@@ -615,6 +651,7 @@ def create(artifact, kind, output, component_review=None):
         components.append({"type": "file", "bom-ref": "file:" + name, "name": name,
                            "hashes": [{"alg": "SHA-256", "content": sha}]})
     dependencies = []
+    file_evidence = {item["path"]: item for item in files}
     for name in sorted(shipped):
         if name == normalized(project["name"]):
             continue  # The application is represented by the SBOM metadata component.
@@ -625,14 +662,36 @@ def create(artifact, kind, output, component_review=None):
         actual = metadata.version(name)
         if actual != item["version"]:
             unresolved.append({"component": name, "reason": "Build environment differs from locked catalog"})
-        record = {**item, "version": actual,
+        expression = item.get("frozen_subset_license_expression", item["license_expression"])
+        if not isinstance(expression, str) or not expression.strip() or "NOASSERTION" in expression:
+            unresolved.append({"component": name, "reason": "Shipped runtime license expression requires review"})
+            expression = "NOASSERTION"
+        supplemental = []
+        notice_paths = item.get("frozen_notice_files", [])
+        if not isinstance(notice_paths, list) or len(notice_paths) > 20:
+            unresolved.append({"component": name, "reason": "Invalid frozen supplemental notice declaration"})
+            notice_paths = []
+        for notice in notice_paths:
+            try:
+                valid = isinstance(notice, str) and notice == safe_member(notice) and notice.startswith("licenses/")
+            except ValueError:
+                valid = False
+            evidence = file_evidence.get(notice) if valid else None
+            if not evidence or not evidence["size"]:
+                unresolved.append({"component": name, "reason": "Required frozen supplemental notice is missing, empty or unsafe"})
+            else:
+                supplemental.append({"path": notice, "sha256": evidence["sha256"]})
+        record = {**item, "version": actual, "license_expression": expression,
+                  "source_license_expression": item["license_expression"],
+                  "supplemental_notices": supplemental,
                   "scope": "shipped-bootloader" if name == "pyinstaller" else "shipped-runtime",
                   "evidence": "Recognized frozen executable bootloader/runtime hooks; build tool not bundled" if name == "pyinstaller" else "Artifact paths and/or embedded PYZ module membership"}
         dependencies.append(record)
         components.append({"type": "library", "bom-ref": "pkg:" + name, "name": name, "version": actual,
                            "purl": f"pkg:pypi/{name}@{actual}",
-                           "licenses": [{"expression": item["license_expression"]}],
-                           "properties": [{"name": "etlayout:evidence", "value": record["evidence"]}]})
+                           "licenses": [{"expression": expression}],
+                           "properties": [{"name": "etlayout:evidence", "value": record["evidence"]},
+                                          {"name": "etlayout:source-license-expression", "value": item["license_expression"]}]})
     for native_name in sorted({item["native_component"] for item in native if item["native_component"]}):
         entry = next((item for item in catalog["native_components"] if item["name"] == native_name), None)
         expression = entry["license_expression"] if entry else "NOASSERTION"

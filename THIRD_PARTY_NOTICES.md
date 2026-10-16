@@ -29,6 +29,8 @@ gated per exact artifact by `packaging/binary-publication-policy.json`.
 | Matplotlib TrueType fonts | Assets in 3.11.2 | Per-family terms below; retain the full Matplotlib, DejaVu and STIX notices | [Font licenses](https://matplotlib.org/stable/project/license.html) |
 | Pillow | 12.3.0 | MIT-CMU plus native codec/font libraries below | [Source and licenses](https://github.com/python-pillow/Pillow/tree/12.3.0) |
 | pyqtgraph | 0.14.0 | MIT; bundled CET colormap data is CC-BY-4.0, with attribution below | [Source](https://github.com/pyqtgraph/pyqtgraph) |
+| Rich | 15.0.0 | MIT, BSD-3-Clause and Unicode-3.0 for the collected generated data; matching wcwidth and emoji preferred sources and original grants are retained | [Source](https://github.com/Textualize/rich) |
+| FontTools | 4.66.1 | MIT, Adobe BSD-3-Clause and Unicode-3.0 for the frozen subset; full source also includes Apache-2.0 cu2qu | [Source and licenses](https://github.com/fonttools/fonttools) |
 | meshio / platformdirs | 5.3.5 / 4.12.4 | MIT | [meshio](https://github.com/nschloe/meshio), [platformdirs](https://github.com/tox-dev/platformdirs) |
 | threadpoolctl / psutil | 3.7.0 / 7.2.2 | BSD-3-Clause | [threadpoolctl](https://github.com/joblib/threadpoolctl), [psutil](https://github.com/giampaolo/psutil) |
 | CPython | 3.12.14 | Python-2.0 / PSF license history plus the exact build's SSL, compression, FFI, database and other component notices | [Source](https://www.python.org/downloads/source/) |
@@ -132,6 +134,24 @@ package are GPL-2.0-or-later; the grants apply by file type. Its complete
 license and this exact runtime-hook copyright/grant are retained in
 `Python-packaging-notices.txt`; PyInstaller core source is not substituted
 for this distinct component.
+
+## Generated data and adapted-code attribution
+
+`Generated-data-notices.txt` retains the full Jeff Quast/Markus Kuhn, emoji
+(Taehoon Kim and Kevin Wurster), Adobe and Unicode grants used by actual
+frozen modules. Rich's 21 Unicode width/VS16 tables match wcwidth 0.3.0, and
+its emoji-name table matches emoji 0.5.4 through the supplied upstream Rich
+generators. These are copied/generated-data sources, not additional imported
+runtime packages; the matching data does not establish a historical generator
+environment. FontTools' Adobe glyph lists and Unicode character-property
+tables retain their own grants. Its full source's optional cu2qu Apache-2.0
+code is not part of the verified frozen subset.
+
+The same notice preserves Mathias Bynens and Taneli Hukkinen's MIT attribution
+for markdown-it-py's punycode code, and the MIT copyright/permission notices
+from the exact Neuroglancer source adapted by meshio: CEA, Forschungszentrum
+Juelich GmbH and Yann Leprince. Required institutional and contributor
+attribution is retained alongside each installed package's license.
 
 ## Qt modules and fonts
 

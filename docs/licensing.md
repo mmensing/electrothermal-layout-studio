@@ -45,10 +45,14 @@ exemption from distributing their corresponding source.
 
 For actually bundled Qt/PySide/Shiboken modules, the distribution selects their
 offered GPL-3.0 option. This is different from claiming LGPL shared-library
-replacement compliance. GEOS offers LGPL-2.1-or-later; the combined distribution
-uses its permitted later-version/GPL route. Required source and notices remain
-available for all such components. Permissive dependency and font notices are
-preserved unchanged. See [the source manifest and recipes](compliance-sources.md)
+replacement compliance. For GEOS, the distribution retains the documented
+LGPL 2.1 grant and uses the complete-source/relink option in section 6(a); no
+later-version conversion is assumed. Matching library and application preferred
+source, modifications, build/relink inputs and notices accompany the release.
+Recipients may replace or modify the library and reverse engineer the combined
+application to debug those modifications. GPL status alone does not discharge
+these obligations. Permissive dependency and font notices remain intact.
+See [the source manifest and recipes](compliance-sources.md)
 and [THIRD_PARTY_NOTICES](../THIRD_PARTY_NOTICES.md).
 
 A release must provide equivalent download access to exact corresponding source,

@@ -72,10 +72,14 @@
       "name": "fonttools",
       "version": "4.66.1",
       "scope": "runtime-environment",
-      "license_expression": "MIT",
+      "license_expression": "MIT AND BSD-3-Clause AND Unicode-3.0 AND Apache-2.0",
       "upstream_urls": [],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "modifications": "No dependency payload changes. Actual Adobe glyph-list and Unicode-property data retain full notices in Generated-data-notices.txt. Full preferred source additionally includes cu2qu under Apache-2.0; cu2qu is not collected in the verified frozen subset.",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_subset_license_expression": "MIT AND BSD-3-Clause AND Unicode-3.0",
+      "frozen_notice_files": [
+        "licenses/license-texts/Generated-data-notices.txt"
+      ]
     },
     {
       "name": "gmsh",
@@ -131,8 +135,11 @@
         "Documentation, https://markdown-it-py.readthedocs.io",
         "Homepage, https://github.com/executablebooks/markdown-it-py"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "modifications": "No dependency payload changes. The actual punycode implementation retains Mathias Bynens and Taneli Hukkinen MIT attribution in Generated-data-notices.txt as well as the package license.",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_notice_files": [
+        "licenses/license-texts/Generated-data-notices.txt"
+      ]
     },
     {
       "name": "matplotlib",
@@ -172,8 +179,11 @@
         "code, https://github.com/nschloe/meshio",
         "issues, https://github.com/nschloe/meshio/issues"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "modifications": "No dependency payload changes. The actual Neuroglancer adaptation retains the original CEA/Forschungszentrum Juelich/Yann Leprince MIT notices in Generated-data-notices.txt as well as the Meshio license.",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_notice_files": [
+        "licenses/license-texts/Generated-data-notices.txt"
+      ]
     },
     {
       "name": "numpy",
@@ -308,7 +318,7 @@
       ],
       "modifications": "No bootloader C source changes; the publication build uses recorded GNU prefix-map/static-libgcc/deterministic-link flags. Exact bundled zlib 1.3.2 grant is retained in PyInstaller-zlib-notice.txt, together with GCC/MinGW runtime notices. Full preferred source retains original grants by component.",
       "bundled_status": "Both frozen executables contain the source-built bootloader, PyInstaller bootstrap modules and core runtime hooks; Waf and ordinary analysis hooks are build tooling.",
-      "frozen_subset_license_expression": "(GPL-2.0-or-later WITH Bootloader-exception) AND Zlib"
+      "frozen_subset_license_expression": "(GPL-2.0-or-later WITH Bootloader-exception) AND Apache-2.0 AND Zlib"
     },
     {
       "name": "pyinstaller-hooks-contrib",
@@ -396,7 +406,8 @@
         "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
       ],
       "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_subset_license_expression": "GPL-3.0-only"
     },
     {
       "name": "pyside6-pdf",
@@ -478,13 +489,16 @@
       "name": "rich",
       "version": "15.0.0",
       "scope": "runtime-environment",
-      "license_expression": "MIT",
+      "license_expression": "MIT AND BSD-3-Clause AND Unicode-3.0",
       "upstream_urls": [
         "Documentation, https://rich.readthedocs.io/en/latest/",
         "Homepage, https://github.com/Textualize/rich"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "modifications": "No dependency payload changes. Collected generated width/VS16 and emoji tables retain wcwidth/Markus Kuhn, emoji and Unicode grants in Generated-data-notices.txt; exact matching preferred sources and upstream Rich generators are supplied without claiming the historical generator environment.",
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_notice_files": [
+        "licenses/license-texts/Generated-data-notices.txt"
+      ]
     },
     {
       "name": "ruff",
@@ -553,7 +567,8 @@
         "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
       ],
       "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
-      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog"
+      "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
+      "frozen_subset_license_expression": "GPL-3.0-only"
     },
     {
       "name": "six",
@@ -607,7 +622,7 @@
     {
       "name": "Gmsh bundled native code",
       "version": "4.15.2",
-      "license_expression": "GPL-2.0-or-later",
+      "license_expression": "GPL-2.0-or-later AND (GPL-3.0-or-later WITH GCC-exception-3.1) AND ZPL-2.1 AND MIT AND BSD-3-Clause AND LicenseRef-MinGW-Notices",
       "review": "Use exact source-built feature list/native hash and source manifest. Retain GPL2-or-later, named-library exception, built contrib notices and scoped TetGen/BR/Blossom permissions. Untangle/HLBFGS/ICFS and uncertain unused HXT duplicate are excluded; full source archive is not blindly redistributed."
     },
     {
@@ -661,7 +676,7 @@
       "version": "Official supported x64 system runtime; installed separately",
       "license_expression": "LicenseRef-Microsoft-Redistributable",
       "source": "https://learn.microsoft.com/visualstudio/releases/2022/redistribution",
-      "review": "Publication build removes all app-local Microsoft redistributable copies and redirects four hashed consumers to canonical installed system-runtime names. Native dependency checks and prerequisite documentation required; no Microsoft runtime binaries shipped."
+      "review": "Publication build removes all app-local Microsoft redistributable copies and redirects four hashed consumers to canonical installed system-runtime names. Native dependency checks and prerequisite documentation required; no app-local Microsoft runtime DLLs or installers shipped. Vendor-built native components retain their recorded compiler provenance."
     },
     {
       "name": "Pillow AVIF codecs",
@@ -673,23 +688,23 @@
     {
       "name": "Pillow native image and font libraries",
       "version": "FreeType2.14.3;HarfBuzz14.2.1;lcms2-2.19.1;JPEG-turbo3.1.4.1;PNG1.6.58;WebP1.6.0;OpenJPEG2.5.4;TIFF4.7.1;Brotli1.2.0;XZ5.8.3;zlib-ng2.3.3",
-      "license_expression": "FTL AND MIT AND IJG AND BSD-3-Clause AND Libpng AND BSD-2-Clause AND Zlib AND 0BSD",
+      "license_expression": "FTL AND MIT AND IJG AND BSD-3-Clause AND Libpng-2.0 AND BSD-2-Clause AND Zlib AND 0BSD AND libtiff",
       "source": "https://github.com/python-pillow/Pillow/tree/12.3.0",
       "review": "Actual wheel reports and matching Windows recipe bound native inputs. Retain full Pillow combined license, including source copyright and exact per-component terms. This wheel does not enable Raqm."
     },
     {
-      "name": "GCC static runtime for source-built Gmsh",
+      "name": "GCC static runtime for source-built components",
       "version": "16.2.0",
       "license_expression": "GPL-3.0-or-later WITH GCC-exception-3.1",
       "source": "https://gcc.gnu.org/",
-      "review": "GCC-only eligible compilation, static libgcc/libstdc++/OpenMP; exact source and runtime copyright/license notices retained. General-purpose compiler is not shipped."
+      "review": "GCC-only eligible compilation: Gmsh statically links libgcc/libstdc++/OpenMP; PyInstaller bootloaders statically link libgcc. Exact source and runtime copyright/license notices are retained. The general-purpose compiler is not shipped."
     },
     {
-      "name": "MinGW-w64 static runtime for source-built Gmsh",
+      "name": "MinGW-w64 static runtime for source-built components",
       "version": "14.0.0",
-      "license_expression": "LicenseRef-MinGW-w64-runtime",
+      "license_expression": "ZPL-2.1 AND MIT AND BSD-3-Clause AND LicenseRef-MinGW-Notices",
       "source": "https://www.mingw-w64.org/",
-      "review": "Retain complete COPYING.MinGW-w64-runtime notice, including component permissions, from exact w64devkit2.10.1 toolchain. Not Microsoft redistributable code."
+      "review": "Gmsh and PyInstaller bootloaders retain complete COPYING.MinGW-w64-runtime component permissions from the exact w64devkit2.10.1 toolchain. This runtime is distinct from the external Microsoft redistributable prerequisite."
     }
   ]
 }

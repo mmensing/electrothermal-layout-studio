@@ -1,0 +1,329 @@
+Generated-data and adapted-code notices
+
+These are additional supplier copyright and permission notices for data or
+code actually retained by the frozen application. Installed package-level
+notices remain required. ETLayout has not modified these dependency payloads.
+
+Rich 15.0.0 includes Unicode width/VS16 data matching wcwidth 0.3.0 and
+emoji-name data matching emoji 0.5.4. Matching preferred tables, upstream
+Rich generators and their source grants are supplied. This records exact
+data correspondence, not a claim about the developer's historical generator
+environment. These data sources are not separate imported runtime packages.
+
+FontTools 4.66.1 includes the Adobe glyph lists and Unicode character-property
+data with the following notices. The full source also retains its separate
+cu2qu Apache-2.0 grant; that optional code is absent from the frozen modules.
+
+markdown-it-py's punycode implementation and meshio's Neuroglancer adaptation
+retain the original authors' MIT notices below. Institutional authorship in
+these required upstream attributions is deliberately preserved.
+
+===== wcwidth / Markus Kuhn =====
+Source: wcwidth 0.3.0, LICENSE (width-table preferred source)
+
+The MIT License (MIT)
+
+Copyright (c) 2014 Jeff Quast <contact@jeffquast.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+Markus Kuhn -- 2007-05-26 (Unicode 5.0)
+
+Permission to use, copy, modify, and distribute this software
+for any purpose and without fee is hereby granted. The author
+disclaims all warranties with regard to this software.
+
+
+===== emoji aliases =====
+Source: emoji 0.5.4, LICENSE.txt (Rich emoji-data preferred source)
+
+New BSD License
+
+Copyright (c) 2014-2015, Taehoon Kim and Kevin Wurster
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* The names of its contributors may not be used to endorse or promote products
+  derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+===== Unicode data =====
+Source: https://www.unicode.org/license.txt (Unicode License V3)
+
+UNICODE LICENSE V3
+
+COPYRIGHT AND PERMISSION NOTICE
+
+Copyright © 1991-2026 Unicode, Inc.
+
+NOTICE TO USER: Carefully read the following legal agreement. BY
+DOWNLOADING, INSTALLING, COPYING OR OTHERWISE USING DATA FILES, AND/OR
+SOFTWARE, YOU UNEQUIVOCALLY ACCEPT, AND AGREE TO BE BOUND BY, ALL OF THE
+TERMS AND CONDITIONS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT
+DOWNLOAD, INSTALL, COPY, DISTRIBUTE OR USE THE DATA FILES OR SOFTWARE.
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of data files and any associated documentation (the "Data Files") or
+software and any associated documentation (the "Software") to deal in the
+Data Files or Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, and/or sell
+copies of the Data Files or Software, and to permit persons to whom the
+Data Files or Software are furnished to do so, provided that either (a)
+this copyright and permission notice appear with all copies of the Data
+Files or Software, or (b) this copyright and permission notice appear in
+associated Documentation.
+
+THE DATA FILES AND SOFTWARE ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF
+THIRD PARTY RIGHTS.
+
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR HOLDERS INCLUDED IN THIS NOTICE
+BE LIABLE FOR ANY CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES,
+OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
+ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE DATA
+FILES OR SOFTWARE.
+
+Except as contained in this notice, the name of a copyright holder shall
+not be used in advertising or otherwise to promote the sale, use or other
+dealings in these Data Files or Software without prior written
+authorization of the copyright holder.
+
+
+===== Adobe Glyph List and Glyph List For New Fonts =====
+Source: FontTools 4.66.1, fontTools/agl.py, _aglText and _aglfnText; upstream commit 4036a9ca80a62f64f9de4f7321a9a045ad0ecfd6
+
+# -----------------------------------------------------------
+# Copyright 2002-2019 Adobe (http://www.adobe.com/).
+#
+# Redistribution and use in source and binary forms, with or
+# without modification, are permitted provided that the
+# following conditions are met:
+#
+# Redistributions of source code must retain the above
+# copyright notice, this list of conditions and the following
+# disclaimer.
+#
+# Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials
+# provided with the distribution.
+#
+# Neither the name of Adobe nor the names of its contributors
+# may be used to endorse or promote products derived from this
+# software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
+# CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# -----------------------------------------------------------
+
+===== FontTools Unicode Blocks =====
+Source: FontTools 4.66.1, fontTools/unicodedata/Blocks.py (data source and copyright header; full Unicode grant above)
+
+# -*- coding: utf-8 -*-
+#
+# NOTE: This file was auto-generated with MetaTools/buildUCD.py.
+# Source: https://unicode.org/Public/UNIDATA/Blocks.txt
+# License: http://unicode.org/copyright.html#License
+#
+# Blocks-18.0.0.txt
+# Date: 2026-07-08
+# © 2026 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see https://www.unicode.org/reports/tr44/
+#
+# Format:
+# Start Code..End Code; Block Name
+
+
+===== FontTools Unicode Scripts =====
+Source: FontTools 4.66.1, fontTools/unicodedata/Scripts.py (data source and copyright header; full Unicode grant above)
+
+# -*- coding: utf-8 -*-
+#
+# NOTE: This file was auto-generated with MetaTools/buildUCD.py.
+# Source: https://unicode.org/Public/UNIDATA/Scripts.txt
+# License: http://unicode.org/copyright.html#License
+#
+# Scripts-18.0.0.txt
+# Date: 2026-06-29, 15:25:26 GMT
+# © 2026 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+#   For documentation, see https://www.unicode.org/reports/tr44/
+# For more information, see:
+#   UAX #24, Unicode Script Property: https://www.unicode.org/reports/tr24/
+#     Especially the sections:
+#       https://www.unicode.org/reports/tr24/#Assignment_Script_Values
+#       https://www.unicode.org/reports/tr24/#Assignment_ScriptX_Values
+#
+
+
+===== FontTools Unicode ScriptExtensions =====
+Source: FontTools 4.66.1, fontTools/unicodedata/ScriptExtensions.py (data source and copyright header; full Unicode grant above)
+
+# -*- coding: utf-8 -*-
+#
+# NOTE: This file was auto-generated with MetaTools/buildUCD.py.
+# Source: https://unicode.org/Public/UNIDATA/ScriptExtensions.txt
+# License: http://unicode.org/copyright.html#License
+#
+# ScriptExtensions-18.0.0.txt
+# Date: 2026-08-06, 18:14:47 GMT
+# © 2026 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+#   For documentation, see https://www.unicode.org/reports/tr44/
+#
+# The Script_Extensions property indicates which characters are commonly used
+# with more than one script, but with a limited number of scripts.
+# For each code point, there is one or more property values.  Each such value is a Script property value.
+# For more information, see:
+#   UAX #24, Unicode Script Property: https://www.unicode.org/reports/tr24/
+#     Especially the sections:
+#       https://www.unicode.org/reports/tr24/#Assignment_Script_Values
+#       https://www.unicode.org/reports/tr24/#Assignment_ScriptX_Values
+#
+# Each Script_Extensions value in this file consists of a set
+# of one or more abbreviated Script property values. The ordering of the
+# values in that set is not material, but for stability in presentation
+# it is given here as alphabetical.
+#
+# All code points not explicitly listed for Script_Extensions
+# have as their value the corresponding Script property value.
+#
+# @missing: 0000..10FFFF; <script>
+
+
+===== FontTools Unicode Mirrored =====
+Source: FontTools 4.66.1, fontTools/unicodedata/Mirrored.py (data source and copyright header; full Unicode grant above)
+
+# -*- coding: utf-8 -*-
+#
+# NOTE: The mappings in this file were generated from the command line:
+# cat BidiMirroring.txt | grep "^[0-9A-F]" | sed "s/;//" | awk '{print "    0x"$1": 0x"$2","}'
+#
+# Source: http://www.unicode.org/Public/UNIDATA/BidiMirroring.txt
+# License: http://unicode.org/copyright.html#License
+#
+# BidiMirroring-18.0.0.txt
+# Date: 2026-02-03
+# © 2026 Unicode®, Inc.
+# Unicode and the Unicode Logo are registered trademarks of Unicode, Inc. in the U.S. and other countries.
+# For terms of use and license, see https://www.unicode.org/terms_of_use.html
+#
+# Unicode Character Database
+# For documentation, see https://www.unicode.org/reports/tr44/
+
+===== markdown-it-py punycode =====
+Source: markdown-it-py 4.2.0, markdown_it/_punycode.py (complete opening MIT notice)
+
+# Copyright 2014 Mathias Bynens <https://mathiasbynens.be/>
+# Copyright 2021 Taneli Hukkinen
+#
+# Permission is hereby granted, free of charge, to any person obtaining
+# a copy of this software and associated documentation files (the
+# "Software"), to deal in the Software without restriction, including
+# without limitation the rights to use, copy, modify, merge, publish,
+# distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so, subject to
+# the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+# LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+# WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+===== meshio Neuroglancer adaptation =====
+Source: HumanBrainProject/neuroglancer-scripts commit 1fcabb613a715ba17c65d52596dec3d687ca3318, src/neuroglancer_scripts/mesh.py opening notice and LICENCE.txt; adapted by meshio 5.3.5
+
+# Copyright (c) 2018 CEA
+# Copyright (c) 2018 Forschungszentrum Juelich GmbH
+# Author: Yann Leprince <y.leprince@fz-juelich.de>
+#
+# This software is made available under the MIT licence, see LICENCE.txt.
+
+
+MIT License
+
+Copyright (c) 2016 Forschungszentrum Juelich GmbH
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+

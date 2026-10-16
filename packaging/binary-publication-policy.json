@@ -6,7 +6,7 @@
   "version": "0.4.0",
   "platform": "windows-x64",
   "license_route": "GPL-3.0-only-with-MPL-3.3",
-  "source_catalog_sha256": "d4010a420566a8216a20e79b49fe10e482e9c0ed3977c17ac0f79966042fadf0",
+  "source_catalog_sha256": "5e27e61d14fb9c8b7f651dbf7c59767ff4a3cdc7206cdd3862fbac4b9b5a295c",
   "native_outputs": {
     "_internal/gmsh-4.15.dll": "d0925dca151a1c34b7c291241ab20026312c24510eedeae2c466aa643bf24192",
     "_internal/python312.dll": "53d38ecd2d9f4e19ac9328a715d1155e3e183473845e15d0044342909fc718a0",
