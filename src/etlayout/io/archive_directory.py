@@ -58,14 +58,14 @@ def inspect_directory(source, *, max_bytes=2_000_000_000, max_entries=100_000,
         if len(tail) != length - tail_start:
             raise SimulationError("Truncated ZIP directory tail")
         offset = tail.rfind(b"PK\x05\x06")
-        while offset >= 0:
-            if len(tail) - offset >= 22:
-                comment = struct.unpack_from("<H", tail, offset + 20)[0]
-                if len(tail) - offset == 22 + comment:
-                    break
-            offset = tail.rfind(b"PK\x05\x06", 0, offset)
-        if offset < 0:
+        if offset < 0 or len(tail) - offset < 22:
             raise SimulationError("Missing or truncated ZIP end-of-directory record")
+        comment = struct.unpack_from("<H", tail, offset + 20)[0]
+        # Use the same last signature as stdlib's parser. Accepting an earlier
+        # valid record when a later ambiguous signature exists could validate
+        # one directory and then let ZipFile allocate a different one.
+        if len(tail) - offset != 22 + comment:
+            raise SimulationError("Ambiguous or truncated ZIP end-of-directory comment")
         _, disk, directory_disk, disk_count, count, size, directory_offset, _ = struct.unpack_from("<4s4H2LH", tail, offset)
         end_offset = tail_start + offset
         if disk != 0 or directory_disk != 0 or disk_count != count:

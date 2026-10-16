@@ -492,3 +492,36 @@ def test_streaming_save_reuses_each_source_directory_for_the_operation(specimen,
         # physical verification stream, independent of object/run count.
         assert len(opened) == 4 and all(archive.fp is None for archive in opened)
     assert len(project_io.load_run_history(target)) == 4
+
+
+@pytest.mark.parametrize("suffix,alias", [(".gds", ".gdsii"), (".oas", ".oasis")])
+def test_source_extension_aliases_share_payload_and_keep_source_hash(specimen, tmp_path, suffix, alias):
+    import klayout.db as kdb
+
+    from etlayout.geometry.layout import LayoutDocument
+
+    project, result = specimen
+    layout = kdb.Layout()
+    layout.dbu = .001
+    top = layout.create_cell("TOP")
+    top.shapes(layout.layer(1, 0)).insert(kdb.Box(0, 0, 1000, 1000))
+    source = tmp_path / ("first" + suffix)
+    layout.write(str(source))
+    other = tmp_path / ("alias" + alias)
+    other.write_bytes(source.read_bytes())
+    project.layout.path, project.layout.cell = str(source), "TOP"
+    project.layout.sha256 = project_io.file_hash(source)
+    result.configuration = project.to_dict()
+    result.configuration_hash = project_io.configuration_hash(project)
+    result.physics_hash = project_io.physics_hash(project)
+    historical = deepcopy(result)
+    historical.configuration["layout"]["path"] = str(other)
+    target = tmp_path / "aliases.etlayout"
+    project_io.save_project(project, target, result, history=[historical], archive_format=3)
+    with ArchiveV3Reader(target) as reader:
+        assert len([item for item in reader._index.values() if item["kind"] == "layout"]) == 1
+    reopened, current = project_io.load_project(target)
+    history = project_io.load_run_history(target)
+    assert reopened.layout.sha256 == project.layout.sha256
+    assert current.configuration_hash == history[0].configuration_hash == result.configuration_hash
+    assert LayoutDocument(reopened.layout.path).top_cells == ["TOP"]
