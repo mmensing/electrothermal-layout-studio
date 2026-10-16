@@ -291,6 +291,26 @@ difference reports include the paired-run provenance. Comparison exports also in
 sidecar recording both panels and their views. Profiles retain selection and source
 provenance in CSV. Save/reopen a project to resume with both setup and results.
 
+Reports from the GUI and command line use the same offline rendering contract.
+Names, notes, diagnostics, captions and recorded configuration are text, including
+when they contain HTML-like tags. Generated field images are embedded PNGs, so the
+HTML file can be moved without its image directory. Its Content Security Policy
+blocks scripts, remote resources, forms and embedded objects. This is protection
+against active report content, **not** a confidentiality filter: reports can still
+contain layout paths, material settings and notes, and the comprehensive numerical
+export can contain the full source archive. Review the recorded export scope
+before sharing.
+
+All application CSV exports use a spreadsheet-safe text policy. Text identifiers
+beginning with formula prefixes (`=`, `+`, `-`, `@`, including after whitespace),
+leading control characters or equivalent full-width prefixes receive an initial
+apostrophe. CSV readers will see that apostrophe; it deliberately identifies text.
+Actual numeric values retain their SI values, including negative voltage, signed
+current and scientific notation. JSON, NPZ and VTU preserve the original identifiers
+and numeric data for programmatic exchange. Do not remove the CSV text protection
+and then open untrusted identifiers in a spreadsheet.
+
+
 ## Recorded runs and result compatibility
 
 **Simulation → Inspect run history** opens the **Run history** tab. Each entry shows its
@@ -324,6 +344,60 @@ Undo/redo handles configuration edits. Recovery is offered after an interrupted 
 session; a normal project save is the durable record. Missing external layouts can be relinked
 through File. Portable archives normally include the layout already.
 Autosave failures appear in the status area; save explicitly after resolving the cause.
+Recovery uses an application-local `recovery/` directory beside the editable material
+library. Each application window has a random session UUID; portable projects persist a
+separate document UUID in metadata, outside scientific configuration and result hashes.
+Snapshots have unique UUID filenames and increasing document revisions. The atomic,
+process-locked index can be rebuilt from independent receipts after a crash. On startup,
+choose individual interrupted sessions to recover, ignore, discard (with confirmation),
+or open their original project. Active sessions are excluded. A damaged entry cannot
+hide another intact snapshot. Older shared recovery files are imported once without
+deleting their source. JSON saves use the already-supported `project` metadata envelope to retain this UUID;
+legacy bare-project JSON remains readable. Legacy projects acquire an identity on migration; Save As
+preserves it, while Duplicate creates a new document.
+
+A durable save removes only this window's snapshots through its saved revision; other
+projects, sessions and newer revisions remain. Failed cleanup is reported and may leave
+a redundant local copy. Recovery archives contain the same potentially confidential
+layout, notes, materials and results as full project archives: they are local files, not
+encrypted backups, and inherit the user's directory permissions. Temporary project writes
+are sibling files removed after success/failure; embedded layouts use the local
+content-hash cache. Deliberate exports remain at their chosen destination. Recovery is
+crash protection, not a replacement for a durable project save.
+
+Project saving now runs in a dedicated background worker. The status bar shows the
+current stage and a **Cancel save** button; cancellation is checked between serialization,
+history, verification and atomic commit. Compression already in progress may finish
+before cancellation is acknowledged. A commit already completed is a successful save.
+The previous durable file remains intact if serialization, validation, cancellation or
+replacement fails. Finished archives pass budget, CRC and embedded-source hash checks
+and are flushed before a same-filesystem atomic replacement. A small sibling `.save.lock`
+file coordinates competing local writers; it contains no project content.
+
+Editing can continue while a snapshot is saved. Completion clears the dirty indicator
+only for the same document generation; the saved revision is shown when newer edits
+remain. One latest manual request and one latest recovery request may wait behind the
+active worker. Repeated Save, Save As and autosave coalesce queued revisions without
+retargeting the active worker. Save As changes the working filename after success.
+An older worker cannot publish over a newer submitted revision, and a destination changed
+by another process after submission (including while queued) is rejected. Resolve that conflict by reopening or
+choosing Save As. Navigation and shutdown wait for save completion or cancellation;
+Save-before-navigation continues only if the saved revision remains current. While
+inspecting History, Save writes the working setup without replacing the inspected
+canvas. Cancel, a cancelled Save As chooser, and a failed save preserve that context.
+
+Completed GUI result arrays use immutable bytes-backed buffers. The initial buffer freeze
+costs one copy; subsequent snapshots share those buffers while copying metadata. Mutable
+arrays supplied through Python are copied when captured, including read-only views with
+writable aliases. The synchronous Python/CLI `save_project` API remains available;
+GUI `MainWindow.save()` returns whether a request was accepted, not proof of durability.
+Wait for the worker to finish before reopening a GUI-created archive in automation.
+
+Opening JSON project metadata preserves that source file: **Save** offers a portable
+`.etlayout` destination instead of overwriting it. **Save As** suggests `.etlayout`
+and adds that suffix when none is entered. JSON destinations are rejected for archive
+saving; Python callers can continue using `save_json` for metadata-only JSON files.
+
 
 ## Power interconnects and routing — added in 0.3.0
 

@@ -14,6 +14,30 @@ import traceback
 from PySide6.QtCore import QObject, QTimer, Signal
 
 
+def _freeze_received_results(value, seen=None):
+    """Freeze completed calculations without rewriting other domain objects."""
+    from dataclasses import fields, is_dataclass
+
+    from etlayout.io.saving import freeze_result_arrays
+    from etlayout.models import SimulationResult
+
+    seen = set() if seen is None else seen
+    if id(value) in seen:
+        return
+    seen.add(id(value))
+    if isinstance(value, SimulationResult):
+        freeze_result_arrays(value)
+    elif is_dataclass(value):
+        for field in fields(value):
+            _freeze_received_results(getattr(value, field.name), seen)
+    elif isinstance(value, dict):
+        for child in value.values():
+            _freeze_received_results(child, seen)
+    elif isinstance(value, (list, tuple)):
+        for child in value:
+            _freeze_received_results(child, seen)
+
+
 def _worker(messages, project, operation, argument, execution=None):
     from etlayout.simulation.execution import execution_context
     try:
@@ -162,6 +186,14 @@ class ComputeJob(QObject):
                     return
             except (EOFError, OSError, ValueError):
                 return
+            if message[0] == "result":
+                try:
+                    # Own immutable numerical buffers on this receiver thread,
+                    # before the GUI sees them; save snapshots then share bytes.
+                    _freeze_received_results(message[1])
+                except Exception as error:
+                    self._received.put(("error", (f"Cannot receive immutable result: {error}", traceback.format_exc())))
+                    return
             self._received.put(message)
             if message[0] in {"result", "error"}:
                 return

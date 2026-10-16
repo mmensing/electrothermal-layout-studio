@@ -57,10 +57,12 @@ def test_presentation_edits_keep_results_save_reopen_and_recover(working, qtbot,
     assert working.result is result and working.mesh is result.mesh
     assert physics_hash(working.project) == original_physics
     working.autosave()
+    qtbot.waitUntil(lambda: working.save_job is None and not working._save_queue, timeout=30000)
     assert working.recovery_path.is_file()
     assert working.recovery_status.text() == "Recovery saved"
     working.path = tmp_path / "saved.etlayout"
     assert working.save()
+    qtbot.waitUntil(lambda: working.save_job is None and not working._save_queue, timeout=30000)
     project, loaded = load_project(working.path)
     assert loaded is not None
     assert not project.layers[0].visible
@@ -100,6 +102,7 @@ def test_inspection_is_readonly_and_export_uses_recorded_design(working, qtbot, 
     assert working.config_dock.isEnabled() and working.run_action.isEnabled()
     working.path = tmp_path / "history.etlayout"
     assert working.save()
+    qtbot.waitUntil(lambda: working.save_job is None and not working._save_queue, timeout=30000)
     loaded_runs = load_run_history(working.path)
     assert {run.configuration["name"] for run in loaded_runs} == {base_project.name, other.name}
 
@@ -135,14 +138,16 @@ def test_open_project_resets_convergence_connectivity_and_diagnostics(working, q
     assert working.key_metrics.text() == ""
 
 
-def test_autosave_failure_is_visible_and_can_recover(working, tmp_path):
+def test_autosave_failure_is_visible_and_can_recover(working, tmp_path, qtbot):
     working.dirty = True
     working.recovery_path = tmp_path  # A directory cannot be replaced by the archive file.
     working.autosave()
+    qtbot.waitUntil(lambda: working.save_job is None and not working._save_queue, timeout=30000)
     assert "Recovery failed" in working.recovery_status.text()
     assert "Automatic recovery could not be saved" in working.console.toPlainText()
     working.recovery_path = tmp_path / "working-recovery.etlayout"
     working.autosave()
+    qtbot.waitUntil(lambda: working.save_job is None and not working._save_queue, timeout=30000)
     assert working.recovery_status.text() == "Recovery saved"
     assert load_project(working.recovery_path)[1] is not None
 

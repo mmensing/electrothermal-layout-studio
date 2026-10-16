@@ -49,7 +49,7 @@ do not change your physical setup.
 | **Results you can interrogate** | Select layers/regions, probe fields, draw profiles, integrate branch current and synchronize comparison maps. | [Read a map and check its support](docs/handbook/results-and-validation.md). |
 | **Power-interconnect analysis** | Inspect device groups, via/port loading, contact loss, source-potential spread and passive multiport exports. | [Explore GaN and SiC feeds](docs/power-examples.md). |
 | **Studies and constrained routing** | Run parameter sweeps, mesh/time studies and bounded routing experiments; check equal service and mesh-verified finalists. | [Compare alternatives fairly](docs/POWER_ROUTING.md). |
-| **Portable work and reporting** | Save embedded layouts, materials and retained runs in ETL projects; export maps, numerical fields and self-contained reports. | [Save a result you can reopen](docs/handbook/first-calculation.md). |
+| **Portable work and reporting** | Choose PNG/PDF/SVG figures or standalone reports, selected CSV/NPZ/VTU data, or a complete ETL experiment with embedded layout and retained runs. | [Save a result you can reopen](docs/handbook/first-calculation.md). |
 
 [The full feature catalog](docs/features.md) explains where to find each tool,
 what it produces and what its result does—and does not—establish.

@@ -18,6 +18,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field, replace
 from pathlib import Path, PureWindowsPath
 
+from etlayout.io.identity import restore_document_id
 from etlayout.models import Project, SimulationError
 
 LAYOUT_SUFFIXES = {".gds", ".gdsii", ".oas", ".oasis"}
@@ -307,6 +308,7 @@ def inspect_project(
             project = project_from_dict(
                 metadata.get("project", metadata) if isinstance(metadata, dict) else metadata
             )
+            restore_document_id(project, metadata.get("document_id") if isinstance(metadata, dict) and "project" in metadata else None, source)
             if project.layout.sha256 and not re.fullmatch(r"[0-9a-fA-F]{64}", project.layout.sha256):
                 raise SimulationError("Invalid declared layout SHA-256 identity")
             resources = (
@@ -333,6 +335,7 @@ def inspect_project(
             ):
                 raise SimulationError("Unsupported project format/version")
             project = project_from_dict(metadata["project"])
+            restore_document_id(project, metadata.get("document_id"), source)
             if project.layout.sha256 and not re.fullmatch(r"[0-9a-fA-F]{64}", project.layout.sha256):
                 raise SimulationError("Invalid declared layout SHA-256 identity")
             embedded = metadata.get("embedded_layout")

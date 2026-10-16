@@ -7,7 +7,6 @@ fixed SI square on an origin-anchored half-window grid, independent of the mesh.
 """
 from __future__ import annotations
 
-import csv
 from copy import deepcopy
 from dataclasses import asdict, replace
 from pathlib import Path
@@ -29,6 +28,7 @@ from shapely import (
 from shapely.geometry import Point
 
 from etlayout.geometry.prepare import polygon_parts, resolve_region
+from etlayout.io.reporting import csv_writer
 from etlayout.models import Cancelled, MeasurementSpec, SimulationError, SupportSelector, checkpoint
 from etlayout.power.measurement_contract import QUANTITIES, validate_limits
 from etlayout.visualization.sampling import element_nodal_values
@@ -920,7 +920,7 @@ def export_power_report(result, path):
         rows = result.analysis.get(category, {})
         keys = sorted({key for row in rows.values() for key in row})
         with (root / (category + ".csv")).open("w", encoding="utf-8-sig", newline="") as stream:
-            writer = csv.writer(stream)
+            writer = csv_writer(stream)
             writer.writerow(["record_id", *keys])
             for key, row in rows.items():
                 writer.writerow([key, *[row.get(k) for k in keys]])

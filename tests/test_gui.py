@@ -110,6 +110,7 @@ def test_window_geometry_drawing_undo_and_persistence(window, qtbot, tmp_path):
     window.undo()
     window.path = tmp_path / "gui-project.etlayout"
     assert window.save()
+    qtbot.waitUntil(lambda: window.save_job is None and not window._save_queue, timeout=30000)
     window.autosave_timer.stop()
     assert window.path.exists()
     window.open_project(window.path)
