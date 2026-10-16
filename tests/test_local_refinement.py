@@ -150,6 +150,11 @@ def test_local_refinement_preserves_uniform_analytical_resistor_and_hotspot(tmp_
                                 execution=ExecutionSettings(study_workers=1))
     assert all(row.result and row.result.converged and not row.error for row in rows)
     assert rows[1].result.mesh.statistics["elements"] > rows[0].result.mesh.statistics["elements"]
+    # A rectangular window must not inherit femtometer seams from the source
+    # triangulation: P1 represents this uniform analytical field exactly.
+    for row in rows:
+        assert row.result.mesh.statistics["minimum_quality"] > .05
+        assert row.result.metrics["electrical_residual"] < 1e-10
     assert rows[1].metrics["effective_resistance"] == pytest.approx(.084, rel=1e-6)
     assert rows[1].metrics["effective_resistance_relative_change"] < 1e-6
     assert rows[1].metrics["regularized_metal_current_density:averaged_j_relative_change"] < 1e-6
@@ -162,6 +167,14 @@ def test_local_refinement_preserves_uniform_analytical_resistor_and_hotspot(tmp_
     compatible_plan = suggest_refinements(restored, loaded)
     assert any(item.purpose == "Averaged hotspot" for item in compatible_plan.suggestions)
     assert metric_unit("regularized_metal_current_density:averaged_j") == "A/m²"
+    # Group metadata can change while the physical result and cached report
+    # remain valid. Always revalidate references instead of trusting that cache.
+    project.power.devices[0].selector.devices = ["outer"]
+    with pytest.raises(SimulationError, match="Cyclic device group"):
+        suggest_refinements(project, source)
+    project.power.devices[0].selector.devices = ["missing"]
+    with pytest.raises(SimulationError, match="Stale device selector"):
+        suggest_refinements(project, source)
 
 
 @pytest.mark.numerical
