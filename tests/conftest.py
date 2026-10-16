@@ -29,3 +29,13 @@ def pytest_collection_modifyitems(items):
         else:
             category = 'numerical' if item.path.name in NUMERICAL_MODULES else 'fast'
         item.add_marker(getattr(pytest.mark, category))
+
+
+@pytest.fixture(autouse=True)
+def isolated_desktop_settings(request, monkeypatch):
+    """Only Qt tests replace the window's native preference-store constructor."""
+    if not {"qtbot", "qapp"}.intersection(request.fixturenames):
+        return
+    from gui_test_helpers import isolate_window_settings
+
+    isolate_window_settings(monkeypatch, request.getfixturevalue("tmp_path"))

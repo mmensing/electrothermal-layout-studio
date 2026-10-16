@@ -36,8 +36,8 @@ def main(argv=None):
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     import klayout.db as db
-    from desktop_acceptance_support import prepare_desktop_fonts
-    from PySide6.QtCore import QCoreApplication, QEvent, QPointF, QSettings, Qt, QTimer
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QMessageBox
 
@@ -49,8 +49,7 @@ def main(argv=None):
 
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=True)
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(out / "settings"))
+    isolate_acceptance_settings(out)
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
     prepare_desktop_fonts(app, out)
