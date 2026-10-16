@@ -7,7 +7,6 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QTableWidgetItem
 
 from etlayout.examples import make_example
@@ -20,10 +19,6 @@ from etlayout.simulation.runner import run_project
 
 @pytest.fixture
 def transient_window(qtbot, tmp_path):
-    # Timeline/canvas assertions use this test's workspace, independent of saved
-    # splitter proportions or drawer visibility from the desktop or other tests.
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(tmp_path / "settings"))
     project = make_example("E17", tmp_path / "inputs")
     result = run_project(project)
     assert result.converged
