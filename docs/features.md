@@ -90,9 +90,13 @@ combinations uses the optional CLI.
 Use **File → Save project as…** for your working configuration, embedded layout,
 material snapshots and retained history. Resolve pending edits with **Apply**,
 **Discard** or **Stay** before changing context. Use **Results → Export task** to
-choose a map, displayed field/support, original numerical results, report or
-selected-run project archive. A selected-run archive belongs to that run's setup;
-it is different from saving a subsequently edited working project.
+choose **Share figure or report**, **Share selected numerical data**, or
+**Archive complete experiment**. Review the exact files and information before
+writing. Sharing uses selected FE support and excludes the original layout,
+configuration, notes and history. Complete archives retain those confidential
+inputs. PNG/PDF/SVG share the same scientific plot renderer, with engineering
+units, physical scales, explicit ranges and source warnings. A selected-run
+archive belongs to that run's setup; it differs from saving an edited project.
 
 The CLI/Python interface shares the backend for batch use and reproduction. It is
 optional for these [GUI walkthroughs](examples.md). See [automation](handbook/automation-and-troubleshooting.md)

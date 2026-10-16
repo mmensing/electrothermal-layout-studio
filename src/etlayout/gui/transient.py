@@ -2,7 +2,6 @@
 """On-demand pulse setup and time-history inspection for the native workflow."""
 from __future__ import annotations
 
-import csv
 from copy import deepcopy
 from pathlib import Path
 
@@ -37,6 +36,7 @@ from PySide6.QtWidgets import (
 
 from etlayout.gui.inputs import parse_number
 from etlayout.gui.workspace import engineering
+from etlayout.io.reporting import csv_writer
 from etlayout.models import SimulationError, TransientDrive, Waveform
 from etlayout.solvers.transient import validate_transient, validate_waveform, waveform_value
 from etlayout.visualization.history import local_history
@@ -816,7 +816,7 @@ class TimeHistoryPanel(QWidget):
             raise ValueError("Select an available local temperature history before exporting")
         probe = self.probe if self.scope_selector.currentData() == "probe" else None
         with Path(path).open("w", encoding="utf-8", newline="") as handle:
-            writer = csv.writer(handle)
+            writer = csv_writer(handle)
             writer.writerow(["time_s", "temperature_K", "layer", "region", "reduction", "probe_x_m", "probe_y_m", "configuration_hash"])
             for time, value in zip(self.trace_times, self.trace_values):
                 writer.writerow([time, value, self.layer, self.region,

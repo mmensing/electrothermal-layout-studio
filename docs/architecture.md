@@ -15,7 +15,11 @@ code converts engineering units. `Project` snapshots the complete physical exper
 7. `simulation.sweep` clones configurations through safe scalar parameter paths;
    `simulation.analysis` probes actual FE fields and compares compatible maps.
 8. `io.project` saves JSON+NPZ+layout archives with no arbitrary pickle loading.
-   `io.export` creates inspectable reports and standard numerical exports.
+   `io.export` retains comprehensive numerical bundles. `io.reporting` owns text,
+   CSP, CSV safety and provenance contracts; `io.sharing` owns explicit figure/data
+   boundaries, exact selected-support clipping and complete-experiment archives.
+   GUI and CLI both use its preview/execute contract. Sharing never serializes a
+   source project and never uses viewport cropping as a data filter.
 9. `simulation.execution` controls machine-local CPU budgets and records execution provenance;
    independent study points use bounded spawn workers.
 10. `gui` owns widgets and worker lifecycle. The solver runs in an independent process;

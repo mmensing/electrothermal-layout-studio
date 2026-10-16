@@ -42,11 +42,13 @@ component handlers; they do not create a second project.
 | Selected-run project archive | Results → Export task → Selected run project archive | `export_run_archive` exports the selected result's original configuration; File → Save retains the working setup/history |
 | Candidate layout export | Routing / Experiments | preserved guarded export/reimport verification; not a screenshot export |
 | Fit/pan/zoom, layers, visibility, overlays | canvas toolbar, layer controls; View → Fit layout / Fit selection | `view.fit/selection`; viewer operations preserve physics |
-| Theme/workspace persistence | View | existing Dark theme; `view.workspace_save/restore/reset` |
+| Theme/workspace persistence | View; compact Workflow / Inspector buttons and status strip | `view.left_panel/right_panel/drawer/focus_canvas/maximize_canvas`; `view.workspace_save/restore/reset`; application-local `WorkspacePanels` |
 | Help/about/workflow limits | Help; contextual stage assistance | preserved offline help and limitations |
 
 Keyboard stage navigation is **Ctrl+1–7**, fit is **Home**, drawer visibility is
-**Ctrl+J**, and the established File/Undo/Redo shortcuts remain. Local text/form
+**Ctrl+J**, independent sides are **Ctrl+Shift+L/R**, focus canvas is **Ctrl+Shift+F**,
+and maximize/restore is **Ctrl+Shift+M**. **Shift+Home** explicitly fits selection/ROI;
+the established File/Undo/Redo shortcuts remain. Local text/form
 editing retains focus; global mutation/run shortcuts must not consume ordinary
 typing. Escape cancels a pending graphical selection. The selection and workflow
 tests exercise these concerns separately from numerical equivalence.
