@@ -40,3 +40,10 @@ logical CPUs and control larger independent FEM assemblies, native library
 threads and independent study processes. Small batches and SuperLU factorization
 remain serial. Device laws remain the documented 2.5D
 research models; see [physics](physics.md) for excluded effects and calibration.
+
+
+Proposed storage work is documented in the
+[content-addressed archive RFC](design/content-addressed-archives.md). Its measured
+baseline and compatibility/acceptance plan do not implement a new archive schema
+or lazy history. Existing portable archives remain on the current writer until a
+separate implementation passes those gates.

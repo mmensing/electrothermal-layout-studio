@@ -85,3 +85,14 @@ subsequent snapshot capture 0.46–0.51 ms. Archive sizes vary slightly with met
 Retaining three runs added about 10.1 s to worker time: archives still serialize each
 run independently. This change improves responsiveness and integrity, not compression
 or history deduplication; immutable ownership has a measured memory cost.
+
+
+## Archive storage design work
+
+The [content-addressed archive RFC](design/content-addressed-archives.md) measures
+the current nested schema-2 writer with one, ten and fifty retained records and
+proposes an opt-in object format. It is design-only: deduplication and lazy
+history are not enabled. The opt-in `scripts/benchmark_archive_history.py`
+harness calculates synthetic reference inputs and measures the existing
+immutable-snapshot writer, eager reopening and process-tree RSS. Use new artifact
+directories and keep its generated archives/logs outside source control.
