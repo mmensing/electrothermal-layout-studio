@@ -128,6 +128,9 @@ def test_hide_focused_inspector_preserves_dirty_editor_and_selection(guided_wind
     original, revision = deepcopy(window.project.to_dict()), guided.document.revision
     field = editor.form.widgets["thickness"]
     assert field.hasFocus()
+    QTest.keyClick(field, Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+    assert window.view.hasFocus() and editor.has_changes()
+    field.setFocus()
     guided.panels.toggle("right")
     assert window.view.hasFocus() and editor is guided.editor and editor.has_changes()
     window.reset_workspace_layout()

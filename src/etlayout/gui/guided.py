@@ -163,7 +163,9 @@ class GuidedWorkspace(QObject):
     def eventFilter(self, watched, event):
         if event.type() == QEvent.Type.ShortcutOverride:
             focus = QApplication.focusWidget()
-            if isinstance(focus, (QLineEdit, QTextEdit, QComboBox)) and event.key() in {
+            canvas_focus = event.key() == Qt.Key.Key_F and event.modifiers() == (
+                Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+            if not canvas_focus and isinstance(focus, (QLineEdit, QTextEdit, QComboBox)) and event.key() in {
                     Qt.Key.Key_Home, Qt.Key.Key_End, Qt.Key.Key_Delete, Qt.Key.Key_F,
                     Qt.Key.Key_F5, Qt.Key.Key_F6, Qt.Key.Key_F7}:
                 event.accept()

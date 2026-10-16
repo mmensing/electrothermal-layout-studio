@@ -169,6 +169,11 @@ def main(argv=None):
         assert guided.editor.form.widgets["name"].text() == project.layers[0].name
         assert "deliberately long material description" in guided.editor.form.widgets["material_id"].currentText()
         capture("long-layer-and-material-names")
+        name_field = guided.editor.form.widgets["name"]
+        name_field.setFocus()
+        QTest.keyClick(name_field, Qt.Key.Key_F, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+        assert window.view.hasFocus() and not guided.editor.has_changes()
+        record("Focus canvas keyboard shortcut remains available inside a long-name inspector field")
         guided.navigate("results")
         assert window.transient_frame is result.transient.snapshots[40]
         state = guided.panels.capture()
