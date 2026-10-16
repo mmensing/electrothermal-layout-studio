@@ -5,8 +5,7 @@ from copy import deepcopy
 import numpy as np
 import pytest
 
-from etlayout.simulation.runner import run_project
-from etlayout.solvers import branch_current
+from etlayout.solvers import branch_current, solve
 from etlayout.teaching_examples import build_teaching_example
 
 pytestmark = pytest.mark.numerical
@@ -31,7 +30,10 @@ def test_series_coupon_bounds_and_fixed_temperature_current_scaling(expanded_nom
     assert lower_limit < result.metrics["effective_resistance"] < lower_limit * 1.03
     doubled = deepcopy(project)
     next(port for port in doubled.power.ports if port.id == "drain").value *= 2
-    scaled = run_project(doubled)
+    # Linearity compares identical spatial discretization. The session fixture
+    # can outlive the runner mesh cache; independently remeshing adds unrelated
+    # Gmsh variation to a fixed-temperature algebraic scaling identity.
+    scaled = solve(doubled, deepcopy(result.mesh))
     assert scaled.converged
     assert scaled.metrics["effective_resistance"] == pytest.approx(result.metrics["effective_resistance"], rel=1e-9)
     assert scaled.metrics["electrical_power"] == pytest.approx(4 * result.metrics["electrical_power"], rel=1e-9)

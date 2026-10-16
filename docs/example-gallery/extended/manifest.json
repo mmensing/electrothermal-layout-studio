@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "generated_utc": "2026-10-16T17:02:28.521868+00:00",
-  "source_fingerprint": "6bb360071ce276c44b48738f07fee3f78e35a24055dbf18d0838cef930de6672",
+  "generated_utc": "2026-10-16T17:37:04.069595+00:00",
+  "source_fingerprint": "9db2cd27b526fe304dff4349e26cfe2b9069e78ce9a1b350f47999a60e18454b",
   "solver_version": "0.4.0",
   "visual_spec": {
     "claim": "Prepared device geometry alongside one representative computed field at its stated operating point.",
@@ -181,14 +181,14 @@
         "layer": "metal",
         "field": "potential",
         "unit": "V",
-        "minimum": 3.248783619733143e-08,
-        "maximum": 0.009233982556296132,
+        "minimum": 3.248783619719766e-08,
+        "maximum": 0.009233982556258125,
         "display_unit": "mV",
         "display_scale": 1000.0,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 3.248783619733143e-05,
-        "display_maximum": 9.233982556296132
+        "display_minimum": 3.248783619719766e-05,
+        "display_maximum": 9.233982556258125
       },
       "physical_layers": [
         {
@@ -217,25 +217,25 @@
         "mesh_nodes": 7310,
         "mesh_triangles": 14136,
         "metrics": {
-          "electrical_power": 0.0004617156879607813,
-          "joule_power": 0.00046025605852144873,
+          "electrical_power": 0.00046171568795698036,
+          "joule_power": 0.0004602560585176598,
           "contact_power": 0.0,
-          "external_feed_power": 1.4596294393325512e-06,
-          "terminal_power": 0.0004617156879609681,
-          "current_balance_error": 6.029898802462955e-13,
-          "power_balance_error": 4.045953802094863e-13,
-          "electrical_residual": 5.689893001175047e-14,
-          "total_current": 0.050000000000283956,
-          "current_density_max": 1736158790.677927,
-          "current_density_average": 811974210.1574283,
-          "current_density_p95": 1250000216.120168,
-          "peak_to_average": 2.138194500464879,
+          "external_feed_power": 1.4596294393205534e-06,
+          "terminal_power": 0.00046171568795712103,
+          "current_balance_error": 5.044575868134449e-13,
+          "power_balance_error": 3.046793417447374e-13,
+          "electrical_residual": 6.253331186195199e-13,
+          "total_current": 0.05000000000007314,
+          "current_density_max": 1736158790.6707993,
+          "current_density_average": 811974210.1540865,
+          "current_density_p95": 1250000216.1150184,
+          "peak_to_average": 2.1381945004649006,
           "contacts": {},
           "electrical_dofs": 2693,
-          "effective_resistance": 0.18468627518228953,
-          "resistance": 0.18468627518228953,
-          "voltage_drop": 0.00923431375916692,
-          "resistance_current": 0.050000000000283956,
+          "effective_resistance": 0.18468627518230812,
+          "resistance": 0.18468627518230812,
+          "voltage_drop": 0.009234313759128913,
+          "resistance_current": 0.05000000000007314,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -254,12 +254,12 @@
         },
         "terminals": {
           "source_landing": {
-            "voltage": 6.50569682762469e-06,
+            "voltage": 6.505696827597901e-06,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.009228255598538805,
+            "voltage": 0.009228255598500825,
             "current": 0.0,
             "power": 0.0
           }
@@ -267,19 +267,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.05000000000025381,
+            "current": -0.050000000000047916,
             "power": -0.0,
-            "feed_power": 8.623918229990544e-07,
+            "feed_power": 8.623918229919524e-07,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.0001,
-                "current": -0.05000000000025381,
-                "power": 8.623918229990544e-07,
+                "current": -0.050000000000047916,
+                "power": 8.623918229919524e-07,
                 "thermal_fraction": 0.25,
-                "voltage": 5.000000000025379e-06,
-                "voltage_min": 3.248783619733143e-08,
-                "voltage_max": 3.0061653438135312e-05,
+                "voltage": 5.000000000004797e-06,
+                "voltage_min": 3.248783619719766e-08,
+                "voltage_max": 3.006165343801152e-05,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -289,20 +289,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.00923431375916692,
-            "current": 0.050000000000283956,
-            "power": 0.0004617156879609681,
-            "feed_power": 5.972376163334968e-07,
+            "voltage": 0.009234313759128913,
+            "current": 0.05000000000007314,
+            "power": 0.00046171568795712103,
+            "feed_power": 5.972376163286011e-07,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.0001,
-                "current": 0.050000000000283956,
-                "power": 5.972376163334968e-07,
+                "current": 0.05000000000007314,
+                "power": 5.972376163286011e-07,
                 "thermal_fraction": 0.25,
-                "voltage": 0.009229313759166887,
-                "voltage_min": 0.009212279956306395,
-                "voltage_max": 0.009233982556296132,
+                "voltage": 0.009229313759128907,
+                "voltage_min": 0.009212279956268481,
+                "voltage_max": 0.009233982556258125,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -467,14 +467,14 @@
         "layer": "metal",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 40378139.47531243,
-        "maximum": 9601395436.015528,
+        "minimum": 40378139.47409802,
+        "maximum": 9601395600.561468,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.04037813947531243,
-        "display_maximum": 9.601395436015528
+        "display_minimum": 0.040378139474098025,
+        "display_maximum": 9.60139560056147
       },
       "physical_layers": [
         {
@@ -500,28 +500,28 @@
         "physics_hash": "85988100eba0e6e3bd8bbbc65ba41d2b7bc75da7495dc3917f89f45126488593",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 8108,
-        "mesh_triangles": 15866,
+        "mesh_nodes": 8109,
+        "mesh_triangles": 15868,
         "metrics": {
-          "electrical_power": 0.008837238765548056,
-          "joule_power": 0.007830193630970279,
+          "electrical_power": 0.008837242351205404,
+          "joule_power": 0.007830196684561343,
           "contact_power": 0.0,
-          "external_feed_power": 0.0010070451345777767,
-          "terminal_power": 0.008837238765546767,
-          "current_balance_error": 2.0716761639503682e-13,
-          "power_balance_error": 1.4584867251471555e-13,
-          "electrical_residual": 1.974809205051626e-14,
-          "total_current": 0.4999999999999901,
-          "current_density_max": 9601395436.015528,
-          "current_density_average": 1470487722.2665973,
-          "current_density_p95": 4320379770.239144,
-          "peak_to_average": 6.529395173198739,
+          "external_feed_power": 0.0010070456666440605,
+          "terminal_power": 0.008837242351204084,
+          "current_balance_error": 2.2848389846784035e-13,
+          "power_balance_error": 1.4938195794056556e-13,
+          "electrical_residual": 2.3092638912198917e-14,
+          "total_current": 0.4999999999999797,
+          "current_density_max": 9601395600.561468,
+          "current_density_average": 1470489371.7675097,
+          "current_density_p95": 4320379658.796048,
+          "peak_to_average": 6.529387960839671,
           "contacts": {},
-          "electrical_dofs": 3938,
-          "effective_resistance": 0.03534895506218847,
-          "resistance": 0.03534895506218847,
-          "voltage_drop": 0.017674477531093885,
-          "resistance_current": 0.4999999999999901,
+          "electrical_dofs": 3939,
+          "effective_resistance": 0.03534896940481921,
+          "resistance": 0.03534896940481921,
+          "voltage_drop": 0.017674484702408885,
+          "resistance_current": 0.4999999999999797,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -537,36 +537,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 302.3006992602403,
-          "temperature_min": 300.31042910509797,
-          "temperature_average": 300.4296795596523,
-          "temperature_rise": 2.3006992602403216,
+          "temperature_max": 302.3006994163673,
+          "temperature_min": 300.31042918560667,
+          "temperature_average": 300.4296797297397,
+          "temperature_rise": 2.3006994163673085,
           "thermal_reference": 300.0,
-          "thermal_power": 0.008081954914614723,
-          "heat_out": 0.008081894629976973,
-          "thermal_resistance": 284.6711327329891,
-          "thermal_balance_error": 7.4591653117860395e-06,
-          "thermal_residual": 7.640730738109143e-06,
+          "thermal_power": 0.008081958101222359,
+          "heat_out": 0.008081897816564126,
+          "thermal_resistance": 284.6710398089466,
+          "thermal_balance_error": 7.459164905009239e-06,
+          "thermal_residual": 7.640723138561992e-06,
           "boundary_heat_flows": {
-            "backside": 0.008081894629976973
+            "backside": 0.008081897816564126
           },
           "hotspot": {
             "layer": "metal",
             "x": 0.0001599309729604238,
             "y": 5.779472969510898e-05,
             "z": 1e-06,
-            "temperature": 302.3006992602403
+            "temperature": 302.3006994163673
           },
-          "thermal_dofs": 12046
+          "thermal_dofs": 12048
         },
         "terminals": {
           "source_landing": {
-            "voltage": 0.0010147220939640972,
+            "voltage": 0.0010147220939689112,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.016660774852980037,
+            "voltage": 0.01666096398784782,
             "current": 0.0,
             "power": 0.0
           }
@@ -574,19 +574,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.5000000000000937,
+            "current": -0.5000000000000939,
             "power": -0.0,
-            "feed_power": 0.0005035228519941822,
+            "feed_power": 0.0005035228519964043,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.002,
-                "current": -0.5000000000000937,
-                "power": 0.0005035228519941822,
+                "current": -0.5000000000000939,
+                "power": 0.0005035228519964043,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0010000000000001872,
-                "voltage_min": 0.0008780284860246281,
-                "voltage_max": 0.0012536136991908198,
+                "voltage": 0.0010000000000001887,
+                "voltage_min": 0.0008780284859871226,
+                "voltage_max": 0.0012536136992737214,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -596,20 +596,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.017674477531093885,
-            "current": 0.4999999999999901,
-            "power": 0.008837238765546767,
-            "feed_power": 0.0005035222825835945,
+            "voltage": 0.017674484702408885,
+            "current": 0.4999999999999797,
+            "power": 0.008837242351204084,
+            "feed_power": 0.0005035228146476563,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.002,
-                "current": 0.4999999999999901,
-                "power": 0.0005035222825835945,
+                "current": 0.4999999999999797,
+                "power": 0.0005035228146476563,
                 "thermal_fraction": 0.25,
-                "voltage": 0.016674477531093912,
-                "voltage_min": 0.016420836359164706,
-                "voltage_max": 0.016796465242294473,
+                "voltage": 0.016674484702408926,
+                "voltage_min": 0.016420824584431226,
+                "voltage_max": 0.016796505127418874,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -824,14 +824,14 @@
         "layer": "film",
         "field": "potential",
         "unit": "V",
-        "minimum": 1.5202446283156905e-05,
-        "maximum": 0.03499872737757416,
+        "minimum": 1.520244959323526e-05,
+        "maximum": 0.03499872749287214,
         "display_unit": "mV",
         "display_scale": 1000.0,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.015202446283156906,
-        "display_maximum": 34.99872737757416
+        "display_minimum": 0.01520244959323526,
+        "display_maximum": 34.99872749287214
       },
       "physical_layers": [
         {
@@ -863,33 +863,33 @@
         "physics_hash": "322d97453d73be649bb239759d9e759a7fc6a238c549a331c6dd234c8ba1c73b",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 6845,
-        "mesh_triangles": 13328,
+        "mesh_nodes": 6844,
+        "mesh_triangles": 13326,
         "metrics": {
           "contacts": {
             "film_contacts": {
-              "power": 2.5004595199252474e-06,
-              "current_a_to_b": -7.936359902593892e-17
+              "power": 2.5004595246874652e-06,
+              "current_a_to_b": 3.122502256758253e-17
             }
           },
-          "electrical_power": 3.50139293668691e-05,
-          "joule_power": 3.2509389321648253e-05,
-          "contact_power": 2.5004595199252474e-06,
-          "external_feed_power": 4.0805252955935836e-09,
-          "terminal_power": 3.5013929376957213e-05,
-          "current_balance_error": 2.882262571260922e-10,
-          "power_balance_error": 2.881171907141817e-10,
-          "electrical_residual": 1.6875389974221804e-11,
-          "total_current": 0.0010000000000447635,
-          "current_density_max": 125302741.10533999,
-          "current_density_average": 51690391.08874411,
-          "current_density_p95": 125000871.51502499,
-          "peak_to_average": 2.424101239439556,
-          "electrical_dofs": 4497,
-          "effective_resistance": 19.99999999423534,
-          "resistance": 19.99999999423534,
-          "voltage_drop": 0.019999999995130607,
-          "resistance_current": 0.0010000000000447635,
+          "electrical_power": 3.5013929402340406e-05,
+          "joule_power": 3.2509389377328066e-05,
+          "contact_power": 2.5004595246874652e-06,
+          "external_feed_power": 4.080500324870755e-09,
+          "terminal_power": 3.5013929412134756e-05,
+          "current_balance_error": 2.7983214707009796e-10,
+          "power_balance_error": 2.79727255802495e-10,
+          "electrical_residual": 1.3766765505351941e-11,
+          "total_current": 0.001000000000023924,
+          "current_density_max": 125302138.43286872,
+          "current_density_average": 51690394.92482137,
+          "current_density_p95": 125000869.43116358,
+          "peak_to_average": 2.424089400266886,
+          "electrical_dofs": 4495,
+          "effective_resistance": 19.999999994405528,
+          "resistance": 19.999999994405528,
+          "voltage_drop": 0.01999999999488283,
+          "resistance_current": 0.001000000000023865,
           "resistance_terminal_pair": [
             "sense_b",
             "sense_a"
@@ -908,42 +908,42 @@
         },
         "terminals": {
           "source_landing": {
-            "voltage": 2.0202990124204555e-06,
+            "voltage": 2.0207156225212045e-06,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.035011902453751124,
+            "voltage": 0.03501190107802504,
             "current": 0.0,
             "power": 0.0
           },
           "sense_a": {
-            "voltage": 0.007506928976145026,
-            "current": -1.734723475976807e-18,
-            "power": -1.3022445927409314e-20
+            "voltage": 0.007506928982168474,
+            "current": -1.4203048459560108e-17,
+            "power": -1.0662127611621507e-19
           },
           "sense_b": {
-            "voltage": 0.027506928971275633,
-            "current": -6.895525817007808e-17,
-            "power": -1.8967473886803117e-18
+            "voltage": 0.027506928977051304,
+            "current": 5.908901840045999e-17,
+            "power": 1.6253574324651306e-18
           }
         },
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.0009999999997564665,
+            "current": -0.0009999999997440778,
             "power": -0.0,
-            "feed_power": 2.0402875435405047e-09,
+            "feed_power": 2.0402839707545943e-09,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.002,
-                "current": -0.0009999999997564665,
-                "power": 2.0402875435405047e-09,
+                "current": -0.0009999999997440778,
+                "power": 2.0402839707545943e-09,
                 "thermal_fraction": 0.25,
-                "voltage": 1.9999999995129327e-06,
-                "voltage_min": 1.683889727259175e-06,
-                "voltage_max": 2.6475441323130876e-06,
+                "voltage": 1.999999999488158e-06,
+                "voltage_min": 1.6838915066567366e-06,
+                "voltage_max": 2.647546433069219e-06,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -953,20 +953,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.03501392937539178,
-            "current": 0.0010000000000447635,
-            "power": 3.5013929376959124e-05,
-            "feed_power": 2.040237752053079e-09,
+            "voltage": 0.03501392941129763,
+            "current": 0.001000000000023865,
+            "power": 3.501392941213324e-05,
+            "feed_power": 2.0402163541161602e-09,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.002,
-                "current": 0.0010000000000447635,
-                "power": 2.040237752053079e-09,
+                "current": 0.001000000000023865,
+                "power": 2.0402163541161602e-09,
                 "thermal_fraction": 0.25,
-                "voltage": 0.03501192937539169,
-                "voltage_min": 0.03501128229973033,
-                "voltage_max": 0.03501224547164684,
+                "voltage": 0.03501192941129757,
+                "voltage_min": 0.03501128234973525,
+                "voltage_max": 0.0350122455125311,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1196,14 +1196,14 @@
         "layer": "metal",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 23422401.819073945,
-        "maximum": 3151273370.4412985,
+        "minimum": 23422412.27306731,
+        "maximum": 3151273589.6807337,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.023422401819073946,
-        "display_maximum": 3.1512733704412987
+        "display_minimum": 0.023422412273067312,
+        "display_maximum": 3.151273589680734
       },
       "physical_layers": [
         {
@@ -1232,25 +1232,25 @@
         "mesh_nodes": 7961,
         "mesh_triangles": 15572,
         "metrics": {
-          "electrical_power": 0.0014176307952123576,
-          "joule_power": 0.0011336842467386382,
+          "electrical_power": 0.0014176359262160392,
+          "joule_power": 0.0011336932000102222,
           "contact_power": 0.0,
-          "external_feed_power": 0.0002839465484737193,
-          "terminal_power": 0.001417630795212213,
-          "current_balance_error": 1.5473733405711923e-13,
-          "power_balance_error": 1.0202414500166151e-13,
-          "electrical_residual": 1.0489294618073094e-14,
-          "total_current": 0.3,
-          "current_density_max": 3151273370.4412985,
-          "current_density_average": 820982666.8338661,
-          "current_density_p95": 1510457018.7144306,
-          "peak_to_average": 3.838416446225642,
+          "external_feed_power": 0.0002839427262058171,
+          "terminal_power": 0.0014176359262160002,
+          "current_balance_error": 7.225701518601622e-14,
+          "power_balance_error": 2.7532653121779045e-14,
+          "electrical_residual": 1.2212453270876694e-14,
+          "total_current": 0.30000000000000737,
+          "current_density_max": 3151273589.6807337,
+          "current_density_average": 820981601.5225585,
+          "current_density_p95": 1510457181.4729242,
+          "peak_to_average": 3.8384216940264095,
           "contacts": {},
           "electrical_dofs": 2302,
-          "effective_resistance": 0.01731246998519553,
-          "resistance": 0.01731246998519553,
-          "voltage_drop": 0.005193740995558659,
-          "resistance_current": 0.3,
+          "effective_resistance": 0.0173125335046288,
+          "resistance": 0.0173125335046288,
+          "voltage_drop": 0.005193760051388767,
+          "resistance_current": 0.30000000000000737,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -1269,17 +1269,17 @@
         },
         "terminals": {
           "source_landing": {
-            "voltage": 0.0004042304297837399,
+            "voltage": 0.0004042304297836942,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.0045874238828610674,
+            "voltage": 0.004585557727344322,
             "current": 0.0,
             "power": 0.0
           },
           "branch_landing": {
-            "voltage": 0.001607614459379056,
+            "voltage": 0.0016070254656062207,
             "current": 0.0,
             "power": 0.0
           }
@@ -1287,19 +1287,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.20000000000004692,
+            "current": -0.20000000000002527,
             "power": -0.0,
-            "feed_power": 8.112780134835306e-05,
+            "feed_power": 8.112780134833549e-05,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.002,
-                "current": -0.20000000000004692,
-                "power": 8.112780134835306e-05,
+                "current": -0.20000000000002527,
+                "power": 8.112780134833549e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0004000000000000933,
-                "voltage_min": 0.000339597701515214,
-                "voltage_max": 0.0005185912625315526,
+                "voltage": 0.00040000000000005054,
+                "voltage_min": 0.00033959770151517724,
+                "voltage_max": 0.0005185912625310843,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1309,20 +1309,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.005193740995558659,
-            "current": 0.3,
-            "power": 0.0015581222986675975,
-            "feed_power": 0.00018253729299037234,
+            "voltage": 0.005193760051388767,
+            "current": 0.30000000000000737,
+            "power": 0.0015581280154166684,
+            "feed_power": 0.0001825330193555339,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.002,
-                "current": 0.3,
-                "power": 0.00018253729299037234,
+                "current": 0.30000000000000737,
+                "power": 0.0001825330193555339,
                 "thermal_fraction": 0.25,
-                "voltage": 0.004593740995558658,
-                "voltage_min": 0.004415553879820541,
-                "voltage_max": 0.004684341920080577,
+                "voltage": 0.004593760051388746,
+                "voltage_min": 0.004415567862319168,
+                "voltage_max": 0.004684367020807678,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1332,20 +1332,20 @@
             "constraint_scope": "port"
           },
           "branch": {
-            "voltage": 0.0014049150345538516,
-            "current": -0.09999999999999949,
-            "power": -0.00014049150345538444,
-            "feed_power": 2.0281454134993897e-05,
+            "voltage": 0.0014049208920066288,
+            "current": -0.10000000000000378,
+            "power": -0.00014049208920066818,
+            "feed_power": 2.0281905501947655e-05,
             "landings": [
               {
                 "terminal_id": "branch_landing",
                 "resistance": 0.002,
-                "current": -0.09999999999999949,
-                "power": 2.0281454134993897e-05,
+                "current": -0.10000000000000378,
+                "power": 2.0281905501947655e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.00160491503455385,
-                "voltage_min": 0.0015747124784756005,
-                "voltage_max": 0.0016642170798315927,
+                "voltage": 0.0016049208920066364,
+                "voltage_min": 0.0015747210342297714,
+                "voltage_max": 0.0016642190450270958,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1510,14 +1510,14 @@
         "layer": "metal",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 15546163.124997254,
-        "maximum": 1407823145.4229808,
+        "minimum": 15545763.549598068,
+        "maximum": 1407822276.4482958,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.015546163124997256,
-        "display_maximum": 1.4078231454229808
+        "display_minimum": 0.015545763549598069,
+        "display_maximum": 1.407822276448296
       },
       "physical_layers": [
         {
@@ -1546,25 +1546,25 @@
         "mesh_nodes": 7409,
         "mesh_triangles": 14504,
         "metrics": {
-          "electrical_power": 0.00594349079103244,
-          "joule_power": 0.004918152112183712,
+          "electrical_power": 0.005943492025117281,
+          "joule_power": 0.004918149621883355,
           "contact_power": 0.0,
-          "external_feed_power": 0.0010253386788487283,
-          "terminal_power": 0.005943490791031951,
-          "current_balance_error": 1.1857181902996e-13,
-          "power_balance_error": 8.230718906194896e-14,
-          "electrical_residual": 6.272760089131409e-15,
-          "total_current": 0.9999999999999973,
-          "current_density_max": 1407823145.4229808,
-          "current_density_average": 605378450.5786124,
-          "current_density_p95": 897298158.1042066,
-          "peak_to_average": 2.3255257006214918,
+          "external_feed_power": 0.0010253424032339266,
+          "terminal_power": 0.005943492025117516,
+          "current_balance_error": 1.0325074129014098e-14,
+          "power_balance_error": 3.940236956105591e-14,
+          "electrical_residual": 6.661338147750939e-15,
+          "total_current": 0.9999999999999913,
+          "current_density_max": 1407822276.4482958,
+          "current_density_average": 605378058.5171033,
+          "current_density_p95": 896981311.3829155,
+          "peak_to_average": 2.325525771278877,
           "contacts": {},
-          "electrical_dofs": 4589,
-          "effective_resistance": 0.005943490791031982,
-          "resistance": 0.005943490791031982,
-          "voltage_drop": 0.0059434907910319665,
-          "resistance_current": 0.9999999999999973,
+          "electrical_dofs": 4590,
+          "effective_resistance": 0.005943492025117618,
+          "resistance": 0.005943492025117618,
+          "voltage_drop": 0.005943492025117567,
+          "resistance_current": 0.9999999999999913,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -1580,36 +1580,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 300.1597693225857,
-          "temperature_min": 300.0753124603216,
-          "temperature_average": 300.1041313062262,
-          "temperature_rise": 0.15976932258570287,
+          "temperature_max": 300.1597692218235,
+          "temperature_min": 300.0753124552652,
+          "temperature_average": 300.10413127462465,
+          "temperature_rise": 0.15976922182352382,
           "thermal_reference": 300.0,
-          "thermal_power": 0.005174486781895896,
-          "heat_out": 0.005174451706064778,
-          "thermal_resistance": 30.87636113878805,
-          "thermal_balance_error": 6.778610632615241e-06,
-          "thermal_residual": 6.755913113922365e-06,
+          "thermal_power": 0.005174485222691837,
+          "heat_out": 0.00517445014687375,
+          "thermal_resistance": 30.876350969731774,
+          "thermal_balance_error": 6.77861015681805e-06,
+          "thermal_residual": 6.756290953631901e-06,
           "boundary_heat_flows": {
-            "backside": 0.005174451706064778
+            "backside": 0.00517445014687375
           },
           "hotspot": {
             "layer": "metal",
             "x": 0.0002000000000004219,
             "y": 0.00022,
             "z": 1e-06,
-            "temperature": 300.1597693225857
+            "temperature": 300.1597692218235
           },
-          "thermal_dofs": 11998
+          "thermal_dofs": 11999
         },
         "terminals": {
           "source_landing": {
-            "voltage": 0.0005163750322880934,
+            "voltage": 0.0005163750330232884,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.005426760809621101,
+            "voltage": 0.005426545648163938,
             "current": 0.0,
             "power": 0.0
           }
@@ -1617,19 +1617,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -1.000000000000116,
+            "current": -0.999999999999981,
             "power": -0.0,
-            "feed_power": 0.0005126714925735836,
+            "feed_power": 0.0005126714925708355,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.0005,
-                "current": -1.000000000000116,
-                "power": 0.0005126714925735836,
+                "current": -0.999999999999981,
+                "power": 0.0005126714925708355,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0005000000000000579,
-                "voltage_min": 0.00038386959637706384,
-                "voltage_max": 0.0007486782471887445,
+                "voltage": 0.0004999999999999904,
+                "voltage_min": 0.00038386959099135645,
+                "voltage_max": 0.0007486783433305744,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1639,20 +1639,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.0059434907910319665,
-            "current": 0.9999999999999973,
-            "power": 0.005943490791031951,
-            "feed_power": 0.0005126671862751448,
+            "voltage": 0.005943492025117567,
+            "current": 0.9999999999999913,
+            "power": 0.005943492025117516,
+            "feed_power": 0.000512670910663091,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.0005,
-                "current": 0.9999999999999973,
-                "power": 0.0005126671862751448,
+                "current": 0.9999999999999913,
+                "power": 0.000512670910663091,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0054434907910319704,
-                "voltage_min": 0.005194819096018207,
-                "voltage_max": 0.0055595501680129255,
+                "voltage": 0.005443492025117577,
+                "voltage_min": 0.005194816410624931,
+                "voltage_max": 0.005559596955495791,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1829,14 +1829,14 @@
         "layer": "m2",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 4932606.322143046,
-        "maximum": 5983841850.040675,
+        "minimum": 4900280.08958858,
+        "maximum": 5983829902.731941,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.004932606322143047,
-        "display_maximum": 5.983841850040675
+        "display_minimum": 0.00490028008958858,
+        "display_maximum": 5.983829902731942
       },
       "physical_layers": [
         {
@@ -1874,37 +1874,37 @@
         "physics_hash": "f92f35ba200b014171e0a9bcfc565a98d08ac7b79ac1832d1401596acc17484c",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 19010,
-        "mesh_triangles": 37256,
+        "mesh_nodes": 19003,
+        "mesh_triangles": 37242,
         "metrics": {
           "contacts": {
             "via12": {
-              "power": 0.0001367273296748598,
-              "current_a_to_b": -0.2999999999996328
+              "power": 0.00013671784386064682,
+              "current_a_to_b": -0.30000000000015786
             },
             "via23": {
-              "power": 4.59312622758493e-05,
-              "current_a_to_b": -0.2999999999996365
+              "power": 4.59235776183228e-05,
+              "current_a_to_b": -0.3000000000002242
             }
           },
-          "electrical_power": 0.010745962745000752,
-          "joule_power": 0.010437652301715653,
-          "contact_power": 0.00018265859195070908,
-          "external_feed_power": 0.00012565185133438955,
-          "terminal_power": 0.01074596274500341,
-          "current_balance_error": 2.2111941907139931e-13,
-          "power_balance_error": 2.4731114635886685e-13,
-          "electrical_residual": 1.0417592714399386e-13,
-          "total_current": 0.29999999999973154,
-          "current_density_max": 6006332140.480909,
-          "current_density_average": 3875415408.033891,
-          "current_density_p95": 5071796429.871318,
-          "peak_to_average": 1.5498550498688586,
-          "electrical_dofs": 10044,
-          "effective_resistance": 0.11939958605580712,
-          "resistance": 0.11939958605580712,
-          "voltage_drop": 0.03581987581671008,
-          "resistance_current": 0.29999999999973154,
+          "electrical_power": 0.010745985468246871,
+          "joule_power": 0.010437689848142164,
+          "contact_power": 0.0001826414214789696,
+          "external_feed_power": 0.00012565419862573852,
+          "terminal_power": 0.01074598546824678,
+          "current_balance_error": 6.772360450209099e-14,
+          "power_balance_error": 8.555785274272307e-15,
+          "electrical_residual": 1.0417592714393036e-13,
+          "total_current": 0.3000000000002031,
+          "current_density_max": 6007528283.957373,
+          "current_density_average": 3875411541.2284255,
+          "current_density_p95": 5071713203.340355,
+          "peak_to_average": 1.5501652456897803,
+          "electrical_dofs": 10036,
+          "effective_resistance": 0.11939983853591365,
+          "resistance": 0.11939983853591365,
+          "voltage_drop": 0.03581995156079835,
+          "resistance_current": 0.3000000000002031,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -1920,36 +1920,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 304.83259640203295,
-          "temperature_min": 300.648891958986,
-          "temperature_average": 301.37069522521324,
-          "temperature_rise": 4.832596402032948,
+          "temperature_max": 304.83260449763577,
+          "temperature_min": 300.64889333691127,
+          "temperature_average": 301.3706984850079,
+          "temperature_rise": 4.832604497635771,
           "thermal_reference": 300.0,
-          "thermal_power": 0.010651723856499956,
-          "heat_out": 0.01065163663302202,
-          "thermal_resistance": 453.69148385159957,
-          "thermal_balance_error": 8.18867247329437e-06,
-          "thermal_residual": 8.837406778104358e-06,
+          "thermal_power": 0.010651744819277569,
+          "heat_out": 0.01065165759556547,
+          "thermal_resistance": 453.69135100661674,
+          "thermal_balance_error": 8.188678341284025e-06,
+          "thermal_residual": 8.191641019236247e-06,
           "boundary_heat_flows": {
-            "backside": 0.01065163663302202
+            "backside": 0.01065165759556547
           },
           "hotspot": {
             "layer": "m3",
             "x": 0.00042775000000049224,
             "y": 7.916721628350507e-06,
             "z": 9e-06,
-            "temperature": 304.83259640203295
+            "temperature": 304.83260449763577
           },
-          "thermal_dofs": 29054
+          "thermal_dofs": 29039
         },
         "terminals": {
           "source_landing": {
-            "voltage": 0.00015235996058112899,
+            "voltage": 0.00015235996060986297,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.035666972682485074,
+            "voltage": 0.035667524779998676,
             "current": 0.0,
             "power": 0.0
           }
@@ -1957,19 +1957,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.2999999999996652,
+            "current": -0.3000000000001828,
             "power": -0.0,
-            "feed_power": 6.267893417448542e-05,
+            "feed_power": 6.267893426970927e-05,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.0005,
-                "current": -0.2999999999996652,
-                "power": 6.267893417448542e-05,
+                "current": -0.3000000000001828,
+                "power": 6.267893426970927e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.00014999999999983264,
-                "voltage_min": 5.7430563310391846e-05,
-                "voltage_max": 0.0003933562600249868,
+                "voltage": 0.0001500000000000912,
+                "voltage_min": 5.743056143605685e-05,
+                "voltage_max": 0.0003933562121514869,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -1979,20 +1979,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.03581987581671008,
-            "current": 0.29999999999973154,
-            "power": 0.01074596274500341,
-            "feed_power": 6.297291715990411e-05,
+            "voltage": 0.03581995156079835,
+            "current": 0.3000000000002031,
+            "power": 0.01074598546824678,
+            "feed_power": 6.297526435602925e-05,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.0005,
-                "current": 0.29999999999973154,
-                "power": 6.297291715990411e-05,
+                "current": 0.3000000000002031,
+                "power": 6.297526435602925e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.03566987581671017,
-                "voltage_min": 0.0354241559628994,
-                "voltage_max": 0.03576306927036971,
+                "voltage": 0.035669951560798226,
+                "voltage_min": 0.0354242263981137,
+                "voltage_max": 0.035763144906339216,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -2294,14 +2294,14 @@
         "layer": "film",
         "field": "potential",
         "unit": "V",
-        "minimum": 0.018541516514131547,
-        "maximum": 0.38146040977019696,
+        "minimum": 0.01854145619629493,
+        "maximum": 0.3814604698832494,
         "display_unit": "mV",
         "display_scale": 1000.0,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 18.541516514131548,
-        "display_maximum": 381.460409770197
+        "display_minimum": 18.54145619629493,
+        "display_maximum": 381.4604698832494
       },
       "physical_layers": [
         {
@@ -2333,33 +2333,33 @@
         "physics_hash": "20968977e6b4c15969f5604c777cd60fb1487c224d81012406fee0dd72cc48fa",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 9530,
-        "mesh_triangles": 18598,
+        "mesh_nodes": 9533,
+        "mesh_triangles": 18604,
         "metrics": {
           "contacts": {
             "ladder_contacts": {
-              "power": 0.0003008613388053286,
-              "current_a_to_b": -1.8583225236401546e-16
+              "power": 0.00030085931798931733,
+              "current_a_to_b": -5.796144814107507e-16
             }
           },
-          "electrical_power": 0.0007751932168097413,
-          "joule_power": 0.0004743223501257943,
-          "contact_power": 0.0003008613388053286,
-          "external_feed_power": 9.52787861836129e-09,
-          "terminal_power": 0.0007751932168462004,
-          "current_balance_error": 4.2788877478862695e-11,
-          "power_balance_error": 4.703229618520656e-11,
-          "electrical_residual": 4.8579843294362026e-11,
-          "total_current": 0.0019379830425119045,
-          "current_density_max": 486808377.12222785,
-          "current_density_average": 263466699.5669655,
-          "current_density_p95": 484541283.8674515,
-          "peak_to_average": 1.8477036298034906,
-          "electrical_dofs": 3408,
-          "effective_resistance": 206.40015483945132,
-          "resistance": 206.40015483945132,
+          "electrical_power": 0.0007751906944889886,
+          "joule_power": 0.00047432184857671474,
+          "contact_power": 0.00030085931798931733,
+          "external_feed_power": 9.527922956589961e-09,
+          "terminal_power": 0.0007751906941870959,
+          "current_balance_error": 4.178237493322427e-10,
+          "power_balance_error": 3.8944318610643785e-10,
+          "electrical_residual": 6.083957717645153e-11,
+          "total_current": 0.0019379767362634312,
+          "current_density_max": 486817082.37666446,
+          "current_density_average": 263468262.02213734,
+          "current_density_p95": 484534102.0587486,
+          "peak_to_average": 1.8477257132996183,
+          "electrical_dofs": 3412,
+          "effective_resistance": 206.40082647101897,
+          "resistance": 206.40082647101897,
           "voltage_drop": 0.4,
-          "resistance_current": 0.0019379830422663231,
+          "resistance_current": 0.001937976736038722,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -2378,47 +2378,47 @@
         },
         "terminals": {
           "source_landing": {
-            "voltage": 1.9509738888631357e-06,
+            "voltage": 1.9509675407454233e-06,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.39999805687553597,
+            "voltage": 0.3999980570124733,
             "current": 0.0,
             "power": 0.0
           },
           "tap_1": {
-            "voltage": 0.1000022242441073,
-            "current": -7.394085344003543e-14,
-            "power": -7.394249806511096e-15
+            "voltage": 0.10000223074665895,
+            "current": -7.549516567451064e-15,
+            "power": -7.54968497803966e-16
           },
           "tap_2": {
-            "voltage": 0.19999993910635133,
-            "current": 2.4558133304708463e-13,
-            "power": 4.911625165507351e-14
+            "voltage": 0.20000026573991853,
+            "current": 2.2470914018413168e-13,
+            "power": 4.494188775101494e-14
           },
           "tap_3": {
-            "voltage": 0.299997833763965,
-            "current": -3.4017233474514796e-13,
-            "power": -1.0205096352997476e-13
+            "voltage": 0.2999978309880918,
+            "current": -9.086065233532281e-13,
+            "power": -2.725799862275994e-13
           }
         },
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.0019379830420148672,
+            "current": -0.0019379767361570079,
             "power": -0.0,
-            "feed_power": 4.763842599832534e-09,
+            "feed_power": 4.7638115984622224e-09,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.001,
-                "current": -0.0019379830420148672,
-                "power": 4.763842599832534e-09,
+                "current": -0.0019379767361570079,
+                "power": 4.7638115984622224e-09,
                 "thermal_fraction": 0.25,
-                "voltage": 1.9379830420148654e-06,
-                "voltage_min": 9.335608157168857e-07,
-                "voltage_max": 4.9668443938019505e-06,
+                "voltage": 1.9379767361570096e-06,
+                "voltage_min": 9.33557778780555e-07,
+                "voltage_max": 4.966828232552907e-06,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -2429,19 +2429,19 @@
           },
           "drain": {
             "voltage": 0.4,
-            "current": 0.0019379830422663231,
-            "power": 0.0007751932169065293,
-            "feed_power": 4.764036018528757e-09,
+            "current": 0.001937976736038722,
+            "power": 0.0007751906944154889,
+            "feed_power": 4.764111358127738e-09,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.001,
-                "current": 0.0019379830422663231,
-                "power": 4.764036018528757e-09,
+                "current": 0.001937976736038722,
+                "power": 4.764111358127738e-09,
                 "thermal_fraction": 0.25,
-                "voltage": 0.39999806201695737,
-                "voltage_min": 0.39999502524636826,
-                "voltage_max": 0.3999990664323837,
+                "voltage": 0.39999806202326466,
+                "voltage_min": 0.39999502521275937,
+                "voltage_max": 0.3999990664614102,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -2629,14 +2629,14 @@
         "layer": "film",
         "field": "sheet_current",
         "unit": "A/m",
-        "minimum": 69.42561564773442,
-        "maximum": 2729.814672316571,
+        "minimum": 65.70379586939936,
+        "maximum": 2730.1307929434406,
         "display_unit": "mA/µm",
         "display_scale": 0.001,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.06942561564773442,
-        "display_maximum": 2.729814672316571
+        "display_minimum": 0.06570379586939935,
+        "display_maximum": 2.7301307929434406
       },
       "physical_layers": [
         {
@@ -2674,37 +2674,37 @@
         "physics_hash": "4a1701cc5204c46998b7af8c79afc7048cee9b0d190b2c65e5be8154a09321a1",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 19423,
-        "mesh_triangles": 38342,
+        "mesh_nodes": 19430,
+        "mesh_triangles": 38356,
         "metrics": {
           "contacts": {
             "source_contacts": {
-              "power": 0.004464149443455577,
-              "current_a_to_b": 0.3000000000001277
+              "power": 0.004464149775140066,
+              "current_a_to_b": 0.30000000000006777
             },
             "drain_contacts": {
-              "power": 0.004464447599113005,
-              "current_a_to_b": -0.3000000000001144
+              "power": 0.004464272247160985,
+              "current_a_to_b": -0.300000000000022
             }
           },
-          "electrical_power": 0.2285891673800367,
-          "joule_power": 0.21929103179178575,
-          "contact_power": 0.00892859704256858,
-          "external_feed_power": 0.0003695385456824005,
-          "terminal_power": 0.2285891673805103,
-          "current_balance_error": 2.0820382455105145e-12,
-          "power_balance_error": 2.071810279360837e-12,
-          "electrical_residual": 2.2741068287727386e-13,
-          "total_current": 0.30000000000077276,
-          "current_density_max": 20725549442.11468,
-          "current_density_average": 10291872741.651814,
-          "current_density_p95": 15465984789.902843,
-          "peak_to_average": 2.0137782464251783,
-          "electrical_dofs": 9463,
-          "effective_resistance": 2.539879637548141,
-          "resistance": 2.539879637548141,
-          "voltage_drop": 0.761963891266405,
-          "resistance_current": 0.30000000000077276,
+          "electrical_power": 0.2285893765518327,
+          "joule_power": 0.2192913483181131,
+          "contact_power": 0.008928422022301052,
+          "external_feed_power": 0.0003696062114185607,
+          "terminal_power": 0.22858937655186864,
+          "current_balance_error": 2.2167453058344022e-13,
+          "power_balance_error": 1.572403362064536e-13,
+          "electrical_residual": 1.5987211554600457e-13,
+          "total_current": 0.3000000000001001,
+          "current_density_max": 20735161752.664215,
+          "current_density_average": 10291917049.03832,
+          "current_density_p95": 15465365478.340397,
+          "peak_to_average": 2.0147035439429346,
+          "electrical_dofs": 9470,
+          "effective_resistance": 2.539881961685735,
+          "resistance": 2.539881961685735,
+          "voltage_drop": 0.7619645885059746,
+          "resistance_current": 0.3000000000001001,
           "resistance_terminal_pair": [
             "drain",
             "source"
@@ -2720,36 +2720,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 311.7033949345463,
-          "temperature_min": 303.3227680834413,
-          "temperature_average": 305.095802652915,
-          "temperature_rise": 11.703394934546282,
+          "temperature_max": 311.70337657263934,
+          "temperature_min": 303.3227734929074,
+          "temperature_average": 305.0958046415381,
+          "temperature_rise": 11.703376572639343,
           "thermal_reference": 300.0,
-          "thermal_power": 0.22831201347077493,
-          "heat_out": 0.22831042848382405,
-          "thermal_resistance": 51.26053051975898,
-          "thermal_balance_error": 6.942196894443915e-06,
-          "thermal_residual": 7.084679063741728e-06,
+          "thermal_power": 0.22831217189326874,
+          "heat_out": 0.22831058690545622,
+          "thermal_resistance": 51.26041452625851,
+          "thermal_balance_error": 6.942195851328022e-06,
+          "thermal_residual": 7.0844940622716515e-06,
           "boundary_heat_flows": {
-            "backside": 0.22831042848382405
+            "backside": 0.22831058690545622
           },
           "hotspot": {
             "layer": "film",
             "x": 0.00020002777367929937,
             "y": 3.757546937180304e-05,
             "z": 1e-06,
-            "temperature": 311.7033949345463
+            "temperature": 311.70337657263934
           },
-          "thermal_dofs": 28886
+          "thermal_dofs": 28900
         },
         "terminals": {
           "source_landing": {
-            "voltage": 0.0003428349126551441,
+            "voltage": 0.00034440736709979503,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing": {
-            "voltage": 0.7616197062429871,
+            "voltage": 0.7616201513732427,
             "current": 0.0,
             "power": 0.0
           }
@@ -2757,19 +2757,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.30000000000014815,
+            "current": -0.3000000000000336,
             "power": -0.0,
-            "feed_power": 0.0001847003392389672,
+            "feed_power": 0.00018468254190751195,
             "landings": [
               {
                 "terminal_id": "source_landing",
                 "resistance": 0.001,
-                "current": -0.30000000000014815,
-                "power": 0.0001847003392389672,
+                "current": -0.3000000000000336,
+                "power": 0.00018468254190751195,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0003000000000001479,
-                "voltage_min": 3.714665522922623e-05,
-                "voltage_max": 0.0012823841759191839,
+                "voltage": 0.00030000000000003337,
+                "voltage_min": 3.7097940106856146e-05,
+                "voltage_max": 0.0012824064306018734,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -2779,20 +2779,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.761963891266405,
-            "current": 0.30000000000077276,
-            "power": 0.2285891673805103,
-            "feed_power": 0.0001848382064434333,
+            "voltage": 0.7619645885059746,
+            "current": 0.3000000000001001,
+            "power": 0.22858937655186864,
+            "feed_power": 0.00018492366951104874,
             "landings": [
               {
                 "terminal_id": "drain_landing",
                 "resistance": 0.001,
-                "current": 0.30000000000077276,
-                "power": 0.0001848382064434333,
+                "current": 0.3000000000001001,
+                "power": 0.00018492366951104874,
                 "thermal_fraction": 0.25,
-                "voltage": 0.7616638912664041,
-                "voltage_min": 0.7606818377384569,
-                "voltage_max": 0.7619268322019653,
+                "voltage": 0.7616645885059748,
+                "voltage_min": 0.7606903247379467,
+                "voltage_max": 0.7619275322407514,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -2969,14 +2969,14 @@
         "layer": "bridge",
         "field": "temperature",
         "unit": "K",
-        "minimum": 300.00030991258217,
-        "maximum": 301.66630470016133,
+        "minimum": 300.0003099010159,
+        "maximum": 301.66614214398976,
         "display_unit": "K",
         "display_scale": 1.0,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 300.00030991258217,
-        "display_maximum": 301.66630470016133
+        "display_minimum": 300.0003099010159,
+        "display_maximum": 301.66614214398976
       },
       "physical_layers": [
         {
@@ -3002,28 +3002,28 @@
         "physics_hash": "adbafb7dde3f92e7776625cc80e7edb554396af837d2d501094da936f94ac169",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 10899,
-        "mesh_triangles": 21376,
+        "mesh_nodes": 10903,
+        "mesh_triangles": 21384,
         "metrics": {
-          "electrical_power": 5.702468910405124e-06,
-          "joule_power": 5.519082664381817e-06,
+          "electrical_power": 5.702457187742588e-06,
+          "joule_power": 5.519070916130493e-06,
           "contact_power": 0.0,
-          "external_feed_power": 1.8338624602330706e-07,
-          "terminal_power": 5.702468910414364e-06,
-          "current_balance_error": 1.6996676057354595e-12,
-          "power_balance_error": 1.6204003155057492e-12,
-          "electrical_residual": 1.0832986706750999e-13,
-          "total_current": 0.0002999999999998401,
-          "current_density_max": 119847180.52228723,
-          "current_density_average": 18514714.17489819,
-          "current_density_p95": 93750005.56110781,
-          "peak_to_average": 6.4730775420110565,
+          "external_feed_power": 1.8338627161209425e-07,
+          "terminal_power": 5.702457187752089e-06,
+          "current_balance_error": 1.6976799017518595e-12,
+          "power_balance_error": 1.666153424134141e-12,
+          "electrical_residual": 1.548827978486019e-13,
+          "total_current": 0.0002999999999999648,
+          "current_density_max": 119847180.59040816,
+          "current_density_average": 18514623.58974061,
+          "current_density_p95": 93750004.17675003,
+          "peak_to_average": 6.473109216047919,
           "contacts": {},
-          "electrical_dofs": 3610,
-          "effective_resistance": 63.36076567133826,
-          "resistance": 63.36076567133826,
-          "voltage_drop": 0.019008229701391346,
-          "resistance_current": 0.0002999999999998401,
+          "electrical_dofs": 3613,
+          "effective_resistance": 63.36063541948253,
+          "resistance": 63.36063541948253,
+          "voltage_drop": 0.01900819062584253,
+          "resistance_current": 0.0002999999999999648,
           "resistance_terminal_pair": [
             "source",
             "drain"
@@ -3039,36 +3039,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 301.66630470016133,
-          "temperature_min": 300.00027439620237,
-          "temperature_average": 300.03468649426213,
-          "temperature_rise": 1.6663047001613336,
+          "temperature_max": 301.66614214398976,
+          "temperature_min": 300.00027439776306,
+          "temperature_average": 300.03468134653104,
+          "temperature_rise": 1.6661421439897595,
           "thermal_reference": 300.0,
-          "thermal_power": 5.564929225887642e-06,
-          "heat_out": 5.564926778788082e-06,
-          "thermal_resistance": 299429.63019364316,
-          "thermal_balance_error": 4.397359715035315e-07,
-          "thermal_residual": 4.3458269975189936e-07,
+          "thermal_power": 5.5649174840335164e-06,
+          "heat_out": 5.564915036957959e-06,
+          "thermal_resistance": 299401.0510973687,
+          "thermal_balance_error": 4.397325861780439e-07,
+          "thermal_residual": 4.3450550571436063e-07,
           "boundary_heat_flows": {
-            "backside": 5.564926778788082e-06
+            "backside": 5.564915036957959e-06
           },
           "hotspot": {
             "layer": "bridge",
             "x": 0.00015,
             "y": 6.4e-05,
             "z": 0.0,
-            "temperature": 301.66630470016133
+            "temperature": 301.66614214398976
           },
-          "thermal_dofs": 14509
+          "thermal_dofs": 14516
         },
         "terminals": {
           "source_landing_1": {
-            "voltage": 0.0003003261917105624,
+            "voltage": 0.0003003261917106884,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing_1": {
-            "voltage": 0.018704606975730835,
+            "voltage": 0.018704551205330006,
             "current": 0.0,
             "power": 0.0
           }
@@ -3076,19 +3076,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.0002999999999993302,
+            "current": -0.0002999999999994555,
             "power": -0.0,
-            "feed_power": 9.169334563637311e-08,
+            "feed_power": 9.16933456364312e-08,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 1.0,
-                "current": -0.0002999999999993302,
-                "power": 9.169334563637311e-08,
+                "current": -0.0002999999999994555,
+                "power": 9.16933456364312e-08,
                 "thermal_fraction": 0.25,
-                "voltage": 0.00029999999999933005,
-                "voltage_min": 0.000250233289985105,
-                "voltage_max": 0.00041296768084031184,
+                "voltage": 0.0002999999999994549,
+                "voltage_min": 0.000250233289985445,
+                "voltage_max": 0.00041296768083954325,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -3098,20 +3098,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.019008229701391346,
-            "current": 0.0002999999999998401,
-            "power": 5.702468910414364e-06,
-            "feed_power": 9.169290038693395e-08,
+            "voltage": 0.01900819062584253,
+            "current": 0.0002999999999999648,
+            "power": 5.702457187752089e-06,
+            "feed_power": 9.169292597566304e-08,
             "landings": [
               {
                 "terminal_id": "drain_landing_1",
                 "resistance": 1.0,
-                "current": 0.0002999999999998401,
-                "power": 9.169290038693395e-08,
+                "current": 0.0002999999999999648,
+                "power": 9.169292597566304e-08,
                 "thermal_fraction": 0.25,
-                "voltage": 0.018708229701391528,
-                "voltage_min": 0.01859525094035875,
-                "voltage_max": 0.018757998860827733,
+                "voltage": 0.018708190625842544,
+                "voltage_min": 0.018595210773215718,
+                "voltage_max": 0.01875796000291418,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -3390,14 +3390,14 @@
         "layer": "heater",
         "field": "temperature",
         "unit": "K",
-        "minimum": 300.09912810802024,
-        "maximum": 300.2677117532398,
+        "minimum": 300.0991281074774,
+        "maximum": 300.267711748156,
         "display_unit": "K",
         "display_scale": 1.0,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 300.09912810802024,
-        "display_maximum": 300.2677117532398
+        "display_minimum": 300.0991281074774,
+        "display_maximum": 300.267711748156
       },
       "physical_layers": [
         {
@@ -3432,25 +3432,25 @@
         "mesh_nodes": 7060,
         "mesh_triangles": 13798,
         "metrics": {
-          "electrical_power": 0.0008676088828289708,
-          "joule_power": 0.0008579828878335931,
+          "electrical_power": 0.0008676088728761084,
+          "joule_power": 0.0008579828812248162,
           "contact_power": 0.0,
-          "external_feed_power": 9.625994995377747e-06,
-          "terminal_power": 0.0008676088828298242,
-          "current_balance_error": 1.2831343919949816e-12,
-          "power_balance_error": 9.835947358906013e-13,
-          "electrical_residual": 2.775557561562735e-13,
-          "total_current": 0.0020100000000002026,
-          "current_density_max": 630303184.2863269,
-          "current_density_average": 286086724.852932,
-          "current_density_p95": 416668071.9979805,
-          "peak_to_average": 2.20318920638609,
+          "external_feed_power": 9.625991651292211e-06,
+          "terminal_power": 0.000867608872876195,
+          "current_balance_error": 8.501008078791264e-14,
+          "power_balance_error": 9.984655100911273e-14,
+          "electrical_residual": 1.6653345369377053e-13,
+          "total_current": 0.0020100000000002165,
+          "current_density_max": 630303184.2865831,
+          "current_density_average": 286086724.957767,
+          "current_density_p95": 416668075.7559573,
+          "peak_to_average": 2.203189205579638,
           "contacts": {},
           "electrical_dofs": 1315,
-          "effective_resistance": 216.9010028435276,
-          "resistance": 216.9010028435276,
-          "voltage_drop": 0.43380200568709887,
-          "resistance_current": 0.0020000000000002013,
+          "effective_resistance": 216.90100035512205,
+          "resistance": 216.90100035512205,
+          "voltage_drop": 0.43380200071029057,
+          "resistance_current": 0.0020000000000002143,
           "resistance_terminal_pair": [
             "source",
             "drain"
@@ -3466,51 +3466,51 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 300.2677117532398,
-          "temperature_min": 300.0831050399018,
-          "temperature_average": 300.10649583752775,
-          "temperature_rise": 0.26771175323978014,
+          "temperature_max": 300.267711748156,
+          "temperature_min": 300.0831050393816,
+          "temperature_average": 300.1064958366173,
+          "temperature_rise": 0.26771174815598897,
           "thermal_reference": 300.0,
-          "thermal_power": 0.0008603893865824375,
-          "heat_out": 0.0008603890148623959,
-          "thermal_resistance": 311.15185451457165,
-          "thermal_balance_error": 4.320369910184356e-07,
-          "thermal_residual": 4.3167399441972027e-07,
+          "thermal_power": 0.0008603893791376394,
+          "heat_out": 0.0008603890074177619,
+          "thermal_resistance": 311.1518512982042,
+          "thermal_balance_error": 4.320368039731458e-07,
+          "thermal_residual": 4.316739590245085e-07,
           "boundary_heat_flows": {
-            "backside": 0.0008603890148623959
+            "backside": 0.0008603890074177619
           },
           "hotspot": {
             "layer": "heater",
             "x": 3.8e-05,
             "y": 9.9e-05,
             "z": 0.0,
-            "temperature": 300.2677117532398
+            "temperature": 300.267711748156
           },
           "thermal_dofs": 8375
         },
         "terminals": {
           "source_landing_1": {
-            "voltage": 0.0021289887520916195,
+            "voltage": 0.0021289933532561076,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing_1": {
-            "voltage": 0.4316730132203395,
+            "voltage": 0.4316730082435313,
             "current": 0.0,
             "power": 0.0
           },
           "sensor_return": {
             "voltage": 0.0,
-            "current": -1.0000000000003499e-05,
+            "current": -1.0000000000009859e-05,
             "power": -0.0
           },
           "sensor_bias": {
-            "voltage": 0.00048714555390441043,
-            "current": 1.0000000000001192e-05,
-            "power": 4.871455539044685e-09
+            "voltage": 0.0004871455520890682,
+            "current": 1.0000000000002113e-05,
+            "power": 4.871455520891712e-09
           },
           "sensor_probe": {
-            "voltage": 0.00027948434023177346,
+            "voltage": 0.0002794843591787407,
             "current": 0.0,
             "power": 0.0
           }
@@ -3518,19 +3518,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.00199999999999762,
+            "current": -0.0020000000000000356,
             "power": -0.0,
-            "feed_power": 4.813003679188717e-06,
+            "feed_power": 4.8130003351037145e-06,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 1.0,
-                "current": -0.00199999999999762,
-                "power": 4.813003679188717e-06,
+                "current": -0.0020000000000000356,
+                "power": 4.8130003351037145e-06,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0019999999999976204,
-                "voltage_min": 0.0010587502620635562,
-                "voltage_max": 0.004209453789844148,
+                "voltage": 0.0020000000000000356,
+                "voltage_min": 0.0010587551326805861,
+                "voltage_max": 0.004209455791237911,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -3540,20 +3540,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.43380200568709887,
-            "current": 0.0020000000000002013,
-            "power": 0.0008676040113742851,
-            "feed_power": 4.812991316189029e-06,
+            "voltage": 0.43380200071029057,
+            "current": 0.0020000000000002143,
+            "power": 0.0008676040014206741,
+            "feed_power": 4.812991316188497e-06,
             "landings": [
               {
                 "terminal_id": "drain_landing_1",
                 "resistance": 1.0,
-                "current": 0.0020000000000002013,
-                "power": 4.812991316189029e-06,
+                "current": 0.0020000000000002143,
+                "power": 4.812991316188497e-06,
                 "thermal_fraction": 0.25,
-                "voltage": 0.43180200568709864,
-                "voltage_min": 0.42959256341223195,
-                "voltage_max": 0.43274324587222013,
+                "voltage": 0.4318020007102899,
+                "voltage_min": 0.4295925584354246,
+                "voltage_max": 0.4327432408954115,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -3753,19 +3753,19 @@
         "mesh_nodes": 2010,
         "mesh_triangles": 3830,
         "metrics": {
-          "electrical_power": 0.00942993902362612,
-          "joule_power": 0.00930722437680523,
+          "electrical_power": 0.009429939023626122,
+          "joule_power": 0.009307224376805232,
           "contact_power": 0.0,
-          "external_feed_power": 0.00012271464682089,
+          "external_feed_power": 0.0001227146468208902,
           "terminal_power": 0.009429939023626398,
-          "current_balance_error": 3.025357742107523e-14,
-          "power_balance_error": 2.943346244985068e-14,
+          "current_balance_error": 2.8727020762213614e-14,
+          "power_balance_error": 2.924950330953911e-14,
           "electrical_residual": 8.52096171399735e-14,
           "total_current": 0.09999999999987025,
-          "current_density_max": 793187054.1890438,
+          "current_density_max": 793187054.1890444,
           "current_density_average": 119715382.58078325,
-          "current_density_p95": 624998615.3547101,
-          "peak_to_average": 6.625606810835739,
+          "current_density_p95": 624998615.3547095,
+          "peak_to_average": 6.625606810835745,
           "contacts": {},
           "electrical_dofs": 516,
           "effective_resistance": 0.9429939023650868,
@@ -3789,16 +3789,16 @@
           },
           "temperature_max": 300.55261126003427,
           "temperature_min": 300.0459236855426,
-          "temperature_average": 300.10375764231225,
+          "temperature_average": 300.1037576423122,
           "temperature_rise": 0.5526112600342685,
           "thermal_reference": 300.0,
           "thermal_power": 0.009337903038510453,
-          "heat_out": 0.009337898877895356,
+          "heat_out": 0.009337898877895346,
           "thermal_resistance": 59.17937440078827,
-          "thermal_balance_error": 4.4556203679576533e-07,
-          "thermal_residual": 4.4764742236422214e-07,
+          "thermal_balance_error": 4.4556203791039896e-07,
+          "thermal_residual": 4.4764742220093367e-07,
           "boundary_heat_flows": {
-            "backside": 0.009337898877895356
+            "backside": 0.009337898877895346
           },
           "hotspot": {
             "layer": "heater",
@@ -3811,7 +3811,7 @@
         },
         "terminals": {
           "source_landing_1": {
-            "voltage": 0.00013259255042230494,
+            "voltage": 0.000132592550422305,
             "current": 0.0,
             "power": 0.0
           },
@@ -3824,19 +3824,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -0.09999999999986722,
+            "current": -0.09999999999986738,
             "power": -0.0,
-            "feed_power": 6.135828504229442e-05,
+            "feed_power": 6.135828504229461e-05,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 0.001,
-                "current": -0.09999999999986722,
-                "power": 6.135828504229442e-05,
+                "current": -0.09999999999986738,
+                "power": 6.135828504229461e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 9.999999999986723e-05,
-                "voltage_min": 6.051912087696415e-08,
-                "voltage_max": 0.0015502097283983816,
+                "voltage": 9.99999999998674e-05,
+                "voltage_min": 6.051912087696414e-08,
+                "voltage_max": 0.0015502097283983834,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -4097,16 +4097,16 @@
         "metrics": {
           "temperature_max": 300.2447517123678,
           "temperature_min": 300.0118034022795,
-          "temperature_average": 300.08647690714525,
+          "temperature_average": 300.0864769071453,
           "temperature_rise": 0.24475171236781534,
           "thermal_reference": 300.0,
           "thermal_power": 0.0,
-          "heat_out": 0.001680061214868562,
+          "heat_out": 0.0016800612148685817,
           "thermal_resistance": null,
-          "thermal_balance_error": 1.674223244642507e-05,
-          "thermal_residual": 4.923243037343643e-07,
+          "thermal_balance_error": 1.6742232368855616e-05,
+          "thermal_residual": 4.923243037343646e-07,
           "boundary_heat_flows": {
-            "backside": 0.001680061214868562
+            "backside": 0.0016800612148685817
           },
           "hotspot": {
             "layer": "neck",
@@ -4116,10 +4116,10 @@
             "temperature": 300.2447517123678
           },
           "thermal_dofs": 2202,
-          "thermal_storage_rate": -0.0016800330868931785,
-          "thermal_stored_energy": 3.0787382444598475e-06,
-          "thermal_balance_absolute_error": 2.812797538355276e-08,
-          "thermal_balance_roundoff_allowance": 2.8805294248977873e-13,
+          "thermal_storage_rate": -0.0016800330868933285,
+          "thermal_stored_energy": 3.0787382444598827e-06,
+          "thermal_balance_absolute_error": 2.8127975253231657e-08,
+          "thermal_balance_roundoff_allowance": 2.8805294248977883e-13,
           "thermal_capacity_scheme": "consistent",
           "thermal_positive_offdiagonal_count": 46,
           "thermal_monotonicity_sign_condition": false,
@@ -4167,8 +4167,8 @@
           "time_s": 0.0004,
           "time_step": 9.999999999999972e-06,
           "state_kind": "transient_snapshot",
-          "transient_input_energy": 3.4294312875442316e-06,
-          "transient_output_energy": 3.506785035768948e-07,
+          "transient_input_energy": 3.429431287544164e-06,
+          "transient_output_energy": 3.506785035768989e-07,
           "transient_energy_reference_offset": 0.0,
           "transient_initialization": {
             "kind": "uniform",
@@ -4197,8 +4197,8 @@
           "transient_periodic_cycles": 0,
           "transient_periodic_temperature_change": null,
           "transient_stop_reason": "stop_time",
-          "transient_stored_energy": 3.0787382444598475e-06,
-          "transient_energy_balance_error": 1.4539507489108887e-11,
+          "transient_stored_energy": 3.0787382444598827e-06,
+          "transient_energy_balance_error": 1.4539507382382735e-11,
           "transient_history_bytes": 14055248,
           "transient_capacity_scheme": "consistent",
           "transient_bound_undershoot": 0.0,
@@ -4447,14 +4447,14 @@
         "layer": "channel_a",
         "field": "sheet_current",
         "unit": "A/m",
-        "minimum": 0.8490773645744881,
-        "maximum": 80.31606745930483,
+        "minimum": 0.8490773641957624,
+        "maximum": 80.31606742338728,
         "display_unit": "mA/µm",
         "display_scale": 0.001,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.0008490773645744882,
-        "display_maximum": 0.08031606745930484
+        "display_minimum": 0.0008490773641957625,
+        "display_maximum": 0.08031606742338729
       },
       "physical_layers": [
         {
@@ -4509,32 +4509,32 @@
         "metrics": {
           "contacts": {
             "source_contact_a": {
-              "power": 0.00013261808154268548,
-              "current_a_to_b": -0.01999999993391572
+              "power": 0.00013261808142561555,
+              "current_a_to_b": -0.019999999925069033
             },
             "drain_contact_a": {
-              "power": 0.0001326180042184591,
-              "current_a_to_b": 0.019999999933916015
+              "power": 0.00013261800410139038,
+              "current_a_to_b": 0.01999999992506947
             }
           },
-          "electrical_power": 0.0032136177141065506,
-          "joule_power": 0.0029475182866523747,
-          "contact_power": 0.00026523608576114457,
-          "external_feed_power": 8.633416930312312e-07,
-          "terminal_power": 0.003213617724724151,
-          "current_balance_error": 3.324968257622597e-09,
-          "power_balance_error": 3.303940125510514e-09,
-          "electrical_residual": 2.7552691319119804e-10,
-          "total_current": 0.020000000000129185,
-          "current_density_max": 8031606745.930482,
-          "current_density_average": 1110630566.460646,
-          "current_density_p95": 8007172382.971868,
-          "peak_to_average": 7.231573655968773,
+          "electrical_power": 0.0032136177114504066,
+          "joule_power": 0.002947518284230745,
+          "contact_power": 0.0002652360855270059,
+          "external_feed_power": 8.633416926557915e-07,
+          "terminal_power": 0.003213617723386294,
+          "current_balance_error": 3.761813263799724e-09,
+          "power_balance_error": 3.714158995204397e-09,
+          "electrical_residual": 3.183231456205249e-10,
+          "total_current": 0.02000000000003533,
+          "current_density_max": 8031606742.338728,
+          "current_density_average": 1110630566.0407069,
+          "current_density_p95": 8007172379.435441,
+          "peak_to_average": 7.231573655469116,
           "electrical_dofs": 1295,
-          "effective_resistance": 8.034044311706591,
-          "resistance": 8.034044311706591,
-          "voltage_drop": 0.16068088623516968,
-          "resistance_current": 0.020000000000129185,
+          "effective_resistance": 8.03404430843735,
+          "resistance": 8.03404430843735,
+          "voltage_drop": 0.16068088616903084,
+          "resistance_current": 0.02000000000003533,
           "resistance_terminal_pair": [
             "source",
             "drain_a"
@@ -4550,25 +4550,25 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 300.2227256880663,
-          "temperature_min": 300.03669423588383,
-          "temperature_average": 300.04402652833875,
-          "temperature_rise": 0.22272568806630488,
+          "temperature_max": 300.2227256892923,
+          "temperature_min": 300.0366942360849,
+          "temperature_average": 300.0440265285802,
+          "temperature_rise": 0.22272568929230374,
           "thermal_reference": 300.0,
-          "thermal_power": 0.003212970207836777,
-          "heat_out": 0.0032129687949005586,
-          "thermal_resistance": 69.32080712203717,
-          "thermal_balance_error": 4.39760136928776e-07,
-          "thermal_residual": 4.4210613822757663e-07,
+          "thermal_power": 0.0032129702051809147,
+          "heat_out": 0.0032129688125202907,
+          "thermal_resistance": 69.32080756091624,
+          "thermal_balance_error": 4.3344959182296896e-07,
+          "thermal_residual": 4.3582677326716144e-07,
           "boundary_heat_flows": {
-            "backside": 0.0032129687949005586
+            "backside": 0.0032129688125202907
           },
           "hotspot": {
             "layer": "channel_a",
             "x": 0.00015475,
             "y": 0.00025461538461538455,
             "z": 0.0,
-            "temperature": 300.2227256880663
+            "temperature": 300.2227256892923
           },
           "thermal_dofs": 4735
         },
@@ -4579,32 +4579,32 @@
             "power": 0.0
           },
           "drain_a_landing_1": {
-            "voltage": 0.16065993227592326,
+            "voltage": 0.1606599322097845,
             "current": 0.0,
             "power": 0.0
           },
           "source_landing_1": {
-            "voltage": 2.05204339736383e-05,
+            "voltage": 2.0520433964578218e-05,
             "current": 0.0,
             "power": 0.0
           }
         },
         "ports": {
           "drain_a": {
-            "voltage": 0.16068088623516968,
-            "current": 0.020000000000129185,
-            "power": 0.003213617724724151,
-            "feed_power": 4.4242698199740213e-07,
+            "voltage": 0.16068088616903084,
+            "current": 0.02000000000003533,
+            "power": 0.003213617723386294,
+            "feed_power": 4.424269819936283e-07,
             "landings": [
               {
                 "terminal_id": "drain_a_landing_1",
                 "resistance": 0.001,
-                "current": 0.020000000000129185,
-                "power": 4.4242698199740213e-07,
+                "current": 0.02000000000003533,
+                "power": 4.424269819936283e-07,
                 "thermal_fraction": 0.25,
-                "voltage": 0.16066088623516958,
-                "voltage_min": 0.16064007959208107,
-                "voltage_max": 0.16066790389870186,
+                "voltage": 0.16066088616903082,
+                "voltage_min": 0.1606400795259425,
+                "voltage_max": 0.16066790383256319,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -4615,19 +4615,19 @@
           },
           "source": {
             "voltage": 0.0,
-            "current": -0.01999999993362982,
+            "current": -0.019999999924799065,
             "power": -0.0,
-            "feed_power": 4.209147110338291e-07,
+            "feed_power": 4.2091471066216326e-07,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 0.001,
-                "current": -0.01999999993362982,
-                "power": 4.209147110338291e-07,
+                "current": -0.019999999924799065,
+                "power": 4.2091471066216326e-07,
                 "thermal_fraction": 0.25,
-                "voltage": 1.9999999933629824e-05,
-                "voltage_min": 1.4684173448311837e-05,
-                "voltage_max": 3.221216835454699e-05,
+                "voltage": 1.999999992479906e-05,
+                "voltage_min": 1.468417344182419e-05,
+                "voltage_max": 3.221216834033426e-05,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -4891,14 +4891,14 @@
         "layer": "channel_a",
         "field": "sheet_current",
         "unit": "A/m",
-        "minimum": 1.3178833165273927,
-        "maximum": 126.12284667235184,
+        "minimum": 1.317883314474847,
+        "maximum": 126.1228463426282,
         "display_unit": "mA/µm",
         "display_scale": 0.001,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.0013178833165273928,
-        "display_maximum": 0.12612284667235185
+        "display_minimum": 0.001317883314474847,
+        "display_maximum": 0.1261228463426282
       },
       "physical_layers": [
         {
@@ -4965,40 +4965,40 @@
         "metrics": {
           "contacts": {
             "source_contact_a": {
-              "power": 0.0025942206899483193,
-              "current_a_to_b": -0.24999999885375382
+              "power": 0.0025942206849098324,
+              "current_a_to_b": -0.24999999895280056
             },
             "drain_contact_a": {
-              "power": 0.0025942219592874046,
-              "current_a_to_b": 0.2499999988537535
+              "power": 0.002594221956217348,
+              "current_a_to_b": 0.24999999895280042
             },
             "source_contact_b": {
-              "power": 0.0025940575918853145,
-              "current_a_to_b": -0.24999999882490465
+              "power": 0.002594057593166916,
+              "current_a_to_b": -0.249999998978019
             },
             "drain_contact_b": {
-              "power": 0.002594049548034801,
-              "current_a_to_b": 0.2499999988249073
+              "power": 0.0025940495581285427,
+              "current_a_to_b": 0.24999999897801997
             }
           },
-          "electrical_power": 0.12811151146758962,
-          "joule_power": 0.11734209025203468,
-          "contact_power": 0.01037654978915584,
-          "external_feed_power": 0.0003928714263990959,
-          "terminal_power": 0.12811151205859636,
-          "current_balance_error": 4.6964853783031886e-09,
-          "power_balance_error": 4.613221201183542e-09,
-          "electrical_residual": 3.274180941761129e-11,
-          "total_current": 0.4999999999997795,
-          "current_density_max": 12612284667.235186,
-          "current_density_average": 2436800792.078632,
-          "current_density_p95": 12512409028.205992,
-          "peak_to_average": 5.175755321581579,
+          "electrical_power": 0.12811151121885248,
+          "joule_power": 0.11734208999980113,
+          "contact_power": 0.01037654979242264,
+          "external_feed_power": 0.00039287142662872143,
+          "terminal_power": 0.12811151174628638,
+          "current_balance_error": 4.192576017377671e-09,
+          "power_balance_error": 4.116990697552537e-09,
+          "electrical_residual": 3.274180940110333e-11,
+          "total_current": 0.4999999999999176,
+          "current_density_max": 12612284634.26282,
+          "current_density_average": 2436800796.0181084,
+          "current_density_p95": 12512409047.383944,
+          "peak_to_average": 5.17575529968314,
           "electrical_dofs": 20147,
-          "effective_resistance": 1.0258100481679067,
-          "resistance": 1.0258100481679067,
-          "voltage_drop": 0.256452512041857,
-          "resistance_current": 0.24999999999988334,
+          "effective_resistance": 1.0258100454715173,
+          "resistance": 1.0258100454715173,
+          "voltage_drop": 0.2564525113679975,
+          "resistance_current": 0.2500000000001152,
           "resistance_terminal_pair": [
             "source",
             "drain_a"
@@ -5014,25 +5014,25 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 301.0600941406121,
-          "temperature_min": 300.28253045836806,
-          "temperature_average": 300.43700923189147,
-          "temperature_rise": 1.0600941406120796,
+          "temperature_max": 301.06009408476785,
+          "temperature_min": 300.2825304625375,
+          "temperature_average": 300.43700919929074,
+          "temperature_rise": 1.0600940847678544,
           "thermal_reference": 300.0,
-          "thermal_power": 0.1278168578977903,
-          "heat_out": 0.12781679757770464,
-          "thermal_resistance": 8.293852298104463,
-          "thermal_balance_error": 4.7192589960893364e-07,
-          "thermal_residual": 4.831781381579903e-07,
+          "thermal_power": 0.12781685764888095,
+          "heat_out": 0.12781679719982236,
+          "thermal_resistance": 8.293851877347695,
+          "thermal_balance_error": 4.7293494538955535e-07,
+          "thermal_residual": 4.835358469434586e-07,
           "boundary_heat_flows": {
-            "backside": 0.12781679757770464
+            "backside": 0.12781679719982236
           },
           "hotspot": {
             "layer": "channel_a",
             "x": 0.00028475,
             "y": 0.00033461538461538475,
             "z": 0.0,
-            "temperature": 301.0600941406121
+            "temperature": 301.06009408476785
           },
           "thermal_dofs": 62029
         },
@@ -5043,7 +5043,7 @@
             "power": 0.0
           },
           "drain_a_landing_1": {
-            "voltage": 0.25618945214801364,
+            "voltage": 0.25618945147415495,
             "current": 0.0,
             "power": 0.0
           },
@@ -5053,32 +5053,32 @@
             "power": 0.0
           },
           "drain_b_landing_1": {
-            "voltage": 0.25573709521772764,
+            "voltage": 0.25573709464224026,
             "current": 0.0,
             "power": 0.0
           },
           "source_landing_1": {
-            "voltage": 0.0005336133385930974,
+            "voltage": 0.0005336133388615359,
             "current": 0.0,
             "power": 0.0
           }
         },
         "ports": {
           "drain_a": {
-            "voltage": 0.256452512041857,
-            "current": 0.24999999999988334,
-            "power": 0.06411312801043433,
-            "feed_power": 6.88594053413736e-05,
+            "voltage": 0.2564525113679975,
+            "current": 0.2500000000001152,
+            "power": 0.06411312784202892,
+            "feed_power": 6.885940534054138e-05,
             "landings": [
               {
                 "terminal_id": "drain_a_landing_1",
                 "resistance": 0.001,
-                "current": 0.24999999999988334,
-                "power": 6.88594053413736e-05,
+                "current": 0.2500000000001152,
+                "power": 6.885940534054138e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.25620251204185707,
-                "voltage_min": 0.25600322987115376,
-                "voltage_max": 0.25628966400400705,
+                "voltage": 0.2562025113679973,
+                "voltage_min": 0.2560032291973522,
+                "voltage_max": 0.2562896633301424,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5088,20 +5088,20 @@
             "constraint_scope": "port"
           },
           "drain_b": {
-            "voltage": 0.2559935361927545,
-            "current": 0.24999999999989614,
-            "power": 0.06399838404816204,
-            "feed_power": 6.886697306443434e-05,
+            "voltage": 0.2559935356172321,
+            "current": 0.24999999999980246,
+            "power": 0.06399838390425745,
+            "feed_power": 6.886697303781094e-05,
             "landings": [
               {
                 "terminal_id": "drain_b_landing_1",
                 "resistance": 0.001,
-                "current": 0.24999999999989614,
-                "power": 6.886697306443434e-05,
+                "current": 0.24999999999980246,
+                "power": 6.886697303781094e-05,
                 "thermal_fraction": 0.25,
-                "voltage": 0.2557435361927546,
-                "voltage_min": 0.25554427765733917,
-                "voltage_max": 0.25583116611706486,
+                "voltage": 0.2557435356172323,
+                "voltage_min": 0.25554427708189853,
+                "voltage_max": 0.2558311655414033,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5112,19 +5112,19 @@
           },
           "source": {
             "voltage": 0.0,
-            "current": -0.4999999976515368,
+            "current": -0.49999999790362964,
             "power": -0.0,
-            "feed_power": 0.00025514504799328797,
+            "feed_power": 0.0002551450482503691,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 0.001,
-                "current": -0.4999999976515368,
-                "power": 0.00025514504799328797,
+                "current": -0.49999999790362964,
+                "power": 0.0002551450482503691,
                 "thermal_fraction": 0.25,
-                "voltage": 0.0004999999976515367,
-                "voltage_min": 0.00041990316939576484,
-                "voltage_max": 0.0006590240899547317,
+                "voltage": 0.0004999999979036296,
+                "voltage_min": 0.00041990316960886965,
+                "voltage_max": 0.0006590240902470013,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5369,14 +5369,14 @@
         "layer": "source",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 11924898.074310463,
-        "maximum": 2883225790.846209,
+        "minimum": 11920595.29780239,
+        "maximum": 2883178931.31017,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.011924898074310464,
-        "display_maximum": 2.8832257908462093
+        "display_minimum": 0.011920595297802391,
+        "display_maximum": 2.8831789313101703
       },
       "physical_layers": [
         {
@@ -5425,32 +5425,32 @@
         "metrics": {
           "contacts": {
             "on_state": {
-              "power": 29.599852831250224,
-              "current_a_to_b": 9.999999999822016
+              "power": 29.59985073039948,
+              "current_a_to_b": 10.000000000155467
             },
             "collection_vias": {
-              "power": 0.004093754524313339,
-              "current_a_to_b": 9.999999999821126
+              "power": 0.004092852848619016,
+              "current_a_to_b": 10.000000000154536
             }
           },
-          "electrical_power": 29.982831065799026,
-          "joule_power": 0.17871112015874968,
-          "contact_power": 29.603946585774537,
-          "external_feed_power": 0.2001733598657419,
-          "terminal_power": 29.982831066341245,
-          "current_balance_error": 1.8336976381922605e-11,
-          "power_balance_error": 1.8084306754504797e-11,
-          "electrical_residual": 1.8832935211321456e-12,
-          "total_current": 10.000000000003503,
-          "current_density_max": 2975811214.34976,
-          "current_density_average": 275016761.524521,
-          "current_density_p95": 1182870177.2429862,
-          "peak_to_average": 10.820472169964198,
+          "electrical_power": 29.98281928958755,
+          "joule_power": 0.17870234676488633,
+          "contact_power": 29.6039435832481,
+          "external_feed_power": 0.200173359574564,
+          "terminal_power": 29.982819289139673,
+          "current_balance_error": 1.472244548483293e-11,
+          "power_balance_error": 1.4937768136674283e-11,
+          "electrical_residual": 2.0008883438699012e-12,
+          "total_current": 10.000000000005414,
+          "current_density_max": 2975747731.9557686,
+          "current_density_average": 275012738.073227,
+          "current_density_p95": 1182331946.3197618,
+          "peak_to_average": 10.820399639682956,
           "electrical_dofs": 5929,
-          "effective_resistance": 0.29982831066320237,
-          "resistance": 0.29982831066320237,
-          "voltage_drop": 2.998283106633074,
-          "resistance_current": 10.000000000003503,
+          "effective_resistance": 0.29982819289107204,
+          "resistance": 0.29982819289107204,
+          "voltage_drop": 2.998281928912344,
+          "resistance_current": 10.000000000005414,
           "resistance_terminal_pair": [
             "source",
             "drain"
@@ -5466,41 +5466,41 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 381.85729130937193,
-          "temperature_min": 353.7100630958417,
-          "temperature_average": 366.1700905457897,
-          "temperature_rise": 81.85729130937193,
+          "temperature_max": 381.85677764906535,
+          "temperature_min": 353.7100454683224,
+          "temperature_average": 366.17005178117694,
+          "temperature_rise": 81.85677764906535,
           "thermal_reference": 300.0,
-          "thermal_power": 29.832701045899725,
-          "heat_out": 29.83267225056651,
-          "thermal_resistance": 2.743877974154224,
-          "thermal_balance_error": 9.652271569528957e-07,
-          "thermal_residual": 9.506180340188885e-07,
+          "thermal_power": 29.83268926990662,
+          "heat_out": 29.832660472537867,
+          "thermal_resistance": 2.7438618392220318,
+          "thermal_balance_error": 9.652957697571332e-07,
+          "thermal_residual": 9.506866542954888e-07,
           "boundary_heat_flows": {
-            "backside": 29.83267225056651
+            "backside": 29.832660472537867
           },
           "hotspot": {
             "layer": "collector",
             "x": 0.0001228630131840715,
             "y": 0.00048795023303884973,
             "z": 1.4e-05,
-            "temperature": 381.85729130937193
+            "temperature": 381.85677764906535
           },
           "thermal_dofs": 9731
         },
         "terminals": {
           "source_landing_1": {
-            "voltage": 0.01015510459982633,
+            "voltage": 0.010155104405967367,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing_1": {
-            "voltage": 2.9881736769313125,
+            "voltage": 2.988172499173524,
             "current": 0.0,
             "power": 0.0
           },
           "kelvin": {
-            "voltage": 0.03103141417708117,
+            "voltage": 0.031030280913120968,
             "current": 0.0,
             "power": 0.0
           }
@@ -5508,19 +5508,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -9.999999999820133,
+            "current": -10.000000000152639,
             "power": -0.0,
-            "feed_power": 0.10011014857925235,
+            "feed_power": 0.10011014825627691,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 0.001,
-                "current": -9.999999999820133,
-                "power": 0.10011014857925235,
+                "current": -10.000000000152639,
+                "power": 0.10011014825627691,
                 "thermal_fraction": 0.25,
-                "voltage": 0.009999999999820132,
-                "voltage_min": 0.009589896762586408,
-                "voltage_max": 0.01077872856049988,
+                "voltage": 0.010000000000152637,
+                "voltage_min": 0.009589896745278272,
+                "voltage_max": 0.01077868451995797,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5530,20 +5530,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 2.998283106633074,
-            "current": 10.000000000003503,
-            "power": 29.982831066341245,
-            "feed_power": 0.10006321128648954,
+            "voltage": 2.998281928912344,
+            "current": 10.000000000005414,
+            "power": 29.982819289139673,
+            "feed_power": 0.10006321131828709,
             "landings": [
               {
                 "terminal_id": "drain_landing_1",
                 "resistance": 0.001,
-                "current": 10.000000000003503,
-                "power": 0.10006321128648954,
+                "current": 10.000000000005414,
+                "power": 0.10006321131828709,
                 "thermal_fraction": 0.25,
-                "voltage": 2.98828310663307,
-                "voltage_min": 2.987565671389943,
-                "voltage_max": 2.9886977582085628,
+                "voltage": 2.9882819289123357,
+                "voltage_min": 2.9875644946340953,
+                "voltage_max": 2.988696580673376,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5729,14 +5729,14 @@
         "layer": "m1",
         "field": "current_density",
         "unit": "A/m²",
-        "minimum": 477841.03126360395,
-        "maximum": 1195788422.5754945,
+        "minimum": 4094329.089390541,
+        "maximum": 1195790577.1892889,
         "display_unit": "mA/µm²",
         "display_scale": 1e-09,
         "normalization": "linear",
         "uniform": false,
-        "display_minimum": 0.00047784103126360396,
-        "display_maximum": 1.1957884225754947
+        "display_minimum": 0.004094329089390541,
+        "display_maximum": 1.195790577189289
       },
       "physical_layers": [
         {
@@ -5774,37 +5774,37 @@
         "physics_hash": "14dc23086d5da0e06c630d1e4903a5913faed019f4bbb88687adb57e255d99be",
         "solver_version": "0.4.0",
         "converged": true,
-        "mesh_nodes": 5296,
-        "mesh_triangles": 10386,
+        "mesh_nodes": 5289,
+        "mesh_triangles": 10372,
         "metrics": {
           "contacts": {
             "branch_vias": {
-              "power": 0.001298619403094432,
-              "current_a_to_b": 5.0000000000003375
+              "power": 0.0012985968206831965,
+              "current_a_to_b": 5.000000000000145
             },
             "output_vias": {
-              "power": 0.0025327232732293235,
-              "current_a_to_b": 5.000000000000813
+              "power": 0.002533212241021632,
+              "current_a_to_b": 5.000000000000749
             }
           },
-          "electrical_power": 0.15933691291923413,
-          "joule_power": 0.1053949223224101,
-          "contact_power": 0.0038313426763237554,
-          "external_feed_power": 0.05011064792050027,
-          "terminal_power": 0.15933691291921892,
-          "current_balance_error": 1.8864909634428893e-13,
-          "power_balance_error": 9.545845440770169e-14,
-          "electrical_residual": 1.4513390489409632e-14,
-          "total_current": 4.9999999999999964,
-          "current_density_max": 1658966574.3387308,
-          "current_density_average": 460240828.194745,
-          "current_density_p95": 706791517.4691422,
-          "peak_to_average": 3.6045619438976857,
-          "electrical_dofs": 5516,
-          "effective_resistance": 0.006373476516768766,
-          "resistance": 0.006373476516768766,
-          "voltage_drop": 0.031867382583843806,
-          "resistance_current": 4.9999999999999964,
+          "electrical_power": 0.1593360090730202,
+          "joule_power": 0.10539355201106412,
+          "contact_power": 0.003831809061704828,
+          "external_feed_power": 0.05011064800025125,
+          "terminal_power": 0.1593360090730108,
+          "current_balance_error": 1.4566126083080978e-13,
+          "power_balance_error": 5.905218907162535e-14,
+          "electrical_residual": 1.6943391134558185e-14,
+          "total_current": 5.000000000000005,
+          "current_density_max": 1658999834.624928,
+          "current_density_average": 460244048.8305549,
+          "current_density_p95": 706790244.7652491,
+          "peak_to_average": 3.604608986993575,
+          "electrical_dofs": 5502,
+          "effective_resistance": 0.006373440362920419,
+          "resistance": 0.006373440362920419,
+          "voltage_drop": 0.03186720181460213,
+          "resistance_current": 5.000000000000005,
           "resistance_terminal_pair": [
             "source",
             "drain"
@@ -5820,36 +5820,36 @@
             "method": "explicit",
             "definition": "abs(Vb - Va) / abs(Icurrent_terminal)"
           },
-          "temperature_max": 306.7271238556752,
-          "temperature_min": 300.7538551989196,
-          "temperature_average": 301.62783463007594,
-          "temperature_rise": 6.727123855675188,
+          "temperature_max": 306.7269577128756,
+          "temperature_min": 300.75384731385503,
+          "temperature_average": 301.6278177431129,
+          "temperature_rise": 6.726957712875617,
           "thermal_reference": 300.0,
-          "thermal_power": 0.12175392697885892,
-          "heat_out": 0.1217538588123292,
-          "thermal_resistance": 55.2518019138986,
-          "thermal_balance_error": 5.598713028635725e-07,
-          "thermal_residual": 7.15348922201336e-07,
+          "thermal_power": 0.12175302307283176,
+          "heat_out": 0.12175295490724376,
+          "thermal_resistance": 55.250847519832014,
+          "thermal_balance_error": 5.598677246217617e-07,
+          "thermal_residual": 7.153357432187179e-07,
           "boundary_heat_flows": {
-            "backside": 0.1217538588123292
+            "backside": 0.12175295490724376
           },
           "hotspot": {
             "layer": "m3",
             "x": 0.0016500000000000087,
             "y": 0.0008029422863406023,
             "z": 9e-05,
-            "temperature": 306.7271238556752
+            "temperature": 306.7269577128756
           },
-          "thermal_dofs": 10812
+          "thermal_dofs": 10791
         },
         "terminals": {
           "source_landing_1": {
-            "voltage": 0.005042415092075408,
+            "voltage": 0.005042415030214599,
             "current": 0.0,
             "power": 0.0
           },
           "drain_landing_1": {
-            "voltage": 0.02681642463096,
+            "voltage": 0.026816243862291835,
             "current": 0.0,
             "power": 0.0
           }
@@ -5857,19 +5857,19 @@
         "ports": {
           "source": {
             "voltage": 0.0,
-            "current": -5.00000000000094,
+            "current": -5.000000000000734,
             "power": -0.0,
-            "feed_power": 0.025087461882223615,
+            "feed_power": 0.025087461962426293,
             "landings": [
               {
                 "terminal_id": "source_landing_1",
                 "resistance": 0.001,
-                "current": -5.00000000000094,
-                "power": 0.025087461882223615,
+                "current": -5.000000000000734,
+                "power": 0.025087461962426293,
                 "thermal_fraction": 0.25,
-                "voltage": 0.005000000000000938,
-                "voltage_min": 0.004638675137719293,
-                "voltage_max": 0.005723043545357121,
+                "voltage": 0.005000000000000733,
+                "voltage_min": 0.004638675078570413,
+                "voltage_max": 0.005723039952606096,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
@@ -5879,20 +5879,20 @@
             "constraint_scope": "port"
           },
           "drain": {
-            "voltage": 0.031867382583843806,
-            "current": 4.9999999999999964,
-            "power": 0.15933691291921892,
-            "feed_power": 0.02502318603827665,
+            "voltage": 0.03186720181460213,
+            "current": 5.000000000000005,
+            "power": 0.1593360090730108,
+            "feed_power": 0.02502318603782496,
             "landings": [
               {
                 "terminal_id": "drain_landing_1",
                 "resistance": 0.001,
-                "current": 4.9999999999999964,
-                "power": 0.02502318603827665,
+                "current": 5.000000000000005,
+                "power": 0.02502318603782496,
                 "thermal_fraction": 0.25,
-                "voltage": 0.026867382583843826,
-                "voltage_min": 0.026462427424627916,
-                "voltage_max": 0.027081566003263727,
+                "voltage": 0.02686720181460214,
+                "voltage_min": 0.026462248308372367,
+                "voltage_max": 0.027081385403571658,
                 "ideal": false,
                 "resistance_model": "distributed_total_contact_resistance"
               }
