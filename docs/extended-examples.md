@@ -11,6 +11,10 @@ See current crowd around a bend, follow heat into a substrate, or watch a device
 5. In **Results**, select **Layer** and **Quantity**, then **Fit layer**. Use **Appearance** for colors and range, **Metrics & loss budget** for numbers, and **History** for earlier runs.
 6. Try the follow-up question for your example. **Sweeps & convergence** opens parameter, mesh and time-step studies; **Compare saved runs…** helps inspect alternatives.
 
+[![Actual E33 bridge temperature results in the Windows application](images/extended-bridge-results.png)](images/extended-bridge-results.png)
+
+*Actual 0.4.0 source GUI on native Windows at 125% Qt scale, in a compact 1280 × 800 logical-pixel window. The selected bridge temperature map uses the project's 300 K backside reservoir. The solver converged; mesh verification is not established for this run. Open the image for full-size controls.*
+
 ## Choose the question, then inspect the physics
 
 Start with a compact coupon before moving to a device or package. Keep the supplied nominal inputs for the first calculation; the saved sweeps are follow-up experiments, not validation substitutes. Opening never starts a solve.
@@ -783,6 +787,8 @@ Optional command-line run of the current project:
 **Look for:** Local sheet voltages determine current division between four active islands; the distributed on-state device loss is separate from collection and feed losses.
 
 **Try next:** Run the collector-thickness sweep at equal current and active area. Compare island sharing and Kelvin potential without interpreting the insulated gate drawing as an automatic gate-dependent model.
+
+**Review F6 validation in the GUI:** the configured reference has zero blockers and one electrically connected network, with two expected notices. The Source warning reports four disconnected polygons: these are the intended active islands, joined through eight collection vias and the shared Collector; vertical on-state loads connect them to the Drain. The Drain/Collector projected-overlap information reports that those two sheets have no direct electrical contact. This is intentional: current must pass from Drain through the area-specific on-state resistance to Source, then through the collection vias to Collector. Do not add a direct Drain–Collector contact: it would short the device model. Use Locate to inspect both notices rather than turning warnings off; they remain useful when editing the layout.
 
 [Project (.etl)](../examples/E39_sic_island_die.etl) · [GDSII](../examples/E39_sic_island_die.gds) · [OASIS](../examples/E39_sic_island_die.oas) · [Vector preview](example-gallery/extended/E39_sic_island_die.svg)
 

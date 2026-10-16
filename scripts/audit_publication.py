@@ -542,7 +542,8 @@ class ArtifactAudit(PublicationAudit):
                 combined = tails[index] + text
                 # Unbounded printable tokens could hide a regex terminator beyond
                 # the overlap. Reject them instead of silently assuming a clean scan.
-                if re.search(r'[\x20-\x7e]{' + str(self.limits.overlap_chars + 1) + r',}', combined):
+                if any(match.end() - match.start() > self.limits.overlap_chars
+                   for match in re.finditer(r'[\x20-\x7e]+', combined)):
                     self.finding(name, 'artifact_text_window_budget')
                     raise _ArtifactStop('Artifact text exceeds its bounded scan window')
                 self.text(name + ('!native-string' if native else ''), combined,

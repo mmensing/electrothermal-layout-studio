@@ -570,6 +570,13 @@ def write_markdown(records, output, markdown, examples):
                   "| What happens between pulses? | [E17: heating and cooling](#e17) | [E18: pulsed conductor](#e18), [E19: delayed receiver heating](#e19) |",
                   f"| How do larger power structures share current? | [E20–E24: power guide]({power_guide}) | [GaN fingers and banks]({power_guide}#e21), [SiC source collection]({power_guide}#e24) |",
                   f"| What should I explore after the foundations? | [E25–E40: extended walkthroughs]({extended_guide}) | [Contact coupons]({extended_guide}#e27), [thermal paths]({extended_guide}#e35), [device sharing]({extended_guide}#e39) |", ""]
+    if extended_only and any(record["catalog"]["id"] == "E33" for record in records):
+        desktop = _relative(ROOT / "docs/images/extended-bridge-results.png", markdown.parent)
+        lines += [f"[![Actual E33 bridge temperature results in the Windows application]({desktop})]({desktop})", "",
+                  "*Actual 0.4.0 source GUI on native Windows at 125% Qt scale, in a compact 1280 × 800 "
+                  "logical-pixel window. The selected bridge temperature map uses the project's 300 K backside "
+                  "reservoir. The solver converged; mesh verification is not established for this run. "
+                  "Open the image for full-size controls.*", ""]
     if extended_only:
         lines += ["## Choose the question, then inspect the physics", "",
                   "Start with a compact coupon before moving to a device or package. Keep the supplied nominal "
@@ -628,6 +635,16 @@ def write_markdown(records, output, markdown, examples):
                   f"**In the GUI:** choose **{analysis}**, then in Results select layer `{info['layer']}` "
                   f"and **{field_label} ({field_unit})**. {action}", "",
                   f"**Look for:** {observation}", "", f"**Try next:** {question}", ""]
+        if info["id"] == "E39":
+            lines += ["**Review F6 validation in the GUI:** the configured reference has zero blockers and one "
+                      "electrically connected network, with two expected notices. The Source warning reports four "
+                      "disconnected polygons: these are the intended active islands, joined through eight collection "
+                      "vias and the shared Collector; vertical on-state loads connect them to the Drain. The "
+                      "Drain/Collector projected-overlap information reports that those two sheets have no direct "
+                      "electrical contact. This is intentional: current must pass from Drain through the area-specific "
+                      "on-state resistance to Source, then through the collection vias to Collector. Do not add a direct "
+                      "Drain–Collector contact: it would short the device model. Use Locate to inspect both notices "
+                      "rather than turning warnings off; they remain useful when editing the layout.", ""]
         downloads = [f"[{label}]({_relative(examples / (name + ext), markdown.parent)})"
                      for label, ext in [("Project (.etl)", ".etl"), ("GDSII", ".gds"), ("OASIS", ".oas")]]
         lines += [" · ".join([*downloads, f"[Vector preview]({asset(name + '.svg')})"]), "",
