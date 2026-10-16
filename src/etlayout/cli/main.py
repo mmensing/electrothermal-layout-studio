@@ -8,6 +8,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from etlayout import __version__
+from etlayout.cli.resources import policy_from_args, resource_arguments
 from etlayout.models import SimulationError, SimulationResult, SweepSpec
 
 
@@ -27,6 +28,7 @@ def parser():
     sub.add_parser("capabilities", help="Report available CPUs and native thread control")
     gui = sub.add_parser("gui", help="Launch native Windows desktop")
     gui.add_argument("project", nargs="?")
+    resource_arguments(gui)
     gui.add_argument("--no-recovery", action="store_true")
     gui.add_argument("--smoke-test", action="store_true")
     gui.add_argument("--screenshot")
@@ -42,12 +44,16 @@ def parser():
     ex.add_argument("--fingers", type=int, help="Actual gated paths per GaN bank, independently of conducting width")
     ex.add_argument("--gate-width-um", type=float, help="GaN conducting gate width along each finger, in micrometers")
     ex.add_argument("--stress", action="store_true", help="Label an overload point and disable verified-ranking experiments")
+    info = sub.add_parser("project-info", help="Inspect project metadata/resource declarations without accessing external layouts")
+    info.add_argument("project")
+    resource_arguments(info)
     inspect = sub.add_parser("inspect", help="Inspect GDS/OASIS hierarchy and masks")
     inspect.add_argument("layout")
     for command in ("validate", "mesh", "mesh-plan", "solve", "transient", "sweep", "refine", "time-refine"):
         q = sub.add_parser(command)
         execution_arguments(q)
         q.add_argument("project")
+        resource_arguments(q)
         q.add_argument("--output", "-o", default="results")
         q.add_argument("--set", action="append", default=[], metavar="PATH=VALUE")
         q.add_argument("--mode", choices=["electrical", "thermal", "electrothermal"],
@@ -117,6 +123,7 @@ def parser():
     compare = sub.add_parser("compare", help="Run equivalent studies across saved projects")
     execution_arguments(compare)
     compare.add_argument("projects", nargs="+")
+    resource_arguments(compare)
     compare.add_argument("--mode", default="electrothermal", choices=["electrical", "thermal", "electrothermal"])
     compare.add_argument("--output", "-o", default="comparison")
     materials = sub.add_parser("materials", help="Export the reference and custom material library")
@@ -140,10 +147,18 @@ def main(argv=None):
             gui_args.extend(["--screenshot", args.screenshot])
         if getattr(args, "editor_smoke_output", None):
             gui_args.extend(["--editor-smoke-output", args.editor_smoke_output])
+        for flag in ("allow_outside_root", "allow_network"):
+            if getattr(args, flag, False):
+                gui_args.append("--" + flag.replace("_", "-"))
         return gui_main(gui_args)
     try:
         from etlayout.cli.power import COMMANDS, run_command
         from etlayout.io.project import _json_dump, load_project, save_project
+        resource_policy = policy_from_args(args)
+        if args.command == "project-info":
+            from etlayout.io.resources import inspect_project
+            print(_json_dump(inspect_project(args.project, allow_network_container=resource_policy.allow_network).summary()))
+            return 0
         if args.command in COMMANDS:
             report, exit_code = run_command(args, progress=lambda fraction, message:
                 print(f"[{fraction:6.1%}] {message}", file=sys.stderr))
@@ -208,14 +223,14 @@ def main(argv=None):
         def progress(fraction, message):
             print(f"[{fraction:6.1%}] {message}", file=sys.stderr)
         if args.command == "compare":
-            loaded = [load_project(x) for x in args.projects]
+            loaded = [load_project(x, external_policy=resource_policy) for x in args.projects]
             sources = [resolve_study_initial_state(project, result) for project, result in loaded]
             rows = compare_projects([item[0] for item in loaded], args.mode, progress=progress,
                                     initial_results=[item["initial_result"] for item in sources],
                                     resumes=[item["resume"] for item in sources], execution=execution)
             print(export_study(rows, args.output, "design"))
             return int(any(r.error for r in rows))
-        project, loaded_result = load_project(args.project)
+        project, loaded_result = load_project(args.project, external_policy=resource_policy)
         if args.mode:
             project.solver.mode = args.mode
         for setting in args.set:
@@ -308,7 +323,7 @@ def main(argv=None):
             if initial_path:
                 if not project.transient.enabled:
                     raise SimulationError("Saved initial states and resume require --operation transient")
-                _, initial_result = load_project(initial_path)
+                _, initial_result = load_project(initial_path, external_policy=resource_policy)
                 if initial_result is None:
                     raise SimulationError("Initial state archive contains no saved result")
                 project.transient.initial_state_digest = ""

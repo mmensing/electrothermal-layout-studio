@@ -99,11 +99,15 @@ def execute_operation(project, operation, options=None, *, progress=None, cancel
         return {"report": report}
     if operation == "export_finalist":
         from etlayout.optimization import export_finalist
+        workspace = Path(options["output"])
+        root = workspace.parent if workspace.is_file() else workspace
         history = options.get("history")
         if history is None:
             path = Path(options["output"])
             history = json.loads((path if path.is_file() else path / "history.json").read_text(encoding="utf-8"))
         destination = options.get("export_directory") or str(Path(options["output"]) / "export")
-        report = export_finalist(project, history, options["candidate_id"], destination, cancel=cancel)
+        from etlayout.io.resources import ExternalResourcePolicy
+        report = export_finalist(project, history, options["candidate_id"], destination, cancel=cancel,
+                                 resource_policy=ExternalResourcePolicy(allowed_root=root))
         return {"report": report}
     raise SimulationError(f"Unknown power workflow {operation}")

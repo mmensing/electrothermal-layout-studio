@@ -10,6 +10,7 @@ import pytest
 from test_power_optimization import example
 
 from etlayout.io.project import file_hash, load_project, save_project
+from etlayout.io.resources import ExternalResourcePolicy
 
 
 def _process(arguments, temporary):
@@ -54,7 +55,7 @@ print(json.dumps(history))
     assert retained.parent == directory / "source"
     assert file_hash(retained) == original_hash
     assert baseline["layout_path"] == str(retained)
-    baseline_project, _ = load_project(baseline["project_path"])
+    baseline_project, _ = load_project(baseline["project_path"], external_policy=ExternalResourcePolicy(allowed_root=directory))
     assert baseline_project.layout.path == str(retained)
     assert baseline_project.power.recipes[0].source_hash == original_hash
     extracted = list((first_temp / "etlayout-layouts").glob("*.gds"))

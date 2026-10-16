@@ -14,6 +14,8 @@ def main(argv=None):
     multiprocessing.freeze_support()
     parser = argparse.ArgumentParser(description="Electrothermal Layout Studio desktop")
     parser.add_argument("project", nargs="?", help="Project archive (.etl/.etlayout)")
+    from etlayout.cli.resources import policy_from_args, resource_arguments
+    resource_arguments(parser)
     parser.add_argument("--no-recovery", action="store_true")
     parser.add_argument("--smoke-test", action="store_true", help="Start Qt, render a frame, and exit")
     parser.add_argument("--screenshot", help="Save the rendered window to PNG before smoke-test exit")
@@ -36,7 +38,9 @@ def main(argv=None):
     application.setOrganizationName("etlayout")
     application.setStyle("Fusion")
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
-    project, result = load_project(args.project) if args.project else (None, None)
+    policy = policy_from_args(args)
+    project, result = (load_project(args.project, external_policy=policy)
+                       if args.project and args.smoke_test else (None, None))
     window = MainWindow(project, result, database_path=editor_output / "materials.sqlite3" if editor_output else None,
                         recover=not args.no_recovery and not args.smoke_test)
     if editor_output:
@@ -50,9 +54,11 @@ def main(argv=None):
             window.restoreGeometry(geometry)
         if state:
             window.restoreState(state)
-    if args.project:
+    if args.project and not args.smoke_test:
+        window.open_project(args.project, external_policy=policy)
+    if args.project and args.smoke_test:
         window.path = Path(args.project)
-        window.run_history = load_run_history(args.project)
+        window.run_history = load_run_history(args.project, external_policy=policy)
         if result:
             window.remember_result(result)
         else:
