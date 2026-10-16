@@ -708,8 +708,8 @@ def resolve_project(inspection: ProjectInspection, *, external_policy: ExternalR
     project = deepcopy(inspection.project)
     project._archive_format = inspection.metadata.get("schema_version", 2) if _archive_data is not None else 2
     if inspection.metadata.get("schema_version") == 3 and _archive_data is not None:
-        from etlayout.io.archive_v3 import ArchiveV3Reader
-        with ArchiveV3Reader(_archive_data, source_path=source, policy=policy) as reader:
+        from etlayout.io.archive_v3 import inspection_reader
+        with inspection_reader(inspection, policy=policy) as reader:
             project = reader._setup(project.to_dict(), inspection.metadata.get("embedded_layout"))
             if inspection.relinked or inspection.discard_stale_result or reader.current_run_id is None:
                 return project, None
@@ -820,17 +820,14 @@ def load_run_history(path: str | Path, *, external_policy: ExternalResourcePolic
         return []
     history = []
     try:
-        if _archive_data is None:
-            inspected = inspect_project(source, allow_network_container=(external_policy or ExternalResourcePolicy()).allow_network)
-            source, _archive_data = inspected.source, inspected.archive_data
-        inspect_archive_size(source, _archive_data=_archive_data)
-        with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as container:
-            metadata = json.loads(container.read("project.json"))
-        if metadata.get("schema_version") == 3:
-            from etlayout.io.archive_v3 import ArchiveV3Reader
-            with ArchiveV3Reader(_archive_data if _archive_data is not None else source, source_path=source,
-                                 policy=external_policy) as reader:
+        inspected = inspect_project(source, _archive_data=_archive_data,
+            allow_network_container=(external_policy or ExternalResourcePolicy()).allow_network)
+        source, _archive_data = inspected.source, inspected.archive_data
+        if inspected.metadata.get("schema_version") == 3:
+            from etlayout.io.archive_v3 import inspection_reader
+            with inspection_reader(inspected, policy=external_policy) as reader:
                 return [reader.materialize(record["id"]) for record in reader.records if record["id"] != reader.current_run_id]
+        inspect_archive_size(source, _archive_data=_archive_data)
         with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as archive:
             for name in sorted(n for n in archive.namelist() if n.startswith("runs/run_") and n.endswith(".etl")):
                 _, result = load_project(source, external_policy=external_policy, _archive_data=archive.read(name),

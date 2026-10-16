@@ -327,12 +327,25 @@ def inspect_project(
             inspection = ProjectInspection(source, project, resources, metadata=metadata)
             inspection._source_sha256 = hashlib.sha256(raw).hexdigest()
             return inspection
-        inspect_archive_size(source, _archive_data=raw)
+        # Bound the directory before ZipFile allocates its member index. The
+        # schema-3 reader below performs the complete graph/budget validation
+        # once; legacy archives retain their recursive size validation.
+        from etlayout.io.archive_directory import inspect_directory
+        from etlayout.io.project import MAX_ARCHIVE_ENTRIES
+        inspect_directory(raw, max_bytes=MAX_ARCHIVE_BYTES, max_entries=MAX_ARCHIVE_ENTRIES)
         with zipfile.ZipFile(io.BytesIO(raw)) as archive:
-            metadata = json.loads(archive.read("project.json"))
+            if "project.json" not in archive.namelist():
+                # Preserve legacy malformed-payload diagnostics (including NPY
+                # allocation claims) before reporting a missing project root.
+                inspect_archive_size(source, _archive_data=raw)
+            root = archive.getinfo("project.json")
+            if root.file_size > MAX_METADATA_BYTES:
+                raise SimulationError("Project metadata exceeds its byte budget")
+            metadata = json.loads(archive.read(root))
             if isinstance(metadata, dict) and metadata.get("schema_version") == 3:
-                from etlayout.io.archive_v3 import ArchiveV3Reader
-                with ArchiveV3Reader(raw, source_path=source) as reader:
+                from etlayout.io.archive_v3 import ArchiveV3Reader, bind_inspection_reader
+                reader = ArchiveV3Reader(raw, source_path=source)
+                try:
                     project = deepcopy(reader.project)
                     resources = []
                     embedded = metadata.get("embedded_layout")
@@ -352,7 +365,13 @@ def inspect_project(
                         if location:
                             resources.append(classify_resource(location, source, embedded=bool(embedded_ref),
                                 key=_prefix + resource_key, expected_sha256=setup["sha256"]))
-                    return ProjectInspection(source, project, tuple(resources), raw, metadata)
+                    inspection = ProjectInspection(source, project, tuple(resources), raw, metadata)
+                    bind_inspection_reader(inspection, reader)
+                    return inspection
+                except BaseException:
+                    reader.close()
+                    raise
+            inspect_archive_size(source, _archive_data=raw)
             if (
                 not isinstance(metadata, dict)
                 or metadata.get("format") != "etlayout"
