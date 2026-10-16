@@ -37,8 +37,11 @@ The ordinary File relink action uses the same review boundary.
 
 An unresolved project retains editable metadata and physical settings, but preparation,
 layout editing, Run, studies and portable archive saving are disabled. Review resources
-to continue. Cancel leaves the current document intact. Approval is local to this opening
-and is not embedded as a permanent trust grant in the project.
+to continue. Review authorizes the current edited document without reopening the original
+file or discarding notes, physical edits, undo history or unsaved status. Stored current
+fields attach only when their physics still matches; recorded historical runs retain
+their own original setups. Cancel leaves the current document intact. Approval is local
+to this opening and is not embedded as a permanent trust grant in the project.
 
 Self-contained archives extract validated embedded layouts to the local temporary
 `etlayout-layouts` cache, keyed by SHA-256. The cache may outlive the session and can be
