@@ -1,0 +1,2 @@
+# Preserve the exact source-input and recipe bytes pinned in the source catalog.
+packaging/source-recipes/** -text
