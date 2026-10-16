@@ -344,6 +344,26 @@ Undo/redo handles configuration edits. Recovery is offered after an interrupted 
 session; a normal project save is the durable record. Missing external layouts can be relinked
 through File. Portable archives normally include the layout already.
 Autosave failures appear in the status area; save explicitly after resolving the cause.
+Recovery uses an application-local `recovery/` directory beside the editable material
+library. Each application window has a random session UUID; portable projects persist a
+separate document UUID in metadata, outside scientific configuration and result hashes.
+Snapshots have unique UUID filenames and increasing document revisions. The atomic,
+process-locked index can be rebuilt from independent receipts after a crash. On startup,
+choose individual interrupted sessions to recover, ignore, discard (with confirmation),
+or open their original project. Active sessions are excluded. A damaged entry cannot
+hide another intact snapshot. Older shared recovery files are imported once without
+deleting their source. JSON saves use the already-supported `project` metadata envelope to retain this UUID;
+legacy bare-project JSON remains readable. Legacy projects acquire an identity on migration; Save As
+preserves it, while Duplicate creates a new document.
+
+A durable save removes only this window's snapshots through its saved revision; other
+projects, sessions and newer revisions remain. Failed cleanup is reported and may leave
+a redundant local copy. Recovery archives contain the same potentially confidential
+layout, notes, materials and results as full project archives: they are local files, not
+encrypted backups, and inherit the user's directory permissions. Temporary project writes
+are sibling files removed after success/failure; embedded layouts use the local
+content-hash cache. Deliberate exports remain at their chosen destination. Recovery is
+crash protection, not a replacement for a durable project save.
 
 ## Power interconnects and routing — added in 0.3.0
 
