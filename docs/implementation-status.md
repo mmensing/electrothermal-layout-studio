@@ -47,3 +47,7 @@ Proposed storage work is documented in the
 baseline and compatibility/acceptance plan do not implement a new archive schema
 or lazy history. Existing portable archives remain on the current writer until a
 separate implementation passes those gates.
+
+The separate [lazy-history RFC](design/lazy-run-history.md) maps metadata-first
+listing, explicit result access, bounded caches and consumer migration. It is
+also design-only: eager loading remains the supported runtime behavior.
