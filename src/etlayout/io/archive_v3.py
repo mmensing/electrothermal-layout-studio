@@ -393,6 +393,8 @@ class ArchiveV3Reader:
         self._json_objects, self._index, self._records, self._errors = {}, {}, {}, {}
         self._object_errors = {}
         self._checked_descriptors = {}
+        self._checked_records = set()
+        self._checked_configurations = {}
         self._catalog_metadata = {}
         try:
             from etlayout.io.archive_directory import inspect_directory
@@ -683,11 +685,19 @@ class ArchiveV3Reader:
                 or any(not isinstance(item, Diagnostic) for item in metadata["diagnostics"])):
             raise SimulationError("Invalid stored result status or diagnostics")
         from etlayout.io.project import configuration_hash, physics_hash, project_from_dict
-        if metadata["configuration"]:
-            project_from_dict(metadata["configuration"])
-            if metadata["configuration_hash"] and configuration_hash(metadata["configuration"]) != metadata["configuration_hash"]:
+        configuration = metadata["configuration"]
+        if configuration:
+            # Catalog values originate from verified immutable object bytes. A
+            # shared configuration needs schema/hash calculation once, while
+            # every frame still checks its own recorded identity against it.
+            checked = self._checked_configurations.get(id(configuration))
+            if checked is None:
+                decoded = project_from_dict(configuration)
+                checked = (configuration, configuration_hash(configuration), physics_hash(decoded, resolve_layout=False))
+                self._checked_configurations[id(configuration)] = checked
+            if metadata["configuration_hash"] and checked[1] != metadata["configuration_hash"]:
                 raise SimulationError("Stored configuration content does not match its hash")
-            if metadata["physics_hash"] and physics_hash(metadata["configuration"], resolve_layout=False) != metadata["physics_hash"]:
+            if metadata["physics_hash"] and checked[2] != metadata["physics_hash"]:
                 raise SimulationError("Stored physics hash does not match its configuration")
         self._validate_metadata(metadata)
         return metadata
@@ -719,7 +729,9 @@ class ArchiveV3Reader:
         digest = record["descriptor"]["$ref"]
         if digest in self._checked_descriptors:
             value, details = self._checked_descriptors[digest]
-            self._check_summary(record["summary"], details, value)
+            if identity not in self._checked_records:
+                self._check_summary(record["summary"], details, value)
+                self._checked_records.add(identity)
             return value
         value = self._json_objects.get(digest)
         if not isinstance(value, dict) or value.get("run_codec") != 1:
@@ -761,6 +773,7 @@ class ArchiveV3Reader:
                 self._check_fields(frame)
         self._check_summary(record["summary"], details, value)
         self._checked_descriptors[digest] = (value, details)
+        self._checked_records.add(identity)
         return value
 
     def _check_summary(self, summary, details, descriptor):
@@ -1039,12 +1052,56 @@ class ArchiveV3Reader:
         self._json_objects.clear()
         self._catalog_metadata.clear()
         self._checked_descriptors.clear()
+        self._checked_records.clear()
+        self._checked_configurations.clear()
 
     def __enter__(self):
         return self
 
     def __exit__(self, *_):
         self.close()
+
+
+class _InspectedReader:
+    """Runtime-only catalog ownership, bound to exact inspected bytes and source.
+
+    No ZIP handle survives an operation. Explicit resolving policy is scoped
+    under a lock; the metadata cache itself confers no filesystem authority.
+    """
+    def __init__(self, reader, data, source):
+        self.reader, self.data, self.source = reader, data, Path(source)
+        self.limits = _limits()
+        self.lock = threading.RLock()
+
+    def __deepcopy__(self, memo):
+        # Undo snapshots may retain their unresolved inspection. The bytes and
+        # private verified graph are immutable; policy is never copied as a grant.
+        return self
+
+
+@contextmanager
+def inspection_reader(inspection, *, policy=None):
+    """Reuse only a runtime catalog built from this exact inspection generation."""
+    context = getattr(inspection, "_archive_v3_reader", None)
+    if (isinstance(context, _InspectedReader) and context.data is inspection.archive_data
+            and context.source == inspection.source and context.limits == _limits() and not context.reader.closed):
+        with context.lock:
+            reader = context.reader
+            original = reader.policy
+            reader.policy = policy or ExternalResourcePolicy()
+            try:
+                yield reader
+            finally:
+                reader.policy = original
+    else:
+        with ArchiveV3Reader(inspection.archive_data, source_path=inspection.source, policy=policy) as reader:
+            yield reader
+
+
+def bind_inspection_reader(inspection, reader):
+    if reader._data is not inspection.archive_data or reader.source != inspection.source:
+        raise SimulationError("Inspected catalog does not match its exact source generation")
+    inspection._archive_v3_reader = _InspectedReader(reader, inspection.archive_data, inspection.source)
 
 
 @dataclass(frozen=True)
