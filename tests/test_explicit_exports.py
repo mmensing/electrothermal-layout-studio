@@ -380,3 +380,40 @@ def test_windows_casefold_and_selected_label_collisions_never_overwrite(experime
         with pytest.raises(FileExistsError, match="case-insensitive"):
             execute_export(result, output, replace(request(), stem="m1", overwrite=overwrite))
     assert before == {file.name: file.read_bytes() for file in output.iterdir()}
+
+
+@pytest.mark.parametrize("network", [False, True])
+def test_cli_export_enforces_independent_external_and_network_grants(experiment, tmp_path, capsys, monkeypatch, network):
+    from etlayout.cli.main import main
+    from etlayout.io.project import save_project
+    project, result = experiment
+    folder = tmp_path / "external-project"
+    folder.mkdir()
+    source = folder / "project.etl"
+    outside = Path(project.layout.path)
+    save_project(project, source, result, embed_layout=False)
+    accesses = []
+    actual = Path.open
+    def observed(path, *args, **kwargs):
+        if path == outside:
+            accesses.append(True)
+        return actual(path, *args, **kwargs)
+    monkeypatch.setattr(Path, "open", observed)
+    if network:
+        monkeypatch.setattr("etlayout.io.resources._network_drive", lambda path: path == outside)
+    args = ["export", str(source), "--mode", "data", "--layer", "metal", "--field", "potential", "--region", "heat:selected",
+            "--output", str(tmp_path / "explicit")]
+    assert main(args) == 2 and accesses == []
+    assert "authorization" in capsys.readouterr().err or network
+    if network:
+        assert main([*args, "--allow-outside-root"]) == 2 and accesses == []
+        assert "network" in capsys.readouterr().err
+    assert main([*args, "--allow-network"]) == 2 and accesses == []
+    assert "outside-root" in capsys.readouterr().err
+    flags = ["--allow-outside-root", "--allow-network"] if network else ["--allow-outside-root"]
+    assert main([*args, *flags]) == 0 and accesses
+    capsys.readouterr()
+    scan_manifest_and_payload(tmp_path / "explicit")
+    assert main(["export", str(source), "--mode", "archive", "--output", str(tmp_path / "approved-archive"), *flags]) == 0
+    capsys.readouterr()
+    assert load_project(tmp_path / "approved-archive" / "selection.etl")[0].name == SECRET

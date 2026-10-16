@@ -95,6 +95,7 @@ def parser():
         if command == "time-refine":
             q.add_argument("--steps", required=True, help="Comma-separated maximum time steps in seconds; output interval remains fixed")
     export = sub.add_parser("export", help="Explicit figure/data sharing or confidential complete experiment archive")
+    resource_arguments(export)
     export.add_argument("project")
     export.add_argument("--mode", required=True, choices=["figure", "data", "archive"])
     export.add_argument("--output", "-o", required=True, help="Requested destination directory; no silent overwrites")
@@ -191,7 +192,7 @@ def main(argv=None):
         if args.command == "export":
             from etlayout.io.project import load_run_history
             from etlayout.io.sharing import ExportRequest, FigureOptions, execute_export, preview_export
-            project, result = load_project(args.project)
+            project, result = load_project(args.project, external_policy=resource_policy)
             if result is None and args.mode != "archive":
                 raise ValueError("Sharing requires saved calculated fields; run and save the project first")
             formats = tuple(item.lower() for item in args.formats) if args.formats else {
@@ -201,7 +202,7 @@ def main(argv=None):
                 limits=tuple(args.color_limits) if args.color_limits else None, logarithmic=args.log,
                 figure=FigureOptions(args.width, args.height, args.dpi, args.pdf_page, args.orientation,
                     args.title, args.annotation, args.colorbar, args.legend, args.smooth), stem=args.name, overwrite=args.overwrite)
-            history = load_run_history(args.project) if args.mode == "archive" else []
+            history = load_run_history(args.project, external_policy=resource_policy) if args.mode == "archive" else []
             manifest = preview_export(result, request, project=project, history=history) if args.preview else execute_export(
                 result, args.output, request, project=project, history=history)
             print(_json_dump(manifest))

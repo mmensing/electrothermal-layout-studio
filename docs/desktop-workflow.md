@@ -245,6 +245,9 @@ without writing exports; omit `--preview` to export. Use `--mode data` with repe
 `--layer`/`--field` and CSV/NPZ/VTU formats, or `--mode archive` with no selection.
 CLI ROI/color ranges remain SI; GUI inputs use displayed units. `--time` records both
 requested and nearest retained time. Full help lists DPI/page/legend options.
+External layouts use the same fail-closed policy as other commands:
+`--allow-outside-root` authorizes outside storage, while `--allow-network` separately
+authorizes network storage. Both may be required; neither grant is persisted.
 
 ## Existing projects and migration
 
