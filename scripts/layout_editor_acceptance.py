@@ -81,7 +81,7 @@ def main(argv=None):
 
     def idle(timeout=180, *, expected_error=False):
         deadline = time.monotonic() + timeout
-        while window.job or window.prepare_job or window.hierarchy_jobs or window.guided.layout_editor.job:
+        while window.save_job or window._save_queue or window.job or window.prepare_job or window.hierarchy_jobs or window.guided.layout_editor.job:
             assert time.monotonic() < deadline, window.console.toPlainText()
             QTest.qWait(40)
         QTest.qWait(100)
@@ -234,6 +234,7 @@ def main(argv=None):
         record("Undo and Redo restore immutable layout revisions")
         window.path = out / "edited.etl"
         assert window.save()
+        idle()
         reopened, _ = load_project(window.path)
         assert physics_hash(reopened) == physics_hash(window.project)
         assert any(target.geometry.equals(expected) for target in editable_polygons(reopened)[0])

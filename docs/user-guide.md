@@ -345,6 +345,35 @@ are sibling files removed after success/failure; embedded layouts use the local
 content-hash cache. Deliberate exports remain at their chosen destination. Recovery is
 crash protection, not a replacement for a durable project save.
 
+Project saving now runs in a dedicated background worker. The status bar shows the
+current stage and a **Cancel save** button; cancellation is checked between serialization,
+history, verification and atomic commit. Compression already in progress may finish
+before cancellation is acknowledged. A commit already completed is a successful save.
+The previous durable file remains intact if serialization, validation, cancellation or
+replacement fails. Finished archives pass budget, CRC and embedded-source hash checks
+and are flushed before a same-filesystem atomic replacement. A small sibling `.save.lock`
+file coordinates competing local writers; it contains no project content.
+
+Editing can continue while a snapshot is saved. Completion clears the dirty indicator
+only for the same document generation; the saved revision is shown when newer edits
+remain. One latest manual request and one latest recovery request may wait behind the
+active worker. Repeated Save, Save As and autosave coalesce queued revisions without
+retargeting the active worker. Save As changes the working filename after success.
+An older worker cannot publish over a newer submitted revision, and a destination changed
+by another process after submission (including while queued) is rejected. Resolve that conflict by reopening or
+choosing Save As. Navigation and shutdown wait for save completion or cancellation;
+Save-before-navigation continues only if the saved revision remains current. While
+inspecting History, Save writes the working setup without replacing the inspected
+canvas. Cancel, a cancelled Save As chooser, and a failed save preserve that context.
+
+Completed GUI result arrays use immutable bytes-backed buffers. The initial buffer freeze
+costs one copy; subsequent snapshots share those buffers while copying metadata. Mutable
+arrays supplied through Python are copied when captured, including read-only views with
+writable aliases. The synchronous Python/CLI `save_project` API remains available;
+GUI `MainWindow.save()` returns whether a request was accepted, not proof of durability.
+Wait for the worker to finish before reopening a GUI-created archive in automation.
+
+
 ## Power interconnects and routing — added in 0.3.0
 
 Version 0.2.0 does not include this extension. In 0.3.0, open **Studies → Routing &

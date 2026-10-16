@@ -310,6 +310,7 @@ def test_saved_historical_result_preserves_working_document_and_export_identity(
     assert window.project.to_dict() == working and window.inspection_context is None
     window.path = tmp_path / "retained.etlayout"
     assert window.save()
+    qtbot.waitUntil(lambda: window.save_job is None and not window._save_queue, timeout=30000)
     reopened, current = load_project(window.path)
     history = load_run_history(window.path)
     # Archive extraction relocates the embedded source; its byte identity and

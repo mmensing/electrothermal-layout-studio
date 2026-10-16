@@ -299,6 +299,7 @@ def test_unwritable_recovery_cache_does_not_prevent_manual_project_save(qtbot, t
     destination = tmp_path / "manual.etlayout"
     window.path = destination
     assert window.save()
+    qtbot.waitUntil(lambda: not window.save_job and not window._save_queue, timeout=30000)
     assert load_project(destination)[0].name == window.project.name
     assert not window.dirty
     window._dirty = False

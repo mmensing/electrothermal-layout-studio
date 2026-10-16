@@ -112,7 +112,7 @@ def main(argv=None):
 
     def wait_idle(timeout=180., require_geometry=False):
         started = time.monotonic()
-        while window.job is not None or window.prepare_job is not None or window.hierarchy_jobs:
+        while window.save_job or window._save_queue or window.job is not None or window.prepare_job is not None or window.hierarchy_jobs:
             if time.monotonic() - started > timeout:
                 window.cancel_job()
                 window.cancel_geometry()
@@ -324,6 +324,7 @@ def main(argv=None):
         export_html_report(window.project, window.result, window.view, output / "report.html", window.legend.text())
         window.path = output / "acceptance.etlayout"
         assert window.save()
+        wait_idle()
         saved_current = window.result.metrics["total_current"]
         window.open_project(window.path)
         wait_idle(require_geometry=True)
@@ -347,6 +348,7 @@ def main(argv=None):
                current_at_minus5V_gate_A=current_off, on_state_temperature_max_K=peak_on)
         window.path = output / "hemt.etlayout"
         assert window.save()
+        wait_idle()
         record("Acceptance complete", completed=True)
         return 0
     except Exception as error:

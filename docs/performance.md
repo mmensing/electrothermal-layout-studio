@@ -51,3 +51,37 @@ the archived field checksum was identical. This is a **63.9% reporting-time
 reduction**, not a whole-run or multi-CPU speedup guarantee. The small maintained
 [receipt](../benchmarks/e21-reporting.json) records source/field identity and
 hardware; detailed profiles and report outputs remain external artifacts.
+
+
+## Project save responsiveness
+
+`scripts/benchmark_saving.py` builds deterministic finite arrays for storage testing;
+it does not calculate a physical device. Use separate fresh output directories:
+
+```powershell
+python scripts/benchmark_saving.py --size 24 --output artifacts/save-small
+python scripts/benchmark_saving.py --size 512 --history 3 --output artifacts/save-large
+python scripts/benchmark_saving.py --size 512 --history 3 --synchronous --output artifacts/save-blocking
+```
+
+Each process records wall time, 10 ms event-loop heartbeats, sampled peak RSS, archive
+bytes, hardware, one-time buffer freeze and snapshot handoff. It verifies reopening
+and exact stored temperature values. Compare revisions in the same environment; one
+sample is evidence of responsiveness, not a stable throughput or hardware guarantee.
+Keep generated archives and detailed receipts outside source control.
+
+A native Windows 11 / Python 3.12.14 / 8-core, 16-thread / 32 GiB comparison used the
+previous blocking writer and the worker implementation on the same deterministic case:
+
+| Storage case | Blocking / worker time | Worker heartbeats | Archive bytes | Blocking / worker peak RSS |
+|---|---:|---:|---:|---:|
+| 576 nodes, 1,058 elements | 0.075 / 0.068 s | 6 | 33,020 | 53.6 / 56.3 MB |
+| 262,144 nodes, 522,242 elements | 2.691 / 2.761 s | 272 | 12,745,807 | 146.1 / 165.6 MB |
+| Same large case plus three retained runs | 12.637 / 12.909 s | 1,275 | 50,372,785 | 169.3 / 180.3 MB |
+
+The blocking writer delivered zero heartbeats during each save. Large worker maximum
+heartbeat gaps were 60–61 ms. The initial immutable-array freeze cost 4.8–5.2 ms and
+subsequent snapshot capture 0.46–0.51 ms. Archive sizes vary slightly with metadata UUIDs.
+Retaining three runs added about 10.1 s to worker time: archives still serialize each
+run independently. This change improves responsiveness and integrity, not compression
+or history deduplication; immutable ownership has a measured memory cost.

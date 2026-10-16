@@ -53,7 +53,7 @@ def run_editor_smoke(window, output, *, timeout=90.):
     heartbeat.start()
 
     def settle():
-        while window.prepare_job or window.job or window.hierarchy_jobs or editor.job:
+        while window.save_job or window._save_queue or window.prepare_job or window.job or window.hierarchy_jobs or editor.job:
             QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
             if timed_out or time.monotonic() - started > timeout:
                 raise TimeoutError(f"Editor runtime verification exceeded {timeout:g} seconds")
@@ -120,6 +120,7 @@ def run_editor_smoke(window, output, *, timeout=90.):
         check("Redo restores the edited revision", window.project.to_dict() == edited)
         window.path = output / "edited.etl"
         check("Portable project saves through the standard action", window.save())
+        settle()
         restored, _ = load_project(window.path)
         check("Embedded edited layout reopens with matching physics", physics_hash(restored) == physics_hash(window.project))
         check("Embedded polygon equals the committed preview", any(target.geometry.equals(expected)

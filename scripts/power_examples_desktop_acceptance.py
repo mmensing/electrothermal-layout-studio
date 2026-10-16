@@ -156,7 +156,7 @@ def main():
 
     def idle(timeout=1500, check_error=True):
         deadline = time.monotonic() + timeout
-        while window.job or window.prepare_job or window.hierarchy_jobs:
+        while window.save_job or window._save_queue or window.job or window.prepare_job or window.hierarchy_jobs:
             assert time.monotonic() < deadline, window.console.toPlainText()
             QTest.qWait(40)
         QTest.qWait(100)
@@ -271,7 +271,8 @@ def main():
         estimate = estimate_project_archive(window.project, window.result, window.run_history)
         assert estimate["fits_budget"], estimate["issues"]
         window.path = destination
-        assert window.save(), "Save action did not complete"
+        assert window.save(), "Save action was not queued"
+        idle()
         receipt["runs"].append(dict(project=window.project.name, archive=str(destination.relative_to(out)),
             configuration_hash=window.result.configuration_hash, operating_point=metadata(window.project),
             delivered_current_A=window.result.analysis.get("ports", {}).get("drain", {}).get("current"),
