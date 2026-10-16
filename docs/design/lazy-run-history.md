@@ -173,7 +173,107 @@ Three observations support medians and observed ranges, not a confidence interva
 Python API timing is not evidence of GUI heartbeat latency or packaged-build
 performance. Keep detailed archives/logs in disposable artifacts outside Git.
 
-The default stays opt-in pending broader workloads. Synthetic repeated pools do
+## Measured source comparisons
+
+Measured on 16 October 2026 using Windows 11 build 26200, CPython 3.12.14,
+NumPy 2.5.4, 8 physical / 16 logical AMD64 CPUs and 31.2 GiB RAM. The pinned
+schema-2 source baseline was `4a464593`; the measured schema-3 runtime was
+`7ce0f09d`, with harness SHA-256
+`a9a5276f5c138f4c4f552670646d441f16bbeb3f0a41a9356d53e06c4841113d`.
+Inputs were copied byte-for-byte from the same actually solved pool; no solver
+was substituted or rerun to obtain a storage improvement.
+
+The baseline completed 36 save/reopen and 36 separate eager-reader observations;
+the schema-3 matrix completed 36 save/reopen and 108 separate reader observations.
+Every reopened record/frame passed independent complete typed equality. All
+observations stayed within the unchanged sampled 3 GiB RSS / 600 s limits.
+Each row below has three fresh-process observations. Time and RSS values are
+**median [observed minimum–maximum]**; archive sizes are medians. MiB means
+2²⁰ bytes. These are observed ranges, not confidence intervals.
+
+The save/reopen baseline was an ordinary-workstation run with brief disclosed
+Qt/functionality overlaps. Reader-only baseline and candidate windows had no
+known concurrent local numerical/desktop suites. All observations were retained;
+OS filesystem caches were not flushed. Expected pool fingerprints were cached
+before timing in the newer harness, while every actual loaded value was still
+checked independently. Save/open timers exclude preparation and fingerprinting;
+whole-process wall times therefore are not directly comparable across harnesses.
+
+A later portable-frame follow-up (`8ad3d8b`) resolves matching-SHA frame source
+paths and checks frame/run provenance. That correctness change is outside this
+measured revision; these values must not be described as a complete timing matrix
+of the final follow-up commit.
+
+| Storage workload | Records | Schema-2 eager ready (s) | Schema-3 eager ready (s) | Schema-3 first selection (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Shared layout / mesh | 1 | 0.904 [0.731–1.088] | 0.796 [0.784–0.804] | 0.775 [0.757–0.780] |
+| Shared layout / mesh | 10 | 5.532 [4.983–5.706] | 3.152 [3.142–3.345] | 0.894 [0.837–0.914] |
+| Shared layout / mesh | 50 | 28.2 [28.1–29.0] | 13.9 [13.7–13.9] | 0.975 [0.969–1.089] |
+| Same layout, varied mesh | 1 | 0.856 [0.792–0.892] | 0.827 [0.765–0.827] | 0.781 [0.776–0.822] |
+| Same layout, varied mesh | 10 | 5.267 [5.132–5.380] | 3.181 [3.158–3.227] | 0.841 [0.841–0.914] |
+| Same layout, varied mesh | 50 | 28.1 [28.0–30.4] | 13.8 [13.7–13.9] | 0.994 [0.988–0.996] |
+| Varied layouts / meshes | 1 | 0.847 [0.770–0.967] | 0.767 [0.755–0.806] | 0.767 [0.752–0.900] |
+| Varied layouts / meshes | 10 | 13.0 [12.9–13.8] | 6.952 [6.928–7.253] | 0.951 [0.862–4.366] |
+| Varied layouts / meshes | 50 | 69.4 [66.6–74.1] | 34.5 [33.6–35.9] | 1.058 [1.006–1.090] |
+| 101-frame E19 | 1 | 1.336 [1.232–1.379] | 1.463 [1.454–1.601] | 0.207 [0.195–0.225] |
+| 101-frame E19 | 10 | 18.1 [16.9–20.2] | 8.097 [7.978–8.279] | 0.326 [0.309–0.340] |
+| 101-frame E19 | 50 | 113.9 [111.4–120.3] | 39.0 [38.4–39.4] | 0.937 [0.851–0.951] |
+
+Eager readiness is `load_project` plus `load_run_history`, excluding independent
+comparison. First-selection readiness includes the full compressed private disk
+copy/catalog and one complete exact stored frame for E19, or one complete run
+otherwise. It is not complete transient materialization and does not certify
+unloaded frames. This is Python storage timing, not a GUI heartbeat measurement.
+
+Sampled **reader-process-tree** RSS at 50 retained records is separate from cache
+payload accounting. Imports and comparison are included; the save/input-pool
+process is not reused for this table.
+E19 eager schema-3 RSS was higher than schema 2; lower selected-view RSS
+depends on on-demand access. Disk deduplication alone does not lower eager RAM.
+
+| Storage workload | Schema-2 eager RSS (MiB) | Schema-3 eager RSS (MiB) | Schema-3 first-selection RSS (MiB) |
+| --- | ---: | ---: | ---: |
+| Shared layout / mesh | 734.7 [733.2–735.0] | 636.3 [635.9–637.2] | 99.0 [98.6–99.0] |
+| Same layout, varied mesh | 731.9 [731.2–732.6] | 637.4 [636.1–638.3] | 99.0 [98.1–99.1] |
+| Varied layouts / meshes | 1806.8 [1805.3–1808.1] | 1330.5 [1329.8–1333.4] | 98.2 [97.7–99.3] |
+| 101-frame E19 | 1884.4 [1882.0–1895.4] | 1973.9 [1972.3–1974.5] | 64.5 [64.5–64.7] |
+
+At 50 records the same-store warm selection and explicit release/clear/reload
+checks retained exact values. All 36 first-selection observations increased cache
+hits on warm reacquisition, cleared resident/pinned payload after release, and
+reloaded exact fields within the configured budget. Cold cache here means
+application LRU eviction, not a flushed operating-system filesystem cache.
+
+| Storage workload | Warm selection (s) | After eviction (s) | Full lazy scan + verification (s) | Full-scan RSS (MiB) |
+| --- | ---: | ---: | ---: | ---: |
+| Shared layout / mesh | 0.230 [0.215–0.234] | 0.269 [0.266–0.270] | 12.5 [12.5–12.9] | 111.2 [110.5–112.6] |
+| Same layout, varied mesh | 0.229 [0.218–0.238] | 0.263 [0.262–0.270] | 12.3 [12.2–12.4] | 122.9 [121.6–123.6] |
+| Varied layouts / meshes | 0.224 [0.214–0.241] | 0.272 [0.251–0.273] | 30.7 [30.1–30.8] | 184.0 [179.8–184.4] |
+| 101-frame E19 | 0.022 [0.022–0.023] | 0.025 [0.023–0.025] | 84.1 [82.3–84.3] | 181.6 [180.3–182.9] |
+
+The complete sequential lazy scan includes independent typed comparison of every
+actual run and all 101 E19 frames per retained run. Its duration is deliberately
+not compared as an I/O-only speedup with eager readiness. It remains a useful
+end-to-end completeness/resource observation; cache leases are released between
+runs.
+
+The preregistered adoption targets at 50 records were: archive bytes at most
+20% of the baseline median; first-selection time at most 50% of the fastest
+baseline eager reader; and first-selection RSS at most 60% of the smallest
+baseline eager RSS. At one and 50 records, save/eager time targets were the
+baseline minimum plus `max(0.15 s, 25% of that minimum)`. Correctness, cache
+accounting and the resource ceilings remained hard requirements.
+
+All size, startup, RSS, eager-reader and cache conditions passed. Three
+single-record save targets failed; the bounds were not changed:
+
+| Target | Observed median (s) | Upper bound (s) |
+| --- | ---: | ---: |
+| shared/1 save overhead bound | 0.917 | 0.864 |
+| varied-mesh/1 save overhead bound | 0.949 | 0.886 |
+| transient/1 save overhead bound | 2.072 | 1.389 |
+
+On-demand history remains opt-in pending broader workloads. Synthetic repeated pools do
 not establish a universal speedup or a benefit for fifty unrelated analyses.
 Small projects may pay container/validation overhead; a single selected result
 can exceed the local cache budget. Native source verification does not certify

@@ -96,6 +96,86 @@ restarted in a short root. No successful observations were substituted from that
 failed attempt. A separately retained exploratory run exposed repeated transient
 metadata inspection; it was stopped before optimization and final measurement.
 
+### Current repeated comparison
+
+Measured on 16 October 2026 using Windows 11 build 26200, CPython 3.12.14,
+NumPy 2.5.4, 8 physical / 16 logical AMD64 CPUs and 31.2 GiB RAM. The pinned
+schema-2 source baseline was `4a464593`; the measured schema-3 runtime was
+`7ce0f09d`, with harness SHA-256
+`a9a5276f5c138f4c4f552670646d441f16bbeb3f0a41a9356d53e06c4841113d`.
+Inputs were copied byte-for-byte from the same actually solved pool; no solver
+was substituted or rerun to obtain a storage improvement.
+
+The baseline completed 36 save/reopen and 36 separate eager-reader observations;
+the schema-3 matrix completed 36 save/reopen and 108 separate reader observations.
+Every reopened record/frame passed independent complete typed equality. All
+observations stayed within the unchanged sampled 3 GiB RSS / 600 s limits.
+Each row below has three fresh-process observations. Time and RSS values are
+**median [observed minimum–maximum]**; archive sizes are medians. MiB means
+2²⁰ bytes. These are observed ranges, not confidence intervals.
+
+The save/reopen baseline was an ordinary-workstation run with brief disclosed
+Qt/functionality overlaps. Reader-only baseline and candidate windows had no
+known concurrent local numerical/desktop suites. All observations were retained;
+OS filesystem caches were not flushed. Expected pool fingerprints were cached
+before timing in the newer harness, while every actual loaded value was still
+checked independently. Save/open timers exclude preparation and fingerprinting;
+whole-process wall times therefore are not directly comparable across harnesses.
+
+A later portable-frame follow-up (`8ad3d8b`) resolves matching-SHA frame source
+paths and checks frame/run provenance. That correctness change is outside this
+measured revision; these values must not be described as a complete timing matrix
+of the final follow-up commit.
+
+| Storage workload | Records | Schema | Archive (MiB) | Save (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Shared layout / mesh | 1 | 2 | 2.12 | 0.720 [0.691–0.737] |
+| Shared layout / mesh | 1 | 3 | 2.28 | 0.917 [0.895–0.966] |
+| Shared layout / mesh | 10 | 2 | 21.15 | 12.0 [9.387–12.4] |
+| Shared layout / mesh | 10 | 3 | 5.26 | 5.852 [5.751–6.214] |
+| Shared layout / mesh | 50 | 2 | 105.72 | 60.1 [49.6–62.2] |
+| Shared layout / mesh | 50 | 3 | 5.28 | 25.6 [25.4–26.3] |
+| Same layout, varied mesh | 1 | 2 | 2.12 | 0.720 [0.709–0.735] |
+| Same layout, varied mesh | 1 | 3 | 2.28 | 0.949 [0.936–0.965] |
+| Same layout, varied mesh | 10 | 2 | 21.19 | 9.833 [9.426–12.1] |
+| Same layout, varied mesh | 10 | 3 | 6.82 | 6.189 [6.100–6.195] |
+| Same layout, varied mesh | 50 | 2 | 105.96 | 51.6 [49.1–60.2] |
+| Same layout, varied mesh | 50 | 3 | 6.84 | 26.0 [25.9–26.1] |
+| Varied layouts / meshes | 1 | 2 | 2.12 | 0.908 [0.859–1.080] |
+| Varied layouts / meshes | 1 | 3 | 2.28 | 0.930 [0.918–0.941] |
+| Varied layouts / meshes | 10 | 2 | 93.31 | 29.8 [28.2–37.7] |
+| Varied layouts / meshes | 10 | 3 | 31.31 | 15.3 [15.2–15.5] |
+| Varied layouts / meshes | 50 | 2 | 500.45 | 152.1 [150.3–202.6] |
+| Varied layouts / meshes | 50 | 3 | 31.34 | 67.3 [65.9–69.8] |
+| 101-frame E19 | 1 | 2 | 5.16 | 1.165 [1.112–1.184] |
+| 101-frame E19 | 1 | 3 | 5.58 | 2.072 [2.055–2.194] |
+| 101-frame E19 | 10 | 2 | 51.50 | 19.8 [17.1–20.3] |
+| 101-frame E19 | 10 | 3 | 5.58 | 13.3 [13.0–13.5] |
+| 101-frame E19 | 50 | 2 | 257.45 | 104.9 [104.1–108.7] |
+| 101-frame E19 | 50 | 3 | 5.60 | 60.6 [60.2–60.8] |
+
+The preregistered adoption targets at 50 records were: archive bytes at most
+20% of the baseline median; first-selection time at most 50% of the fastest
+baseline eager reader; and first-selection RSS at most 60% of the smallest
+baseline eager RSS. At one and 50 records, save/eager time targets were the
+baseline minimum plus `max(0.15 s, 25% of that minimum)`. Correctness, cache
+accounting and the resource ceilings remained hard requirements.
+
+All size, startup, RSS, eager-reader and cache conditions passed. Three
+single-record save targets failed; the bounds were not changed:
+
+| Target | Observed median (s) | Upper bound (s) |
+| --- | ---: | ---: |
+| shared/1 save overhead bound | 0.917 | 0.864 |
+| varied-mesh/1 save overhead bound | 0.949 | 0.886 |
+| transient/1 save overhead bound | 2.072 | 1.389 |
+
+Schema 2 remains the default writer/recovery format. Metadata-first history
+remains opt-in. Small-project overhead and deliberately repeated input pools do
+not establish a general advantage for unrelated analyses. Reader-only opening,
+selected-frame latency and sampled RSS are reported in
+[metadata-first history](lazy-run-history.md#measured-source-comparisons).
+
 <details>
 <summary>Historical schema-2 prototype evidence (one observation per row)</summary>
 
