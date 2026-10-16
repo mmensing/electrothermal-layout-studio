@@ -187,6 +187,41 @@ class ProjectInspection:
     archive_data: bytes | None = field(default=None, repr=False)
     metadata: dict = field(default_factory=dict, repr=False)
     relinked: bool = False
+    discard_stale_result: bool = False
+
+    def for_project(self, project: Project) -> ProjectInspection:
+        """Review current persisted edits against the already inspected container.
+
+        Runtime resource caches are intentionally excluded. History declarations
+        and exact archive bytes still describe their original recorded runs.
+        """
+        from etlayout.io.project import physics_hash, project_from_dict
+
+        current = project_from_dict(project.to_dict())
+        if hasattr(project, "_document_id"):
+            current._document_id = project._document_id
+        metadata = deepcopy(self.metadata)
+        if self.archive_data is not None or "project" in metadata or hasattr(current, "_document_id"):
+            metadata["project"] = current.to_dict()
+            if hasattr(current, "_document_id"):
+                metadata["document_id"] = current._document_id
+        else:
+            metadata = current.to_dict()
+        if current.layout.path != self.project.layout.path:
+            metadata["embedded_layout"] = None
+        embedded = metadata.get("embedded_layout")
+        resources = tuple(item for item in self.resources if item.key != "layout")
+        if embedded or current.layout.path:
+            resource = classify_resource(
+                embedded or current.layout.path, self.source, embedded=bool(embedded),
+                expected_sha256=current.layout.sha256,
+            )
+            resources = (resource, *resources)
+        changed = physics_hash(current, resolve_layout=False) != physics_hash(self.project, resolve_layout=False)
+        return ProjectInspection(
+            self.source, current, resources, self.archive_data, metadata, self.relinked,
+            self.discard_stale_result or changed,
+        )
 
     def unresolved_project(self) -> Project:
         project = deepcopy(self.project)

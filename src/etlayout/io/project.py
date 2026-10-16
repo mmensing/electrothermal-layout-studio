@@ -675,13 +675,15 @@ def resolve_project(inspection: ProjectInspection, *, external_policy: ExternalR
             if not isinstance(rm, dict) or not isinstance(rm.get("arrays"), dict):
                 raise SimulationError("Invalid stored result metadata objects")
             converged = _decode(bool, rm["converged"])
-            recorded_configuration = rm.get("configuration") or metadata["project"]
-            if physics_hash(recorded_configuration, resolve_layout=False) != physics_hash(project):
-                raise SimulationError("Saved result configuration does not match project physical setup")
+            recorded_configuration = rm.get("configuration") or json.loads(archive.read("project.json"))["project"]
             if rm.get("configuration_hash") and rm.get("configuration"):
                 project_from_dict(rm["configuration"])
                 if configuration_hash(rm["configuration"]) != rm["configuration_hash"]:
                     raise SimulationError("Saved result configuration content does not match its hash")
+            if physics_hash(recorded_configuration, resolve_layout=False) != physics_hash(project):
+                if inspection.discard_stale_result:
+                    return project, None
+                raise SimulationError("Saved result configuration does not match project physical setup")
             with np.load(io.BytesIO(archive.read("results/arrays.npz")), allow_pickle=False) as arrays:
                 def group(name):
                     names = _decode(dict[str, str], rm["arrays"].get(name, {}))

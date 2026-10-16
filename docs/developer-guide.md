@@ -191,6 +191,10 @@ source and candidate JSON. It does not grant network access or arbitrary outside
 Never infer approval from saved project metadata.
 `load_run_history` applies the same policy to every historical resource. Geometry and
 simulation entry points reject projects deliberately left unresolved by the GUI.
+`inspection.for_project(project)` copies current persisted metadata while retaining the
+inspected archive bytes and historical declarations. The GUI uses this same-document
+review path to preserve unresolved edits. Physically incompatible current fields are
+detached; historical runs continue to load against their original recorded setups.
 
 The CLI `etlayout project-info PROJECT` prints metadata/resource declarations without
 opening referenced files. Calculation, validation and power commands fail closed;
