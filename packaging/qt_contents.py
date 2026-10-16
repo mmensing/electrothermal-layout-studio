@@ -5,7 +5,7 @@ from pathlib import PurePosixPath
 QT_MODULES = {"qt6core.dll", "qt6gui.dll", "qt6network.dll", "qt6opengl.dll",
               "qt6openglwidgets.dll", "qt6svg.dll", "qt6svgwidgets.dll",
               "qt6widgets.dll", "qt6test.dll"}
-UNUSED_MODULES = {"qt6pdf.dll", "qt6qml.dll", "qt6qmlmeta.dll", "qt6qmlmodels.dll",
+UNUSED_MODULES = {"opengl32sw.dll", "qt6pdf.dll", "qt6qml.dll", "qt6qmlmeta.dll", "qt6qmlmodels.dll",
                   "qt6qmlworkerscript.dll", "qt6quick.dll", "qt6virtualkeyboard.dll"}
 
 

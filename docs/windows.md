@@ -4,17 +4,24 @@ The application targets 64-bit Windows 11 with Python 3.12. Normal operation is
 offline. The development environment and build must be created on Windows; an
 executable generated on another operating system is not a Windows build.
 
-This public edition supplies source only. No historical Windows binary is an MPL
-release of this repository. Local builds preserve functionality, but redistribution
-requires the separate [licensing gate](licensing.md). The owner-only
-[maintainer procedure](maintainer-guide.md) governs future publication.
+Use the complete Windows ZIP from [GitHub Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+when a version is published. No historical pre-public binary is an MPL release of
+this repository. Original source is MPL-2.0; the reviewed combined Windows bundle
+uses the [GPL distribution route](licensing.md). Releases include corresponding
+source, build information, notices and checksums. The owner-only
+[maintainer procedure](maintainer-guide.md) governs publication.
+
+Install the current supported **Microsoft Visual C++ x64 v14 Redistributable**
+directly from Microsoft if it is absent. See [the runtime prerequisite](windows-runtime.md).
+The application ZIP contains neither its DLLs nor its installer.
 
 ## Python runtime and verification scope
 
 Hosted Windows workflows explicitly use **CPython 3.12.10 x64**. The official
 [Actions Python manifest](https://github.com/actions/python-versions/blob/main/versions-manifest.json)
 provides that Windows artifact; its later 3.12.14 entry has no Windows download.
-Local native source and candidate-build verification used **3.12.14**. These are
+The reviewed public Windows profile uses **3.12.14**, pinned to the public
+python-build-standalone archive and source recipe in [source provenance](compliance-sources.md). These are
 separate runtime environments, not identical patch-version evidence. The locked
 Windows wheels target the same CPython 3.12 ABI; exact-commit hosted tests establish
 actual CI compatibility. The CI artifact pin is not a claim that 3.12.10 includes
@@ -55,6 +62,8 @@ not runnable standalone application folders. Starting one there can report a
 missing `_internal/python312.dll`. Launch the GUI under
 `dist/ElectrothermalLayoutStudio/` or extract the complete release ZIP instead.
 Keep the entire application folder, including `_internal`, together.
+Use short local paths for extraction, projects and build/test temporary files;
+paths beyond the traditional Windows path-length limit can fail in this profile.
 
 ```powershell
 dist/ElectrothermalLayoutStudio/etlayout.exe --version
@@ -95,8 +104,9 @@ creates GUI and console executables sharing the same libraries. See
 
 Explicit native dependency handling includes:
 
-- The Gmsh DLL, which the wheel installs under Python's `Lib` directory outside
-  `site-packages`; it is copied beside the frozen `gmsh.py` import location.
+- The reviewed source-built Gmsh DLL, selected with paired `--gmsh-library` and
+  `--native-build-manifest` inputs. Stock-wheel local candidates are explicitly
+  ineligible for that release profile. The DLL sits beside frozen `gmsh.py`.
 - KLayout database DLLs and format plugin DLLs for GDSII and OASIS import.
 - Qt Widgets, SVG, image plugins and the `qwindows` platform plugin.
 - NumPy/SciPy native numerical libraries, Shapely/GEOS and matplotlib's Agg,
@@ -106,7 +116,7 @@ Explicit native dependency handling includes:
 - `multiprocessing.freeze_support()` before any dispatch, required by frozen Windows workers.
 
 The application uses native Widgets. The specification excludes WebEngine,
-QML/Quick, PDF and multimedia Python bindings, but dependency collection can
+QML/Quick, PDF and multimedia Python bindings and unused Mesa software OpenGL, but dependency collection can
 still retain additional Qt DLLs required by collected plugins. Verify the final
 module inventory when assembling dependency corresponding sources; Python import
 exclusions alone do not prove native DLL exclusions. UPX and one-file extraction

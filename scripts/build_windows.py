@@ -99,9 +99,137 @@ def write_json(path, value):
     Path(path).write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def source_fingerprint():
+    return {path.relative_to(ROOT).as_posix(): sha256(path) for path in source_files()}
+
+
+def require_source_snapshot(expected):
+    if source_fingerprint() != expected:
+        raise RuntimeError("Source or resources changed during the build; finish edits and rebuild before producing archives")
+
+
 def code_fingerprint():
     return {path.relative_to(ROOT).as_posix(): sha256(path) for path in source_files()
             if path.suffix in {".py", ".spec", ".lock", ".toml"}}
+
+
+BOOTLOADER_MAX_BYTES = 32 * 1024**2
+
+
+def bootloader_properties(data):
+    """Bind executable code and direct imports without executing PE content."""
+    import pefile
+
+    if not isinstance(data, bytes) or not 0 < len(data) <= BOOTLOADER_MAX_BYTES:
+        raise ValueError("Bootloader PE exceeds its finite inspection budget")
+    try:
+        pe = pefile.PE(data=data, fast_load=True)
+    except pefile.PEFormatError as error:
+        raise ValueError("Invalid bootloader PE") from error
+    try:
+        if pe.FILE_HEADER.Machine != 0x8664 or not 1 <= len(pe.sections) <= 96:
+            raise ValueError("Bootloader must be a bounded x64 PE")
+        sections = [section for section in pe.sections if section.Name.rstrip(b"\0") == b".text"]
+        if (len(sections) != 1 or not 0 < sections[0].SizeOfRawData <= len(data)
+                or sections[0].PointerToRawData + sections[0].SizeOfRawData > len(data)):
+            raise ValueError("Bootloader executable section is missing or exceeds its file")
+        text = sections[0].get_data()
+        if len(text) != sections[0].SizeOfRawData:
+            raise ValueError("Truncated bootloader executable section")
+        pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_IMPORT"]])
+        entries = getattr(pe, "DIRECTORY_ENTRY_IMPORT", [])
+        signature = []
+        if not entries or len(entries) > 128:
+            raise ValueError("Bootloader direct imports are missing or oversized")
+        for entry in entries:
+            if not 0 < len(entry.imports) <= 8192:
+                raise ValueError("Bootloader import-symbol budget exceeded")
+            signature.append({"dll": entry.dll.decode("ascii").casefold(),
+                              "symbols": sorted((symbol.name.decode("ascii") if symbol.name else
+                                                  "#" + str(symbol.ordinal)) for symbol in entry.imports)})
+        signature.sort(key=lambda row: row["dll"])
+        if len({row["dll"] for row in signature}) != len(signature):
+            raise ValueError("Duplicate bootloader import DLL")
+        return {"text_section_sha256": hashlib.sha256(text).hexdigest(),
+                "text_section_bytes": len(text),
+                "imports": [row["dll"] for row in signature],
+                "direct_import_signature_sha256": hashlib.sha256(json.dumps(
+                    signature, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}
+    except pefile.PEFormatError as error:
+        raise ValueError("Invalid bootloader import data") from error
+    finally:
+        pe.close()
+
+
+def verify_frozen_bootloader(data, record):
+    """Resources and appended PYZ may change; code/direct imports must match."""
+    actual = bootloader_properties(data)
+    if any(record.get(name) != value for name, value in actual.items()):
+        raise ValueError("Frozen executable code/imports differ from the audited bootloader")
+    return actual
+
+
+def installed_bootloader_profile(catalog, proof, directory=None):
+    rows = catalog.get("compiled_bootloaders")
+    if (type(rows) is not list or len(rows) != 2 or not all(type(row) is dict for row in rows)
+            or {row.get("filename") for row in rows} != {"run.exe", "runw.exe"}
+            or proof.get("compiled_bootloaders") != rows):
+        raise ValueError("Exact paired audited bootloader evidence is required")
+    source_rows = {row["id"]: row for row in catalog["sources"]}
+    directory = Path(directory or metadata.distribution("pyinstaller").locate_file(
+        "PyInstaller/bootloader/Windows-64bit-intel"))
+    for row in rows:
+        path = directory / row["filename"]
+        recipe = ROOT / row["recipe"]
+        source = source_rows.get(row.get("source_id"), {})
+        if (row.get("version") != metadata.version("pyinstaller") or path.is_symlink() or path.is_junction()
+                or not path.is_file() or not 0 < path.stat().st_size <= BOOTLOADER_MAX_BYTES
+                or path.stat().st_size != row.get("bytes")
+                or not source or row.get("source_sha256") != source.get("sha256")
+                or recipe.is_symlink() or not recipe.resolve().is_relative_to(ROOT.resolve())
+                or not recipe.is_file() or sha256(recipe) != row.get("recipe_sha256")):
+            raise ValueError("Installed bootloader, source or recipe differs from the audited profile")
+        with path.open("rb") as stream:
+            data = stream.read(BOOTLOADER_MAX_BYTES + 1)
+        if len(data) != row["bytes"] or hashlib.sha256(data).hexdigest() != row.get("sha256"):
+            raise ValueError("Installed bootloader bytes differ from the audited profile")
+        verify_frozen_bootloader(data, row)
+    return rows
+
+
+def native_build_profile(library, descriptor, *, python_library=None, bootloader_directory=None):
+    """Bind a release profile to reviewed source recipes and exact native bytes.
+
+    A normal stock-wheel candidate remains useful locally. It is explicitly
+    ineligible for this release profile, even if its smoke tests pass.
+    """
+    if library is None and descriptor is None:
+        return {"schema_version": 1, "audited_source_profile": False,
+                "reason": "Stock-wheel local candidate; no source-build provenance selected"}
+    if library is None or descriptor is None:
+        raise ValueError("--gmsh-library and --native-build-manifest must be supplied together")
+    library, descriptor = Path(library), Path(descriptor)
+    if (not library.is_file() or library.is_symlink() or not descriptor.is_file()
+            or descriptor.is_symlink() or descriptor.stat().st_size > 1024**2):
+        raise ValueError("Source-built native inputs must be ordinary bounded files")
+    catalog = json.loads((ROOT / "packaging/third-party-sources.json").read_text(encoding="utf-8"))
+    proof = json.loads(descriptor.read_text(encoding="utf-8"))
+    gmsh = [row for row in catalog["compiled_native"] if row["id"] == "gmsh"]
+    if len(gmsh) != 1:
+        raise ValueError("Exactly one audited Gmsh source build is required")
+    python_library = Path(python_library or (Path(sys.base_prefix) / "python312.dll"))
+    runtime = catalog["runtime_python"]
+    if (proof.get("schema_version") != 1 or proof.get("runtime_python") != runtime
+            or any(proof.get("gmsh", {}).get(key) != value for key, value in gmsh[0].items() if key != "id")
+            or library.name != gmsh[0]["filename"] or sha256(library) != gmsh[0]["sha256"]
+            or not python_library.is_file() or sha256(python_library) != runtime["python312_dll_sha256"]):
+        raise ValueError("Native library, Python runtime or build provenance differs from the audited profile")
+    bootloaders = installed_bootloader_profile(catalog, proof, bootloader_directory)
+    # Copy only public catalog data. Private paths/build logs never enter a bundle.
+    return {"schema_version": 1, "audited_source_profile": True,
+            "compiled_native": catalog["compiled_native"], "compiled_bootloaders": bootloaders, "runtime_python": runtime,
+            "build_descriptor_sha256": sha256(descriptor),
+            "source_catalog_sha256": sha256(ROOT / "packaging/third-party-sources.json")}
 
 
 def isolated_environment(build=False):
@@ -200,9 +328,12 @@ def main(argv=None):
     parser.add_argument("--skip-build", action="store_true", help="Re-test/repackage an existing onedir build")
     parser.add_argument("--skip-tests", action="store_true", help="Build only; never mark runtime verification passed")
     parser.add_argument("--no-archive", action="store_true", help="Skip ZIP creation during development iterations")
+    parser.add_argument("--gmsh-library", type=Path, help="Exact reviewed source-built Gmsh DLL")
+    parser.add_argument("--native-build-manifest", type=Path, help="Hash-bound source-build evidence; used with --gmsh-library")
     args = parser.parse_args(argv)
     if sys.platform != "win32" or platform.architecture()[0] != "64bit":
         parser.error("Build requires a native 64-bit Windows Python environment")
+    profile = native_build_profile(args.gmsh_library, args.native_build_manifest)
     project_metadata = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
     installed = metadata.metadata(project_metadata["name"])
     if (installed.get("Version") != project_metadata["version"]
@@ -214,22 +345,28 @@ def main(argv=None):
     verification = workspace_path(build_root / "verification")
     distribution_root.mkdir(exist_ok=True)
     verification.mkdir(parents=True, exist_ok=True)
-    code_before = code_fingerprint()
+    source_before = source_fingerprint()
+    code_before = {name: digest for name, digest in source_before.items()
+                   if Path(name).suffix in {".py", ".spec", ".lock", ".toml"}}
     if args.skip_build:
         manifest_path = bundle / "BUILD_MANIFEST.json"
         if not manifest_path.is_file():
             raise RuntimeError("Existing build has no source manifest; omit --skip-build to establish source provenance")
         previous = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if previous.get("code_sha256") != code_before:
+        if (previous.get("code_sha256") != code_before
+                or previous.get("source_sha256") != source_before):
             raise RuntimeError("Source changed since the existing build; omit --skip-build to keep binary and source archives consistent")
     if not args.skip_build:
         if not (ROOT / "LICENSE").is_file() or not (ROOT / "THIRD_PARTY_NOTICES.md").is_file():
             raise RuntimeError("LICENSE and THIRD_PARTY_NOTICES.md are required for a distributable build")
         execute([sys.executable, ROOT / "scripts" / "collect_licenses.py", ROOT / "artifacts" / "licenses"],
                 timeout=120, logfile=verification / "licenses.log")
+        build_environment = isolated_environment(build=True)
+        if args.gmsh_library is not None:
+            build_environment["ETLAYOUT_GMSH_LIBRARY"] = str(args.gmsh_library.resolve())
         execute([sys.executable, "-m", "PyInstaller", "--noconfirm", "--distpath", distribution_root,
                  "--workpath", build_root / "pyinstaller-windows", ROOT / "packaging" / "etlayout.spec"],
-                timeout=1800, logfile=verification / "pyinstaller.log", environment=isolated_environment(build=True))
+                timeout=1800, logfile=verification / "pyinstaller.log", environment=build_environment)
     cli, gui = bundle / "etlayout.exe", bundle / "ElectrothermalLayoutStudio.exe"
     if not cli.is_file() or not gui.is_file():
         raise RuntimeError("Expected GUI and CLI executables are absent; run without --skip-build")
@@ -238,8 +375,7 @@ def main(argv=None):
     for folder in ("examples", "docs"):
         if (ROOT / folder).is_dir():
             synchronize_resources(ROOT, bundle, folder)
-            # Documentation may be finalized while native dependency analysis
-            # runs. Keep the runtime resource copy and adjacent readable copy identical.
+            # Keep the runtime resource copy and adjacent readable copy identical.
             synchronize_resources(ROOT, bundle / "_internal", folder)
     if (ROOT / "artifacts" / "licenses").is_dir():
         shutil.copytree(ROOT / "artifacts" / "licenses", bundle / "licenses", dirs_exist_ok=True)
@@ -252,6 +388,14 @@ def main(argv=None):
     for filename in ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json", "REUSE.toml", "requirements-windows-py312.lock"):
         if (ROOT / filename).is_file():
             shutil.copy2(ROOT / filename, bundle / filename)
+    runtime = runpy.run_path(str(ROOT / "packaging/windows_runtime.py"))["prepare_runtime_prerequisite"](bundle)
+    if profile["audited_source_profile"]:
+        gmsh = next(row for row in profile["compiled_native"] if row["id"] == "gmsh")
+        if sha256(bundle / "_internal" / gmsh["filename"]) != gmsh["sha256"]:
+            raise RuntimeError("Collected Gmsh differs from the reviewed source build")
+        if sha256(bundle / "_internal" / "python312.dll") != profile["runtime_python"]["python312_dll_sha256"]:
+            raise RuntimeError("Collected Python differs from the reviewed public runtime")
+    write_json(bundle / "SOURCE_BUILD_PROVENANCE.json", profile)
     checks = []
     if not args.skip_tests:
         # Avoid development PYTHONPATH and venv PATH entries during frozen checks.
@@ -361,17 +505,26 @@ def main(argv=None):
             raise RuntimeError("Frozen editor workers, persistence and source-immutability verification did not pass")
         checks.append(execute([cli, "solve", editor_output / "edited.etl", "--no-plots", "--output", editor_output / "solved"],
                               cwd=bundle, timeout=180, logfile=verification / "frozen-editor-solve.log", environment=env))
-    # Capture late documentation/verification receipts after the native checks,
-    # immediately before hashing and archiving this candidate.
+    # Keep both readable resource copies identical before the final snapshot check.
     for target in (bundle, bundle / "_internal"):
         synchronize_resources(ROOT, target, "docs")
     for filename in ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json"):
         if (ROOT / filename).is_file():
             shutil.copy2(ROOT / filename, bundle / filename)
             shutil.copy2(ROOT / filename, bundle / "_internal" / filename)
+    if profile["audited_source_profile"]:
+        if native_build_profile(args.gmsh_library, args.native_build_manifest) != profile:
+            raise RuntimeError("Audited native build inputs changed during freezing")
+        for filename, bootloader in (("etlayout.exe", "run.exe"), ("ElectrothermalLayoutStudio.exe", "runw.exe")):
+            executable = bundle / filename
+            if executable.stat().st_size > BOOTLOADER_MAX_BYTES:
+                raise RuntimeError("Frozen executable exceeds its bootloader inspection budget")
+            with executable.open("rb") as stream:
+                data = stream.read(BOOTLOADER_MAX_BYTES + 1)
+            record = next(row for row in profile["compiled_bootloaders"] if row["filename"] == bootloader)
+            verify_frozen_bootloader(data, record)
     source = sorted(set(source_files()))
-    if code_fingerprint() != code_before:
-        raise RuntimeError("Source code changed during the build; finish concurrent edits and rebuild before producing archives")
+    require_source_snapshot(source_before)
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True, capture_output=True)
     manifest = {
         "application": "Electrothermal Layout Studio", "version": metadata.version("etlayout"),
@@ -379,10 +532,12 @@ def main(argv=None):
         "python": platform.python_version(), "pyinstaller": metadata.version("pyinstaller"),
         "git_head": revision.stdout.strip() if revision.returncode == 0 else None,
         "source_tree": "Working tree snapshot; per-file hashes identify exact source, including uncommitted edits",
-        "source_sha256": {p.relative_to(ROOT).as_posix(): sha256(p) for p in source},
+        "source_sha256": source_before,
         "code_sha256": code_before,
         "installed_packages": sorted(f"{d.metadata['Name']}=={d.version}" for d in metadata.distributions()),
         "verification": {"performed": not args.skip_tests, "host": "Native build host; not a clean-machine test", "checks": [public_check_summary(check) for check in checks]},
+        "native_source_profile": profile,
+        "windows_runtime": runtime,
         "dependency_source": "See THIRD_PARTY_NOTICES.md for bundled dependencies and corresponding-source obligations",
     }
     write_json(bundle / "BUILD_MANIFEST.json", manifest)
@@ -393,7 +548,7 @@ def main(argv=None):
              "--artifact", bundle, "--output", bundle / "compliance"], timeout=180,
             logfile=verification / "sbom.log")
     shutil.copyfile(ROOT / "packaging" / "binary-publication-policy.json", bundle / "compliance" / "binary-publication-policy.json")
-    print("Local candidate only: public binary publication remains blocked by compliance policy", flush=True)
+    print("Local candidate only: publication requires exact artifact review and owner release preflight", flush=True)
     if not args.no_archive:
         name = f"ElectrothermalLayoutStudio-{manifest['version']}-windows-x64"
         application_zip = distribution_root / (name + ".zip")
@@ -413,6 +568,7 @@ def main(argv=None):
             # distribution exactly as a recipient will unpack it.
             verify_extracted_archive(application_zip, verification, env)
         print(f"Distribution: {application_zip}\nApplication source: {source_zip}", flush=True)
+    require_source_snapshot(source_before)
     print(f"Native smoke checks passed: {len(checks)}; details in {verification}", flush=True)
     return 0
 

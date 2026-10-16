@@ -96,14 +96,21 @@ add E25–E40: analytical coupons, contacts and networks, thermal experiments,
 pulsed constrictions, independently driven GaN banks, SiC active islands and
 a package interposer.
 
-## Start from source on Windows
+## Install on Windows
 
-**0.4.0 source edition · research prototype · MPL-2.0 original project source.**
-Windows 11 x64 / Python 3.12 is the validated desktop platform. Check the
-[Releases page](https://github.com/mmensing/electrothermal-layout-studio/releases)
-for publication status. Local Windows candidates require the
-[binary compliance checks](docs/licensing.md) before redistribution.
-To run from source, install once in a clean environment using PowerShell:
+**0.4.0 · research prototype · MPL-2.0 original source.**
+Windows 11 x64 is the validated desktop platform. Download a published Windows
+ZIP from [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases),
+extract the whole folder, and start `ElectrothermalLayoutStudio.exe`. Keep
+`_internal` beside the executables. Install the official
+[Visual C++ x64 runtime](docs/windows-runtime.md) if it is absent; the ZIP does not
+redistribute its installer or DLLs. Windows bundles use the documented
+[GPL larger-work route](docs/licensing.md), with source, build information,
+third-party notices and checksums alongside them.
+
+### Run from source
+
+Source development uses Python 3.12. To run from source, install once in a clean environment using PowerShell:
 
 ```powershell
 git clone https://github.com/mmensing/electrothermal-layout-studio.git
@@ -158,6 +165,8 @@ remain SI.
 
 Original project material uses the unmodified [MPL-2.0](LICENSE). Third-party
 components retain their licenses and exceptions; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-and [licensing](docs/licensing.md). A combined frozen application is not MPL-only;
+and [licensing](docs/licensing.md). Windows releases require the official
+[Visual C++ runtime](docs/windows-runtime.md) and include corresponding source.
+A combined frozen application is not MPL-only;
 public binary publication requires separate corresponding-source and
 redistribution clearance.

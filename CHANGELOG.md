@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 — extended example library
+## 0.4.0 — extended examples and Windows distribution
 
 - Add 16 distinct ready-to-open examples, E25–E40, spanning analytical/contact
   coupons, routed resistor/via networks, thermal/pulsed experiments, fully gated
@@ -11,8 +11,17 @@
   nominal checks, independent analytical references and portable GDSII/OASIS/ETL.
 - Include opt-in content-addressed archives and metadata-first history loading
   with bounded caching, exact transient frames, complete saves and exports.
-- Keep source MPL-2.0 and runtime notices intact. Windows publication remains
-  subject to the committed binary-compliance policy and exact candidate checks.
+- Preserve MPL-2.0 source; use the documented GPL-3.0-only larger-work distribution
+  route for Windows, with exact corresponding source, build recipes and notices.
+- Build Gmsh from an audited source subset without unused restricted 3D components;
+  retain all supported planar meshing and numerical workflows. Pin the public
+  Python runtime/source provenance and inventory actual native libraries/fonts.
+- Use Microsoft's official runtime as a separate prerequisite; restore four
+  NumPy/GEOS import aliases and omit all app-local Microsoft runtime copies.
+- Remove unused Mesa/legacy font metrics/demo data and unnecessary SVG authoring
+  paths. Verify retained plotting/export fonts and actual desktop calculations.
+- Harden bounded release/archive inspection and hash-bound private component
+  review; retain manual owner publication and read-only CI.
 
 ## Public source edition — untagged
 

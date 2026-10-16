@@ -2,10 +2,14 @@
 """Release-only streaming inspection keeps ordinary source gates unchanged."""
 from __future__ import annotations
 
+import bz2
 import importlib.util
 import io
 import json
+import lzma
+import re
 import struct
+import subprocess
 import sys
 import tarfile
 import warnings
@@ -220,6 +224,9 @@ def test_binary_helper_selects_large_modes_only_after_unchanged_compliance_gate(
     with pytest.raises(release.ReleaseError, match='source-only'):
         release.reviewed_inputs(root, assets, manifest, COMMIT, VERSION)
     review['kind'] = 'binary'
+    review['license_route'] = 'GPL-3.0-only-with-MPL-3.3'
+    review['attestations'].update(corresponding_source=True, gpl_source_access=True,
+                                  native_and_font_notices=True, runtime_prerequisites=True)
     review['attestations'].update(corresponding_source=True,
                                  lgpl_replacement_and_debugging=True,
                                  native_and_font_notices=True)
@@ -232,7 +239,7 @@ def test_binary_helper_selects_large_modes_only_after_unchanged_compliance_gate(
 
     def read(args, **kwargs):
         if args[:2] == ['git', 'show']:
-            return '{"publication_allowed":true}'
+            return '{"publication_allowed":true,"license_route":"GPL-3.0-only-with-MPL-3.3"}'
         return original(args, **kwargs)
 
     release.preflight(root, assets, manifest, read=read, environ={})
@@ -240,7 +247,12 @@ def test_binary_helper_selects_large_modes_only_after_unchanged_compliance_gate(
     assert inspections[0][-2:] == ['--artifact-kind', 'third-party-source']
     assert all('--artifact-kind' not in command for command in inspections[1:])
     policy = json.loads((SCRIPT.parents[1] / 'packaging/binary-publication-policy.json').read_text())
-    assert policy['publication_allowed'] is False
+    assert policy['publication_allowed'] is True
+    assert (policy['version'], policy['platform'], policy['license_route']) == (
+        '0.4.0', 'windows-x64', 'GPL-3.0-only-with-MPL-3.3')
+    assert policy['source_catalog_sha256'] == release.sha256(SCRIPT.parents[1] / 'packaging/third-party-sources.json')
+    assert len(policy['native_outputs']) == 6
+    assert all(re.fullmatch('[0-9a-f]{64}', value) for value in policy['native_outputs'].values())
 
 
 def test_gzip_transport_filename_metadata_is_inspected(tmp_path):
@@ -295,3 +307,428 @@ def test_streamed_artifact_cli_reports_its_explicit_scope(tmp_path, capsys):
 def test_artifact_limits_cannot_be_unbounded_or_disable_checks(change):
     with pytest.raises(ValueError):
         limits(**change)
+
+
+@pytest.mark.parametrize('payload', [b'ordinary raw data\n', b'\0' * 500])
+def test_raw_gzip_is_inspected_as_data_with_crc_validation(tmp_path, payload):
+    import gzip
+    path = tmp_path / 'pixels.raw.gz'
+    path.write_bytes(gzip.compress(payload))
+    result = inspect(path, member_bytes=2048, ratio=1000)
+    assert result.report()['clean']
+    assert result.counts['archives'] == 1 and result.counts['items'] == 2
+    assert not (tmp_path / 'pixels.raw').exists()
+    content = bytearray(path.read_bytes())
+    content[-8] ^= 1
+    path.write_bytes(content)
+    assert 'artifact_read_error' in kinds(inspect(path, member_bytes=2048, ratio=1000))
+
+
+def test_raw_gzip_expansion_and_hidden_credentials_are_not_waived(tmp_path):
+    import gzip
+    path = tmp_path / 'data.gz'
+    path.write_bytes(gzip.compress(b'x' * 20_000))
+    assert 'archive_size_budget' in kinds(inspect(path, member_bytes=4096, ratio=10000))
+    path.write_bytes(gzip.compress(b'gh' + b'p_' + b'Z' * 40))
+    assert 'github_token' in kinds(inspect(path))
+
+
+@pytest.mark.parametrize('target', ['data', './data'])
+def test_tar_hardlink_aliases_require_fully_inspected_regular_targets(tmp_path, target):
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode='w:gz') as archive:
+        alias = tarfile.TarInfo('alias')
+        alias.type = tarfile.LNKTYPE
+        alias.linkname = target
+        archive.addfile(alias)
+        payload = b'gh' + b'p_' + b'Z' * 40
+        data = tarfile.TarInfo('data')
+        data.size = len(payload)
+        archive.addfile(data, io.BytesIO(payload))
+    path = tmp_path / 'timezones.tar.gz'
+    path.write_bytes(output.getvalue())
+    result = inspect(path)
+    assert result.counts['hardlink_aliases'] == 1 and 'github_token' in kinds(result)
+    assert not (tmp_path / 'alias').exists()
+
+
+@pytest.mark.parametrize('case', ['missing', 'cycle', 'parent', 'directory'])
+def test_tar_hardlinks_cannot_hide_outside_missing_or_cyclic_data(tmp_path, case):
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode='w:gz') as archive:
+        member = tarfile.TarInfo('alias')
+        member.type = tarfile.LNKTYPE
+        member.linkname = {'missing': 'absent', 'cycle': 'alias', 'parent': '../outside', 'directory': 'dir'}[case]
+        archive.addfile(member)
+        directory = tarfile.TarInfo('dir')
+        directory.type = tarfile.DIRTYPE
+        archive.addfile(directory)
+    path = tmp_path / 'bad.tar.gz'
+    path.write_bytes(output.getvalue())
+    result = inspect(path)
+    assert 'artifact_read_error' in kinds(result) and result.counts['streamed_bytes'] == 0
+    assert not (tmp_path / 'outside').exists()
+
+
+@pytest.mark.parametrize('tar_payload', [False, True])
+def test_concatenated_gzip_cannot_hide_uninspected_transport_metadata(tmp_path, tar_payload):
+    import gzip
+    first = gzip.compress(tar_bytes([('safe', b'safe')], 'w') if tar_payload else b'safe\n')
+    second = bytearray(gzip.compress(b'\0' * 512 if tar_payload else b'also safe\n'))
+    second[3] |= 8
+    token = b'gh' + b'p_' + b'Z' * 40
+    path = tmp_path / ('source.tar.gz' if tar_payload else 'data.raw.gz')
+    path.write_bytes(first + second[:10] + token + b'\0' + second[10:])
+    result = inspect(path, member_bytes=32768, expanded_bytes=65536, ratio=10000)
+    assert 'unsupported_gzip_concatenation_or_trailing_data' in kinds(result)
+    assert not result.report()['clean']
+    assert token.decode() not in json.dumps(result.report())
+
+
+@pytest.mark.parametrize('change', ['truncated', 'trailing_nonzero', 'header_crc'])
+def test_gzip_invalid_transport_fails_closed(tmp_path, change):
+    import gzip
+    data = gzip.compress(b'safe\n')
+    if change == 'truncated':
+        data = data[:-1]
+    elif change == 'trailing_nonzero':
+        data += b'uninspected tail'
+    else:
+        data = bytearray(data)
+        data[3] |= 2  # Deliberately wrong FHCRC; zlib validates it.
+        data = data[:10] + b'\0\0' + data[10:]
+    path = tmp_path / 'data.raw.gz'
+    path.write_bytes(data)
+    result = inspect(path)
+    assert not result.report()['clean']
+    assert kinds(result) & {'artifact_read_error', 'unsupported_gzip_concatenation_or_trailing_data'}
+
+
+def test_single_gzip_accepts_zero_transport_padding(tmp_path):
+    import gzip
+    path = tmp_path / 'data.raw.gz'
+    path.write_bytes(gzip.compress(b'safe\n') + b'\0' * 100)
+    assert inspect(path).report()['clean']
+
+
+@pytest.mark.parametrize('metadata', ['overridden_linkname', 'overridden_gnu_longname', 'uname', 'gname', 'raw_padding'])
+def test_all_raw_tar_metadata_is_scanned_before_overrides(tmp_path, metadata):
+    import gzip
+    token = b'gh' + b'p_' + b'Z' * 40
+    short_key = b'AK' + b'IA' + b'Z' * 16
+    output = io.BytesIO()
+    with tarfile.open(fileobj=output, mode='w', format=tarfile.PAX_FORMAT) as archive:
+        if metadata == 'overridden_linkname':
+            alias = tarfile.TarInfo('alias')
+            alias.type = tarfile.LNKTYPE
+            alias.linkname = token.decode()
+            alias.pax_headers = {'linkpath': 'data'}
+            archive.addfile(alias)
+        elif metadata == 'overridden_gnu_longname':
+            longname = tarfile.TarInfo('././@LongLink')
+            longname.type = tarfile.GNUTYPE_LONGNAME
+            longname.size = len(token) + 1
+            archive.addfile(longname, io.BytesIO(token + b'\0'))
+        data = tarfile.TarInfo('data')
+        data.size = 4
+        if metadata == 'overridden_gnu_longname':
+            data.pax_headers = {'path': 'data'}
+        if metadata in {'uname', 'gname'}:
+            setattr(data, metadata, short_key.decode())
+        archive.addfile(data, io.BytesIO(b'safe'))
+    raw = output.getvalue()
+    if metadata == 'raw_padding':
+        header = bytearray(raw[:512])
+        header[5:5 + len(token)] = token  # After the name's first NUL.
+        header[148:156] = b' ' * 8
+        header[148:156] = ('%06o\0 ' % sum(header)).encode('ascii')
+        raw = bytes(header) + raw[512:]
+    path = tmp_path / 'data.tar.gz'
+    path.write_bytes(gzip.compress(raw))
+    result = inspect(path, member_bytes=32768, expanded_bytes=65536, metadata_bytes=512, ratio=10000)
+    assert ('cloud_access_key' if metadata in {'uname', 'gname'} else 'github_token') in kinds(result)
+    assert not result.report()['clean']
+    assert token.decode() not in json.dumps(result.report())
+    assert short_key.decode() not in json.dumps(result.report())
+
+
+def test_reviewed_artifact_size_is_bounded_before_any_content_read(tmp_path, monkeypatch):
+    path = tmp_path / 'large.dll'
+    path.write_bytes(b'MZ' + b'x' * 100)
+    small_limits = limits(compressed_bytes=32)
+    monkeypatch.setattr(audit, 'ArtifactLimits', lambda: small_limits)
+    original_open = Path.open
+
+    def guarded_open(current, *args, **kwargs):
+        if current == path:
+            pytest.fail('Oversized reviewed artifact must not be opened for hashing')
+        return original_open(current, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'open', guarded_open)
+    with pytest.raises(SystemExit) as stopped:
+        audit.main(['--root', str(path), '--artifact-kind', 'binary-candidate',
+                    '--reviewed-findings', str(tmp_path / 'review.json')])
+    assert stopped.value.code == 2
+
+
+def test_reviewed_artifact_growing_during_prehash_is_rejected(tmp_path, monkeypatch):
+    path = tmp_path / 'changing.dll'
+    path.write_bytes(b'MZ00')
+    original_open = Path.open
+
+    def growing_open(current, *args, **kwargs):
+        return io.BytesIO(b'MZ000') if current == path else original_open(current, *args, **kwargs)
+
+    monkeypatch.setattr(Path, 'open', growing_open)
+    with pytest.raises(SystemExit) as stopped:
+        audit.main(['--root', str(path), '--artifact-kind', 'binary-candidate',
+                    '--reviewed-findings', str(tmp_path / 'review.json')])
+    assert stopped.value.code == 2
+
+
+@pytest.mark.parametrize('secret', [False, True])
+def test_conventional_lgpl_copying_lib_is_retained_and_fully_scanned(tmp_path, secret):
+    license_text = (SCRIPT.parents[1] / 'packaging/license-texts/LGPL-2.1.txt').read_bytes()
+    token = 'gh' + 'p_' + 'A' * 40
+    path = tmp_path / 'COPYING.LIB'
+    path.write_bytes(license_text + (b'\n' + token.encode() if secret else b''))
+    result = inspect(path, kind='third-party-source', member_bytes=128 * 1024,
+                     expanded_bytes=128 * 1024, compressed_bytes=128 * 1024)
+    assert 'native_payload_in_source_artifact' not in kinds(result)
+    assert result.report()['clean'] is not secret
+    assert ('github_token' in kinds(result)) is secret
+    assert token not in json.dumps(result.report())
+
+
+@pytest.mark.parametrize('name,data', [
+    ('COPYING.LIB', b'MZ' + b'X' * 40),
+    ('COPYING.LIB', b'\x7fELF' + b'X' * 40),
+    ('COPYING.LIB', b'!<arch>\n' + b'X' * 40),
+    ('COPYING.LIB', b'not a text license\x00binary bytes'),
+    ('licenses/runtime.lib', b'ordinary suffix remains native'),
+    ('COPYING.dll', b'other native suffix remains native'),
+])
+def test_license_filenames_never_exempt_native_or_binary_payload(tmp_path, name, data):
+    path = tmp_path / 'sources.zip'
+    write_zip(path, [(name, data)])
+    result = inspect(path, kind='third-party-source')
+    assert kinds(result) & {'native_payload_in_source_artifact', 'binary_payload_in_license_notice'}
+
+
+@pytest.mark.parametrize('payload', ['ordinary', 'token', 'authenticated_url'])
+def test_long_source_line_is_scanned_without_a_window_waiver(tmp_path, payload):
+    token = 'gh' + 'p_' + 'A' * 40
+    value = 'symbols = ' + 'A' * 70_000
+    if payload == 'token':
+        value += ' ' + token
+    elif payload == 'authenticated_url':
+        value = 'url = "https://public-user:' + 'A' * 70_000 + '@example.test/path"'
+    path = tmp_path / 'generated.py'
+    path.write_text(value + '\n', encoding='utf-8')
+    result = inspect(path, kind='third-party-source', member_bytes=128 * 1024,
+                     expanded_bytes=128 * 1024, compressed_bytes=128 * 1024)
+    assert 'artifact_text_window_budget' not in kinds(result)
+    assert result.report()['clean'] is (payload == 'ordinary')
+    assert result.counts['bounded_text_bytes'] == path.stat().st_size
+    if payload != 'ordinary':
+        assert ('github_token' if payload == 'token' else 'authenticated_url') in kinds(result)
+        assert value not in json.dumps(result.report())
+
+
+def test_ordinary_source_text_ceiling_is_not_relaxed(tmp_path, monkeypatch):
+    assert audit.ArtifactLimits().overlap_chars == 65_536
+    path = tmp_path / 'generated.py'
+    path.write_bytes(b'A' * 65)
+    monkeypatch.setattr(audit, 'MAX_ITEM_BYTES', 64)
+    result = inspect(path, kind='third-party-source')
+    assert kinds(result) == {'text_item_budget'}
+    assert result.counts['streamed_bytes'] == 0
+
+
+@pytest.mark.parametrize('kind,custom,ceiling', [
+    ('binary-candidate', False, 2000),
+    ('third-party-source', False, 20_000),
+    ('third-party-source', True, 2),
+])
+def test_finding_budgets_remain_finite_and_scope_specific(kind, custom, ceiling):
+    result = audit.ArtifactAudit(artifact_kind=kind,
+                                 limits=limits(findings=ceiling) if custom else None)
+    assert result.limits.findings == ceiling
+    for index in range(ceiling):
+        result.finding('upstream/source.c', 'email', f'upstream-{index}@example.test')
+    assert len(result.findings) == ceiling
+    assert all(row['kind'] == 'email' for row in result.findings)
+    with pytest.raises(audit._ArtifactStop, match='finding budget'):
+        result.finding('upstream/source.c', 'email', 'one-extra@example.test')
+    assert len(result.findings) == ceiling + 1
+    assert result.findings[-1]['kind'] == 'finding_budget'
+    assert not result.report()['clean']
+    assert audit.MAX_ITEM_BYTES == 32 * 1024**2
+    assert audit.MAX_ARCHIVE_BYTES == 256 * 1024**2
+
+
+@pytest.mark.parametrize('suffix', ['.ttf', '.otf'])
+@pytest.mark.parametrize('encoding', ['utf-16-le', 'utf-16-be'])
+def test_font_strings_are_scanned_in_both_unicode_orders_across_chunks(tmp_path, suffix, encoding):
+    token = 'gh' + 'p_' + 'A' * 40
+    path = tmp_path / ('synthetic-font' + suffix)
+    # The SFNT prefix is data, not executable magic. No font parser or font code
+    # is executed; this tests raw metadata discovery independently of fontTools.
+    path.write_bytes(b'\x00\x01\x00\x00' + b'\0' * 17 + ('prefix ' + token + '\n').encode(encoding))
+    result = inspect(path, kind='third-party-source')
+    assert 'native_payload_in_source_artifact' not in kinds(result)
+    assert 'github_token' in kinds(result)
+    assert all('!native-string' not in finding['path'] for finding in result.findings)
+    assert any('!font-string' in finding['path'] for finding in result.findings)
+    assert token not in json.dumps(result.report())
+
+
+@pytest.mark.parametrize('value', [
+    'prefix.user+tag@example.test other@example.test',
+    'abc%def---hello@domain.example (outside@another.example)',
+    'a@b.example@d.example', 'bad-prefix@a..b.example suffix',
+    'not-an-address just-token AAAAAA', 'user@notld user@localhost',
+    '.a@domain.example trailing', 'before\nnext@example.test\nafter',
+    'copyright contact@example.test\n' + 'A' * 150,
+])
+def test_email_boundary_optimization_preserves_maximal_matches(value):
+    original = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+    expected = [(item.span(), item.group()) for item in original.finditer(value)]
+    assert [(item.span(), item.group()) for item in audit._PATTERNS['email'].finditer(value)] == expected
+
+
+def test_long_source_token_after_real_email_finishes_in_bounded_process(tmp_path):
+    source = tmp_path / 'long-runtime-source.xml'
+    source.write_text('Copyright public-contact@upstream.test\n' + 'A' * 2_000_000 + '\n', encoding='utf8')
+    program = (
+        "import runpy,sys;from pathlib import Path;"
+        "m=runpy.run_path(sys.argv[1]);a=m['ArtifactAudit'](artifact_kind='third-party-source');"
+        "a.artifact(Path(sys.argv[2]));r=a.report();"
+        "assert not any(f['kind'] in {'artifact_text_window_budget','artifact_read_error'} for f in r['findings']);"
+        "assert r['counts']['bounded_text_bytes']==Path(sys.argv[2]).stat().st_size;"
+        "print('completed')"
+    )
+    completed = subprocess.run([sys.executable, '-c', program, str(SCRIPT), str(source)],
+                               check=True, capture_output=True, text=True, timeout=10)
+    assert completed.stdout.strip() == 'completed'
+
+
+def test_incremental_finding_line_numbers_match_direct_counts():
+    value = ('one[at]fixture.example.edu\nignored@example.test\npassword = "long-enough-value"'
+             '\nnext[at]fixture.example.edu').replace('[at]', '@')
+    result = audit.PublicationAudit()
+    result.text('source.txt', value, line_offset=19)
+    assert len(result.findings) == 3
+    for finding in result.findings:
+        pattern = audit._PATTERNS[finding['kind']]
+        expected = {audit._fingerprint(match.group()): 20 + value.count('\n', 0, match.start())
+                    for match in pattern.finditer(value)}
+        assert finding['line'] == expected[finding['fingerprint']]
+
+
+@pytest.mark.parametrize('payload', ['ordinary', 'token', 'encoded_token', 'entity', 'wrong_root', 'native'])
+def test_exact_qmake_xml_plist_lib_is_validated_and_scanned(tmp_path, payload):
+    token = 'gh' + 'p_' + 'A' * 40
+    value = token if payload == 'token' else ''.join(f'&#{ord(char)};' for char in token) if payload == 'encoded_token' else '$(PRODUCT_NAME)'
+    data = ('<?xml version="1.0"?><plist version="1.0"><dict><key>Name</key><string>'
+            + value + '</string></dict></plist>').encode()
+    if payload == 'entity':
+        data = b'<?xml version="1.0"?><!DOCTYPE plist [<!ENTITY hidden "data">]><plist>&hidden;</plist>'
+    elif payload == 'wrong_root':
+        data = b'<?xml version="1.0"?><other>Not a plist</other>'
+    elif payload == 'native':
+        data = b'MZ' + b'X' * 40
+    path = tmp_path / 'Info.plist.lib'
+    path.write_bytes(data)
+    result = inspect(path, kind='third-party-source')
+    assert result.report()['clean'] is (payload == 'ordinary')
+    if payload in {'token', 'encoded_token'}:
+        assert 'github_token' in kinds(result)
+    elif payload == 'native':
+        assert 'native_payload_in_source_artifact' in kinds(result)
+    elif payload == 'entity':
+        assert 'plist_entity_declaration' in kinds(result)
+    elif payload == 'wrong_root':
+        assert 'invalid_plist_template' in kinds(result)
+    assert token not in json.dumps(result.report())
+
+
+@pytest.mark.parametrize('case', ['valid', 'secret', 'truncated', 'crc', 'trailing', 'concatenated', 'ratio'])
+def test_standalone_bzip2_build_fixture_is_decoded_and_bounded(tmp_path, case):
+    token = 'gh' + 'p_' + 'A' * 40
+    plain = (token + '\n').encode() if case == 'secret' else b'Required make-test input\n' * 20
+    if case == 'ratio':
+        plain = b'A' * 8000
+    data = bz2.compress(plain)
+    if case == 'truncated':
+        data = data[:-5]
+    elif case == 'crc':
+        data = data[:-5] + bytes([data[-5] ^ 1]) + data[-4:]
+    elif case == 'trailing':
+        data += b'hidden uninspected nonzero tail'
+    elif case == 'concatenated':
+        data += bz2.compress(token.encode())
+    path = tmp_path / 'sample1.bz2'
+    path.write_bytes(data)
+    result = inspect(path, kind='third-party-source', **({'ratio': 2} if case == 'ratio' else {}))
+    assert result.report()['clean'] is (case == 'valid')
+    if case == 'secret':
+        assert 'github_token' in kinds(result)
+    elif case in {'trailing', 'concatenated'}:
+        assert 'unsupported_bzip2_concatenation_or_trailing_data' in kinds(result)
+    elif case in {'truncated', 'crc'}:
+        assert 'artifact_read_error' in kinds(result)
+    elif case == 'ratio':
+        assert 'archive_size_budget' in kinds(result)
+    assert token not in json.dumps(result.report())
+
+
+def test_bzip2_tar_rejects_hidden_compressed_tail(tmp_path):
+    path = tmp_path / 'source.tar.bz2'
+    path.write_bytes(tar_bytes([('source.c', b'int retained;')], 'w:bz2') + b'hidden tail')
+    result = inspect(path, kind='third-party-source')
+    assert 'unsupported_bzip2_concatenation_or_trailing_data' in kinds(result)
+
+
+@pytest.mark.parametrize('case', ['valid', 'empty', 'secret', 'truncated', 'crc', 'trailing',
+                                  'concatenated', 'ratio', 'dictionary'])
+def test_standalone_xz_build_fixture_is_decoded_and_bounded(tmp_path, case):
+    token = 'gh' + 'p_' + 'A' * 40
+    plain = (token + '\n').encode() if case == 'secret' else b'Required XZ build-test input\n' * 20
+    if case == 'empty':
+        plain = b''
+    elif case == 'ratio':
+        plain = b'A' * 8000
+    data = lzma.compress(plain, format=lzma.FORMAT_XZ, check=lzma.CHECK_CRC64)
+    if case == 'truncated':
+        data = data[:-5]
+    elif case == 'crc':
+        data = data[:-20] + bytes([data[-20] ^ 1]) + data[-19:]
+    elif case == 'trailing':
+        data += b'hidden uninspected nonzero tail'
+    elif case == 'concatenated':
+        data += lzma.compress(token.encode(), format=lzma.FORMAT_XZ)
+    path = tmp_path / 'good-data.xz'
+    path.write_bytes(data)
+    settings = {'ratio': 2} if case == 'ratio' else {'lzma_memory_bytes': 1024} if case == 'dictionary' else {}
+    result = inspect(path, kind='third-party-source', **settings)
+    assert result.report()['clean'] is (case in {'valid', 'empty'})
+    if case == 'secret':
+        assert 'github_token' in kinds(result)
+        assert any(row['path'] == 'good-data' for row in result.findings)
+    elif case in {'trailing', 'concatenated'}:
+        assert 'unsupported_xz_concatenation_or_trailing_data' in kinds(result)
+    elif case in {'truncated', 'crc', 'dictionary'}:
+        assert 'artifact_read_error' in kinds(result)
+    elif case == 'ratio':
+        assert 'archive_size_budget' in kinds(result)
+    assert token not in json.dumps(result.report())
+
+
+@pytest.mark.parametrize('suffix', ['.tar.xz', '.txz'])
+def test_xz_tar_keeps_strict_member_and_compressed_tail_checks(tmp_path, suffix):
+    path = tmp_path / ('source' + suffix)
+    path.write_bytes(tar_bytes([('source.c', b'int retained;')], 'w:xz') + b'hidden tail')
+    result = inspect(path, kind='third-party-source')
+    assert 'artifact_read_error' in kinds(result)
+    assert result.counts['items'] == 1  # Never reinterpret a named TAR as standalone text.
