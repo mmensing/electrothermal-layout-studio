@@ -403,3 +403,67 @@ def test_save_before_navigation_preserves_history_until_durable(saving_window, q
         loaded, _ = archive_io.load_project(window.inspection_context["path"])
         assert loaded.name == working.name and loaded.notes == "working edit to persist"
         assert not window.errors
+
+
+def test_gui_saves_opened_json_as_portable_archive_without_replacing_metadata(saving_window, qtbot, tmp_path, monkeypatch):
+    from etlayout.examples import make_example
+
+    window = saving_window
+    project = make_example("E1", tmp_path / "json-layout")
+    source = tmp_path / "metadata.json"
+    archive_io.save_json(project, source)
+    original = source.read_bytes()
+    window.open_project(source)
+    qtbot.waitUntil(lambda: not window.prepare_job and not window.hierarchy_jobs, timeout=30000)
+    assert window.path == source and window.project.name == project.name
+    window.project.notes = "edited through the standard GUI workflow"
+    window.dirty = True
+    destination = source.with_suffix(".etlayout")
+    defaults = []
+    def choose(parent, title, suggested, *args, **kwargs):
+        defaults.append(Path(suggested))
+        return str(destination), ""
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", choose)
+    assert window.save()
+    qtbot.waitUntil(lambda: not window.save_job and not window._save_queue, timeout=30000)
+    assert source.read_bytes() == original
+    assert defaults == [destination] and window.path == destination and not window.dirty
+    loaded, _ = archive_io.load_project(destination)
+    assert loaded.notes == window.project.notes and Path(loaded.layout.path).is_file()
+    metadata, _ = archive_io.load_project(source)
+    assert document_id(metadata) == document_id(loaded)
+    assert metadata.notes != loaded.notes and metadata.name == project.name
+    assert not window.errors
+
+
+def test_archive_writer_rejects_json_without_replacing_metadata(tmp_path):
+    source = tmp_path / "metadata.JSON"
+    archive_io.save_json(Project(name="original metadata"), source)
+    original = source.read_bytes()
+    with pytest.raises(SimulationError, match="save_json"):
+        archive_io.save_project(Project(name="archive must not replace metadata"), source)
+    assert source.read_bytes() == original
+    assert archive_io.load_project(source)[0].name == "original metadata"
+
+
+@pytest.mark.parametrize("chosen", ["", "metadata.json", "portable"])
+def test_save_as_cancel_json_rejection_and_default_suffix(saving_window, qtbot, tmp_path, monkeypatch, chosen):
+    window = saving_window
+    metadata = tmp_path / "metadata.json"
+    archive_io.save_json(window.project, metadata)
+    original = metadata.read_bytes()
+    window.path = metadata
+    window.dirty = True
+    destination = str(tmp_path / chosen) if chosen else ""
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: (destination, ""))
+    accepted = window.save()
+    if chosen == "portable":
+        assert accepted
+        qtbot.waitUntil(lambda: not window.save_job and not window._save_queue, timeout=30000)
+        assert window.path == tmp_path / "portable.etlayout" and not window.dirty
+        assert archive_io.load_project(window.path)[0].name == window.project.name
+    else:
+        assert not accepted and window.path == metadata and window.dirty
+        assert window.save_job is None and window._save_queue == []
+        assert bool(window.errors) == bool(chosen)
+    assert metadata.read_bytes() == original

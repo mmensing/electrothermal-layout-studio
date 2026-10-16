@@ -373,6 +373,11 @@ writable aliases. The synchronous Python/CLI `save_project` API remains availabl
 GUI `MainWindow.save()` returns whether a request was accepted, not proof of durability.
 Wait for the worker to finish before reopening a GUI-created archive in automation.
 
+Opening JSON project metadata preserves that source file: **Save** offers a portable
+`.etlayout` destination instead of overwriting it. **Save As** suggests `.etlayout`
+and adds that suffix when none is entered. JSON destinations are rejected for archive
+saving; Python callers can continue using `save_json` for metadata-only JSON files.
+
 
 ## Power interconnects and routing — added in 0.3.0
 

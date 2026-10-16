@@ -3206,7 +3206,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
         path = self.inspection_context["path"] if self.inspection_context else self.path
-        if path is None:
+        if path is None or Path(path).suffix.lower() == ".json":
             return self.save_as()
         return self._queue_save(path)
 
@@ -3216,8 +3216,14 @@ class MainWindow(QMainWindow):
         context = self.inspection_context
         project = context["project"] if context else self.project
         current_path = context["path"] if context else self.path
-        path, _ = QFileDialog.getSaveFileName(self, "Save project", str(current_path or (project.name + ".etlayout")), "Electrothermal project (*.etlayout)")
-        return self._queue_save(Path(path)) if path else False
+        suggested = Path(current_path).with_suffix(".etlayout") if current_path else Path(project.name + ".etlayout")
+        path, _ = QFileDialog.getSaveFileName(self, "Save project", str(suggested), "Electrothermal project (*.etlayout)")
+        if not path:
+            return False
+        destination = Path(path)
+        if not destination.suffix:
+            destination = destination.with_suffix(".etlayout")
+        return self._queue_save(destination)
 
     def _queue_save(self, path, *, recovery=False):
         candidates = ([self.save_job.request] if self.save_job else []) + self._save_queue
@@ -3228,6 +3234,8 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage("This document revision is already queued for saving")
                 return True
         try:
+            if not recovery and Path(path).suffix.lower() == ".json":
+                raise SimulationError("JSON is a metadata format. Choose a .etlayout destination for the portable project archive.")
             project = self.inspection_context["project"] if self.inspection_context else self.project
             result = self.inspection_context["result"] if self.inspection_context else self.result
             snapshot = SaveSnapshot.capture(project, result, self.run_history, revision=self.document_revision)

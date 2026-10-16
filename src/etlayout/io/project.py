@@ -442,6 +442,10 @@ def inspect_archive_size(path, *, _archive_data=None) -> dict:
 def save_project(project: Project, path: str | Path, result: SimulationResult | None = None,
                  embed_layout: bool = True, history: list[SimulationResult] | None = None,
                  *, progress=None, cancel=None, commit=None) -> None:
+    target = Path(path)
+    if target.suffix.lower() == ".json":
+        raise SimulationError("JSON is a metadata format. Use save_json for JSON metadata or choose .etlayout for a project archive.")
+
     def checkpoint(fraction, message):
         if cancel is not None and cancel():
             from etlayout.io.saving import SaveCancelled
@@ -457,7 +461,6 @@ def save_project(project: Project, path: str | Path, result: SimulationResult | 
     if not estimate["fits_budget"]:
         raise SimulationError("; ".join(estimate["issues"]) + ". Reduce retained snapshots or saved run history.")
     checkpoint(.08, "Preparing archive and source layout")
-    target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     saved = deepcopy(project)
     embedded = None
