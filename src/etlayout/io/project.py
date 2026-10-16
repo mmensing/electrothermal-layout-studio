@@ -440,19 +440,34 @@ def inspect_archive_size(path, *, _archive_data=None) -> dict:
 
 
 def save_project(project: Project, path: str | Path, result: SimulationResult | None = None,
-                 embed_layout: bool = True, history: list[SimulationResult] | None = None) -> None:
+                 embed_layout: bool = True, history: list[SimulationResult] | None = None,
+                 *, progress=None, cancel=None, commit=None) -> None:
+    target = Path(path)
+    if target.suffix.lower() == ".json":
+        raise SimulationError("JSON is a metadata format. Use save_json for JSON metadata or choose .etlayout for a project archive.")
+
+    def checkpoint(fraction, message):
+        if cancel is not None and cancel():
+            from etlayout.io.saving import SaveCancelled
+            raise SaveCancelled("Save cancelled; the previous project was preserved")
+        if progress is not None:
+            progress(fraction, message)
+
+    checkpoint(0., "Checking save snapshot")
     # Incomplete physical setups are useful drafts, but every saved setup must
     # satisfy the typed schema and reopen without losing null/nonfinite values.
     project_from_dict(project.to_dict())
     estimate = estimate_project_archive(project, result, history, embed_layout=embed_layout)
     if not estimate["fits_budget"]:
         raise SimulationError("; ".join(estimate["issues"]) + ". Reduce retained snapshots or saved run history.")
-    target = Path(path)
+    checkpoint(.08, "Preparing archive and source layout")
     target.parent.mkdir(parents=True, exist_ok=True)
     saved = deepcopy(project)
     embedded = None
     if project.layout.path and Path(project.layout.path).is_file():
         saved.layout.sha256 = file_hash(project.layout.path)
+        if project.layout.sha256 and saved.layout.sha256 != project.layout.sha256.lower():
+            raise SimulationError("Layout source changed and describes a different physical setup; it no longer matches the save snapshot. Relink before saving; the previous project was preserved.")
         if embed_layout:
             embedded = "layout/source" + Path(project.layout.path).suffix.lower()
             saved.layout.path = embedded
@@ -488,6 +503,7 @@ def save_project(project: Project, path: str | Path, result: SimulationResult | 
             if embedded:
                 archive.write(project.layout.path, embedded)
             if result:
+                checkpoint(.2, "Serializing numerical fields")
                 array_data, metadata = _result_payload(result, saved)
                 buffer = io.BytesIO()
                 np.savez_compressed(buffer, **array_data)
@@ -501,13 +517,35 @@ def save_project(project: Project, path: str | Path, result: SimulationResult | 
                 # runs from another design. Existing readers ignore this folder.
                 with tempfile.TemporaryDirectory(prefix="etlayout-runs-", dir=target.parent) as folder:
                     for index, run in enumerate(history):
+                        checkpoint(.4 + .4 * index / len(history), f"Saving history {index + 1}/{len(history)}")
                         if not isinstance(run, SimulationResult) or not run.configuration:
                             raise SimulationError("Saved run history requires results with their recorded configurations")
                         nested = Path(folder) / f"run_{index:04d}.etl"
-                        save_project(project_from_dict(run.configuration), nested, run, embed_layout=True)
+                        save_project(project_from_dict(run.configuration), nested, run, embed_layout=True, cancel=cancel)
                         archive.write(nested, f"runs/run_{index:04d}.etl")
+        checkpoint(.85, "Verifying complete archive")
         inspect_archive_size(temporary)
-        os.replace(temporary, target)
+        with zipfile.ZipFile(temporary) as verified:
+            if verified.testzip() is not None:
+                raise SimulationError("Finished project archive failed its CRC integrity check")
+            if embedded:
+                digest = hashlib.sha256()
+                with verified.open(embedded) as layout_stream:
+                    while chunk := layout_stream.read(1024 * 1024):
+                        checkpoint(.9, "Verifying embedded source identity")
+                        digest.update(chunk)
+                if digest.hexdigest() != saved.layout.sha256:
+                    raise SimulationError("Source layout changed during saving; the previous project was preserved")
+        with Path(temporary).open("r+b") as durable:
+            durable.flush()
+            os.fsync(durable.fileno())
+        checkpoint(.98, "Committing verified project")
+        if commit is None:
+            os.replace(temporary, target)
+        else:
+            commit(temporary, target)
+        if progress is not None:
+            progress(1., "Project archive committed")
     finally:
         if Path(temporary).exists():
             Path(temporary).unlink()

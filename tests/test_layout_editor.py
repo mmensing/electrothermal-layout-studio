@@ -73,6 +73,7 @@ def test_real_mouse_drag_apply_undo_redo_and_portable_reopening(editor_window, q
     assert window.project.to_dict() == edited
     window.path = tmp_path / "edited.etl"
     window.save()
+    _idle(window, qtbot)
     restored, _ = load_project(window.path)
     assert physics_hash(restored) == physics_hash(window.project)
     assert any(t.geometry.equals(expected) for t in editable_polygons(restored)[0])

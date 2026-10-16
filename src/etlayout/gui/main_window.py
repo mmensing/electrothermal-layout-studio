@@ -58,6 +58,7 @@ from etlayout.gui.forms import ModelDialog, region_summary
 from etlayout.gui.inputs import parse_number
 from etlayout.gui.jobs import ComputeJob
 from etlayout.gui.plots import CrossSectionPanel, ProfilePanel, StudyPanel
+from etlayout.gui.saving import SaveJob, SaveRequest
 from etlayout.gui.transient import TimeHistoryPanel, TimeNavigation, TransientDialog
 from etlayout.gui.viewer import VECTOR_FIELDS, LayoutView, geometry_region
 from etlayout.gui.workspace import (
@@ -72,9 +73,9 @@ from etlayout.io.project import (
     annotated_result,
     physics_hash,
     project_from_dict,
-    save_project,
 )
 from etlayout.io.recovery import RecoveryStore
+from etlayout.io.saving import SaveOrder, SaveSnapshot, freeze_result_arrays
 from etlayout.materials.database import MaterialDatabase
 from etlayout.models import (
     HeatSource,
@@ -317,6 +318,8 @@ class MainWindow(QMainWindow):
         if not self.project.materials:
             self.project.materials = {m.id: m for m in self.database.list_materials()}
         self.result = result
+        if result is not None:
+            freeze_result_arrays(result)
         self.transient_frame = None
         self.mesh = result.mesh if result else None
         self.geometry = None
@@ -324,6 +327,14 @@ class MainWindow(QMainWindow):
         self.masks = {}
         self.path = None
         self.document_revision = 0
+        self.document_epoch = str(uuid.uuid4())
+        self.save_job = None
+        self._save_queue = []
+        self._save_sequence = 0
+        self._latest_manual_save = 0
+        self._save_continuation = None
+        self._save_success = False
+        self._close_after_save = False
         self.dirty = False
         document_id(self.project)
         self.undo_history = []
@@ -769,6 +780,14 @@ class MainWindow(QMainWindow):
         self.recovery_status = QLabel()
         self.recovery_status.setWordWrap(True)
         self.statusBar().addPermanentWidget(self.recovery_status)
+        self.save_progress = QProgressBar()
+        self.save_progress.setMaximumWidth(160)
+        self.save_progress.hide()
+        self.statusBar().addPermanentWidget(self.save_progress)
+        self.cancel_save_button = QPushButton("Cancel save")
+        self.cancel_save_button.clicked.connect(self.cancel_saving)
+        self.cancel_save_button.hide()
+        self.statusBar().addPermanentWidget(self.cancel_save_button)
 
     def add_dock(self, title, widget, area):
         dock = QDockWidget(title, self)
@@ -2019,6 +2038,7 @@ class MainWindow(QMainWindow):
         self.workflow_tabs.setCurrentIndex(3)
 
     def remember_result(self, result):
+        freeze_result_arrays(result)
         if not any(existing is result or (existing.configuration_hash == result.configuration_hash
                                           and existing.elapsed_seconds == result.elapsed_seconds)
                    for existing in self.run_history):
@@ -2066,7 +2086,7 @@ class MainWindow(QMainWindow):
         context, self.inspection_context = self.inspection_context, None
         self.clear_analysis()
         self.project, self.result, self.path = context["project"], context["result"], context["path"]
-        self.dirty = context["dirty"]
+        self._dirty = context["dirty"]
         self.undo_history, self.redo_history = context["undo"], context["redo"]
         self.inspection_bar.hide()
         self.refresh_project()
@@ -2963,26 +2983,31 @@ class MainWindow(QMainWindow):
         self.view_mode.setCurrentIndex(self.view_mode.findData("difference"))
         self.select_view_mode()
 
-    def confirm_discard(self):
+    def confirm_discard(self, continuation=None):
+        if self.save_job or self._save_queue:
+            self.statusBar().showMessage("A project save is still active. Wait for completion or cancel the save before changing project.")
+            return False
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
-        if self.inspection_context:
-            self.return_to_project()
         if self.job or (self.guided.power and self.guided.power.job):
             self.error("Computation running", "Cancel the running computation before changing project.")
             return False
-        if not self.dirty:
+        dirty = self.inspection_context["dirty"] if self.inspection_context else self.dirty
+        if not dirty:
             return True
         answer = QMessageBox.question(self, "Unsaved project", "Save changes before continuing?",
                                       QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel)
         if answer == QMessageBox.StandardButton.Cancel:
             return False
         if answer == QMessageBox.StandardButton.Save:
-            return self.save()
+            self._save_continuation = continuation
+            if not self.save():
+                self._save_continuation = None
+            return False
         return True
 
     def new_project(self):
-        if not self.confirm_discard():
+        if not self.confirm_discard(self.new_project):
             return
         wizard = NewProjectWizard(self)
         if wizard.exec():
@@ -2996,7 +3021,7 @@ class MainWindow(QMainWindow):
             self.update_title()
 
     def load_example(self, name):
-        if not self.confirm_discard():
+        if not self.confirm_discard(lambda: self.load_example(name)):
             return
         try:
             from etlayout.examples import make_example
@@ -3038,6 +3063,7 @@ class MainWindow(QMainWindow):
         self.project, self.result, self.path = project, result, Path(path) if path else None
         document_id(project)
         self.document_revision += 1
+        self.document_epoch = str(uuid.uuid4())
         self.mesh = result.mesh if result else None
         if hasattr(self, "guided"):
             self.guided.project_replaced()
@@ -3109,7 +3135,7 @@ class MainWindow(QMainWindow):
             self.error("Cannot review project resources", error)
 
     def open_project(self, path=None, *, external_policy=None):
-        if not self.confirm_discard():
+        if not self.confirm_discard(lambda: self.open_project(path, external_policy=external_policy)):
             return
         if not isinstance(path, (str, Path)):
             path, _ = QFileDialog.getOpenFileName(self, "Open project", "", "Electrothermal projects (*.etl *.etlayout *.etproj *.zip);;All files (*)")
@@ -3177,35 +3203,158 @@ class MainWindow(QMainWindow):
                 self.error("Cannot relink", error)
 
     def save(self):
+        """Queue an immutable revision; True means accepted, not yet durable."""
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
-        if self.inspection_context:
-            self.return_to_project()
-        if self.path is None:
+        path = self.inspection_context["path"] if self.inspection_context else self.path
+        if path is None or Path(path).suffix.lower() == ".json":
             return self.save_as()
-        try:
-            save_project(self.project, self.path, self.result, history=self.run_history)
-            self.dirty = False
-            self.update_title()
-            self.log(f"Saved {self.path}")
-            self._autosave_error = ""
-            self.recovery_status.clear()
-            self._cleanup_recovery()
-            return True
-        except Exception as error:
-            self.error("Cannot save project", error)
-            return False
+        return self._queue_save(path)
 
     def save_as(self):
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
-        if self.inspection_context:
-            self.return_to_project()
-        path, _ = QFileDialog.getSaveFileName(self, "Save project", str(self.path or (self.project.name + ".etlayout")), "Electrothermal project (*.etlayout)")
-        if path:
-            self.path = Path(path)
-            return self.save()
-        return False
+        context = self.inspection_context
+        project = context["project"] if context else self.project
+        current_path = context["path"] if context else self.path
+        suggested = Path(current_path).with_suffix(".etlayout") if current_path else Path(project.name + ".etlayout")
+        path, _ = QFileDialog.getSaveFileName(self, "Save project", str(suggested), "Electrothermal project (*.etlayout)")
+        if not path:
+            return False
+        destination = Path(path)
+        if not destination.suffix:
+            destination = destination.with_suffix(".etlayout")
+        return self._queue_save(destination)
+
+    def _queue_save(self, path, *, recovery=False):
+        candidates = ([self.save_job.request] if self.save_job else []) + self._save_queue
+        for request in candidates:
+            if (request.epoch == self.document_epoch and request.snapshot.revision == self.document_revision
+                    and (request.recovery_store is not None) == recovery
+                    and (recovery or request.destination.absolute() == Path(path).absolute())):
+                self.statusBar().showMessage("This document revision is already queued for saving")
+                return True
+        try:
+            if not recovery and Path(path).suffix.lower() == ".json":
+                raise SimulationError("JSON is a metadata format. Choose a .etlayout destination for the portable project archive.")
+            project = self.inspection_context["project"] if self.inspection_context else self.project
+            result = self.inspection_context["result"] if self.inspection_context else self.result
+            snapshot = SaveSnapshot.capture(project, result, self.run_history, revision=self.document_revision)
+            store = self._recovery_owner() if recovery else None
+            self._save_sequence += 1
+            request = SaveRequest(snapshot, Path(path), self.document_epoch, self._save_sequence, store,
+                str(self.inspection_context["path"] or "") if self.inspection_context else str(self.path or ""),
+                () if recovery else SaveOrder.reserve(path), cleanup_store=self.recovery_store)
+            if not recovery:
+                self._latest_manual_save = request.sequence
+            # One latest pending manual revision and one latest recovery revision.
+            # An active worker is never fed live state or retargeted in place.
+            self._save_queue = [old for old in self._save_queue
+                                if (old.recovery_store is None) != (store is None)]
+            self._save_queue.append(request)
+            self._save_queue.sort(key=lambda old: old.recovery_store is not None)
+            if self.save_job is None:
+                self._start_next_save()
+            else:
+                self.statusBar().showMessage("Latest project revision queued for saving")
+            return True
+        except Exception as error:
+            if recovery:
+                self._save_failed(None, str(error), recovery=True)
+            else:
+                self.error("Cannot prepare project save", error)
+            return False
+
+    def _start_next_save(self):
+        if not self._save_queue:
+            self.save_progress.hide()
+            self.cancel_save_button.hide()
+            continuation, self._save_continuation = self._save_continuation, None
+            dirty = self.inspection_context["dirty"] if self.inspection_context else self.dirty
+            if continuation and self._save_success and not dirty:
+                QTimer.singleShot(0, continuation)
+            return
+        request = self._save_queue.pop(0)
+        job = SaveJob(request, self)
+        self.save_job = job
+        self._save_success = False
+        self.save_progress.setValue(0)
+        self.save_progress.show()
+        self.cancel_save_button.show()
+        self.statusBar().showMessage("Saving recovery snapshot…" if request.recovery_store else f"Saving {request.destination.name}…")
+        job.progress.connect(lambda fraction, message: self._save_progress(job, fraction, message))
+        job.saved.connect(self._save_completed)
+        job.failed.connect(self._save_failed)
+        job.cancelled.connect(self._save_cancelled)
+        job.finished.connect(lambda: self._save_thread_finished(job))
+        job.start()
+
+    def _save_progress(self, job, fraction, message):
+        if self.save_job is job:
+            self.save_progress.setValue(round(100 * fraction))
+            self.statusBar().showMessage(message)
+
+    def _save_completed(self, request, entry):
+        snapshot = request.snapshot
+        self._save_success = True
+        if entry is not None:
+            self.recovery_path = request.recovery_store.snapshot_path(entry)
+            self._recovery_current_path = self.recovery_path
+            self.recovery_status.setText("Recovery saved")
+            self.recovery_status.setToolTip(str(self.recovery_path))
+            self._autosave_error = ""
+            return
+        if request.epoch == self.document_epoch:
+            if request.sequence == self._latest_manual_save:
+                if self.inspection_context:
+                    self.inspection_context["path"] = request.destination
+                else:
+                    self.path = request.destination
+            if snapshot.revision == self.document_revision:
+                if self.inspection_context:
+                    self.inspection_context["dirty"] = False
+                else:
+                    self._dirty = False
+            if self.save_job and self.save_job.cleanup_errors:
+                self.log("Saved project, but recovery cleanup failed: " + "; ".join(self.save_job.cleanup_errors))
+            self.recovery_status.clear()
+            self.update_title()
+        self.log(f"Saved revision {snapshot.revision} to {request.destination}" +
+                 ("; newer edits remain unsaved" if snapshot.revision != self.document_revision else ""))
+
+    def _save_failed(self, request, message, recovery=False):
+        self._save_success = False
+        self._save_continuation = None
+        if recovery or (request is not None and request.recovery_store is not None):
+            self.recovery_status.setText("Recovery failed — save your project")
+            self.recovery_status.setToolTip(message)
+            if self._autosave_error != message:
+                self.log(f"Automatic recovery could not be saved: {message}. Use File → Save project as to choose a writable location.")
+            self._autosave_error = message
+        else:
+            self.error("Cannot save project", message)
+
+    def _save_cancelled(self, request, message):
+        self._save_success = False
+        self._save_continuation = None
+        self.log(message)
+
+    def _save_thread_finished(self, job):
+        if self.save_job is job:
+            self.save_job = None
+        job.deleteLater()
+        if self._close_after_save and not self._save_queue:
+            self._close_after_save = False
+            QTimer.singleShot(0, self.close)
+        else:
+            self._start_next_save()
+
+    def cancel_saving(self):
+        self._save_queue.clear()
+        self._save_continuation = None
+        if self.save_job:
+            self.save_job.cancel()
+            self.statusBar().showMessage("Save cancellation requested; checking before atomic commit")
 
     def duplicate_project(self):
         if self.inspection_context:
@@ -3221,26 +3370,8 @@ class MainWindow(QMainWindow):
 
     def autosave(self):
         dirty = self.inspection_context["dirty"] if self.inspection_context else self.dirty
-        if not dirty or self.job:
-            return
-        try:
-            project = self.inspection_context["project"] if self.inspection_context else self.project
-            result = self.inspection_context["result"] if self.inspection_context else self.result
-            entry = self._recovery_owner().snapshot(project, result, self.run_history,
-                revision=self.document_revision, original_path=self.inspection_context["path"] if self.inspection_context else self.path)
-            self.recovery_path = self.recovery_store.snapshot_path(entry)
-            self._recovery_current_path = self.recovery_path
-            self.statusBar().showMessage("Recovery snapshot saved", 3000)
-            self.recovery_status.setText("Recovery saved")
-            self.recovery_status.setToolTip(str(self.recovery_path))
-            self._autosave_error = ""
-        except Exception as error:
-            LOG.warning("Autosave failed: %s", error)
-            self.recovery_status.setText("Recovery failed — save your project")
-            self.recovery_status.setToolTip(str(error))
-            if self._autosave_error != str(error):
-                self.log(f"Automatic recovery could not be saved: {error}. Use File → Save project as to choose a writable location.")
-            self._autosave_error = str(error)
+        if dirty and not self.job:
+            self._queue_save(self.recovery_path, recovery=True)
 
     def offer_recovery(self):
         from etlayout.gui.recovery import RecoveryDialog
@@ -3549,6 +3680,13 @@ class MainWindow(QMainWindow):
             "Polygon tools: click vertices; double-click or Enter finishes. Drag for rectangle/line tools. Shift-select supports multiple polygons; right-click offers region actions. All coordinates display in µm.")
 
     def closeEvent(self, event):
+        if self.save_job or self._save_queue:
+            if QMessageBox.question(self, "Project save in progress", "Cancel saving and close after the worker has stopped?",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
+                self.cancel_saving()
+                self._close_after_save = True
+            event.ignore()
+            return
         if self.job or (self.guided.power and self.guided.power.job):
             if QMessageBox.question(self, "Computation running", "Cancel computation and close the application?") != QMessageBox.StandardButton.Yes:
                 event.ignore()
@@ -3559,13 +3697,13 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Cancellation requested. Close again after the computation stops.")
             event.ignore()
             return
-        if not self.confirm_discard():
+        if not self.confirm_discard(self.close):
             event.ignore()
             return
         self.cancel_geometry()
         self.settings.setValue("geometry", self.saveGeometry())
         self.settings.setValue("state", self.saveState())
-        self._cleanup_recovery()
+        self._cleanup_recovery(self.inspection_context["project"] if self.inspection_context else self.project)
         if self.recovery_store is not None:
             self.recovery_store.close()
         self.dispose_plots()

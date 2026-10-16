@@ -71,7 +71,7 @@ def guided_window(qtbot, tmp_path):
 
 
 def _idle(window, qtbot, timeout=30000):
-    qtbot.waitUntil(lambda: not window.prepare_job and not window.job and not window.hierarchy_jobs,
+    qtbot.waitUntil(lambda: not window.save_job and not window._save_queue and not window.prepare_job and not window.job and not window.hierarchy_jobs,
                     timeout=timeout)
     QApplication.processEvents()
 
