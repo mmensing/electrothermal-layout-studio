@@ -271,7 +271,8 @@ class ResultStore:
             if expected_generation is not None and self.generation != expected_generation:
                 raise SimulationError("The selected archive generation differs from the reviewed bytes; review it again")
             self._checkpoint(cancel)
-            self._reader = ArchiveV3Reader(self._snapshot_path, source_path=self.source, policy=self.policy)
+            self._reader = ArchiveV3Reader(self._snapshot_path, source_path=self.source, policy=self.policy,
+                cancel=lambda: self._cancel.is_set() or bool(cancel is not None and cancel()))
             self.current_run_id = self._reader.current_run_id
             records = []
             for descriptor in self._reader.records:
