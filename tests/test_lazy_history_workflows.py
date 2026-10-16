@@ -348,3 +348,30 @@ def test_catalog_commit_waits_for_a_save_started_after_open_request(
         permit_save.set()
         qtbot.waitUntil(lambda: window.save_job is None and not window.history_opener.jobs
                         and not window.history_workflow.loader.jobs, timeout=30000)
+
+
+def test_portable_transient_inspection_uses_embedded_geometry_after_import_is_removed(
+        guided_window, qtbot, tmp_path):
+    project, transient = load_project(Path(__file__).parent / "fixtures" / "legacy_transient_e18.etl")
+    imported = tmp_path / "owned-import.gds"
+    imported.write_bytes(Path(project.layout.path).read_bytes())
+    project.layout.path = str(imported)
+    for result in [transient, *transient.transient.snapshots]:
+        result.configuration = deepcopy(result.configuration)
+        result.configuration["layout"]["path"] = str(imported)
+    source = tmp_path / "portable-transient.etlayout"
+    save_project(project, source, transient, history=[transient], archive_format=3)
+    imported.unlink()  # Only the fixture-owned import; the selected archive is retained.
+    window = guided_window
+    store = opened(window, qtbot, source)
+    window.inspect_result(store.history[0])
+    qtbot.waitUntil(lambda: window.inspection_context is not None and not window.history_workflow.loader.jobs,
+                    timeout=30000)
+    _idle(window, qtbot)
+    resolved = Path(window.project.layout.path)
+    assert resolved.is_file() and resolved != imported
+    assert window.project.layout.sha256 == transient.configuration["layout"]["sha256"]
+    assert window.geometry is not None
+    assert window.result.configuration_hash == transient.configuration_hash
+    window.return_to_project()
+    _idle(window, qtbot)

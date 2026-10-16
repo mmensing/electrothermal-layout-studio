@@ -24,7 +24,9 @@ history. A single run can also contain identical arrays in different field roles
 ZIP compression does not share a dictionary between separate run entries.
 
 The current aggregate expanded-data budget is 2,000,000,000 bytes, with at most
-100,000 recursive entries, depth 3 and 20,000,000 bytes per metadata document.
+100,000 recursive entries, legacy ZIP nesting depth 3 and 20,000,000 bytes per
+metadata document. Schema 3 separately limits its object-reference graph to
+depth 16.
 These are safety limits, not compression targets. The current writer verifies the
 finished temporary archive before atomic replacement. None of those safeguards
 should be removed to obtain smaller files or faster measurements.
@@ -34,7 +36,7 @@ should be removed to obtain smaller files or faster measurements.
 Run the opt-in harness from a source checkout; ordinary CI does not run it:
 
 ```powershell
-python scripts/benchmark_archive_history.py --output artifacts/archive-history-baseline
+python scripts/benchmark_archive_history.py --output "$env:TEMP\etl-bench-new" --formats 2 3 --repeats 3 --reader-phases eager lazy-startup lazy-full
 ```
 
 The output directory must be new. It holds actual generated layouts, solved
@@ -67,12 +69,42 @@ are outside the save/open timings.
 - **Transient:** the configured E19 multilayer thermal example, retaining all
   101 actual snapshots. Fields, time order and thermal-history rows are preserved.
 
-The harness verifies reopened mesh/field array dtype, shape and logical C-order
+The current checker independently traverses every declared `SimulationResult`,
+`PlanarMesh` and `TransientHistory` dataclass field. It retains array dtype,
+shape and logical C-order bytes, NumPy scalar types/bytes, native floating-point
+bit patterns, mapping key types, tuple/list distinctions, configuration,
+execution, diagnostics, metrics, times and every retained frame. Only the
+relocated path of a SHA-identified source layout is normalized. Reopened project
+values, document identity, record count and order are also checked. The checker
+does not call the archive codec. Expected fingerprints may be computed once for
+each immutable input-pool entry; every actual reopened record/frame is checked
+independently. Preparation and comparison are excluded from save/open timers.
+
+Use `--inputs-from` to copy the exact solved input archive bytes, and
+`--runtime-root` with the same checkout in `PYTHONPATH` to select a frozen
+runtime. Receipts record both runtime and harness revision/hash. Three fresh
+processes per case yield medians and observed ranges, not confidence intervals.
+Reader-only modes separate eager opening, catalog plus one exact stored frame/run,
+and a complete sequential lazy scan. The last includes independent fingerprinting
+and must not be compared directly with eager I/O-only latency.
+
+On Windows, choose a short, newly owned output root. Generated layout-cache
+filenames include a 64-character source hash in addition to case/temporary
+directories. An initial deeply nested measurement directory exceeded native
+path limits; its failures were retained, and the entire unchanged matrix was
+restarted in a short root. No successful observations were substituted from that
+failed attempt. A separately retained exploratory run exposed repeated transient
+metadata inspection; it was stopped before optimization and final measurement.
+
+<details>
+<summary>Historical schema-2 prototype evidence (one observation per row)</summary>
+
+The initial harness verified reopened mesh/field array dtype, shape and logical C-order
 bytes, configuration and physics hashes, metrics, terminals, transient times and
-rows. It separately counts equal SHA-256 hashes of existing uncompressed NPY,
-layout and metadata members. The digest does not independently assert every
-execution or diagnostic metadata member; the proposed format must add that
-complete typed-metadata coverage before migration is enabled. Counting repeated
+rows. It separately counted equal SHA-256 hashes of existing uncompressed NPY,
+layout and metadata members. That initial digest did not independently assert every execution or diagnostic
+metadata member. The complete typed checks now implemented supersede that
+limited verification; the following values remain historical observations. Counting repeated
 payload is **not** a
 measurement of schema-3 compression, speedup or future memory savings.
 
@@ -129,7 +161,10 @@ as intended. This small compatibility check is separate from the original
 reader. A separate exact-file reader-allocation diagnostic is also not a new
 writer benchmark. Header inspection remains eager, not lazy history startup.
 
-## Proposed representation
+
+</details>
+
+## Implemented representation
 
 Keep a self-contained ZIP and the `.etl` / `.etlayout` extensions. A versioned
 root declares `format: etlayout`, `schema_version: 3`, the stable document ID,
@@ -275,6 +310,7 @@ second deflate pass also deserves measurement. External object stores and a
 custom database/container would add portability, trust and migration complexity
 that is not justified by these measurements.
 
-Lazy history should build on the reviewed object/reference contract. It requires
-its own metadata catalog, bounded cache, corruption policy, mutable-API adapter
-and consumer migration. Archive-only measurements do not establish lazy-startup performance.
+The implemented [metadata-first history consumer](lazy-run-history.md) uses this
+object/reference contract with an explicit catalog, bounded cache, immutable
+leases and eager compatibility adapter. Archive-only measurements do not
+establish GUI responsiveness or packaged-build performance.
