@@ -206,10 +206,10 @@ def test_background_geometry_failure_is_visible_and_opens_layout(guided_window, 
     assert all('missing-maintenance.gds' not in text for text in messages)
     assert 'missing-maintenance.gds' not in window.console.toPlainText()
     assert guided.last_error_stage == 'layout'
+    guided.navigate('conditions')
     action = next(control for control in guided.issue_table.cellWidget(row, 3).findChildren(QPushButton)
                   if control.text() == 'Open setup')
-    assert action.isEnabled()
-    guided.navigate('conditions')
+    assert action.isEnabled() and action.isVisible()
     _click(window, action)
     assert guided.stage == 'layout'
 
