@@ -485,9 +485,9 @@ def corresponding_sources(windows_profile):
     import hashlib
     _path, _policy, _files, root, _profile, _manifest = windows_profile
     (root / 'packaging/license-texts').mkdir(parents=True)
-    (root / 'packaging/license-texts/GPL-3.0.txt').write_bytes((ROOT / 'packaging/license-texts/GPL-3.0.txt').read_bytes())
-    (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').write_bytes(
-        (ROOT / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes())
+    for notice in ('GPL-3.0.txt', 'Pillow-embedded-font-notices.txt', 'Generated-data-notices.txt'):
+        (root / 'packaging/license-texts' / notice).write_bytes(
+            (ROOT / 'packaging/license-texts' / notice).read_bytes())
     assets = root.parent / 'complete-source'
     assets.mkdir()
     sources, contents, grouped = [], {}, {}
@@ -521,7 +521,9 @@ def corresponding_sources(windows_profile):
             'SOURCE_CATALOG.json': catalog_bytes, 'SOURCE_INDEX.json': json.dumps(index).encode(),
             'licenses/GPL-3.0.txt': (root / 'packaging/license-texts/GPL-3.0.txt').read_bytes(),
             'licenses/Pillow-embedded-font-notices.txt':
-                (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes()})
+                (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes(),
+            'licenses/Generated-data-notices.txt':
+                (root / 'packaging/license-texts/Generated-data-notices.txt').read_bytes()})
     inspections = {name: {'inspection_kind': 'source' if name.startswith('etlayout-') else 'third-party-source'}
                    for name in envelopes}
     return root, assets, envelopes, inspections
@@ -541,7 +543,7 @@ def write_corresponding_sources(fixture):
 
 @pytest.mark.parametrize('change', ['none', 'missing_application', 'application_kind', 'application_bytes',
     'application_commit', 'missing_part', 'part_kind', 'missing_archive', 'archive_hash', 'archive_size',
-    'extra_archive', 'part_catalog', 'part_index', 'gpl_text', 'font_notice', 'missing_font_notice', 'unsafe_member'])
+    'extra_archive', 'part_catalog', 'part_index', 'gpl_text', 'font_notice', 'missing_font_notice', 'generated_notice', 'missing_generated_notice', 'unsafe_member'])
 def test_binary_corresponding_source_gate_requires_complete_exact_assets(corresponding_sources, change):
     root, _assets, envelopes, inspections = corresponding_sources
     app = f'etlayout-{VERSION}-source.zip'
@@ -579,6 +581,10 @@ def test_binary_corresponding_source_gate_requires_complete_exact_assets(corresp
         envelopes[part]['licenses/Pillow-embedded-font-notices.txt'] = b'Incomplete permission.'
     elif change == 'missing_font_notice':
         del envelopes[part]['licenses/Pillow-embedded-font-notices.txt']
+    elif change == 'generated_notice':
+        envelopes[part]['licenses/Generated-data-notices.txt'] = b'Incomplete copied-data permission.'
+    elif change == 'missing_generated_notice':
+        del envelopes[part]['licenses/Generated-data-notices.txt']
     elif change == 'unsafe_member':
         envelopes[part]['../outside.tar.gz'] = b'Unsafe.'
     paths = write_corresponding_sources(corresponding_sources)

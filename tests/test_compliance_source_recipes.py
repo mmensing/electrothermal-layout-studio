@@ -227,3 +227,24 @@ def test_qt_attribution_normalization_keeps_all_notice_values(tmp_path):
     assert normalized.count(b'"Comment"') == 2
     assert json.loads(normalized, object_pairs_hook=list) == json.loads(
         duplicates, strict=False, object_pairs_hook=list)
+
+
+@pytest.mark.parametrize("source_id,generator,entries", [
+    ("wcwidth-0.3.0", "upstream-make-width-tables.py.txt", 21),
+    ("emoji-0.5.4", "upstream-make-emoji.py.txt", 3608),
+])
+def test_rich_generated_runtime_data_preserves_preferred_sources(source_id, generator, entries):
+    import json
+    catalog = json.loads((ROOT / "packaging/third-party-sources.json").read_text(encoding="utf-8"))
+    sources = {row["id"]: row for row in catalog["sources"]}
+    owners = catalog["python_module_sources"]["rich"]
+    assert "rich-15.0.0" in owners and source_id in owners
+    assert source_id in sources["rich-15.0.0"]["derived_table_source_ids"]
+    row = sources[source_id]
+    assert row["normalization"]["omission_prefixes"] == []
+    assert row["generated_runtime_data"].get("tables", row["generated_runtime_data"].get("entries")) == entries
+    relative = "packaging/source-recipes/rich-15.0.0/" + generator
+    assert row["generated_runtime_data"]["upstream_generator"] == relative
+    recipe_hashes = {item["path"]: item["sha256"] for item in catalog["source_recipe_files"]}
+    assert hashlib.sha256((ROOT / relative).read_bytes()).hexdigest() == recipe_hashes[relative]
+    assert "not asserted" in str(row["generated_runtime_data"])

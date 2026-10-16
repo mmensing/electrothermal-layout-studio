@@ -103,6 +103,17 @@ retain their GPL 2.0-or-later terms. The catalog maps each non-standard-library 
 outer hook to its actual source owner; standard-library roots use the recorded
 CPython source. Imported module names alone do not establish copyright ownership.
 
+Rich's generated Unicode widths and emoji aliases have explicit additional
+preferred data sources: wcwidth 0.3.0 and emoji 0.5.4. All 21 width tables/VS16
+sets and 3,608 name/code pairs match those sources under Rich's original
+generators. This establishes data correspondence, not the original developer's
+generator environment. Both source archives, the omitted-from-sdist Rich
+upstream generators and their original grants are supplied; see
+[the generation inputs](../packaging/source-recipes/rich-15.0.0/README.md).
+FontTools' supplied source retains its Adobe glyph lists, editable Unicode
+tables and MetaTools generator. Runtime metadata distinguishes these data
+licenses from source-only cu2qu and omitted optional font media.
+
 The NumPy/SciPy OpenBLAS DLLs embed libgfortran paths identifying GCC 10.3.0;
 these are separate from the rebuilt Gmsh GCC 16.2 runtime. Their exact published
 Windows link recipes use gfortran/static runtimes and check that libquadmath is

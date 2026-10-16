@@ -463,7 +463,7 @@ def inspect_corresponding_sources(root, assets, inspections, version, commit):
         declared[name] = identities
     require(set(declared) == set(grouped), 'Source catalog omits a corresponding-source bundle part')
     allowed_metadata = {'README.md', 'SOURCE_INDEX.json', 'SOURCE_CATALOG.json', 'licenses/GPL-3.0.txt',
-                        'licenses/Pillow-embedded-font-notices.txt'}
+                        'licenses/Pillow-embedded-font-notices.txt', 'licenses/Generated-data-notices.txt'}
     for name, entries in grouped.items():
         require(name in by_name and inspections[name].get('inspection_kind') == 'third-party-source',
                 'Windows binary requires every catalog source bundle as a reviewed third-party-source asset')
@@ -477,12 +477,10 @@ def inspect_corresponding_sources(root, assets, inspections, version, commit):
                         'Corresponding-source archive bytes differ from the committed catalog')
             require(_source_metadata(archive, members['SOURCE_CATALOG.json']) == catalog_bytes,
                     'Source-part catalog differs from the committed source catalog')
-            require(_source_metadata(archive, members['licenses/GPL-3.0.txt']) ==
-                    (root / 'packaging/license-texts/GPL-3.0.txt').read_bytes(),
-                    'Source-part GPL license text differs from the retained license')
-            require(_source_metadata(archive, members['licenses/Pillow-embedded-font-notices.txt']) ==
-                    (root / 'packaging/license-texts/Pillow-embedded-font-notices.txt').read_bytes(),
-                    'Source-part embedded-font notices differ from the retained permissions')
+            for notice in ('GPL-3.0.txt', 'Pillow-embedded-font-notices.txt', 'Generated-data-notices.txt'):
+                require(_source_metadata(archive, members['licenses/' + notice]) ==
+                        (root / 'packaging/license-texts' / notice).read_bytes(),
+                        'Source-part license/notices differ from the retained permissions')
             index = json.loads(_source_metadata(archive, members['SOURCE_INDEX.json']))
             indexed = [{key: entry[key] for key in ('id', 'filename', 'bytes', 'sha256')}
                        for entry in sorted(entries, key=lambda entry: entry['id'])]
