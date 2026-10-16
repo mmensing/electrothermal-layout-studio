@@ -246,3 +246,19 @@ Direct `export_finalist` calls using candidate JSON outside its source directory
 supply `resource_policy=ExternalResourcePolicy(allowed_root=experiment_directory)`.
 The shared GUI/CLI workflow derives this bounded grant from the user-selected
 experiment directory, never from a saved history declaration alone.
+
+
+Standalone desktop acceptance runners use `isolate_acceptance_settings(output)`
+from `scripts/desktop_acceptance_support.py`. It installs process-local aliases on
+both the main window and layout editor using explicit file-backed `IniFormat`
+settings with fallbacks disabled, including snap-grid preferences. Module-local
+standard-path facades also isolate eager recovery-store initialization and cache
+fallbacks before construction, while Qt's global classes remain unchanged. Qt's
+`QSettings(organization, application)` overload can still choose native settings
+after `setDefaultFormat`/`setPath`; changing those globals does not isolate QA.
+Pytest uses the same pure `acceptance_settings_factory(output)` through scoped
+monkeypatches. Never read, clear or restore normal user settings from acceptance
+code. Generic `--smoke-test` owns temporary settings, material DB, recovery and
+layout caches until workers and the owned window have closed; editor smoke keeps
+its explicitly selected output directory. Ordinary GUI startup retains normal
+persistent preferences. These are validation helpers, not a new application API.

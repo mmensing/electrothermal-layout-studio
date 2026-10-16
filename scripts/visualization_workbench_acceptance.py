@@ -33,8 +33,8 @@ def main(argv=None):
         os.environ.pop("QT_QPA_PLATFORM", None)
 
     import numpy as np
-    from desktop_acceptance_support import prepare_desktop_fonts
-    from PySide6.QtCore import QPoint, QPointF, QSettings, Qt
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from PySide6.QtCore import QPoint, QPointF, Qt
     from PySide6.QtGui import QWheelEvent
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QDockWidget, QLabel, QMessageBox
@@ -50,10 +50,7 @@ def main(argv=None):
 
     output = args.output.resolve() / (f"{'offscreen' if args.offscreen else 'native'}-{args.scale:g}x")
     output.mkdir(parents=True, exist_ok=True)
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(output / "settings"))
-    isolated_settings = QSettings("etlayout", "Electrothermal Layout Studio")
-    isolated_settings.setFallbacksEnabled(False)
+    isolated_settings = isolate_acceptance_settings(output)
     isolated_settings.clear()
     isolated_settings.sync()
     app = QApplication(["visualization-workbench-acceptance"])
