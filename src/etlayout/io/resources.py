@@ -343,12 +343,15 @@ def inspect_project(
                         if not record["available"]:
                             continue  # Unavailable rows confer no resource authority.
                         descriptor = reader._descriptor(record["id"])
+                        resource_key = reader.layout_resource_key(record["id"])
+                        if resource_key == "layout":
+                            continue  # The identical current source is already declared.
                         setup = descriptor["project"]["layout"]
                         embedded_ref = descriptor["layout"]
                         location = reader.object_name(embedded_ref["$ref"]) if embedded_ref else setup["path"]
                         if location:
                             resources.append(classify_resource(location, source, embedded=bool(embedded_ref),
-                                key=_prefix + record["id"] + ":layout", expected_sha256=setup["sha256"]))
+                                key=_prefix + resource_key, expected_sha256=setup["sha256"]))
                     return ProjectInspection(source, project, tuple(resources), raw, metadata)
             if (
                 not isinstance(metadata, dict)

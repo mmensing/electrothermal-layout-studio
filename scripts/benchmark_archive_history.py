@@ -437,6 +437,8 @@ def main(argv=None):
     parser.add_argument("--formats", type=int, nargs="+", default=[2], choices=(2, 3))
     parser.add_argument("--repeats", type=int, default=3, help="Fresh process observations; timings include no cache flush")
     parser.add_argument("--inputs-from", type=Path, help="Reuse byte-identical solved inputs from a previous output directory")
+    parser.add_argument("--runtime-root", type=Path,
+                        help="Explicit frozen checkout used through PYTHONPATH; defaults to this harness checkout")
     parser.add_argument("--reader-phases", nargs="*", default=[], choices=("eager", "lazy-startup", "lazy-full"),
                         help="Additional fresh reader-only processes; lazy modes require schema 3")
     parser.add_argument("--max-rss-gib", type=float, default=3.)
@@ -465,11 +467,13 @@ def main(argv=None):
     git = shutil.which("git")
     if git is None:
         parser.error("Run this source benchmark with Git available for exact revision provenance")
-    revision = subprocess.check_output([git, "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
-    dirty = subprocess.check_output([git, "-C", str(source), "status", "--porcelain"], text=True).strip()
+    runtime = args.runtime_root.resolve(strict=True) if args.runtime_root else source
+    revision = subprocess.check_output([git, "-C", str(runtime), "rev-parse", "HEAD"], text=True).strip()
+    dirty = subprocess.check_output([git, "-C", str(runtime), "status", "--porcelain"], text=True).strip()
+    harness_revision = subprocess.check_output([git, "-C", str(source), "rev-parse", "HEAD"], text=True).strip()
     import etlayout
-    require(Path(etlayout.__file__).resolve().is_relative_to(source / "src"),
-            "Benchmark runtime differs from this checkout; set PYTHONPATH to this checkout's src")
+    require(Path(etlayout.__file__).resolve().is_relative_to(runtime / "src"),
+            "Benchmark runtime differs from the selected checkout; set PYTHONPATH to its src")
     output.mkdir(parents=True, exist_ok=False)
     temporary = output / "preparation-temp"
     temporary.mkdir()
@@ -502,9 +506,14 @@ def main(argv=None):
                               "replicate", "reader_mode", "save_seconds", "history_ready_seconds", "peak_rss_bytes", "status")}), flush=True)
                         (output / "measurements.json").write_text(json.dumps(records, indent=2), encoding="utf-8")
                         (output / "summary.json").write_text(json.dumps(summarize(records), indent=2), encoding="utf-8")
-                        if not record.get("round_trip_exact"):
+                        if not record.get("round_trip_exact") and mode is None:
+                            # A failed save has no verified target. Reader-only
+                            # failures are independent: retain them and continue
+                            # the other explicit reader observations on this file.
                             break
-    receipt = {"writer_revision": revision, "worktree_dirty": bool(dirty),
+    require(subprocess.check_output([git, "-C", str(runtime), "rev-parse", "HEAD"], text=True).strip() == revision,
+            "Runtime revision changed during measurement; do not compare mixed source revisions")
+    receipt = {"writer_revision": revision, "harness_revision": harness_revision, "worktree_dirty": bool(dirty),
         "harness_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "input_sha256": input_hashes,
         "peak_rss_scope": "Sampled 10ms aggregate of owned launcher and descendant Python processes; imports and validation included",
         "storage_only": True, "repeated_pool_entries_are_not_independent_analyses": True,
