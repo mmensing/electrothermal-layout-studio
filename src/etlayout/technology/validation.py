@@ -13,6 +13,8 @@ def validate_project(project: Project, raise_errors: bool = True, *, initial_sta
     def error(message, obj=""):
         messages.append(Diagnostic("error", message, obj))
 
+    if getattr(project, "_resource_unresolved", False):
+        error("Project resources are unresolved; review resources or relink the layout before preparation or simulation", "layout")
     if not project.layers:
         error("Add at least one physical layer before simulating")
     for collection, label in [(project.layers, "layer"), (project.terminals, "terminal"),

@@ -17,6 +17,37 @@ the canvas and inspector share available space; resizing is preferable to reduci
 font size. The light theme uses blue interaction controls; dark mode is
 under View.
 
+## Opening projects and resource trust
+
+Opening a project first inspects bounded metadata and resource declarations. Embedded
+layouts open normally. Local layouts within the project directory are checked before
+geometry preparation; an outside-root layout requires explicit approval. UNC paths,
+extended UNC paths, mapped network drives and links to network locations require a
+separate network opt-in. Approving outside-root files does not approve network access.
+A network-hosted project container itself needs approval before it is read.
+
+![Resource review for a synthetic, unopened network layout](images/desktop/resource-review.png)
+
+**Review project resources…** in File lists each location, its boundary and its access
+status. Unapproved locations are not probed for availability. Authorize selected
+resources, choose **Relink layout…**, leave the project unresolved, or cancel. Relinking
+is explicit and drops stored result/history attachment when it changes the source.
+A changed layout hash requires relinking/reimporting; it is not silently accepted.
+The ordinary File relink action uses the same review boundary.
+
+An unresolved project retains editable metadata and physical settings, but preparation,
+layout editing, Run, studies and portable archive saving are disabled. Review resources
+to continue. Cancel leaves the current document intact. Approval is local to this opening
+and is not embedded as a permanent trust grant in the project.
+
+Self-contained archives extract validated embedded layouts to the local temporary
+`etlayout-layouts` cache, keyed by SHA-256. The cache may outlive the session and can be
+removed when no project is using it; the next opening reconstructs it from the archive.
+Metadata inspection retains the selected container bytes in memory until resolution.
+Resource review is a trust boundary, not a sandbox against a hostile local process
+changing filesystem links during an authorized read. Use a local copy of untrusted
+network projects when stronger isolation is needed.
+
 ## Choose analysis first
 
 The header offers DC electrical, steady thermal, coupled DC electrothermal,

@@ -245,3 +245,24 @@ def test_application_csv_writers_cannot_bypass_the_shared_policy():
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
                 assert not (isinstance(node.func.value, ast.Name) and node.func.value.id == "csv" and
                             node.func.attr in {"writer", "DictWriter"}), str(path)
+
+
+@pytest.mark.fast
+def test_report_provenance_never_probes_metadata_resource_locations(report_case, monkeypatch):
+    project, result = report_case
+    project.layout.path = r"\\example.invalid\private\layout.gds"
+    project.layout.sha256 = ""
+    result.configuration = project.to_dict()
+    result.physics_hash = physics_hash(project, resolve_layout=False)
+    calls = []
+    for name in ("stat", "is_file", "exists", "open", "read_bytes"):
+        original = getattr(Path, name)
+        def probe(self, *args, _name=name, _original=original, **kwargs):
+            if "example.invalid" in str(self):
+                calls.append(_name)
+                raise AssertionError("Report metadata caused filesystem access")
+            return _original(self, *args, **kwargs)
+        monkeypatch.setattr(Path, name, probe)
+    context = prepare_report_context(result, deepcopy(project))
+    assert context.result.physics_hash == result.physics_hash
+    assert calls == []

@@ -120,6 +120,8 @@ def prepare_geometry(project: Project, progress=None, cancel=None, *,
     a second GUI extraction. Both reading and polygon conversion accept cancel
     checkpoints; a GUI may terminate its worker during native kernel calls.
     """
+    from etlayout.io.resources import require_resources
+    require_resources(project)
     checkpoint(cancel, progress, .0, "Reading layout geometry")
     masks = {}
     import_diagnostics = []

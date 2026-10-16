@@ -33,6 +33,7 @@ from etlayout.io.project import (
     save_json,
     save_project,
 )
+from etlayout.io.resources import ExternalResourcePolicy
 from etlayout.models import Cancelled, RefinementRegion, RegionSpec, SimulationError, checkpoint
 from etlayout.power.analysis import analyze_power
 from etlayout.power.measurement_contract import has_acceptance_limit, validate_limits
@@ -695,7 +696,7 @@ def run_experiment(project, experiment_id, output_dir, progress=None, cancel=Non
             checkpoint(cancel, progress, .7+.25*index/max(1,len(verification)), f"Refining {row['id']}")
             if row.get("verification", {}).get("levels"):
                 continue
-            candidate, _ = load_project(row["project_path"])
+            candidate, _ = load_project(row["project_path"], external_policy=ExternalResourcePolicy(allowed_root=root))
             row["verification"] = _refine(candidate, experiment, row, root/row["id"]/"verification", cancel=cancel, execution=execution)
             _atomic_json(path, history)
         base_evidence = baseline.get("verification", {})
@@ -774,7 +775,8 @@ def run_experiment(project, experiment_id, output_dir, progress=None, cancel=Non
     return history
 
 
-def export_finalist(project, history, candidate_id, output_dir, progress=None, cancel=None, execution=None):
+def export_finalist(project, history, candidate_id, output_dir, progress=None, cancel=None, execution=None,
+                    resource_policy=None):
     if isinstance(history, (str, Path)):
         history = json.loads(Path(history).read_text(encoding="utf-8"))
     experiment = next((e for e in project.power.experiments if e.id == history.get("experiment_id")), None)
@@ -787,7 +789,14 @@ def export_finalist(project, history, candidate_id, output_dir, progress=None, c
     root.mkdir(parents=True, exist_ok=True)
     if (root / "verification.json").exists():
         raise SimulationError("Choose a new verification export directory")
-    candidate, _ = load_project(row["project_path"])
+    # run_experiment retained the already-authorized source in this workspace.
+    # Do not derive a wider trust scope from an arbitrary history declaration.
+    if resource_policy is None:
+        artifact_root = Path(project.layout.path).absolute().parent.parent
+        if artifact_root != Path(history.get("output_dir", "")).absolute():
+            raise SimulationError("Supply the explicitly selected experiment workspace policy before export")
+        resource_policy = ExternalResourcePolicy(allowed_root=artifact_root)
+    candidate, _ = load_project(row["project_path"], external_policy=resource_policy)
     candidate, _ = _refined_project(candidate, experiment.refinement_factors[-1], row)
     report = {"candidate_id": candidate_id, "status": "unverified", "formats": {}, "baseline": "baseline",
               "cache_key": history["cache_key"], "mesh_comparison": row["verification"]["baseline_comparison"]}

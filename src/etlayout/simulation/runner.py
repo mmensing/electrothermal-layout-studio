@@ -64,9 +64,11 @@ def _remember(cache, key, value, size, budget):
 
 
 def _verify_layout(project):
+    from etlayout.io.resources import require_resources
+    require_resources(project)
     if project.layout.path:
         if not Path(project.layout.path).is_file():
-            raise SimulationError(f"Layout is missing: {project.layout.path}. Relink the source in the project editor.")
+            raise SimulationError("Layout is missing. Relink the source in the project editor.")
         digest = file_hash(project.layout.path)
         if project.layout.sha256 and digest != project.layout.sha256:
             raise SimulationError("Layout content changed. Reimport or relink before running.")

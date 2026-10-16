@@ -175,7 +175,7 @@ def prepare_report_context(result: SimulationResult, project: Project | None = N
     source = {key: value for key, value in result.configuration.items() if key != "visualization"}
     if project is None:
         project = project_from_dict(source) if source else Project(name="Electrothermal simulation")
-    elif physics_hash(project) != physics_hash(source):
+    elif physics_hash(project, resolve_layout=False) != physics_hash(source, resolve_layout=False):
         project = project_from_dict(source)
     rendered = replace(result, diagnostics=list(result.diagnostics))
     if visualization.get("kind") != "difference":
