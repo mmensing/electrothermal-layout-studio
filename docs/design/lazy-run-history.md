@@ -34,7 +34,7 @@ The one-record history call has no historical payload. RSS includes imports, the
 input pool, integrity/equality checks, save and load; it is not attributable solely
 to opening. OS storage caches were not flushed and there is one replicate, so no
 uncertainty interval or speedup is established. The prerequisite RFC records the
-Python/Qt/host configuration, varied-content/transient matrix and exact workload.
+Python/NumPy/host configuration, varied-content/transient matrix and exact workload.
 
 ## Current metadata-inspection measurements
 
