@@ -328,10 +328,20 @@ def test_source_changed_after_snapshot_cannot_silently_rebind_archive(tmp_path):
     assert archive_io.load_project(target)[0].layout.sha256 == project.layout.sha256
 
 
-def _inspect_synthetic_history(window):
-    _, historical = case()
-    historical.configuration["name"] = "read-only historical setup"
+@pytest.fixture(scope="module")
+def historical_e1(tmp_path_factory):
+    from etlayout.examples import make_example
+    from etlayout.simulation.runner import run_project
+
+    project = make_example("E1", tmp_path_factory.mktemp("history-save-E1"))
+    result = run_project(project)
+    assert result.converged
+    return result
+
+
+def _inspect_synthetic_history(window, qtbot, historical):
     window.inspect_result(historical)
+    qtbot.waitUntil(lambda: not window.prepare_job and not window.hierarchy_jobs, timeout=30000)
     QApplication.processEvents()
     assert window.inspection_context is not None
     return (window.inspection_context, window.project, window.result, window.path,
@@ -346,10 +356,10 @@ def _assert_historical_context(window, before):
 
 
 @pytest.mark.parametrize("decision", ["cancel", "save_as_cancel"])
-def test_cancelled_navigation_preserves_historical_context(saving_window, monkeypatch, decision):
+def test_cancelled_navigation_preserves_historical_context(saving_window, qtbot, monkeypatch, decision, historical_e1):
     window = saving_window
     window.dirty = True
-    before = _inspect_synthetic_history(window)
+    before = _inspect_synthetic_history(window, qtbot, historical_e1)
     choice = QMessageBox.StandardButton.Cancel if decision == "cancel" else QMessageBox.StandardButton.Save
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: choice)
     monkeypatch.setattr(QFileDialog, "getSaveFileName", lambda *a, **k: ("", ""))
@@ -361,7 +371,7 @@ def test_cancelled_navigation_preserves_historical_context(saving_window, monkey
 
 
 @pytest.mark.parametrize("fails", [False, True], ids=["durable", "write_failure"])
-def test_save_before_navigation_preserves_history_until_durable(saving_window, qtbot, tmp_path, monkeypatch, fails):
+def test_save_before_navigation_preserves_history_until_durable(saving_window, qtbot, tmp_path, monkeypatch, fails, historical_e1):
     import etlayout.gui.saving as gui_saving
 
     window = saving_window
@@ -371,7 +381,7 @@ def test_save_before_navigation_preserves_history_until_durable(saving_window, q
     window.project.notes = "working edit to persist"
     window.dirty = True
     working = window.project
-    before = _inspect_synthetic_history(window)
+    before = _inspect_synthetic_history(window, qtbot, historical_e1)
     monkeypatch.setattr(QMessageBox, "question", lambda *a, **k: QMessageBox.StandardButton.Save)
     if fails:
         monkeypatch.setattr(gui_saving, "save_project", lambda *a, **k: (_ for _ in ()).throw(OSError("injected save failure")))
