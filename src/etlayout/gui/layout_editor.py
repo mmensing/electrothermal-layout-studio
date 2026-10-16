@@ -218,7 +218,7 @@ class LayoutEditor(QObject):
             return self.finish()
         if not self.workspace.resolve_draft():
             return False
-        if w.model_locked() or not w.project.layout.path:
+        if w.model_locked() or not w.project.layout.path or getattr(w.project, "_resource_unresolved", False):
             self.workspace.next_reason.setText("Open an imported GDSII/OASIS layout in the working setup before vertex editing.")
             return False
         if not self.workspace.navigate("layout"):

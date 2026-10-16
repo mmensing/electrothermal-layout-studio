@@ -20,7 +20,7 @@ def main():
     args = parser.parse_args()
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    from desktop_acceptance_support import prepare_desktop_fonts
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
@@ -28,6 +28,7 @@ def main():
     from etlayout.gui.main_window import MainWindow
 
     args.output.mkdir(parents=True, exist_ok=True)
+    isolate_acceptance_settings(args.output)
     app = QApplication.instance() or QApplication([])
     prepare_desktop_fonts(app, args.output)
     project = make_example("E1", args.output / "inputs")

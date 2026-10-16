@@ -13,12 +13,19 @@ import zipfile
 from copy import copy, deepcopy
 from dataclasses import asdict, fields, is_dataclass, replace
 from functools import cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Union, get_args, get_origin, get_type_hints
 
 import numpy as np
 
 from etlayout import __version__
+from etlayout.io.resources import (
+    ExternalResourcePolicy,
+    ProjectInspection,
+    inspect_project,
+    require_resources,
+    resolve_layout,
+)
 from etlayout.models import (
     Diagnostic,
     PlanarMesh,
@@ -135,7 +142,7 @@ def configuration_hash(project: Project | dict) -> str:
                                      allow_nan=False).encode()).hexdigest()
 
 
-def physics_hash(project: Project | dict) -> str:
+def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str:
     """Identify a calculation independently of names, annotations and display state.
 
     Legacy dictionaries acquire current default settings before comparison. A
@@ -196,7 +203,8 @@ def physics_hash(project: Project | dict) -> str:
     for key in ("name", "notes", "display_roi", "sweeps", "thresholds"):
         data.pop(key, None)
     layout = data["layout"]
-    if not layout["sha256"] and layout["path"] and Path(layout["path"]).is_file():
+    if (resolve_layout and not getattr(snapshot, "_resource_unresolved", False)
+            and not layout["sha256"] and layout["path"] and Path(layout["path"]).is_file()):
         layout["sha256"] = file_hash(layout["path"])
     if layout["sha256"]:
         layout["path"] = ""
@@ -307,6 +315,7 @@ def estimate_project_archive(project: Project, result: SimulationResult | None =
     It is a preflight estimate; save also inspects the completed temporary archive
     before replacing a destination. No large array copies/compression are needed.
     """
+    require_resources(project)
     from etlayout.io.transient import _array_storage_size, _encoded_metadata
     used = metadata_bytes = entries = 0
     largest_metadata = 0
@@ -381,6 +390,13 @@ def inspect_archive_size(path, *, _archive_data=None) -> dict:
             raise SimulationError("Project archive exceeds its nesting budget")
         with zipfile.ZipFile(source) as archive:
             members = archive.infolist()
+            for member in members:
+                name = member.filename
+                if ("\\" in name or PurePosixPath(name).is_absolute()
+                        or ".." in PurePosixPath(name).parts or ":" in name):
+                    raise SimulationError("Project archive contains an unsafe member name")
+                if (member.external_attr >> 16) & 0o170000 == 0o120000:
+                    raise SimulationError("Project archive contains a symbolic link")
             if len({item.filename for item in members}) != len(members):
                 raise SimulationError("Project archive contains duplicate member names")
             entries += len(members)
@@ -605,25 +621,33 @@ def diagnose_legacy_fields(result: SimulationResult) -> None:
                 result.analysis["legacy_ambiguous_layers"].append(layer)
 
 
-def load_project(path: str | Path, *, _archive_data: bytes | None = None) -> tuple[Project, SimulationResult | None]:
-    source = Path(path)
-    if source.suffix.lower() == ".json":
-        try:
-            data = json.loads(source.read_text(encoding="utf-8"))
-        except (ValueError, OSError) as exc:
-            raise SimulationError(f"Cannot load project {source.name}: {exc}") from exc
-        project = project_from_dict(data.get("project", data) if isinstance(data, dict) else data)
-        if project.layout.path and not Path(project.layout.path).is_absolute():
-            project.layout.path = str((source.parent / project.layout.path).resolve())
+def load_project(path: str | Path, *, external_policy: ExternalResourcePolicy | None = None,
+                 _archive_data: bytes | None = None, _resource_prefix: str = "") -> tuple[Project, SimulationResult | None]:
+    """Inspect first, then resolve only policy-approved resources (local-root by default)."""
+    policy = external_policy or ExternalResourcePolicy()
+    inspection = inspect_project(path, _archive_data=_archive_data, _prefix=_resource_prefix,
+                                 allow_network_container=policy.allow_network)
+    return resolve_project(inspection, external_policy=external_policy)
+
+
+def resolve_project(inspection: ProjectInspection, *, external_policy: ExternalResourcePolicy | None = None
+                    ) -> tuple[Project, SimulationResult | None]:
+    """Second stage: resolve the exact metadata/container previously inspected."""
+    policy = external_policy or ExternalResourcePolicy()
+    source, _archive_data = inspection.source, inspection.archive_data
+    project = deepcopy(inspection.project)
+    if _archive_data is None:
+        if project.layout.path:
+            location, digest = resolve_layout(inspection, policy)
+            project.layout.path, project.layout.sha256 = str(location), digest
         return project, None
     try:
         inspect_archive_size(source, _archive_data=_archive_data)
         with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as archive:
-            metadata = json.loads(archive.read("project.json"))
+            metadata = inspection.metadata
             if (not isinstance(metadata, dict) or metadata.get("format") != "etlayout"
                     or type(metadata.get("schema_version")) is not int or metadata["schema_version"] not in (1, 2)):
                 raise SimulationError("Unsupported project format/version")
-            project = project_from_dict(metadata["project"])
             if metadata.get("embedded_layout"):
                 raw = archive.read(metadata["embedded_layout"])
                 digest = hashlib.sha256(raw).hexdigest()
@@ -640,25 +664,23 @@ def load_project(path: str | Path, *, _archive_data: bytes | None = None) -> tup
                 project.layout.path = str(cached)
                 project.layout.sha256 = digest
             elif project.layout.path:
-                candidate = Path(project.layout.path)
-                if not candidate.is_absolute():
-                    candidate = source.parent / candidate
-                project.layout.path = str(candidate.resolve())
-                if candidate.is_file() and project.layout.sha256 and file_hash(candidate) != project.layout.sha256:
-                    raise SimulationError("External layout changed since save; explicitly relink/reimport it")
-            if "results/metadata.json" not in archive.namelist():
+                candidate, digest = resolve_layout(inspection, policy)
+                project.layout.path, project.layout.sha256 = str(candidate), digest
+            if inspection.relinked or "results/metadata.json" not in archive.namelist():
                 return project, None
             rm = json.loads(archive.read("results/metadata.json"))
             if not isinstance(rm, dict) or not isinstance(rm.get("arrays"), dict):
                 raise SimulationError("Invalid stored result metadata objects")
             converged = _decode(bool, rm["converged"])
-            recorded_configuration = rm.get("configuration") or metadata["project"]
-            if physics_hash(recorded_configuration) != physics_hash(project):
-                raise SimulationError("Saved result configuration does not match project physical setup")
+            recorded_configuration = rm.get("configuration") or json.loads(archive.read("project.json"))["project"]
             if rm.get("configuration_hash") and rm.get("configuration"):
                 project_from_dict(rm["configuration"])
                 if configuration_hash(rm["configuration"]) != rm["configuration_hash"]:
                     raise SimulationError("Saved result configuration content does not match its hash")
+            if physics_hash(recorded_configuration, resolve_layout=False) != physics_hash(project):
+                if inspection.discard_stale_result:
+                    return project, None
+                raise SimulationError("Saved result configuration does not match project physical setup")
             with np.load(io.BytesIO(archive.read("results/arrays.npz")), allow_pickle=False) as arrays:
                 def group(name):
                     names = _decode(dict[str, str], rm["arrays"].get(name, {}))
@@ -683,7 +705,7 @@ def load_project(path: str | Path, *, _archive_data: bytes | None = None) -> tup
                                       execution=rm.get("execution", {}),
                                       **local_data, analysis=rm.get("analysis", {}),
                                       field_version=_decode(int, rm.get("field_version", 1)),
-                                      physics_hash=rm.get("physics_hash", "") or physics_hash(recorded_configuration))
+                                      physics_hash=rm.get("physics_hash", "") or physics_hash(recorded_configuration, resolve_layout=False))
             _validate_local_fields(result)
             diagnose_legacy_fields(result)
             if result.physics_hash != physics_hash(project):
@@ -708,17 +730,22 @@ def save_json(project: Project, path: str | Path) -> None:
     Path(path).write_text(_json_dump(project.to_dict()), encoding="utf-8")
 
 
-def load_run_history(path: str | Path) -> list[SimulationResult]:
+def load_run_history(path: str | Path, *, external_policy: ExternalResourcePolicy | None = None,
+                     _archive_data: bytes | None = None) -> list[SimulationResult]:
     """Load immutable stored runs without changing load_project's two-value API."""
     source = Path(path)
     if source.suffix.lower() == ".json":
         return []
     history = []
     try:
-        inspect_archive_size(source)
-        with zipfile.ZipFile(source) as archive:
+        if _archive_data is None:
+            inspected = inspect_project(source, allow_network_container=(external_policy or ExternalResourcePolicy()).allow_network)
+            source, _archive_data = inspected.source, inspected.archive_data
+        inspect_archive_size(source, _archive_data=_archive_data)
+        with zipfile.ZipFile(io.BytesIO(_archive_data) if _archive_data is not None else source) as archive:
             for name in sorted(n for n in archive.namelist() if n.startswith("runs/run_") and n.endswith(".etl")):
-                _, result = load_project(source, _archive_data=archive.read(name))
+                _, result = load_project(source, external_policy=external_policy, _archive_data=archive.read(name),
+                                         _resource_prefix=name+":")
                 if result is None:
                     raise SimulationError(f"Saved run {name} has no numerical result")
                 history.append(result)

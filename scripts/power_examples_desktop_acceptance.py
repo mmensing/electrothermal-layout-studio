@@ -83,8 +83,8 @@ def main():
         os.environ.pop("QT_QPA_PLATFORM", None)
     os.environ["QT_SCALE_FACTOR"] = str(args.scale)
     import psutil
-    from desktop_acceptance_support import prepare_desktop_fonts
-    from PySide6.QtCore import QCoreApplication, QEvent, QSettings, Qt, QTimer
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from PySide6.QtCore import QCoreApplication, QEvent, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QMenu, QPushButton
 
@@ -103,8 +103,7 @@ def main():
 
     out = args.output.resolve()
     out.mkdir(parents=True, exist_ok=True)
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(out / "settings"))
+    isolate_acceptance_settings(out)
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
     prepare_desktop_fonts(app, out)

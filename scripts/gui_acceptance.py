@@ -28,7 +28,7 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
-    from desktop_acceptance_support import prepare_desktop_fonts
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
     from PySide6.QtCore import QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QDialogButtonBox, QMessageBox
@@ -41,6 +41,7 @@ def main(argv=None):
     from etlayout.models import SweepSpec
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
+    isolate_acceptance_settings(output)
     baseline = make_example("E4", output / "layouts")
     application = QApplication.instance() or QApplication(["gui_acceptance"])
     application.setStyle("Fusion")
