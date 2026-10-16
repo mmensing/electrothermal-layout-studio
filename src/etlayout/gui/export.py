@@ -2,27 +2,18 @@
 """Vector/raster maps and self-contained HTML reports from actual result data."""
 from __future__ import annotations
 
-import base64
 import math
-from dataclasses import replace
-from html import escape
 from pathlib import Path
 
 from PySide6.QtCore import QBuffer, QIODevice, QRect, QRectF, QSize, Qt
 from PySide6.QtGui import QColor, QFont, QImage, QLinearGradient, QPainter, QPen
 from PySide6.QtSvg import QSvgGenerator
 
-from etlayout.io.project import (
-    _json_dump,
-    annotated_result,
-    physics_hash,
-    project_from_dict,
-    refresh_threshold_diagnostics,
-)
+from etlayout.io.project import _json_dump
+from etlayout.io.reporting import prepare_report_context, render_report
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.palettes import get_colormap
 from etlayout.visualization.sampling import DISPLAY_FIELD_LABELS as FIELD_LABELS
-from etlayout.visualization.sampling import metric_label, metric_unit
 from etlayout.visualization.timing import difference_time_label
 from etlayout.visualization.units import to_display
 
@@ -167,59 +158,13 @@ def export_view(view, path, legend, *, provenance=None):
 
 
 def export_html_report(project, result, view, path, legend, *, provenance=None, run=None):
-    provenance = dict(provenance or result.configuration.get("visualization", {}))
-    difference = provenance.get("kind") == "difference"
-    source_configuration = {key: value for key, value in result.configuration.items() if key != "visualization"}
-    if physics_hash(project) != physics_hash(source_configuration):
-        # Never label foreign results using the currently edited design.
-        project = project_from_dict(source_configuration)
-    result = replace(result, diagnostics=list(result.diagnostics))
-    if not difference:
-        if run is not None:
-            result = annotated_result(result, project, run=run)
-        elif provenance.get("whole_run_metrics"):
-            result = replace(result, metrics={**result.metrics, "whole_run_metrics": provenance["whole_run_metrics"]})
-        refresh_threshold_diagnostics(result, project)
+    context = prepare_report_context(result, project, provenance=provenance, run=run)
     image = QImage(1800, 1100, QImage.Format.Format_ARGB32)
-    map_metadata = render_map(view, image, legend, provenance=provenance)
+    map_metadata = render_map(view, image, legend, provenance=context.provenance)
     buffer = QBuffer()
     buffer.open(QIODevice.OpenModeFlag.WriteOnly)
-    image.save(buffer, "PNG")
-    encoded = base64.b64encode(bytes(buffer.data())).decode("ascii")
-    def table(rows, headings):
-        return "<table><thead><tr>" + "".join(f"<th>{escape(str(x))}</th>" for x in headings) + "</tr></thead><tbody>" + "".join(
-            "<tr>" + "".join(f"<td>{escape(str(value))}</td>" for value in row) + "</tr>" for row in rows) + "</tbody></table>"
-    report_metrics = {**result.metrics, **result.metrics.get("whole_run_metrics", {})}
-    metrics = table([[metric_label(key), to_display(value, metric_unit(key))] for key, value in ({} if difference else report_metrics).items()
-                     if isinstance(value, (int, float, str))], ["Metric", "Value"])
-    layers = table([[x.name, x.material_id, x.role, f"{x.z * 1e6:g}", f"{x.thickness * 1e6:g}"] for x in project.layers],
-                   ["Layer", "Material", "Role", "Bottom z (µm)", "Thickness (µm)"])
-    terminals = table([[name, data.get("voltage", "—"), data.get("current", "—")] for name, data in ({} if difference else result.terminals).items()],
-                      ["Terminal", "Potential (V)", "Current into device (A)"])
-    diagnostics = table([[d.severity, d.object_id, d.message] for d in result.diagnostics], ["Level", "Object", "Diagnostic"])
-    details = escape(_json_dump({"configuration": result.configuration, "report_annotations": {"name": project.name, "notes": project.notes, "thresholds": project.thresholds}, "iterations": result.iterations,
-                                "mesh": result.mesh.statistics, "metrics": {} if difference else result.metrics,
-                                "converged": result.converged,
-                                "displayed_map": map_metadata, "visualization": provenance}))
-    if difference:
-        results_html = ("<h2>Derived difference</h2><p>Current − comparison on common finite support. "
-                        "Original solver metrics and terminal quantities do not describe the difference map and are omitted.</p>"
-                        "<h2>Paired-run provenance</h2><pre>" + escape(_json_dump(provenance)) + "</pre>")
-    else:
-        results_html = f"<h2>Computed metrics</h2>{metrics}<h2>Terminal quantities</h2>{terminals}"
-    status = "Derived difference" if difference else "Converged" if result.converged else "<strong>NOT CONVERGED</strong>"
-    if "time_s" in result.metrics:
-        status += f" · selected snapshot at t = {result.metrics['time_s']:.9g} s"
-    if provenance.get("transient_completed") is False:
-        status += " · snapshot from <strong>INCOMPLETE transient run</strong>"
-    if difference and not result.converged:
-        status += " · <strong>NOT CONVERGED source — diagnostic output only</strong>"
-    html = f"""<!doctype html><html lang='en'><meta charset='utf-8'><title>{escape(project.name)} — Analysis</title>
-<style>body{{font:16px 'Segoe UI',Arial,sans-serif;color:#17221e;max-width:1100px;margin:48px auto;padding:0 24px}}h1{{font-size:30px}}h2{{font-size:21px;margin-top:36px}}p{{line-height:1.6}}table{{width:100%;border-collapse:collapse;margin:20px 0}}th,td{{padding:9px;text-align:left;border-bottom:1px solid #d9dfda}}th{{border-top:2px solid #1f6f5f}}img{{width:100%;height:auto}}.metadata{{color:#59675e;font-size:14px}}@media print{{body{{margin:15px}}}}</style>
-<h1>{escape(project.name)}</h1><p>Analysis: <strong>{escape(project.solver.mode)}</strong> · {status} · {result.elapsed_seconds:.3f} s</p>
-<p class='metadata'>Configuration hash: {escape(result.configuration_hash)}<br>Solver version: {escape(result.solver_version)} · {len(result.mesh.triangles):,} triangles</p>
-<img alt='{escape(legend)}' src='data:image/png;base64,{encoded}'>{results_html}<h2>Physical stack</h2>{layers}<h2>Diagnostics</h2>{diagnostics}
-<h2>Assumptions and notes</h2><p>{escape(project.notes).replace(chr(10), '<br>')}</p><p>2.5D resistive sheets with explicitly declared interlayer coupling. The analytical HEMT model excludes drift-diffusion, velocity saturation, trapping, breakdown and field-plate electrostatics. Representative material data require process calibration. Sharp-corner current maxima depend on mesh size; use convergence studies and local averages.</p>
-<h2>Reproducible configuration and convergence</h2><p>The recorded setup contains layout identity and ROI, material snapshots, layer dimensions, electrical conditions, thermal boundaries, mesh settings and solver tolerances. Values use SI units. Save the project archive to retain numerical arrays and embedded layout as well.</p>
-<details><summary>Inspect setup, iterations and complete statistics</summary><pre style='white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px'>{details}</pre></details></html>"""
-    Path(path).write_text(html, encoding="utf-8")
+    if not image.save(buffer, "PNG"):
+        raise OSError("Unable to encode the displayed report image")
+    document = render_report(context, images=[(bytes(buffer.data()), legend)], selection=map_metadata,
+                             scope="Displayed map and recorded physical configuration; this report may contain design metadata.")
+    Path(path).write_text(document, encoding="utf-8")

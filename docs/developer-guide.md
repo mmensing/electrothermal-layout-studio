@@ -178,6 +178,38 @@ blocked until the separate compliance gate is satisfied. Owner publication is
 local, manual and staged through an inspected draft; no automatic mirror, tag
 trigger, package publisher or long-lived publishing token is used.
 
+## Report and CSV output contract
+
+`etlayout.io.reporting` owns `prepare_report_context` and `render_report` for both
+GUI and headless HTML reports. Presentation-specific map generation stays in the
+existing exporters. The context resolves foreign physical setups to the recorded
+configuration, copies annotation diagnostics, retains selected-frame and whole-run
+provenance, and leaves source fields and identities unchanged. Metadata mappings
+and optional snapshot times are validated before rendering. Nonfinite diagnostic
+values are shown as unavailable; numerical exports are not rounded to report text.
+
+Use `html_text` for every metadata value, `html_table` for textual tables and
+`html_image` for generated PNG bytes and textual captions. `html_document` accepts
+renderer-owned markup only. Do not interpolate a project string into its body,
+styles, attributes, URLs or filenames. The shared CSP permits embedded data images
+and the renderer's inline stylesheet, with other resource classes disabled.
+`safe_filename` and the exporter's collision allocator retain portable artifact
+names; image URLs never come from metadata. The historical `_safe` import remains
+an alias for Python compatibility.
+
+Use `csv_writer` / `csv_dict_writer` for every application CSV writer, including
+headers, GUI tables, power reports and studies. They protect *string* fields and
+never coerce numeric objects to text identifiers. The low-level
+`spreadsheet_safe=False` switch is for deliberate machine-only consumers and is
+not exposed as the application's spreadsheet default. JSON/NPZ/VTU are the normal
+lossless machine exchange formats. JSON material export is unchanged; its material
+property CSV path is an importer, not an output writer.
+
+Reports remain local files with recorded design metadata; CSP is not redaction,
+filesystem isolation, or a guarantee that every spreadsheet/import tool will
+retain text typing after a user edits or resaves the file. Browser and spreadsheet
+software should remain current. No HTML or CSV content is executed during tests.
+
 ## Project resource API
 
 `inspect_project(path)` parses the selected container and returns `ProjectInspection`
