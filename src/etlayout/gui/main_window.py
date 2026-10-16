@@ -69,8 +69,6 @@ from etlayout.gui.workspace import (
 )
 from etlayout.io.project import (
     annotated_result,
-    load_project,
-    load_run_history,
     physics_hash,
     project_from_dict,
     save_project,
@@ -774,6 +772,7 @@ class MainWindow(QMainWindow):
             action.setToolTip(info.learning_goal + detail)
             examples.addAction(action)
         files.addSeparator()
+        files.addAction(self.action("Review project resources…", self.review_project_resources))
         files.addAction(self.action("Exit", self.close, "Alt+F4"))
         # Only shared actions are created here. GuidedWorkspace owns the menus;
         # there is no second set of hidden Geometry/Simulation/View actions.
@@ -1049,6 +1048,9 @@ class MainWindow(QMainWindow):
         self.masks = {}
         self.hierarchy.clear()
         self.view.set_geometries({}, preserve_view=preserve)
+        if getattr(self.project, "_resource_unresolved", False):
+            self.workflow_hint.setText("Project resources are unresolved. Review project resources before geometry or simulation.")
+            return
         if not self.project.layers and not self.project.layout.path:
             return
         generation = self.geometry_generation
@@ -1630,7 +1632,7 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            _, initial = load_project(path)
+            _, initial = self.load_project_data(path)
             if initial is None or not any("temperature" in fields for fields in initial.fields.values()):
                 raise ValueError("Choose an archive containing a computed thermal state.")
             restart_keys = ("time_s", "transient_input_energy", "transient_output_energy", "transient_energy_reference_offset")
@@ -1703,6 +1705,9 @@ class MainWindow(QMainWindow):
         if not self.project.layers and operation != "import":
             self.error("No physical stack", "Import a layout and assign at least one physical layer.")
             return
+        if getattr(self.project, "_resource_unresolved", False) and operation != "import":
+            self.error("Unresolved resources", "Review project resources or relink the layout before computation.")
+            return
         if self.prepare_job:
             # Finish binding source identity before taking the run snapshot.
             # Keep one CPU budget rather than overlapping geometry and solve.
@@ -1737,9 +1742,10 @@ class MainWindow(QMainWindow):
 
     def set_running(self, running):
         locked = running or self.model_locked()
+        unresolved = getattr(self.project, "_resource_unresolved", False)
         for action in (self.run_action, self.mesh_action, self.validate_action):
-            action.setEnabled(not locked)
-        self.power_action.setEnabled(not locked)
+            action.setEnabled(not locked and not unresolved)
+        self.power_action.setEnabled(not locked and not unresolved)
         self.cancel_action.setEnabled(running or self.prepare_job is not None)
         self.config_dock.setEnabled(not locked)
         # The guided Complete model page reparents these controls out of the dock.
@@ -2814,7 +2820,7 @@ class MainWindow(QMainWindow):
         if paths:
             try:
                 from etlayout.simulation.sweep import resolve_study_initial_state
-                loaded = [load_project(path) for path in paths]
+                loaded = [self.load_project_data(path) for path in paths]
                 projects = [deepcopy(self.project), *[item[0] for item in loaded]]
                 sources = [self.initial_state_argument() or {}]
                 sources += [resolve_study_initial_state(project, result) for project, result in loaded]
@@ -2835,7 +2841,7 @@ class MainWindow(QMainWindow):
                 return
             try:
                 for path in paths:
-                    project, result = load_project(path)
+                    project, result = self.load_project_data(path)
                     if result:
                         candidates.append((project.name, result))
                 if len(candidates) < 2:
@@ -2881,7 +2887,7 @@ class MainWindow(QMainWindow):
         if not path:
             return
         try:
-            project, other = load_project(path)
+            project, other = self.load_project_data(path)
             if other is None:
                 raise ValueError("The selected project has no saved result.")
             self.load_difference_result(other, project.name)
@@ -2995,16 +3001,57 @@ class MainWindow(QMainWindow):
         if result:
             self.show_result(result)
 
-    def open_project(self, path=None):
+    def load_project_data(self, path, *, external_policy=None):
+        from etlayout.gui.resources import open_reviewed_project
+        opened = open_reviewed_project(path, self, policy=external_policy)
+        if opened is None:
+            raise SimulationError("Project opening cancelled; the current project was retained")
+        return opened
+
+    def review_project_resources(self):
+        if self.model_locked():
+            self.log("Return to the working setup and finish the active job before reviewing its resources.")
+            return
+        inspection = getattr(self.project, "_resource_inspection", None)
+        if inspection is None:
+            self.relink_layout()
+            return
+        if hasattr(self, "guided") and not self.guided.resolve_draft():
+            return
+        from etlayout.gui.resources import resolve_reviewed_project
+        try:
+            opened = resolve_reviewed_project(inspection.for_project(self.project), self)
+            if opened is None:
+                return
+            project, result = opened
+            was_dirty = self.dirty
+            self.project, self.result = project, result
+            self.mesh = result.mesh if result else None
+            for run in getattr(project, "_resource_history", []):
+                self.remember_result(run)
+            if result:
+                self.remember_result(result)
+            self.refresh_project(preserve_view=True)
+            if result:
+                self.render_result(result)
+            self.dirty = was_dirty
+            self.set_running(False)
+            self.update_title()
+            self.log("Project resources remain unresolved" if getattr(project, "_resource_unresolved", False)
+                     else "Resolved resources for the current edited project")
+        except Exception as error:
+            self.error("Cannot review project resources", error)
+
+    def open_project(self, path=None, *, external_policy=None):
         if not self.confirm_discard():
             return
         if not isinstance(path, (str, Path)):
             path, _ = QFileDialog.getOpenFileName(self, "Open project", "", "Electrothermal projects (*.etl *.etlayout *.etproj *.zip);;All files (*)")
         if path:
             try:
-                project, result = load_project(path)
-                self.set_project(project, result, path, load_run_history(path))
-                self.log(f"Opened {path}")
+                project, result = self.load_project_data(path, external_policy=external_policy)
+                self.set_project(project, result, path, getattr(project, "_resource_history", []))
+                self.log("Opened project metadata" if getattr(project, "_resource_unresolved", False) else "Opened project")
             except Exception as error:
                 self.error("Cannot open project", error)
 
@@ -3037,7 +3084,7 @@ class MainWindow(QMainWindow):
                 self.project.mesh.refinements = []
                 self.changed()
                 self.view.fit_all()
-                self.log(f"Imported {document.path}, cell {self.project.layout.cell}. Review stack, via masks and terminal conditions before solving.")
+                self.log(f"Imported layout, cell {self.project.layout.cell}. Review stack, via masks and terminal conditions before solving.")
         except Exception as error:
             self.error("Layout import failed", error)
 
@@ -3048,11 +3095,18 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(self, "Relink layout file", "", "Layout files (*.gds *.gdsii *.oas *.oasis)")
         if path:
             try:
+                from etlayout.gui.resources import review_layout_relink
+                reviewed = review_layout_relink(self.project, path, self.path, self)
+                if reviewed is None:
+                    return
+                project, _ = reviewed
                 self.before_edit()
-                self.project.layout.path = str(Path(path).resolve())
-                self.project.layout.sha256 = ""
+                self.project.layout = project.layout
+                self.project._resource_unresolved = getattr(project, "_resource_unresolved", False)
+                if self.project._resource_unresolved:
+                    self.project._resource_inspection = project._resource_inspection
                 self.changed()
-                self.log("Relinked source. Geometry is being checked in the background; select a cell in the hierarchy if its name changed.")
+                self.log("Relinked source. Review resource status and select a cell in the hierarchy if its name changed.")
             except Exception as error:
                 self.error("Cannot relink", error)
 
@@ -3123,8 +3177,8 @@ class MainWindow(QMainWindow):
     def offer_recovery(self):
         if QMessageBox.question(self, "Recover project", "An automatic recovery snapshot is available. Restore it?") == QMessageBox.StandardButton.Yes:
             try:
-                project, result = load_project(self.recovery_path)
-                self.set_project(project, result, history=load_run_history(self.recovery_path))
+                project, result = self.load_project_data(self.recovery_path)
+                self.set_project(project, result, history=getattr(project, "_resource_history", []))
                 self.dirty = True
                 self.update_title()
             except Exception as error:
@@ -3223,7 +3277,7 @@ class MainWindow(QMainWindow):
                             source_path, _ = QFileDialog.getOpenFileName(self, "Choose preset initial state", "", "Projects (*.etl *.etlayout)")
                             if not source_path:
                                 return
-                            _, source = load_project(source_path)
+                            _, source = self.load_project_data(source_path)
                             from etlayout.simulation.sweep import resolve_study_initial_state
                             try:
                                 source_options = resolve_study_initial_state(project, source)

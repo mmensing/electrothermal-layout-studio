@@ -18,11 +18,14 @@ from etlayout.simulation.runner import run_project
 def isolate_window_settings(monkeypatch, tmp_path):
     """Patch application aliases only; Qt's class and native stores stay untouched."""
     from etlayout.gui import layout_editor, main_window
-    from etlayout.gui.editor_smoke import acceptance_settings_factory
+    from etlayout.gui.editor_smoke import acceptance_settings_factory, acceptance_standard_paths
 
     factory = acceptance_settings_factory(tmp_path)
     monkeypatch.setattr(main_window, "QSettings", factory)
     monkeypatch.setattr(layout_editor, "QSettings", factory)
+    paths = acceptance_standard_paths(tmp_path)
+    monkeypatch.setattr(main_window, "QStandardPaths", paths)
+    monkeypatch.setattr(layout_editor, "QStandardPaths", paths)
     settings = factory()
     filename = Path(settings.fileName()).resolve()
     assert settings.format() == QSettings.Format.IniFormat

@@ -480,6 +480,10 @@ class GuidedWorkspace(QObject):
     def command_availability(self, key):
         busy = bool(self.window.job or (self.power and self.power.job))
         read_only = key.startswith(("view.", "results.", "help.", "file.export"))
+        if (getattr(self.window.project, "_resource_unresolved", False)
+                and (key.startswith(("simulation.", "studies.")) and key not in {"simulation.cancel", "studies.saved"}
+                     or key in {"edit.layout", "file.save", "file.save_as"})):
+            return "Review project resources or relink the layout before this operation."
         if key == "simulation.cancel":
             return busy or bool(self.window.prepare_job or self.window.hierarchy_jobs)
         if busy and not read_only and key not in {"file.save", "file.save_as", "file.exit"}:

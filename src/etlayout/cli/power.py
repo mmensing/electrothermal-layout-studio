@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from etlayout.cli.resources import policy_from_args, resource_arguments
 from etlayout.models import SimulationError
 
 COMMANDS = {"power", "multiport", "routing", "optimize"}
@@ -20,6 +21,7 @@ def add_arguments(subparsers, execution_arguments):
         parser = subparsers.add_parser(command, help=description)
         execution_arguments(parser)
         parser.add_argument("project")
+        resource_arguments(parser)
         parser.add_argument("--output", "-o", default="power-results")
         if command == "power":
             parser.add_argument("--no-plots", action="store_true")
@@ -56,7 +58,7 @@ def run_command(args, *, progress=None):
     execution = ExecutionSettings(cpu_threads=args.cpu_threads,
         study_workers=args.study_workers if args.study_workers is not None else args.cpu_threads)
     validate_execution(execution)
-    project, _ = load_project(args.project)
+    project, _ = load_project(args.project, external_policy=policy_from_args(args))
     options = {"output": args.output}
     operation = args.command
     if operation == "power":

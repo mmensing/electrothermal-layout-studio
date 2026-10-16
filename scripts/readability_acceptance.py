@@ -25,8 +25,7 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
-    from desktop_acceptance_support import prepare_desktop_fonts
-    from PySide6.QtCore import QSettings
+    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QMessageBox
 
@@ -35,8 +34,7 @@ def main(argv=None):
 
     output = args.output.resolve() / f"{'offscreen' if args.offscreen else 'native'}-{args.scale:g}x"
     output.mkdir(parents=True, exist_ok=True)
-    QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-    QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(output / "settings"))
+    isolate_acceptance_settings(output)
     app = QApplication.instance() or QApplication([])
     app.setStyle("Fusion")
     prepare_desktop_fonts(app, output)

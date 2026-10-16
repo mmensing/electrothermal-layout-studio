@@ -48,6 +48,30 @@ def acceptance_settings_factory(output):
     return local_settings
 
 
+def acceptance_standard_paths(output):
+    """Provide module-local QA data/cache paths without changing Qt globally."""
+    from PySide6.QtCore import QStandardPaths
+
+    root = Path(output).resolve()
+
+    class LocalPaths:
+        StandardLocation = QStandardPaths.StandardLocation
+
+        @staticmethod
+        def writableLocation(location):
+            directory = {QStandardPaths.StandardLocation.AppLocalDataLocation: "application-data",
+                         QStandardPaths.StandardLocation.AppDataLocation: "application-data",
+                         QStandardPaths.StandardLocation.CacheLocation: "cache"}.get(location)
+            if directory is None:
+                raise RuntimeError("Unexpected desktop acceptance standard-path request")
+            path = (root / directory).resolve()
+            if not path.is_relative_to(root):
+                raise RuntimeError("Desktop acceptance data escaped the output directory")
+            return str(path)
+
+    return LocalPaths
+
+
 def run_editor_smoke(window, output, *, timeout=90.):
     """Edit the E1 line-contact fixture and leave a portable input for CLI solve."""
     output = Path(output).resolve()
@@ -81,7 +105,8 @@ def run_editor_smoke(window, output, *, timeout=90.):
     heartbeat.start()
 
     def settle():
-        while window.prepare_job or window.job or window.hierarchy_jobs or editor.job:
+        while (window.prepare_job or window.job or window.hierarchy_jobs or editor.job
+               or getattr(window, "save_job", None) or getattr(window, "_save_queue", [])):
             QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
             if timed_out or time.monotonic() - started > timeout:
                 raise TimeoutError(f"Editor runtime verification exceeded {timeout:g} seconds")
@@ -148,6 +173,7 @@ def run_editor_smoke(window, output, *, timeout=90.):
         check("Redo restores the edited revision", window.project.to_dict() == edited)
         window.path = output / "edited.etl"
         check("Portable project saves through the standard action", window.save())
+        settle()
         restored, _ = load_project(window.path)
         check("Embedded edited layout reopens with matching physics", physics_hash(restored) == physics_hash(window.project))
         check("Embedded polygon equals the committed preview", any(target.geometry.equals(expected)
