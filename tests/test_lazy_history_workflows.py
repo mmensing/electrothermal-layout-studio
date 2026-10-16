@@ -302,3 +302,49 @@ def test_reviewed_resources_keep_the_edited_working_document(guided_window, qtbo
     assert window.studies is retained_studies
     assert not getattr(window.project, "_resource_unresolved", False)
     assert window.capture_view_state()["transform"] == view["transform"]
+
+
+def test_catalog_commit_waits_for_a_save_started_after_open_request(
+        guided_window, qtbot, history_archive, tmp_path, monkeypatch):
+    from etlayout.gui import history_opening, saving
+
+    window = guided_window
+    window.history_lazy_enabled = True
+    original = window.project
+    copied, permit_catalog = threading.Event(), threading.Event()
+    saving_started, permit_save = threading.Event(), threading.Event()
+    open_catalog, save = history_opening.open_history_catalog, saving.save_project
+    def delayed_catalog(*args, **options):
+        store = open_catalog(*args, **options)
+        copied.set()
+        if not permit_catalog.wait(10):
+            store.close()
+            raise RuntimeError("catalog test was not released")
+        return store
+    def delayed_save(*args, **options):
+        saving_started.set()
+        if not permit_save.wait(10):
+            raise RuntimeError("save test was not released")
+        return save(*args, **options)
+    monkeypatch.setattr(history_opening, "open_history_catalog", delayed_catalog)
+    monkeypatch.setattr(saving, "save_project", delayed_save)
+    destination = tmp_path / "working-copy.etlayout"
+    try:
+        window.open_project(history_archive[0])
+        qtbot.waitUntil(copied.is_set)
+        assert window._queue_save(destination, archive_format=3)
+        qtbot.waitUntil(saving_started.is_set)
+        permit_catalog.set()
+        qtbot.waitUntil(lambda: window._pending_catalog is not None)
+        qtbot.wait(60)
+        assert window.project is original and window.save_job is not None
+        permit_save.set()
+        qtbot.waitUntil(lambda: window.project is not original and window.save_job is None
+                        and not window.history_opener.jobs and not window.history_workflow.loader.jobs, timeout=30000)
+        assert load_project(destination)[0].name == original.name
+        assert window.path == history_archive[0]
+    finally:
+        permit_catalog.set()
+        permit_save.set()
+        qtbot.waitUntil(lambda: window.save_job is None and not window.history_opener.jobs
+                        and not window.history_workflow.loader.jobs, timeout=30000)

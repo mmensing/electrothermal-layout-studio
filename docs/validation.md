@@ -177,3 +177,33 @@ native Windows checks. The shared font verification rejects unreadable glyphs;
 inspect the actual PNGs before treating captures as visual evidence. These checks
 do not establish physical monitor DPI, mixed-monitor restoration, assistive
 technology support or clean-machine packaged behavior.
+
+
+## Archive and on-demand history checks
+
+`python scripts/archive_history_acceptance.py --offscreen --output artifacts/desktop-archive-history`
+solves two configured E1 operating points, writes a schema-3 archive, enables
+metadata-first opening through the settings dialog and checks recorded inspection,
+return to the working setup, exact transient-frame navigation, metadata step
+traces and complete Save As after partial browsing. It verifies the reopened
+configuration, retained histories and every saved time, and checks that the
+original file is unchanged. Omit `--offscreen` for native Windows source widgets;
+use `--scale 1.25` for Qt application scaling. Preferences and recovery are
+isolated. File-chooser input uses a process-scoped adapter because native Qt file
+dialogs have their own persistent history; this script does not certify the
+native chooser, a frozen package or physical mixed-monitor behavior. Inspect the
+actual captures and font-verification receipt.
+
+Focused backend regressions are `test_content_addressed_archives`,
+`test_archive_directory`, `test_lazy_history_store` and `test_history_opening`.
+Desktop behavior is covered by `test_lazy_history_workflows`,
+`test_lazy_transient_ui`, `test_lazy_archive_export` and the existing eager
+workflow/export/continuation suites. These tests supplement the independent
+analytical and scientific acceptance regressions; storage changes do not relax
+their tolerances.
+
+The opt-in `scripts/benchmark_archive_history.py` matrix is separate from routine
+PR CI. Its [archive](design/content-addressed-archives.md) and
+[history](design/lazy-run-history.md) contracts define the solved workloads,
+complete typed equality checks, resource guards and timing boundaries. Keep raw
+archives, process logs and repeated receipts in CI/release artifacts, outside Git.

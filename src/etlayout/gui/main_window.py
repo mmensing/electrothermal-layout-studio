@@ -3275,7 +3275,8 @@ class MainWindow(QMainWindow):
         self._apply_pending_catalog()
 
     def _apply_pending_catalog(self):
-        if self._pending_catalog and any(job.isRunning() for job in self.history_workflow.loader.jobs):
+        if self._pending_catalog and (self.save_job or self._save_queue
+                or any(job.isRunning() for job in self.history_workflow.loader.jobs)):
             self.history_workflow.loader.cancel()
             QTimer.singleShot(25, self._apply_pending_catalog)
             return
