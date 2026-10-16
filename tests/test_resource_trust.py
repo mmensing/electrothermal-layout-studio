@@ -262,3 +262,38 @@ def test_current_metadata_review_is_a_pure_copy_with_original_resource_boundarie
     assert not reviewed.discard_stale_result  # Notes do not change scientific identity.
     current.solver.initial_temperature += 10.
     assert inspection.for_project(current).discard_stale_result
+
+
+@pytest.mark.parametrize("suffix", ["json", "etl"])
+def test_container_inspection_bounds_each_read_allocation(tmp_path, monkeypatch, suffix):
+    import io
+
+    from etlayout.io import resources
+    path = tmp_path / ("small." + suffix)
+    if suffix == "json":
+        save_json(Project(), path)
+    else:
+        save_project(Project(), path)
+    payload = path.read_bytes()
+    requested = []
+    class TrackedStream(io.BytesIO):
+        def read(self, size=-1):
+            requested.append(size)
+            assert 0 < size <= 1024 * 1024
+            return super().read(size)
+    original = Path.open
+    def tracked_open(self, *args, **kwargs):
+        if self == path:
+            return TrackedStream(payload)
+        return original(self, *args, **kwargs)
+    monkeypatch.setattr(Path, "open", tracked_open)
+    inspected = resources.inspect_project(path)
+    assert inspected.project.name == "Untitled"
+    assert requested and max(requested) <= 1024 * 1024
+
+
+def test_chunked_container_read_retains_aggregate_budget():
+    import io
+
+    from etlayout.io.resources import _read_container
+    assert _read_container(io.BytesIO(b"0123456789extra"), 10) == b"0123456789e"

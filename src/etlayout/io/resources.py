@@ -260,6 +260,19 @@ class ProjectInspection:
         }
 
 
+def _read_container(stream, limit: int) -> bytes:
+    """Bound every allocation as well as the aggregate selected-container size."""
+    chunks = []
+    remaining = limit + 1
+    while remaining:
+        chunk = stream.read(min(1024 * 1024, remaining))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    return b"".join(chunks)
+
+
 def inspect_project(
     path: str | Path,
     *,
@@ -281,7 +294,7 @@ def inspect_project(
         limit = MAX_METADATA_BYTES if source.suffix.lower() == ".json" else MAX_ARCHIVE_BYTES
         try:
             with source.open("rb") as stream:
-                raw = stream.read(limit + 1)
+                raw = _read_container(stream, limit)
         except OSError as exc:
             raise SimulationError("Cannot read the selected project container") from exc
         if len(raw) > limit:
