@@ -47,6 +47,11 @@ def parser():
     info = sub.add_parser("project-info", help="Inspect project metadata/resource declarations without accessing external layouts")
     info.add_argument("project")
     resource_arguments(info)
+    migrate = sub.add_parser("archive-convert", help="Verify and write a new schema-2 or content-addressed schema-3 project; never overwrite the source")
+    migrate.add_argument("project")
+    migrate.add_argument("destination")
+    migrate.add_argument("--archive-format", type=int, choices=[2, 3], required=True)
+    resource_arguments(migrate)
     inspect = sub.add_parser("inspect", help="Inspect GDS/OASIS hierarchy and masks")
     inspect.add_argument("layout")
     for command in ("validate", "mesh", "mesh-plan", "solve", "transient", "sweep", "refine", "time-refine"):
@@ -159,6 +164,12 @@ def main(argv=None):
         if args.command == "project-info":
             from etlayout.io.resources import inspect_project
             print(_json_dump(inspect_project(args.project, allow_network_container=resource_policy.allow_network).summary()))
+            return 0
+        if args.command == "archive-convert":
+            from etlayout.io.project import migrate_project
+            report = migrate_project(args.project, args.destination, archive_format=args.archive_format,
+                                     external_policy=resource_policy)
+            print(_json_dump(report))
             return 0
         if args.command in COMMANDS:
             report, exit_code = run_command(args, progress=lambda fraction, message:

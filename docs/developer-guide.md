@@ -262,3 +262,21 @@ code. Generic `--smoke-test` owns temporary settings, material DB, recovery and
 layout caches until workers and the owned window have closed; editor smoke keeps
 its explicitly selected output directory. Ordinary GUI startup retains normal
 persistent preferences. These are validation helpers, not a new application API.
+
+
+### Explicit content-addressed archives
+
+`save_project(project, path, result, history=history, archive_format=3)` opts in to
+the schema-3 container. The keyword defaults to `2`; `load_project` and
+`load_run_history` remain eager, returning ordinary independently mutable result
+arrays. Model `Project.schema_version` remains 2 and is separate from the archive
+container version. `SaveSnapshot.capture(..., archive_format=3)` records the choice
+in the immutable worker handoff; recovery deliberately writes schema 2.
+
+Use `migrate_project(source, new_destination, archive_format=3)` for verified
+conversion and `archive_format=2` for a legacy copy. Do not use configuration hashes
+as unique run IDs: multiple ordered records may legitimately contain identical
+payloads. The [archive format specification](design/content-addressed-archives.md)
+describes the object graph, exact typed codec, resource budgets and corruption
+checks. Benchmarks measure storage operations; repeated records are not independent
+physical experiments and imply no solver acceleration.

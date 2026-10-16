@@ -53,7 +53,8 @@ class SaveJob(QThread):
         snapshot = request.snapshot
         try:
             options = {"history": list(snapshot.history), "progress": self.progress.emit,
-                       "cancel": self._cancel.is_set}
+                       "cancel": self._cancel.is_set,
+                       "archive_format": 2 if request.recovery_store is not None else snapshot.archive_format}
             if request.recovery_store is not None:
                 def writer(project, path, result, history=None):
                     save_project(project, path, result, **{**options, "history": history})

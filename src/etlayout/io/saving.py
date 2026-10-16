@@ -91,9 +91,12 @@ class SaveSnapshot:
     history: tuple[SimulationResult, ...]
     document_id: str
     revision: int
+    archive_format: int = 2
 
     @classmethod
-    def capture(cls, project, result=None, history=None, *, revision=0):
+    def capture(cls, project, result=None, history=None, *, revision=0, archive_format=2):
+        if type(archive_format) is not int or archive_format not in (2, 3):
+            raise SimulationError("Archive format must be 2 or 3")
         require_resources(project)  # Pure state check; never authorize or open a resource.
         identity = document_id(project)
         # Persisted model fields only: runtime inspection/history caches must not
@@ -105,7 +108,7 @@ class SaveSnapshot:
         graph = (persisted, result, tuple(history or ()))
         memo = {id(array): _immutable_array(array) for array in _arrays(graph)}
         saved_project, saved_result, saved_history = deepcopy(graph, memo)
-        return cls(saved_project, saved_result, saved_history, identity, revision)
+        return cls(saved_project, saved_result, saved_history, identity, revision, archive_format)
 
 
 class SaveOrder:

@@ -526,7 +526,10 @@ class GuidedWorkspace(QObject):
         file_commands = {
             "New project…": ("new", w.new_project), "Open project…": ("open", w.open_project),
             "Import layout…": ("import", w.import_layout), "Save project": ("save", w.save),
-            "Save project as…": ("save_as", w.save_as), "Duplicate project…": ("duplicate", w.duplicate_project),
+            "Save project as…": ("save_as", w.save_as),
+            "Save content-addressed copy…": ("save_v3", lambda: w.save_as(archive_format=3)),
+            "Save legacy-compatible copy…": ("save_legacy", lambda: w.save_as(archive_format=2)),
+            "Duplicate project…": ("duplicate", w.duplicate_project),
             "Relink layout…": ("relink", w.relink_layout), "Exit": ("exit", w.close),
             "Export / share results…": ("export_share", lambda: w.share_export()),
             "Export complete numerical bundle (confidential)…": ("export_full", w.export_results),
