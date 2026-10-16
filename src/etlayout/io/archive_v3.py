@@ -862,12 +862,20 @@ class ArchiveV3Reader:
         return PlanarMesh(self._array(descriptor["points"], loader, cancel), self._array(descriptor["triangles"], loader, cancel),
                           statistics=self._metadata(descriptor["statistics"], loader, cancel), **groups)
 
+    def layout_resource_key(self, run_id):
+        """The identical current source shares its already reviewed declaration."""
+        from dataclasses import asdict
+        descriptor = self._descriptor(run_id)
+        if run_id == self.current_run_id and descriptor["project"]["layout"] == asdict(self.project.layout):
+            return "layout"
+        return run_id + ":layout"
+
     def materialize(self, run_id, *, array_loader=None, cancel=None, resolve_sources=True):
         _checkpoint(cancel)
         self.required_arrays(run_id)
         descriptor = self._descriptor(run_id)
         embedded = self.object_name(descriptor["layout"]["$ref"]) if descriptor["layout"] else None
-        project = self._setup(descriptor["project"], embedded, resolve_sources=resolve_sources, key=run_id + ":layout")
+        project = self._setup(descriptor["project"], embedded, resolve_sources=resolve_sources, key=self.layout_resource_key(run_id))
         mesh = self._mesh(descriptor["mesh"], array_loader, cancel)
         result = self._result(descriptor, mesh, array_loader, cancel)
         from etlayout.io.project import (
@@ -927,7 +935,7 @@ class ArchiveV3Reader:
         self.required_arrays(run_id, index)
         descriptor = self._descriptor(run_id)
         embedded = self.object_name(descriptor["layout"]["$ref"]) if descriptor["layout"] else None
-        project = self._setup(descriptor["project"], embedded, key=run_id + ":layout")
+        project = self._setup(descriptor["project"], embedded, key=self.layout_resource_key(run_id))
         transient = descriptor["transient"]
         times = self._array(transient["times"], array_loader, cancel)
         rows = self._metadata(transient["rows"], array_loader, cancel)
@@ -1010,7 +1018,7 @@ def _import_run(collector, reference, target, *, embed_layout=True):
     # Relative external locations belong to the source generation's root. Resolve
     # them through its explicit policy before rebasing or portable embedding.
     if descriptor["layout"] is None and descriptor["project"]["layout"]["path"]:
-        setup = reader._setup(descriptor["project"], None, key=run_id + ":layout")
+        setup = reader._setup(descriptor["project"], None, key=reader.layout_resource_key(run_id))
         for digest in _references(descriptor):
             transfer(digest)
         if embed_layout:

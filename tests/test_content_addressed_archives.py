@@ -351,3 +351,27 @@ def test_array_bytes_base_contains_only_the_accounted_numeric_payload(specimen, 
             assert not array.flags.writeable
             with pytest.raises(ValueError):
                 array.setflags(write=True)
+
+
+def test_identical_current_external_source_uses_one_explicit_root_approval(specimen, tmp_path):
+    from etlayout.io.resources import ExternalResourcePolicy, inspect_project
+
+    project, result = specimen
+    source = tmp_path / "source.gds"
+    source.write_bytes((Path(__file__).parents[1] / "examples" / "E1_straight.gds").read_bytes())
+    project.layout.path, project.layout.sha256 = str(source), project_io.file_hash(source)
+    result.configuration = project.to_dict()
+    result.configuration_hash, result.physics_hash = project_io.configuration_hash(project), project_io.physics_hash(project)
+    folder = tmp_path / "archives"
+    folder.mkdir()
+    target = folder / "external.etl"
+    project_io.save_project(project, target, result, archive_format=3, embed_layout=False)
+    inspection = inspect_project(target)
+    assert [resource.key for resource in inspection.resources] == ["layout"]
+    approved = ExternalResourcePolicy(approved_resources=frozenset({"layout"}))
+    with ArchiveV3Reader(target, policy=approved) as reader:
+        assert reader.layout_resource_key(reader.current_run_id) == "layout"
+        assert reader.resolve_project().layout.sha256 == project.layout.sha256
+        saved = reader.materialize(reader.current_run_id)
+        assert saved.physics_hash == result.physics_hash
+        np.testing.assert_array_equal(saved.fields["a"]["temperature"], result.fields["a"]["temperature"])
