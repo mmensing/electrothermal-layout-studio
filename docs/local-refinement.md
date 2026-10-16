@@ -28,6 +28,13 @@ Suggestions cover:
   fixed averaging window, clipped to the exact selected support, including
   nested device groups, exclusions, holes and partially intersected elements.
 
+Hotspot sizing uses the prepared physical layer and selector boundaries, rather
+than clipped source-triangle edges. This avoids feeding numerical seams back
+into the mesher as extremely thin regions. Mesh-defined region tags retain their
+selected-cell meaning; cells are unioned before the averaging window is clipped.
+Existing reviewed plans retain their saved geometry. Regenerate suggestions to
+use the current physical-boundary construction, then review before applying.
+
 Suggestions below the current minimum size explain that Apply will lower that
 minimum. Geometry, contact resistance, constitutive properties and solver
 tolerances are never changed to make a mesh cheaper. Via arrays retain the

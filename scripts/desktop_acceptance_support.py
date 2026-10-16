@@ -89,3 +89,22 @@ def isolate_acceptance_settings(output):
     main_window.QStandardPaths = paths
     layout_editor.QStandardPaths = paths
     return factory()
+
+
+def wait_desktop_events(milliseconds=40):
+    """Pump a real Qt event loop without starving Python worker threads.
+
+    Some PySide6 QTest.qWait builds hold the GIL while waiting in native code.
+    An event loop matches QApplication.exec and allows archive compression,
+    cancellation and queued Qt signals to make progress during acceptance.
+    """
+    from PySide6.QtCore import QEventLoop, QTimer
+
+    if milliseconds < 0:
+        raise ValueError("Event-loop wait duration must be nonnegative")
+    loop = QEventLoop()
+    timer = QTimer(loop)
+    timer.setSingleShot(True)
+    timer.timeout.connect(loop.quit)
+    timer.start(milliseconds)
+    loop.exec()

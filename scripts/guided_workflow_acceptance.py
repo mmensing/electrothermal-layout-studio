@@ -19,6 +19,21 @@ from dataclasses import asdict
 from pathlib import Path
 
 
+def wait_for_workers(window, process_events, *, timeout=180., check=None):
+    """Deliver Qt events until accepted operations, including queued saves, finish."""
+    deadline = time.monotonic() + timeout
+    while (window.job or window.prepare_job or window.hierarchy_jobs
+           or window.save_job or window._save_queue
+           or (window.guided.power and window.guided.power.job)):
+        if check:
+            check()
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Guided workflow workers did not finish: " + window.console.toPlainText())
+        process_events(40)
+    if check:
+        check()
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path(".artifacts/guided-workflow"))
@@ -36,7 +51,11 @@ def main(argv=None):
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     import klayout.db as db
-    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from desktop_acceptance_support import (
+        isolate_acceptance_settings,
+        prepare_desktop_fonts,
+        wait_desktop_events,
+    )
     from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QMessageBox
@@ -44,6 +63,7 @@ def main(argv=None):
     from etlayout.examples import make_example
     from etlayout.gui.export import export_html_report, export_view
     from etlayout.gui.main_window import ImportWizard, MainWindow
+    from etlayout.io.identity import document_id
     from etlayout.io.project import load_project, load_run_history, physics_hash, save_project
     from etlayout.simulation.runner import run_project
 
@@ -85,17 +105,13 @@ def main(argv=None):
         print(name, flush=True)
 
     def idle(timeout=180):
-        deadline = time.monotonic() + timeout
-        while window.job or window.prepare_job or window.hierarchy_jobs:
-            check_monitor()
-            assert time.monotonic() < deadline, window.console.toPlainText()
-            QTest.qWait(40)
-        QTest.qWait(100)
+        wait_for_workers(window, wait_desktop_events, timeout=timeout, check=check_monitor)
+        wait_desktop_events(100)
         check_monitor()
         assert not window.guided.last_error, window.guided.last_error
 
     def capture(name, reference=None):
-        QTest.qWait(120)
+        wait_desktop_events(120)
         picture = window.grab()
         path = out / (name + ".png")
         assert picture.save(str(path))
@@ -115,7 +131,7 @@ def main(argv=None):
         if window.guided.page.isAncestorOf(control):
             window.guided.page_scroll.ensureWidgetVisible(control)
         QTest.mouseClick(control, Qt.MouseButton.LeftButton)
-        QTest.qWait(30)
+        wait_desktop_events(30)
         check_monitor()
 
     def fill(key, value):
@@ -140,22 +156,32 @@ def main(argv=None):
         QTest.mousePress(view.viewport(), Qt.MouseButton.LeftButton, pos=a)
         QTest.mouseMove(view.viewport(), b, 30)
         QTest.mouseRelease(view.viewport(), Qt.MouseButton.LeftButton, pos=b)
-        QTest.qWait(40)
+        wait_desktop_events(40)
         assert window.guided.pending_region is not None
 
     def dispose():
+        nonlocal window
         if window:
+            window.autosave_timer.stop()
             window.cancel_geometry()
             if window.job:
                 window.cancel_job()
+            if window.guided.power and window.guided.power.job:
+                window.guided.power.cancel_job()
+            # A failed journey must still stop its owned save thread before
+            # destroying Qt objects. Cancellation here never makes a save pass.
+            if monitor_error or receipt.get("result") == "failed":
+                window.cancel_saving()
+            wait_for_workers(window, wait_desktop_events)
             if window.inspection_context:
                 window.inspection_context["dirty"] = False
             # Cleanup must not enter another draft dialog after a failed check.
             window.guided.cancel_selection()
             window.guided.clear_editor()
             window.dirty = False
-            window.close()
-            window.deleteLater()
+            assert window.close(), "The acceptance window refused to close after its workers stopped"
+            disposed, window = window, None
+            disposed.deleteLater()
             QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
             app.processEvents()
 
@@ -335,10 +361,20 @@ def main(argv=None):
             perform("Historical report export", lambda: export_html_report(window.project, window.result, window.view, out / "historical-report.html", window.legend.text()))
             perform("Return from History to working setup", window.return_to_project)
             window.path = out / "fresh-project.etlayout"
+            saved_identity = document_id(window.project)
+            saved_physics = physics_hash(window.project)
             assert perform("Save working project after History", window.save)
-            assert len(perform("Load archived run history", lambda: load_run_history(window.path))) == 2
+            perform("Wait for durable project save", idle)
+            assert window._save_success and not window.dirty and window.path.is_file(), window.console.toPlainText()
+            saved_project, saved_result = perform("Verify saved working project", lambda: load_project(window.path))
+            assert document_id(saved_project) == saved_identity and physics_hash(saved_project) == saved_physics
+            assert saved_result is None  # The working setup changed after the two retained runs.
+            archived = perform("Load archived run history", lambda: load_run_history(window.path))
+            assert len(archived) == 2
+            assert {run.configuration_hash for run in archived} == {first.configuration_hash, second.configuration_hash}
             perform("Reopen saved working project", lambda: window.open_project(window.path))
             idle()
+            assert document_id(window.project) == saved_identity and physics_hash(window.project) == saved_physics
             assert window.project.layers[0].thickness == 3e-6
             record("UX-11/13/17 stale history, immutable export and archive reopen")
             window.guided.run()
@@ -381,7 +417,7 @@ def main(argv=None):
             deadline = time.monotonic() + 180
             while window.job:
                 assert time.monotonic() < deadline
-                QTest.qWait(40)
+                wait_desktop_events(40)
             assert window.guided.last_error, "The real mesh resource limit must fail"
             assert len(window.run_history) == history_count
             window.guided.open_drawer(0)
@@ -412,7 +448,7 @@ def main(argv=None):
         for stage, reference in (("layout", "M01"), ("layers", "M02"), ("connections", "M03"), ("mesh", "M04"), ("results", "M05")):
             click(window.guided.stage_buttons[stage])
             window.guided.open_drawer(3 if stage == "results" else 0)
-            QTest.qWait(60)
+            wait_desktop_events(60)
             window.view.fit_all()
             if stage == "layout":
                 window.guided.numeric_domain()
@@ -437,7 +473,7 @@ def main(argv=None):
         scene_point = QPointF(point.x * 1e6, -point.y * 1e6)
         QTest.mouseClick(window.view.viewport(), Qt.MouseButton.LeftButton,
                          pos=window.view.mapFromScene(scene_point))
-        QTest.qWait(100)
+        wait_desktop_events(100)
         assert window.view.candidate_menu and window.view.candidate_menu.isVisible()
         assert window.view.candidate_menu.grab().save(str(out / "overlapping-object-pick-list.png"))
         window.view.candidate_menu.close()
@@ -452,7 +488,7 @@ def main(argv=None):
         window.resize(1280, 800)
         click(window.guided.stage_buttons["results"])
         window.guided.drawer.hide()
-        QTest.qWait(80)
+        wait_desktop_events(80)
         window.fit_result_layer()
         capture("compact-results")
         assert window.guided.primary.isVisible() and window.guided.analysis.isVisible()
@@ -472,6 +508,10 @@ def main(argv=None):
         expected_modal = None
         try:
             dispose()
+        except BaseException as error:
+            receipt["result"] = "failed"
+            receipt["cleanup_error"] = f"{type(error).__name__}: {error}"
+            raise
         finally:
             watchdog.stop()
             faulthandler.cancel_dump_traceback_later()

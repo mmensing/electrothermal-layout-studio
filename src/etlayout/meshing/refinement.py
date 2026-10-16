@@ -11,7 +11,7 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, field
 
 import numpy as np
-from shapely import polygons, union_all
+from shapely import points, polygons, union_all
 from shapely.geometry import box
 
 from etlayout.geometry.prepare import geometry_region, polygon_parts, prepare_geometry
@@ -101,6 +101,80 @@ def contact_transfer_estimate(project, interface, layer_id, states=()):
     if not conductances or interface.electrical_value <= 0:
         return None, "Local sheet conductance unavailable for transfer-length estimate"
     return math.sqrt(interface.electrical_value / (1. / min(conductances))), estimate
+
+
+def _physical_selector_support(project, result, geometry, selector):
+    """Resolve physical sizing boundaries without inherited triangulation seams.
+
+    Numerical triangle unions can retain roundoff-sized seams along an otherwise
+    straight boundary. Feeding those seams back into the PSLG creates needle
+    elements. Physical selectors use prepared geometry; element IDs only identify
+    disconnected parts. Explicitly mesh-defined regions retain their cell edges.
+    The measurement path validates selector identities/cycles before this call.
+    """
+    from etlayout.power.analysis import _region_geometry
+    from etlayout.visualization.support import region_elements
+
+    support = {layer.id: geometry.layers[layer.id] for layer in project.layers
+               if layer.id in result.fields and layer.id in geometry.layers
+               and (not selector.layers or layer.id in selector.layers)
+               and (not selector.materials or layer.material_id in selector.materials)
+               and (not selector.nets or layer.net_id in selector.nets)}
+    regions = {prefix + ":" + key: shape for prefix, group in (
+        ("interface", geometry.interfaces), ("terminal", geometry.terminals),
+        ("thermal", geometry.thermal_boundaries), ("heat", geometry.heat_sources),
+        ("refinement", geometry.refinements)) for key, shape in group.items()}
+
+    def selected_parts(shape, ids):
+        centers = points(result.mesh.points[result.mesh.triangles[ids]].mean(axis=1))
+        return union_all([part for part in polygon_parts(shape)
+                          if part.covers(centers).any()])
+
+    if selector.regions:
+        for layer, shape in support.items():
+            pieces = []
+            for key in selector.regions:
+                if key.startswith("component:"):
+                    pieces.append(selected_parts(shape, region_elements(result, layer, key)))
+                elif key in regions:
+                    pieces.append(regions[key])
+                else:
+                    # Adjacent-edge support tags and caller-defined mesh regions
+                    # are genuinely mesh-defined. Preserve their full-cell
+                    # meaning, unioning before any geometric clipping.
+                    ids = region_elements(result, layer, key)
+                    pieces.append(union_all(polygons(result.mesh.points[result.mesh.triangles[ids]])))
+            support[layer] = shape.intersection(union_all(pieces))
+    if selector.contacts:
+        interfaces = {item.id: item for item in project.interfaces}
+        contacts = result.analysis.get("contacts", {})
+        for layer, shape in support.items():
+            pieces = []
+            for key in selector.contacts:
+                record = contacts.get(key)
+                interface = interfaces[record["interface_id"] if record else key]
+                if layer not in {interface.layer_a, interface.layer_b}:
+                    continue
+                contact = geometry.interfaces[interface.id]
+                if record is not None:
+                    contact = selected_parts(contact, np.asarray(record["elements"], dtype=int))
+                pieces.append(contact)
+            support[layer] = shape.intersection(union_all(pieces))
+    if selector.ports:
+        for layer, shape in support.items():
+            terminals = [terminal for port in project.power.ports if port.id in selector.ports
+                         for landing in port.landings for terminal in project.terminals
+                         if terminal.id == landing.terminal_id and terminal.layer_id == layer]
+            support[layer] = shape.intersection(union_all([geometry.terminals[t.id] for t in terminals]))
+    if selector.geometry and not selector.geometry.full_domain:
+        clip = _region_geometry(project, selector.geometry, None)
+        support = {layer: shape.intersection(clip) for layer, shape in support.items()}
+    if selector.devices:
+        groups = [_physical_selector_support(project, result, geometry, device.selector)
+                  for device in project.power.devices if device.id in selector.devices]
+        support = {layer: shape.intersection(union_all([group[layer] for group in groups if layer in group]))
+                   for layer, shape in support.items()}
+    return support
 
 
 def suggest_refinements(project, result=None, *, geometry=None, progress=None, cancel=None,
@@ -230,16 +304,11 @@ def suggest_refinements(project, result=None, *, geometry=None, progress=None, c
             x, y = center
             half = spec.averaging_length / 2
             window = box(x-half, y-half, x+half, y+half)
-            selected, clips = selected_support(project, result, spec.selector)
-            pieces = []
-            for layer, elements in selected.items():
-                shapes = polygons(result.mesh.points[result.mesh.triangles[elements]])
-                shapes = shapes[window.intersects(shapes)]
-                local = window.intersection(shapes)
-                if clips.get(layer) is not None:
-                    local = clips[layer].intersection(local)
-                pieces.extend(local)
-            support = union_all(pieces).intersection(geometry.domain)
+            # A stored report may predate changes to nonphysical group metadata.
+            # Revalidate every selector identity and cycle before resolving it.
+            selected_support(project, result, spec.selector)
+            selected = _physical_selector_support(project, result, geometry, spec.selector)
+            support = window.intersection(union_all(list(selected.values()))).intersection(geometry.domain)
             add("hotspot-" + identifier, "Averaged hotspot", identifier, support, spec.averaging_length,
                 "Four elements across this solved physical averaging window; its location is fixed throughout the study.")
     checkpoint(cancel, progress, 1., f"Prepared {len(plan.suggestions)} local refinement suggestions")

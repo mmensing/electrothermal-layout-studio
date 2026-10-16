@@ -28,7 +28,11 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
-    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from desktop_acceptance_support import (
+        isolate_acceptance_settings,
+        prepare_desktop_fonts,
+        wait_desktop_events,
+    )
     from PySide6.QtCore import QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QCheckBox, QComboBox, QDialogButtonBox, QMessageBox
@@ -51,7 +55,7 @@ def main(argv=None):
     window.resize(1560, 980)
     window.apply_theme(False)
     window.show()
-    QTest.qWait(180)
+    wait_desktop_events(180)
     checkpoints = []
     failures = []
 
@@ -118,7 +122,7 @@ def main(argv=None):
                 window.cancel_job()
                 window.cancel_geometry()
                 raise TimeoutError(f"Desktop workers exceeded {timeout} seconds")
-            QTest.qWait(40)
+            wait_desktop_events(40)
         assert not failures, failures
         if require_geometry:
             assert window.geometry is not None, window.console.toPlainText()
@@ -180,7 +184,7 @@ def main(argv=None):
             if time.monotonic() - start > timeout:
                 window.cancel_job()
                 raise TimeoutError(f"{operation} exceeded {timeout} seconds")
-            QTest.qWait(40)
+            wait_desktop_events(40)
             modal = QApplication.activeModalWidget()
             if isinstance(modal, QMessageBox):
                 text = modal.text()
@@ -193,7 +197,7 @@ def main(argv=None):
         return time.monotonic() - start
 
     def screenshot(name):
-        QTest.qWait(100)
+        wait_desktop_events(100)
         window.grab().save(str(output / name))
 
     try:
@@ -303,7 +307,7 @@ def main(argv=None):
         start = time.monotonic()
         while window.job:
             assert time.monotonic() - start < 180
-            QTest.qWait(50)
+            wait_desktop_events(50)
         assert len(window.studies) == 3 and all(row.result and row.result.converged for row in window.studies)
         export_study(window.studies, output / "sweep", sweep.parameter)
         screenshot("07-sweep.png")
@@ -360,6 +364,15 @@ def main(argv=None):
         if window.job:
             window.cancel_job()
         window.cancel_geometry()
+        window.autosave_timer.stop()
+        window.cancel_saving()
+        # Cancelling is asynchronous: let the writer close its temporary archive
+        # before window destruction or Python's temporary-directory cleanup.
+        cleanup_started = time.monotonic()
+        while window.save_job or window._save_queue:
+            if time.monotonic() - cleanup_started > 30.:
+                raise TimeoutError("Cancelled desktop save did not finish within 30 seconds")
+            wait_desktop_events(40)
         window.dirty = False
         window.close()
         application.processEvents()
