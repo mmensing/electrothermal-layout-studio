@@ -20,6 +20,34 @@ from etlayout.geometry.polygon_edit import editable_polygons
 from etlayout.io.project import file_hash, load_project, physics_hash
 
 
+def acceptance_settings_factory(output):
+    """Return explicit local INI settings for QA; never alter Qt global settings.
+
+    QSettings(organization, application) can retain NativeFormat despite global
+    defaults. Acceptance callers install this factory only on their application
+    module aliases for that process, or use scoped monkeypatches in tests. Normal
+    application startup never invokes it. No native preference store is inspected.
+    """
+    from PySide6.QtCore import QSettings
+
+    root = Path(output).resolve()
+    directory = root / "settings"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = (directory / "application.ini").resolve()
+    if not path.is_relative_to(root):
+        raise RuntimeError("Desktop acceptance preferences escaped the output directory")
+
+    def local_settings(*_args, **_kwargs):
+        settings = QSettings(str(path), QSettings.Format.IniFormat)
+        settings.setFallbacksEnabled(False)
+        if (settings.format() != QSettings.Format.IniFormat or settings.fallbacksEnabled()
+                or Path(settings.fileName()).resolve() != path):
+            raise RuntimeError("Desktop acceptance preferences escaped the output directory")
+        return settings
+
+    return local_settings
+
+
 def run_editor_smoke(window, output, *, timeout=90.):
     """Edit the E1 line-contact fixture and leave a portable input for CLI solve."""
     output = Path(output).resolve()
