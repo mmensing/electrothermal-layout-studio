@@ -2,12 +2,12 @@
 """Time histories with SI columns and source-linked, shared-time-axis figures."""
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 
 import numpy as np
 
 from etlayout.io.project import _json_dump
+from etlayout.io.reporting import csv_writer
 
 HISTORY_COLUMNS = {
     "time_s": "time_s", "time_step": "time_step_s",
@@ -66,7 +66,7 @@ def export_transient_history(result, directory, *, plots=True):
     sidecar["csv_file"] = "transient_history.csv"
     (root / "transient_history.metadata.json").write_text(_json_dump(sidecar), encoding="utf-8")
     with (root / "transient_history.csv").open("w", newline="", encoding="utf-8-sig") as stream:
-        writer = csv.writer(stream)
+        writer = csv_writer(stream)
         writer.writerow([*HISTORY_COLUMNS.values(), "drives_json", "terminals_json", "configuration_hash"])
         for row in history.rows:
             writer.writerow([*(row.get(key, "") for key in HISTORY_COLUMNS),

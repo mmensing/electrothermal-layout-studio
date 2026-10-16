@@ -2,7 +2,6 @@
 """Geometry cuts, multiple line profiles and real sweep/comparison tables."""
 from __future__ import annotations
 
-import csv
 import json
 import math
 
@@ -25,6 +24,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from etlayout.io.reporting import csv_writer
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.formatting import distinct_labels, series_context_range
 from etlayout.visualization.sampling import DISPLAY_FIELD_LABELS as FIELD_LABELS
@@ -131,7 +131,7 @@ class ProfilePanel(QWidget):
         path, _ = QFileDialog.getSaveFileName(self, "Export all profiles", "profiles.csv", "CSV (*.csv)")
         if path:
             with open(path, "w", newline="", encoding="utf-8") as stream:
-                writer = csv.writer(stream)
+                writer = csv_writer(stream)
                 writer.writerow(["profile", "layer", "field", "unit", "distance_m", "x_m", "y_m", "value", "provenance_json"])
                 for profile in self.profiles:
                     unit = FIELD_UNITS.get(profile["field"], "SI")
@@ -376,7 +376,7 @@ class StudyPanel(QWidget):
         path, _ = QFileDialog.getSaveFileName(self, "Export study", "study.csv", "CSV (*.csv)")
         if path:
             with open(path, "w", newline="", encoding="utf-8") as stream:
-                writer = csv.writer(stream)
+                writer = csv_writer(stream)
                 metrics = sorted({key for row in self.rows if row.result for key, value in row.result.metrics.items()
                                   if isinstance(value, (float, int))})
                 writer.writerow([self.parameter, "applied_value", *metrics, "error"])

@@ -291,6 +291,26 @@ difference reports include the paired-run provenance. Comparison exports also in
 sidecar recording both panels and their views. Profiles retain selection and source
 provenance in CSV. Save/reopen a project to resume with both setup and results.
 
+Reports from the GUI and command line use the same offline rendering contract.
+Names, notes, diagnostics, captions and recorded configuration are text, including
+when they contain HTML-like tags. Generated field images are embedded PNGs, so the
+HTML file can be moved without its image directory. Its Content Security Policy
+blocks scripts, remote resources, forms and embedded objects. This is protection
+against active report content, **not** a confidentiality filter: reports can still
+contain layout paths, material settings and notes, and the comprehensive numerical
+export can contain the full source archive. Review the recorded export scope
+before sharing.
+
+All application CSV exports use a spreadsheet-safe text policy. Text identifiers
+beginning with formula prefixes (`=`, `+`, `-`, `@`, including after whitespace),
+leading control characters or equivalent full-width prefixes receive an initial
+apostrophe. CSV readers will see that apostrophe; it deliberately identifies text.
+Actual numeric values retain their SI values, including negative voltage, signed
+current and scientific notation. JSON, NPZ and VTU preserve the original identifiers
+and numeric data for programmatic exchange. Do not remove the CSV text protection
+and then open untrusted identifiers in a spreadsheet.
+
+
 ## Recorded runs and result compatibility
 
 **Simulation → Inspect run history** opens the **Run history** tab. Each entry shows its
