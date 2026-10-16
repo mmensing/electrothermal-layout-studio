@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Shared font verification for real desktop acceptance captures.
+"""Shared local settings isolation and fonts for desktop acceptance captures.
 
 Windows' offscreen Qt plugin does not discover installed fonts. Register the
 host's existing fonts for that test plugin only; never copy or bundle them.
@@ -67,3 +67,21 @@ def prepare_desktop_fonts(app, output):
         (output / "font-verification.json").write_text(
             json.dumps(receipt, indent=2, ensure_ascii=False), encoding="utf-8")
     return receipt
+
+
+def isolate_acceptance_settings(output):
+    """Install file-backed preferences for this standalone acceptance process.
+
+    Only application-module constructor aliases are replaced; QtCore.QSettings
+    and global defaults/paths remain untouched. Both windows and vertex-editor
+    snap-grid controls must use the same store. Return its genuine QSettings for
+    runners that need explicit initial preferences before constructing windows.
+    """
+    import etlayout.gui.layout_editor as layout_editor
+    import etlayout.gui.main_window as main_window
+    from etlayout.gui.editor_smoke import acceptance_settings_factory
+
+    factory = acceptance_settings_factory(output)
+    main_window.QSettings = factory
+    layout_editor.QSettings = factory
+    return factory()

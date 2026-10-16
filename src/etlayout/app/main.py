@@ -23,16 +23,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.editor_smoke_output and not (args.smoke_test and args.project):
         parser.error("--editor-smoke-output requires --smoke-test and an E1 project fixture")
-    from PySide6.QtCore import QSettings, QTimer
+    from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
     from etlayout.gui.main_window import MainWindow
     from etlayout.io.project import load_project, load_run_history
     editor_output = Path(args.editor_smoke_output).resolve() if args.editor_smoke_output else None
     if editor_output:
-        editor_output.mkdir(parents=True, exist_ok=True)
-        QSettings.setDefaultFormat(QSettings.Format.IniFormat)
-        QSettings.setPath(QSettings.Format.IniFormat, QSettings.Scope.UserScope, str(editor_output / "settings"))
+        import etlayout.gui.layout_editor as layout_editor
+        import etlayout.gui.main_window as main_window
+        from etlayout.gui.editor_smoke import acceptance_settings_factory
+
+        factory = acceptance_settings_factory(editor_output)
+        main_window.QSettings = factory
+        layout_editor.QSettings = factory
     application = QApplication.instance() or QApplication(sys.argv[:1])
     application.setApplicationName("Electrothermal Layout Studio")
     application.setOrganizationName("etlayout")
