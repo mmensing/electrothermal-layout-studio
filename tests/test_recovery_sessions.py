@@ -234,7 +234,8 @@ def test_recovery_discard_requires_confirmation(qtbot, stores, recovery_widgets)
 @pytest.mark.parametrize("field,value", [
     ("document_id", 12), ("session_id", None), ("snapshot_id", []),
     ("saved_at", float("nan")), ("saved_at", float("inf")), ("saved_at", 1e300),
-    ("saved_at", True), ("revision", True), ("status", []),
+    ("saved_at", True), ("saved_at", 10**1000), ("revision", True), ("status", []),
+    ("name", "\ud800"), ("original_path", "\udfff"),
 ])
 def test_malformed_receipt_cannot_hide_an_intact_snapshot(stores, field, value):
     import uuid

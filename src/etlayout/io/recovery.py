@@ -102,6 +102,8 @@ class RecoveryEntry:
                 or entry.snapshot != entry.snapshot_id + ".etlayout"
                 or entry.status not in {"recoverable", "deletion_failed", "legacy"}):
             raise ValueError("Invalid recovery receipt")
+        entry.name.encode("utf-8")
+        entry.original_path.encode("utf-8")
         try:
             datetime.fromtimestamp(entry.saved_at)
         except (ValueError, OverflowError, OSError) as error:
@@ -154,7 +156,7 @@ class RecoveryStore:
                     entries[entry.snapshot_id] = entry
                 else:
                     self.issues.append("Unavailable recovery snapshot " + entry.snapshot_id)
-            except (OSError, ValueError, TypeError, KeyError):
+            except (OSError, ValueError, TypeError, KeyError, OverflowError):
                 self.issues.append("Unreadable recovery receipt " + receipt.name)
                 continue
         return entries
