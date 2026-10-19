@@ -2025,7 +2025,10 @@ class GuidedWorkspace(QObject):
                   ("reporting", "Reporting"), ("cached_result_load", "Cache retrieval"), ("total", "Total"))
         self.job_timings.setText(" · ".join(f"{label}: {timings[key]:.2f} s" for key, label in labels if key in timings))
         linear = timings.get("sparse_linear_solves")
-        self.job_timings.setToolTip((f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
+        assembly = " · ".join(f"{label}: {timings[key]:.2f} s" for key, label in
+                              (("electrical_assembly", "Electrical assembly"), ("thermal_assembly", "Thermal assembly"))
+                              if key in timings)
+        self.job_timings.setToolTip((assembly + "\n" if assembly else "") + (f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
             "Measured wall time for the recorded run. CPU budget and assembly concurrency do not imply a total speedup.")
 
     def initial_state_key(self):
