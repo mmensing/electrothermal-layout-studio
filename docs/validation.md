@@ -26,6 +26,15 @@ wheel lock. Keep those patch versions explicit in receipts and inspect actual
 GitHub checks for the public commit; local execution does not establish a hosted
 CI pass. See [runtime availability](windows.md#python-runtime-and-verification-scope).
 
+## Local current and heat verification
+
+See [current crowding](current-crowding.md) for ten independent reference geometries,
+fixed-area metrics, singular-peak diagnostics, three-mesh evidence and equal-current
+corner-radius studies. Numerical convergence does not establish process calibration.
+
+See [physical local meshing](local-meshing.md) for radius/contact/via sizing,
+bounded flux guidance, graded fields, resource screens and per-metric receipts.
+
 ## Source checks
 
 Install the locked Windows dependencies and editable package, then run:
