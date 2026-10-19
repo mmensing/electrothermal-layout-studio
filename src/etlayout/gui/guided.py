@@ -1800,9 +1800,14 @@ class GuidedWorkspace(QObject):
                     self.result_evidence.setText(f"Run {result.configuration_hash[:12]}\n"
                                                 f"{result_state} · "
                                                 f"{'Solver converged' if result.converged else 'Solver did not converge'}\n"
-                                                "Mesh convergence: not established for this run")
+                                                + w.engineering_panel.evidence_text())
                     if result.metrics.get("thermal_limit_compliance", {}).get("status") in {"failed", "unavailable"}:
                         self.result_evidence.setText(w.result_status.text())
+                    concern = bool(w.result_status.property("error"))
+                    if self.result_evidence.property("error") != concern:
+                        self.result_evidence.setProperty("error", concern)
+                        self.result_evidence.style().unpolish(self.result_evidence)
+                        self.result_evidence.style().polish(self.result_evidence)
                     self.result_metrics.setText(w.key_metrics.text())
                     self.stage_buttons["results"].setToolTip(result_state + ". Fields and metrics retain this run's recorded configuration.")
                 else:

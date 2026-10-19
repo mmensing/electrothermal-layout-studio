@@ -118,6 +118,10 @@ def local_crowding(project, result, layer_id, *, support=None, geometry=None, re
     peak_index = int(np.argmax(sheet))
     peak_element = int(ids[peak_index])
     peak_shape = Polygon(result.mesh.points[result.mesh.triangles[peak_element]])
+    peak_xy = list(peak_shape.centroid.coords[0]) if support is None else np.asarray(centers[peak_index]).tolist()
+    if support is not None and not support.covers(Point(peak_xy)):
+        # A centroid of a concave/holed intersection can lie outside support.
+        peak_xy = list(peak_shape.intersection(support).representative_point().coords[0])
     features = corner_features(geometry.layers[layer_id]) if geometry is not None else []
     near = [
         item for item in features if peak_shape.distance(Point(item["xy"])) <= math.sqrt(peak_shape.area) * 2
@@ -148,7 +152,7 @@ def local_crowding(project, result, layer_id, *, support=None, geometry=None, re
         "reference_sheet_current_A_per_m": reference_sheet_current,
         "crowding_factor": float(sheet.max() / reference_sheet_current) if reference_sheet_current else None,
         "peak_element": peak_element,
-        "peak_xy": peak_shape.centroid.coords[0],
+        "peak_xy": peak_xy,
         "nearby_geometry": near,
         "nearby_boundaries": boundaries,
         "raw_peak_status": status,

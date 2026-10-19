@@ -59,6 +59,10 @@ def _execute_worker(messages, project, operation, argument):
             from etlayout.geometry.polygon_edit import edit_polygon, editable_polygons
             output = (editable_polygons(project, progress=progress) if operation == "layout:load" else
                       edit_polygon(project, *argument, progress=progress))
+        elif operation == "engineering-support":
+            from etlayout.power.engineering import scoped_engineering
+            options = dict(argument)
+            output = scoped_engineering(options.pop("result"), progress=progress, **options)
         elif operation.startswith("power:"):
             from etlayout.power.workflows import execute_operation
             output = execute_operation(project, operation.split(":", 1)[1], argument, progress=progress)
