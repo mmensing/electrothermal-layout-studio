@@ -36,6 +36,7 @@ def parser():
     ex = sub.add_parser("examples", help="Generate actual GDS/OASIS and ready-to-run projects")
     ex.add_argument("directory", nargs="?", default="examples")
     ex.add_argument("--name", help="Stable example ID or full name; omit to generate reference layouts only (no solves)")
+    ex.add_argument("--scenario", help="Named operating scenario; see example-science documentation")
     ex.add_argument("--preset", help="Power-device size: compact/reference/large; GaN also small, banks also stress")
     ex.add_argument("--variant", help="Family routing/feed variant; see power-examples documentation")
     ex.add_argument("--current", type=float, help="Requested total current in A; never silently reduced")
@@ -183,7 +184,7 @@ def main(argv=None):
             return 0
         if args.command == "examples":
             from etlayout.examples import generate_all, make_example
-            options = dict(preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
+            options = dict(scenario=args.scenario, preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
                            fingers=args.fingers, gate_width_um=args.gate_width_um)
             if not args.name and (args.pulse or args.stress or any(value is not None for value in options.values())):
                 raise ValueError("Preset/variant/current/thermal options require --name")

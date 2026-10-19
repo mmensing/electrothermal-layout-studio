@@ -874,6 +874,7 @@ class MainWindow(QMainWindow):
             action.setToolTip(info.learning_goal + detail + "\nEvidence: " + info.evidence_level
                 + "; material seeds are uncalibrated; a converged solve is not mesh verification.")
             categories[info.category].addAction(action)
+        files.addAction(self.action("Choose example operating scenario…", self.choose_example_scenario))
         files.addSeparator()
         files.addAction(self.action("Review project resources…", self.review_project_resources))
         files.addAction(self.action("Exit", self.close, "Alt+F4"))
@@ -3111,17 +3112,31 @@ class MainWindow(QMainWindow):
                 self.import_layout()
             self.update_title()
 
-    def load_example(self, name):
-        if not self.confirm_discard(lambda: self.load_example(name)):
+    def load_example(self, name, scenario=None):
+        if not self.confirm_discard(lambda: self.load_example(name, scenario)):
             return
         try:
             from etlayout.examples import make_example
             destination = self.recovery_path.parent / "examples"
-            project = make_example(name, destination)
+            project = make_example(name, destination, scenario=scenario)
             self.set_project(project)
             self.log(f"Loaded {project.name}. All physical parameters remain editable. Press F5 to solve.")
         except Exception as error:
             self.error("Example could not be loaded", error)
+
+    def choose_example_scenario(self):
+        if self.model_locked():
+            return
+        from etlayout.example_scenarios import scenarios
+        try:
+            choices = scenarios(self.project.name)
+        except ValueError:
+            self.statusBar().showMessage("Open a built-in example first to choose a named operating scenario.")
+            return
+        labels = [item.title for item in choices]
+        selected, accepted = QInputDialog.getItem(self, "Example operating scenario", "Regenerate an editable project; pending edits are resolved first.\nJoule demonstrations change electrical drives, preserving layout/materials/cooling.\nFailure scenarios use a chosen engineering limit, not a material rating.", labels, 0, False)
+        if accepted:
+            self.load_example(self.project.name, choices[labels.index(selected)].id)
 
     def apply_example_view_defaults(self):
         """Choose a useful initial map once when opening a catalog project."""

@@ -484,6 +484,8 @@ class GuidedWorkspace(QObject):
                 and (key.startswith(("simulation.", "studies.")) and key not in {"simulation.cancel", "studies.saved"}
                      or key in {"edit.layout", "file.save", "file.save_as"})):
             return "Review project resources or relink the layout before this operation."
+        if key == "file.example_scenario" and self.window.inspection_context:
+            return "Return to the working setup before choosing an example operating scenario."
         if key == "simulation.cancel":
             return busy or bool(self.window.prepare_job or self.window.hierarchy_jobs)
         if busy and not read_only and key not in {"file.save", "file.save_as", "file.exit"}:
@@ -530,6 +532,7 @@ class GuidedWorkspace(QObject):
             "Save content-addressed copy…": ("save_v3", lambda: w.save_as(archive_format=3)),
             "Save legacy-compatible copy…": ("save_legacy", lambda: w.save_as(archive_format=2)),
             "Duplicate project…": ("duplicate", w.duplicate_project),
+            "Choose example operating scenario…": ("example_scenario", w.choose_example_scenario),
             "Relink layout…": ("relink", w.relink_layout), "Exit": ("exit", w.close),
             "Export / share results…": ("export_share", lambda: w.share_export()),
             "Export complete numerical bundle (confidential)…": ("export_full", w.export_results),
