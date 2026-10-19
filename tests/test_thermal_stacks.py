@@ -219,6 +219,9 @@ def test_unused_deposition_fields_preserve_legacy_full_configuration_hash():
 
     project, _ = contact_fixture()
     legacy = asdict(project)
+    # Later optional limit metadata is absent from the historical interface fixture.
+    if legacy.get("temperature_limits") == []:
+        legacy.pop("temperature_limits")
     for interface in legacy["interfaces"]:
         interface.pop("heat_to_layer_a_fraction")
         interface.pop("heat_layer_id")
