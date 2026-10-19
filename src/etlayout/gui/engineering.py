@@ -66,7 +66,16 @@ class EngineeringPanel(QWidget):
         self.tabs = QTabWidget()
         self.evidence = _table(["Evidence axis", "State", "Meaning / scope"])
         self.evidence.setAccessibleName("Independent engineering evidence axes")
-        self.tabs.addTab(self.evidence, "Evidence")
+        evidence_page = QWidget()
+        evidence_layout = QVBoxLayout(evidence_page)
+        evidence_layout.setContentsMargins(0, 0, 0, 0)
+        evidence_layout.addWidget(self.evidence, 1)
+        self.mesh_details = QPushButton("Local mesh evidence…")
+        self.mesh_details.setAccessibleName("Inspect selected-metric local mesh refinement evidence")
+        self.mesh_details.clicked.connect(self.show_mesh_evidence)
+        self.mesh_details.hide()
+        evidence_layout.addWidget(self.mesh_details)
+        self.tabs.addTab(evidence_page, "Evidence")
         self.dashboard = _table(["Quantity", "Recorded value", "Definition / support"])
         self.dashboard.setAccessibleName("Device and disjoint loss dashboard")
         self.tabs.addTab(self.dashboard, "Device && losses")
@@ -123,6 +132,17 @@ class EngineeringPanel(QWidget):
         self.crowding.clear()
         self.inspect_button.setEnabled(False)
         self.locate_button.setEnabled(False)
+        self.mesh_details.hide()
+
+    def show_mesh_evidence(self):
+        from etlayout.gui.refinement import MeshVerificationDialog
+        receipt = next((row["evidence"] for row in self.report["axes"] if row["axis"] == "Mesh confidence"), {}) if self.report else {}
+        if receipt:
+            dialog = MeshVerificationDialog(receipt, self)
+            try:
+                dialog.exec()
+            finally:
+                dialog.deleteLater()
 
     def request_support(self):
         try:
@@ -150,6 +170,7 @@ class EngineeringPanel(QWidget):
         self.heading.style().polish(self.heading)
         _rows(self.evidence, [(row["axis"], row["status"].replace("_", " "), row["detail"])
                               for row in report["axes"]])
+        self.mesh_details.setVisible(any(row["axis"] == "Mesh confidence" and row.get("evidence") for row in report["axes"]))
         rows = [(metric_label(key, display=False), engineering(value, metric_unit(key)), "Recorded solver metric")
                 for key, value in report["metrics"].items()]
         labels = {"routing_metal": "Routing metal loss", "other_metal": "Other metal loss", "access": "Access loss",

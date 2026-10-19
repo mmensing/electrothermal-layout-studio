@@ -5,6 +5,11 @@ The **Engineering** tab groups evidence, device losses and a linked physical-sup
 readout. **All recorded metrics** retains the original scalar and terminal tables.
 The result's original configuration and fields remain the numerical source.
 
+![Linked field and local power readouts on the actual E39 source sheet](images/engineering-support.png)
+
+Actual native Windows source application inspecting the 10 A E39 explicit-gap
+thermal-stack calculation. This single mesh is explicitly unverified.
+
 ## Read the evidence axes
 
 A converged PDE solution can exceed a temperature limit, lie outside a material
@@ -74,7 +79,8 @@ estimates are explicitly uncalibrated. A raw maximum remains illustrative.
 A local mesh receipt applies to this readout only when layer and physical support
 match; each metric retains its own convergence state and no receipt establishes
 physical qualification. A different probe square does not inherit that status.
-Use the mesh-confidence details in the refinement study for the compared levels.
+Select **Local mesh evidence…** in the Evidence tab to open the existing
+refinement-confidence dialog with its actual levels, sizes and per-metric states.
 
 ## Use the device and loss dashboard
 
@@ -101,6 +107,12 @@ stopped at a hard limit retains accepted fields and labels its requested duratio
 as incomplete even when the last PDE solution converged. Use time-step and mesh
 studies before interpreting a pulse peak as resolved. On-demand archives keep
 metadata and the currently loaded frame distinct until the requested frame loads.
+
+![E18 peak field and separate displayed-frame/run-peak labels](images/transient-peak-frame.png)
+
+Actual nominal E18 calculation: 323.59 K at 295 µs, versus 301.44 K at the
+400 µs final frame. Both maps use the same across-time color range. These are
+source-app captures, not packaged-build or clean-machine validation.
 
 On compact windows, tables scroll and the Same support page scrolls vertically;
 use the existing Workflow/Inspector and drawer toggles to recover map space.

@@ -75,6 +75,7 @@ def test_drag_selection_coalesces_and_release_flushes_final_frame(qtbot):
     widget.slider.setSliderDown(True)
     widget.slider.setValue(0)
     widget.slider.setValue(1)
+    assert widget.displayed_metrics["time_s"] == 2.  # Canvas has not accepted a coalesced frame yet.
     widget.slider.setValue(2)
     assert not selections
     widget.slider.setSliderDown(False)

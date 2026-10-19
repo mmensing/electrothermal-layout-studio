@@ -704,8 +704,6 @@ class TimeNavigation(QWidget):
 
     def changed(self, index):
         self.update_label()
-        if 0 <= index < len(self._frame_metrics):
-            self.set_frame_metrics(self._frame_metrics[index])
         if self.slider.isSliderDown():
             self._pending_index = index
             if not self._drag_timer.isActive():
@@ -713,13 +711,21 @@ class TimeNavigation(QWidget):
         else:
             self._drag_timer.stop()
             self._pending_index = None
-            self.snapshot_changed.emit(index)
+            self._emit_selection(index)
 
     def flush_selection(self):
         self._drag_timer.stop()
         if self._pending_index is not None:
             index, self._pending_index = self._pending_index, None
-            self.snapshot_changed.emit(index)
+            self._emit_selection(index)
+
+
+    def _emit_selection(self, index):
+        # A dragged/requested time is not yet the displayed frame. Advance the
+        # summary together with the coalesced field-selection event only.
+        if 0 <= index < len(self._frame_metrics):
+            self.set_frame_metrics(self._frame_metrics[index])
+        self.snapshot_changed.emit(index)
 
 
 class TimeHistoryPanel(QWidget):
