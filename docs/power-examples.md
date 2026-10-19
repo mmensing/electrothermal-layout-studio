@@ -570,3 +570,6 @@ verified high-current ranking. The eight-bank 30 A stress preset exceeded its
 requests, not validated device operating ratings.
 
 </details>
+
+
+See the [scientific evidence audit](example-science.md) for applicability levels, exact nominal measurements, model limits and reproduction commands.
