@@ -9,7 +9,7 @@ from etlayout.models import PropertyModel, SimulationError
 
 def test_all_reference_materials_have_positive_properties():
     materials = reference_materials()
-    assert len(materials) == 18
+    assert {"sin", "sio2", "alumina", "aln", "polyimide", "gan", "sic"} <= materials.keys()
     for material in materials.values():
         assert evaluate_property(material.resistivity, 300.) > 0
         assert evaluate_property(material.thermal_conductivity, 300.) > 0
@@ -51,7 +51,7 @@ def test_immutable_reference_and_persistent_customization(tmp_path):
     assert db.get(custom.id).name == "Process Cu"
     exported = tmp_path / "materials.json"
     db.export_json(exported)
-    assert len(db.import_json(exported)) == 19
+    assert len(db.import_json(exported)) == len(reference_materials()) + 1
     db.delete(custom.id)
     with pytest.raises(KeyError):
         db.get(custom.id)
@@ -62,3 +62,17 @@ def test_csv_property_import(tmp_path):
     source.write_text("temperature_K,value\n300,1.6e-8\n400,2.2e-8\n")
     prop = MaterialDatabase.import_property_csv(source)
     assert float(evaluate_property(prop, 350)) == pytest.approx(1.9e-8)
+
+
+def test_new_library_seeds_preserve_an_original_example_identity(tmp_path):
+    from copy import deepcopy
+
+    from etlayout.examples import make_example
+    from etlayout.io.project import physics_hash
+
+    project = make_example("E1", tmp_path)
+    legacy = deepcopy(project)
+    legacy.materials = {key: value for key, value in reference_materials().items()
+                        if key not in {"aln", "polyimide"}}
+    assert {"aln", "polyimide"} <= reference_materials().keys()
+    assert physics_hash(project) == physics_hash(legacy)

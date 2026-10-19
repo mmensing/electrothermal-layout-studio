@@ -170,6 +170,8 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
             refinement.pop("axis_sizes", None)
         if refinement.get("grading_length") == 0.:
             refinement.pop("grading_length", None)
+    if not any(limit["enabled"] for limit in data.get("temperature_limits", [])):
+        data.pop("temperature_limits", None)
     if data.get("power") == asdict(PowerSettings()):
         data.pop("power", None)
     for layer in data["layers"]:
@@ -178,7 +180,8 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
                 layer.pop(key, None)
     defaults = {"model_kind": "effective", "height_mode": "explicit", "enclosure": 0.,
                 "allow_partial": False, "replaces_layers": [], "resistance_semantics": "array",
-                "purpose": "connection", "reference_temperature": 300., "temperature_coefficient": 0.}
+                "purpose": "connection", "reference_temperature": 300., "temperature_coefficient": 0.,
+                "heat_to_layer_a_fraction": .5, "heat_layer_id": ""}
     for interface in data["interfaces"]:
         if interface.get("height_mode") == "stack" and interface.get("model_kind") != "effective":
             endpoints = [layer for layer in data["layers"] if layer["id"] in {interface["layer_a"], interface["layer_b"]}]
@@ -255,6 +258,9 @@ def annotated_result(result: SimulationResult, project: Project, *, run: Simulat
     # used as an initial/restart state. Whole-run annotations are separate.
     metrics = dict(result.metrics)
     if run is not result:
+        for key in ("thermal_limit_compliance", "engineering_accepted"):
+            if key in run.metrics:
+                metrics[key] = deepcopy(run.metrics[key])
         metrics["whole_run_metrics"] = {key: value for key, value in run.metrics.items() if key.startswith("transient_")}
     diagnostics = list(run.diagnostics)
     diagnostics.extend(item for item in result.diagnostics if item not in diagnostics)

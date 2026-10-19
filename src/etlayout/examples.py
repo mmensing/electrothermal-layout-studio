@@ -135,6 +135,11 @@ def make_example(name: str, directory: str | Path, *, preset=None, variant=None,
                                 for x in p.layers]
     if not p.sweeps:
         p.sweeps = [SweepSpec("terminals.drain.value", [.01,.02,.04], "electrothermal", "Bias sweep")]
+    # New optional library seeds must not alter the historical reference identity.
+    used_materials = {layer.material_id for layer in p.layers} | {item.material_id for item in p.interfaces}
+    for identifier in ('aln', 'polyimide'):
+        if identifier not in used_materials:
+            p.materials.pop(identifier, None)
     source_path = directory / (name + ".gds")
     builder.write(source_path)
     builder.write(directory / (name + ".oas"))
@@ -304,7 +309,8 @@ def generate_all(directory: str | Path) -> list[Project]:
                  "learning_goal": example_info(p.name).learning_goal,
                  "source_sha256": p.layout.sha256,
                  "level": example_info(p.name).level, "reference_tier": example_info(p.name).reference_tier,
-                 "physical_scope": example_info(p.name).physical_scope} for p in projects]
+                 "physical_scope": example_info(p.name).physical_scope,
+                 "evidence_level": example_info(p.name).evidence_level} for p in projects]
     Path(directory, "index.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return projects
 

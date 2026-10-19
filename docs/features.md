@@ -47,6 +47,7 @@ switching-parasitic model. See [transient operation](handbook/transient.md).
 | Task | GUI route | Read the result with this context |
 | --- | --- | --- |
 | Validate and mesh | **Mesh & Checks**, **F6**, **F7** | Issues carry severity and object/location where available. **Locate** frames evidence; **Fix** opens its editing task. |
+| Enforce maximum temperature | **Operating conditions → Maximum operating temperature…** | Optional global °C/K and exact layer/region limits fail engineering acceptance at equality/exceedance while retaining converged fields; transients can stop at a violating accepted state. [Thermal-limit guide](temperature-limits.md). |
 | Review local refinement | **Mesh & Checks → Suggest local refinement** | Inspect bounded contact/channel/hotspot suggestions and resource estimates before applying them. A suggestion is not proof of convergence. |
 | Explore maps | **Results** | Select result, layer, quantity, physical region and transient time. Colormaps/manual ranges change display, not the saved fields. |
 | Sample and integrate | Result probes; **Results → Draw line profile**, **Integrate branch current**, **Contacts, devices and loss budget** | Use component-local fields and physical support. Keep sheet current, metal volumetric current density and contact-normal loading distinct. |

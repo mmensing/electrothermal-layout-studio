@@ -24,6 +24,10 @@ from .thermal import solve_state as thermal_state
 
 
 def _validate(project: Project, mesh: PlanarMesh) -> None:
+    from etlayout.simulation.temperature import validate_temperature_limits
+    errors = validate_temperature_limits(project)
+    if errors:
+        raise SimulationError("\n".join(item.message for item in errors))
     settings = project.solver
     if settings.initial_temperature <= 0 or not np.isfinite(settings.initial_temperature):
         raise SimulationError("Initial temperature must be finite and above zero kelvin")
@@ -52,6 +56,8 @@ def _finish(result: SimulationResult, project: Project, started: float, progress
     result.configuration_hash = configuration_hash(result.configuration)
     result.physics_hash = physics_hash(project)
     result.elapsed_seconds = time.perf_counter() - started
+    from etlayout.simulation.temperature import finalize_temperature_limits
+    finalize_temperature_limits(project, result)
     refresh_threshold_diagnostics(result, project)
     if project.power.measurements or project.power.devices:
         from etlayout.power.analysis import analyze_power
@@ -95,9 +101,11 @@ def electrical_heat(result: SimulationResult) -> dict[str, np.ndarray]:
         raise SimulationError("Cannot use heating from a nonconverged electrical result")
     if "electrical_power" not in result.metrics:
         raise SimulationError("Result does not contain an electrical solution")
-    return {layer: np.nan_to_num(fields["joule_density"], nan=0.) +
-                   np.nan_to_num(fields.get("contact_density", np.zeros(len(result.mesh.triangles))), nan=0.)
-            for layer, fields in result.fields.items() if "joule_density" in fields}
+    zero = np.zeros(len(result.mesh.triangles))
+    return {layer: np.nan_to_num(fields.get("joule_density", zero), nan=0.) +
+                   np.nan_to_num(fields.get("contact_density", zero), nan=0.)
+            for layer, fields in result.fields.items()
+            if "joule_density" in fields or "contact_density" in fields}
 
 
 def solve(project: Project, mesh: PlanarMesh, progress: Progress | None = None,

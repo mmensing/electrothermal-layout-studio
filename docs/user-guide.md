@@ -77,7 +77,7 @@ Reordering the list does not silently change physical z coordinates: edit z expl
 
 Choose **Electrical / thermal / Interfaces** to declare which two layers connect and where. Select ideal, lumped,
 specific-contact, via or distributed electrical conductance as appropriate; independently
-choose the thermal link. Coincident x/y coordinates alone never connect different layers.
+choose the thermal link. Coincident x/y coordinates alone never connect different layers. For explicit dielectric/passivation sheets, half-thickness resistance, source-depth calibration and cross-section interpretation, see [thermal stacks](thermal-stacks.md).
 The cross-section uses solid shapes for physical layers/conductive vias and dashed links
 for effective thermal-only coupling. Thermal coefficients do not imply a solid material.
 
@@ -508,3 +508,12 @@ etlayout archive-convert experiment-v3.etlayout experiment-legacy.etlayout --arc
 Conversion preserves the current result and every retained run, then checks a full
 reopen. It refuses to overwrite an existing destination. External resource grants
 are still explicit; a format choice never authorizes a declared file or network path.
+
+### Hard temperature acceptance
+
+Use **Operating conditions → Maximum operating temperature…** for an optional
+global °C/K limit and layer/region limits. An accepted temperature at or above
+the limit fails engineering acceptance while retaining numerical fields.
+Transient operation can stop at the first violating accepted state.
+See [maximum operating temperature](temperature-limits.md) for status, history,
+CLI exit-code and compatibility details. Existing warning thresholds remain warnings.

@@ -503,6 +503,12 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
     steps finished and passed nonlinear and energy checks, not steady state.
     Cancellation raises Cancelled; it never returns a partially valid run.
     """
+    from etlayout.simulation.temperature import (
+        accumulate_temperature_limits,
+        evaluate_temperature_limits,
+        stop_requested,
+    )
+
     from .solve import _finish, _validate
 
     started = time.perf_counter()
@@ -643,9 +649,15 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
         2048 + 256 * (len(drive_values) + len(current.terminals)))
     if expected_bytes > settings.max_history_bytes:
         raise SimulationError("Requested transient history exceeds max_history_bytes; increase output interval or the memory budget")
+    limit_support_cache = {}  # immutable mesh/selection geometry, bounded to this integration
+    limit_report = evaluate_temperature_limits(original, current, time_s=start_time, _support_cache=limit_support_cache)
+    thermal_stopped = stop_requested(limit_report)
+    current.metrics["thermal_limit_compliance"] = deepcopy(limit_report)
     retain(current, start_time, True, drive_values)
     output_set = set(output_times.tolist())
     for step, time_s in enumerate(grid[1:], 1):
+        if thermal_stopped:
+            break
         checkpoint(cancel, progress, step / (len(grid) - 1),
                    f"Transient step {step}/{len(grid) - 1}, t={time_s:.6g} s")
         dt = float(time_s - grid[step - 1])
@@ -672,7 +684,14 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
         if temperature > peak_temperature:
             peak_temperature, peak_time = temperature, float(time_s)
             peak_result = current
-        retain(current, float(time_s), float(time_s) in output_set, drive_values)
+        accepted_limits = evaluate_temperature_limits(original, current, time_s=float(time_s), _support_cache=limit_support_cache)
+        limit_report = accumulate_temperature_limits(limit_report, accepted_limits)
+        current.metrics["thermal_limit_compliance"] = deepcopy(accepted_limits)
+        thermal_stopped = stop_requested(accepted_limits) and float(time_s) < settings.stop_time
+        retain(current, float(time_s), float(time_s) in output_set or thermal_stopped, drive_values)
+        history.rows[-1]["thermal_limit_status"] = accepted_limits["status"]
+        if thermal_stopped:
+            break
         if step in periodic_steps:
             periodic_cycle = periodic_steps[step]
             if previous_cycle is not None:
@@ -706,12 +725,16 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
             history_bytes += peak_bytes
             peak_retained = True
     history.times = np.asarray(saved_times)
-    history.completed = failure is None
+    history.completed = failure is None and not thermal_stopped
     result = copy(current)
     result.metrics = dict(current.metrics)
     result.diagnostics = list(current.diagnostics)
     result.transient = history
-    result.converged = history.completed
+    # A user-requested engineering stop does not invalidate accepted PDE states.
+    result.converged = failure is None
+    limit_report.update(stopped_early=thermal_stopped, requested_stop_time=settings.stop_time,
+                        actual_stop_time=float(history.rows[-1]["time_s"]))
+    result.metrics["thermal_limit_compliance"] = limit_report
     stored = float(current.metrics["thermal_stored_energy"])
     result.metrics.update(transient_completed=history.completed, transient_steps=len(history.rows) - 1,
                           transient_snapshot_count=len(history.snapshots), transient_time=float(history.rows[-1]["time"]),
@@ -724,7 +747,7 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
                           transient_periodic_converged=periodic_converged,
                           transient_periodic_cycles=periodic_cycle,
                           transient_periodic_temperature_change=periodic_change,
-                          transient_stop_reason="periodic_convergence" if periodic_converged else "stop_time" if failure is None else "failed_step",
+                          transient_stop_reason="maximum_temperature" if thermal_stopped else "periodic_convergence" if periodic_converged else "stop_time" if failure is None else "failed_step",
                           transient_input_energy=input_energy, transient_output_energy=output_energy,
                           transient_stored_energy=stored,
                           transient_energy_balance_error=abs(input_energy - output_energy - stored),
@@ -745,7 +768,7 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
             "Mesh anisotropy/angles and exchange terms can still prevent monotonicity; lumping alone is not a guarantee."))
     if settings.retain_peak and not peak_retained:
         result.diagnostics.append(Diagnostic("warning", "Peak temperature was measured, but its exact field could not be retained within the snapshot/byte budget"))
-    if settings.periodic_tolerance and not periodic_converged and failure is None:
+    if settings.periodic_tolerance and not periodic_converged and failure is None and not thermal_stopped:
         result.diagnostics.append(Diagnostic("warning", "Requested stop time reached before periodic convergence. "
                                             "The transient segment completed, but a periodic thermal state was not established."))
     if failure is not None:
@@ -760,5 +783,5 @@ def solve_transient(project: Project, mesh: PlanarMesh, progress=None, cancel=No
         snapshot.physics_hash = result.physics_hash
         snapshot.elapsed_seconds = result.elapsed_seconds
         snapshot.metrics["elapsed_seconds_scope"] = "whole_run"
-    checkpoint(cancel, progress, 1., "Transient simulation complete" if result.converged else "Transient integration stopped")
+    checkpoint(cancel, progress, 1., "Transient stopped at maximum-temperature limit" if thermal_stopped else "Transient simulation complete" if history.completed else "Transient integration stopped")
     return result

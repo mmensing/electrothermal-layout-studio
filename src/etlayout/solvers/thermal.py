@@ -2,6 +2,7 @@
 """Thickness-integrated lateral heat flow and conservative vertical exchange."""
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass
 
 import numpy as np
@@ -18,7 +19,7 @@ from etlayout.models import (
     SimulationResult,
     checkpoint,
 )
-from etlayout.simulation.execution import map_independent
+from etlayout.simulation.execution import map_independent, record_phase
 
 from .electrical import _interface_elements
 from .fem import Assembly, Space, check_references, layer_matrix, linear_solve, mass, stiffness
@@ -244,6 +245,7 @@ def solve_state(project: Project, mesh: PlanarMesh, heat: dict[str, np.ndarray] 
         return repr((layers, interfaces))
 
     def assemble(temperature: np.ndarray):
+        assembly_started = time.perf_counter()
         checkpoint(cancel)
         key = operator_key() if not nonlinear else None
         cached = getattr(space, "_thermal_operator", None)
@@ -305,7 +307,9 @@ def solve_state(project: Project, mesh: PlanarMesh, heat: dict[str, np.ndarray] 
             if key is not None:
                 space._thermal_operator = key, matrix
         matrix = matrix + boundary_matrix
-        return matrix + capacity_rate if transient else matrix
+        assembled = matrix + capacity_rate if transient else matrix
+        record_phase("thermal_assembly", time.perf_counter() - assembly_started)
+        return assembled
 
     for node, value in fixed.items():
         values[node] = value + reference

@@ -884,3 +884,6 @@ The desktop walkthroughs above work with the existing projects. Maintainers can 
 The generator reads existing projects from `examples/` and creates missing ones. Its cache is reused only when the physics hash, solver version and source-code fingerprint match. Use `--no-solve` for explicitly labeled geometry-only previews. The manifest records plotted range, units, mesh, convergence, diagnostics, operating point and configuration hashes.
 
 </details>
+
+
+See the [scientific evidence audit](example-science.md) for applicability levels, exact nominal measurements, model limits and reproduction commands.
