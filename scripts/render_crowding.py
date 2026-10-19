@@ -84,7 +84,13 @@ def render(source, output):
                         row["elapsed_s"],
                         *[
                             timings.get(k)
-                            for k in ("preparation", "meshing", "numerical", "sparse_linear_solves", "reporting")
+                            for k in (
+                                "preparation",
+                                "meshing",
+                                "numerical",
+                                "sparse_linear_solves",
+                                "reporting",
+                            )
                         ],
                         row["process_peak_working_set_bytes"],
                     ]
@@ -171,6 +177,12 @@ def render(source, output):
     fig.savefig(output / "corner-radius.svg")
     fig.savefig(output / "corner-radius.png", dpi=200)
     plt.close(fig)
+    for name in ("crowding-convergence.svg", "corner-radius.svg"):
+        asset = output / name
+        asset.write_text(
+            "\n".join(line.rstrip() for line in asset.read_text(encoding="utf-8").splitlines()) + "\n",
+            encoding="utf-8",
+        )
 
 
 if __name__ == "__main__":
