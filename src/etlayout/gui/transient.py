@@ -564,7 +564,9 @@ class TimeNavigation(QWidget):
         self._drag_timer.timeout.connect(self.flush_selection)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         row = QHBoxLayout()
+        self._navigation_row = row
         layout.addLayout(row)
         self.run_metrics = {}
         self.displayed_metrics = {}
@@ -613,7 +615,36 @@ class TimeNavigation(QWidget):
         actions.addWidget(self.last_button)
         actions.addWidget(self.temperature_summary, 1)
         layout.addLayout(actions)
+        self._actions_row = actions
+        self._navigation_controls = (previous, following, self.time_input, self.label,
+                                     self.peak_button, self.last_button)
+        self._actions_in_navigation = False
         self.hide()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._place_actions()
+
+    def _place_actions(self):
+        # Keep the summary on its own short line when the saved-time controls
+        # fit. Narrow inspectors retain the two grouped action/summary rows.
+        row = self._navigation_row
+        spacing = max(0, row.spacing())
+        needed = sum(min(widget.sizeHint().width(), widget.maximumWidth())
+                     for widget in self._navigation_controls)
+        needed += self.slider.minimumSizeHint().width() + spacing * len(self._navigation_controls)
+        inline = self.width() >= needed
+        if inline == self._actions_in_navigation:
+            return
+        self._actions_in_navigation = inline
+        for index, button in enumerate((self.peak_button, self.last_button)):
+            if inline:
+                self._actions_row.removeWidget(button)
+                row.insertWidget(row.indexOf(self.label), button)
+            else:
+                row.removeWidget(button)
+                self._actions_row.insertWidget(index, button)
+        self.updateGeometry()
 
     def set_result(self, result):
         history = result.transient if result else None
@@ -676,6 +707,7 @@ class TimeNavigation(QWidget):
             if not np.any(np.isclose(self.times, time, rtol=1e-10, atol=0)):
                 text += " · peak spatial field not retained"
         self.temperature_summary.setText(text)
+        self._place_actions()
 
     def jump_to_last(self):
         if len(self.times):
