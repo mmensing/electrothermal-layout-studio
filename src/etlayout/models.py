@@ -486,7 +486,15 @@ class Project:
         return next(x for x in self.layers if x.id == layer_id)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        # Unused additive contracts must not rewrite legacy full configuration
+        # identities or make old strict archive readers reject unchanged setups.
+        for interface in data["interfaces"]:
+            if interface.get("heat_to_layer_a_fraction") == .5:
+                interface.pop("heat_to_layer_a_fraction")
+            if interface.get("heat_layer_id") == "":
+                interface.pop("heat_layer_id")
+        return data
 
 
 @dataclass
