@@ -134,6 +134,9 @@ def generate_mesh(project: Project, geometry: PreparedGeometry, progress=None, c
     size_regions += [(geometry.refinements[r.id], r.size) for r in settings.refinements]
     size_regions += [(g, settings.contact_size)
                      for g in [*geometry.interfaces.values(), *geometry.terminals.values()] if g.area > 0]
+    for refinement in settings.refinements:
+        if not math.isfinite(refinement.grading_length) or refinement.grading_length < 0:
+            raise SimulationError(f"Refinement {refinement.id}: grading length must be finite and nonnegative")
     refined_estimate = 0.
     for index, face in enumerate(faces):
         center = face.representative_point()
@@ -144,8 +147,13 @@ def generate_mesh(project: Project, geometry: PreparedGeometry, progress=None, c
             refined_estimate += 2 * intervals(x0, x1, 0) * intervals(y0, y1, 1)
         else:
             refined_estimate += face.area / size ** 2
+    for refinement in settings.refinements:
+        if refinement.grading_length > 0:
+            halo = geometry.refinements[refinement.id].buffer(refinement.grading_length).intersection(footprint)
+            size = max(settings.min_size, min(refinement.size, settings.max_size))
+            refined_estimate += halo.area / size**2
     if refined_estimate > settings.max_elements:
-        raise SimulationError(f"Local refinement requires at least about {math.ceil(refined_estimate):,} elements, exceeding budget {settings.max_elements:,}; enlarge local sizes or the budget")
+        raise SimulationError(f"Conservative local refinement estimate is about {math.ceil(refined_estimate):,} elements, exceeding budget {settings.max_elements:,}; enlarge local sizes or the budget")
     # Translate origin as well as scaling: avoid loss of precision in global chip coordinates.
     origin = np.array(footprint.bounds[:2], dtype=float)
     with _GMSH_LOCK:
@@ -258,6 +266,25 @@ def generate_mesh(project: Project, geometry: PreparedGeometry, progress=None, c
                 gmsh.model.mesh.field.setNumber(restrict, "InField", field)
                 gmsh.model.mesh.field.setNumbers(restrict, "SurfacesList", selected)
                 fields.append(restrict)
+            # Optional smooth halo supplements the exact restricted size. It
+            # changes numerical sizing only; region boundaries remain identical.
+            for refinement in settings.refinements:
+                if not refinement.grading_length:
+                    continue
+                support = geometry.refinements[refinement.id]
+                selected_edges = [tag for tag, segment in edge_xy.items()
+                                  if segment.intersection(support.boundary).length >= segment.length * .999999]
+                if not selected_edges:
+                    continue
+                distance = gmsh.model.mesh.field.add("Distance")
+                gmsh.model.mesh.field.setNumbers(distance, "CurvesList", selected_edges)
+                gmsh.model.mesh.field.setNumber(distance, "Sampling", 50)
+                transition = gmsh.model.mesh.field.add("Threshold")
+                for key, value in (("InField", distance), ("SizeMin", max(settings.min_size, min(refinement.size, settings.max_size)) * _SCALE),
+                                   ("SizeMax", settings.max_size * _SCALE), ("DistMin", 0.),
+                                   ("DistMax", refinement.grading_length * _SCALE)):
+                    gmsh.model.mesh.field.setNumber(transition, key, value)
+                fields.append(transition)
             if contacts:
                 contact_lines = unary_union([line for g in contacts for line in _lines(g)])
                 selected_edges = [tag for tag, segment in edge_xy.items()

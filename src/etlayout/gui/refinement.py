@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QGraphicsPathItem,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QPushButton,
@@ -68,7 +69,7 @@ class RefinementReviewDialog(QDialog):
         self.project, self.plan, self.geometry = project, plan, geometry
         self.apply_callback, self.run_callback, self.preview_callback = apply, run, preview
         layout = QVBoxLayout(self)
-        note = QLabel("Review exact supports before applying. These are sizing suggestions, not an error estimator. "
+        note = QLabel("Review exact supports before applying. Geometry and optional flux-jump guidance are not guaranteed error bounds. "
                       "A study changes selected local sizes only; active geometry, material properties and global mesh size stay fixed.")
         note.setWordWrap(True)
         layout.addWidget(note)
@@ -216,3 +217,87 @@ class RefinementReviewDialog(QDialog):
 
     def show_details(self, row, *_args):
         self.details.setText(self.plan.suggestions[row].reason if 0 <= row < len(self.plan.suggestions) else "")
+
+
+class MeshVerificationDialog(QDialog):
+    """Read-only confidence receipt; all numbers are supplied by the backend."""
+
+    def __init__(self, receipt, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Local mesh confidence")
+        self.setObjectName("local_mesh_confidence")
+        self.resize(900, 620)
+        layout = QVBoxLayout(self)
+        note = QLabel(receipt.get("reason", receipt["recommendation"]))
+        note.setTextFormat(Qt.TextFormat.PlainText)
+        note.setWordWrap(True)
+        layout.addWidget(note)
+        targets = QLabel(
+            "\n".join(
+                layer
+                + " · "
+                + "; ".join(data["purpose_targets"])
+                + f" · fixed support {data['area_m2'] * 1e12:.5g} µm²"
+                for layer, data in receipt.get("layers", {}).items()
+            )
+        )
+        targets.setTextFormat(Qt.TextFormat.PlainText)
+        targets.setWordWrap(True)
+        layout.addWidget(targets)
+        levels = QLabel(
+            "\n".join(
+                f"Level {i + 1}: factor {level['factor']:g}, {level['elements']:,} triangles, "
+                f"{level['dofs']:,} DOFs, {level['elapsed_s']:.3g} s"
+                for i, level in enumerate(receipt.get("levels", []))
+            )
+        )
+        levels.setTextFormat(Qt.TextFormat.PlainText)
+        levels.setWordWrap(True)
+        layout.addWidget(levels)
+        records = [
+            (layer, data, key, metric)
+            for layer, data in receipt.get("layers", {}).items()
+            for key, metric in data["metrics"].items()
+        ]
+        table = QTableWidget(len(records), 5)
+        table.setHorizontalHeaderLabels(
+            ["Layer / physical quantity", "Status", "Physical values", "Changes (%)", "Criterion (%)"]
+        )
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        for row, (layer, data, key, metric) in enumerate(records):
+            labels = {
+                "joule_power_W": ("Joule heat (mW)", 1e3, 0.0),
+                "sheet_current_average_A_per_m": ("Mean K (kA/m)", 1e-3, 0.0),
+                "raw_sheet_current_max_A_per_m": ("Raw peak K (kA/m)", 1e-3, 0.0),
+                "temperature_max_K": ("Max T (°C)", 1.0, -273.15),
+                "temperature_average_K": ("Mean T (°C)", 1.0, -273.15),
+            }
+            label, scale, offset = labels[key]
+            statuses = {
+                "mesh_converged": "Mesh converged",
+                "refine_required": "Needs refinement",
+                "singular_peak_unverified": "Singular · unverified",
+                "reference_unavailable": "Reference unavailable",
+            }
+            values = [
+                layer + " · " + label,
+                statuses.get(metric["status"], metric["status"]),
+                ", ".join(f"{v * scale + offset:.6g}" for v in metric["values"]),
+                ", ".join(f"{v * 100:.3g}" for v in metric["relative_changes"]),
+                f"{metric['criterion'] * 100:g}",
+            ]
+            for column, value in enumerate(values):
+                item = QTableWidgetItem(value)
+                item.setToolTip(
+                    f"Fixed support {data['area_m2'] * 1e12:.6g} µm²; "
+                    + "; ".join(data["purpose_targets"])
+                    + ". Numerical convergence does not establish physical calibration."
+                )
+                table.setItem(row, column, item)
+        table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.ResizeToContents)
+        table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        table.resizeRowsToContents()
+        layout.addWidget(table, 1)
+        close = QPushButton("Close")
+        close.clicked.connect(self.accept)
+        layout.addWidget(close)

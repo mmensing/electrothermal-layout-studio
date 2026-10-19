@@ -91,6 +91,7 @@ def parser():
             q.add_argument("--selected", help="Comma-separated suggestion IDs; default selects all")
             q.add_argument("--profiles", help="JSON file: list of {layer_id,field,start,end,count} profile requests in SI")
         if command == "mesh-plan":
+            q.add_argument("--field-driven", action="store_true", help="Propose bounded flux-jump guidance from a compatible saved result")
             q.add_argument("--memory-mib", type=int, default=4096, help="Additional numerical-memory screen, excluding process baseline; not a peak-RSS guarantee")
             q.add_argument("--max-elements", type=int, help="Explicit reviewed candidate element budget")
             q.add_argument("--max-dofs", type=int, help="Explicit reviewed candidate DOF budget")
@@ -299,7 +300,8 @@ def main(argv=None):
                 raise SimulationError("Memory planning budget must be positive")
             plan = suggest_refinements(project, loaded_result, progress=progress,
                                        max_memory_bytes=args.memory_mib * 1024**2,
-                                       averaging_length=args.averaging_length, hotspot_layer=args.hotspot_layer)
+                                       averaging_length=args.averaging_length, hotspot_layer=args.hotspot_layer,
+                                       field_driven=args.field_driven)
             if args.max_elements is not None:
                 plan.max_elements = args.max_elements
             if args.max_dofs is not None:

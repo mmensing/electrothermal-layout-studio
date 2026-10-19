@@ -201,6 +201,7 @@ class RefinementRegion:
     geometry: RegionSpec
     size: float
     axis_sizes: list[float] = field(default_factory=list)  # optional x/y spacing on conforming rectangular faces
+    grading_length: float = 0.  # optional smooth distance transition outside exact support [m]
 
 
 @dataclass
@@ -503,6 +504,9 @@ class Project:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        for refinement in data["mesh"]["refinements"]:
+            if refinement["grading_length"] == 0.:
+                refinement.pop("grading_length")
         # Unused additive contracts must not rewrite legacy full configuration
         # identities or make old strict archive readers reject unchanged setups.
         for interface in data["interfaces"]:
