@@ -10,12 +10,13 @@ import time
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 import psutil
+import pytest
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from etlayout.examples import make_example
 from etlayout.gui.jobs import ComputeJob
-from etlayout.io.project import load_project, project_from_dict, save_project
+from etlayout.io.project import load_project, physics_hash, project_from_dict, save_project
 from etlayout.models import SweepSpec
 from etlayout.simulation.execution import ExecutionSettings
 from etlayout.simulation.runner import run_project
@@ -166,3 +167,20 @@ def test_solve_waits_for_preparation_and_source_identity(qtbot, tmp_path):
     assert window.result is not None and window.result.converged
     assert window.inspection_context is None
     assert window.project.layout.sha256 == window.result.configuration["layout"]["sha256"]
+
+
+@pytest.mark.numerical
+def test_electrothermal_reports_measured_assembly_and_linear_phases_without_identity_change(tmp_path):
+    project = make_example("E1", tmp_path / "timed")
+    project.solver.mode = "electrothermal"
+    result = run_project(project, execution=ExecutionSettings(1, 1))
+    timings = result.execution["timings_seconds"]
+    for key in ("electrical_assembly", "thermal_assembly", "sparse_linear_solves"):
+        assert timings[key] > 0
+        assert timings[key] <= timings["numerical"]
+    assert result.physics_hash == physics_hash(project)
+    path = tmp_path / "timed.etl"
+    save_project(project, path, result)
+    _, reopened = load_project(path)
+    assert reopened.execution["timings_seconds"] == timings
+    assert reopened.physics_hash == result.physics_hash

@@ -87,7 +87,8 @@ quality rules or give an integration a bypass to clear this message.
 ## Validation and CI trust
 
 PR updates run `source-quality`: publication/workflow contracts, redacted bounded
-source inspection, lint, fast/package-policy tests and CLI metadata/import.
+source inspection, lint, fast/package-policy tests, one fixed-size transient
+map/state regression and CLI metadata/import.
 The stable `scientific-regression` check independently compares actual Git paths
 against the PR base. Physical models, solvers, geometry/meshing, persistence,
 result interpretation, example layouts, tests, dependencies/configuration and
