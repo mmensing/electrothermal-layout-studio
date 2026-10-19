@@ -106,10 +106,8 @@ def render(source, output):
         path = output / ("local-mesh." + suffix)
         fig.savefig(path, dpi=180)
         if suffix == "svg":
-            path.write_bytes((
-                "\n".join(line.rstrip() for line in path.read_text(encoding="utf-8").splitlines()) + "\n",
-                encoding="utf-8",
-            )
+            svg = "\n".join(line.rstrip() for line in path.read_text(encoding="utf-8").splitlines()) + "\n"
+            path.write_bytes(svg.encode("utf-8"))
     plt.close(fig)
 
 
