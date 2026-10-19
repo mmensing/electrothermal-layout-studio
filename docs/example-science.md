@@ -88,3 +88,7 @@ See [the complete nominal matrix](example-science/nominal-reference.md),
 [guided examples](examples.md), [power examples](power-examples.md) and
 [extended device walkthroughs](extended-examples.md). The matrix retains original
 observations independently of later optional operating scenarios.
+
+For stronger Joule heating with unchanged reference geometry/material/cooling,
+see [editable thermal operating scenarios](thermal-example-scenarios.md). The
+original reference is always available; failed engineering limits retain fields.

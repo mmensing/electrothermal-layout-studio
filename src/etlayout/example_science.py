@@ -97,6 +97,15 @@ def scientific_record(project, result):
     thermal["prescribed_power_W"] = (metrics["thermal_power"] - deposited
         if deposited is not None and "thermal_power" in metrics else
         metrics.get("thermal_power") if project.solver.mode == "thermal" else None)
+    if result.transient is not None:
+        thermal["transient_actual_stop_time"] = metrics.get("thermal_limit_compliance", {}).get("actual_stop_time", metrics.get("transient_time"))
+        peak_index = metrics.get("transient_peak_snapshot_index")
+        peak_frame = (result.transient.snapshots[peak_index] if isinstance(peak_index, int)
+                      and 0 <= peak_index < len(result.transient.snapshots) else None)
+        thermal["peak_state"] = ({key: deepcopy(peak_frame.metrics.get(key)) for key in (
+            "time_s", "total_current", "voltage_drop", "electrical_power", "joule_power", "contact_power",
+            "external_feed_power", "thermal_power", "heat_out", "thermal_storage_rate", "thermal_stored_energy",
+            "applied_drives")} if peak_frame is not None else None)
     thermal["initial_temperature_K"] = project.solver.initial_temperature if project.transient.enabled else None
     thermal["reference_boundary"] = project.power.thermal_reference_boundary or None
     thermal["reservoirs"] = deepcopy(result.analysis.get("reservoirs", {}))
@@ -133,7 +142,7 @@ def scientific_record(project, result):
         prescribed_sources=[asdict(item) for item in project.heat_sources],
         contact_resolution=contact_resolution,
         devices=deepcopy(result.analysis.get("devices", {})), measurements=deepcopy(result.analysis.get("measurements", {})),
-        status=dict(numerically_converged=result.converged, mesh_verified=False,
+        status=dict(numerically_converged=result.converged, engineering_accepted=metrics.get("engineering_accepted"), mesh_verified=False,
             time_verified=False if project.transient.enabled else None,
             property_range_violations=validity, declared_model_violations=model_failures, calibration_verified=False,
             measurement_failures=[key for key, value in result.analysis.get("measurements", {}).items()

@@ -104,7 +104,7 @@ class LayoutBuilder:
 
 
 def make_example(name: str, directory: str | Path, *, preset=None, variant=None, current=None, thermal=None, pulse=False,
-                 fingers=None, gate_width_um=None, stress=False) -> Project:
+                 fingers=None, gate_width_um=None, stress=False, scenario=None) -> Project:
     name = example_info(name).name
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
@@ -135,6 +135,14 @@ def make_example(name: str, directory: str | Path, *, preset=None, variant=None,
                                 for x in p.layers]
     if not p.sweeps:
         p.sweeps = [SweepSpec("terminals.drain.value", [.01,.02,.04], "electrothermal", "Bias sweep")]
+    if scenario is not None:
+        from etlayout.example_scenarios import apply_scenario
+        apply_scenario(p, scenario)
+    # New optional library seeds must not alter the historical reference identity.
+    used_materials = {layer.material_id for layer in p.layers} | {item.material_id for item in p.interfaces}
+    for identifier in ('aln', 'polyimide'):
+        if identifier not in used_materials:
+            p.materials.pop(identifier, None)
     source_path = directory / (name + ".gds")
     builder.write(source_path)
     builder.write(directory / (name + ".oas"))
