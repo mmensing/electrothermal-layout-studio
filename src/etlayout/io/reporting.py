@@ -202,6 +202,8 @@ def report_status(context: ReportContext) -> str:
             status += f" · transient fields at t = {format_value(result.transient.times[-1])} s; complete history in simulation.etl"
         elif "time_s" in result.metrics:
             status += " · selected snapshot at t = " + format_value(result.metrics["time_s"]) + " s"
+    if result.metrics.get("thermal_limit_compliance", {}).get("status") in {"failed", "unavailable"}:
+        status += " · FAILED engineering acceptance: maximum-temperature compliance"
     if provenance.get("transient_completed") is False or (result.transient is not None and not result.transient.completed):
         status += " · snapshot from incomplete transient run"
     return status
@@ -211,7 +213,7 @@ def render_report(context: ReportContext, *, images=(), selection=None, metadata
     """Render the same security/provenance contract for every application report."""
     project, result = context.project, context.result
     metrics = {**result.metrics, **result.metrics.get("whole_run_metrics", {})}
-    status_class = ' class="warning"' if (not result.converged or context.provenance.get("transient_completed") is False or
+    status_class = ' class="warning"' if (not result.converged or result.metrics.get("engineering_accepted") is False or context.provenance.get("transient_completed") is False or
                                           result.transient is not None and not result.transient.completed) else ""
     content = [f"<h1>{html_text(project.name)}</h1><p{status_class}>{html_text(report_status(context))}</p>",
                f"<p>Analysis: {html_text(project.solver.mode)} · Solver {html_text(result.solver_version)} · "

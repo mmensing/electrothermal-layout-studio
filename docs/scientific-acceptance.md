@@ -83,3 +83,10 @@ or relabel unverified results to make a visual status pass.
 
 See [power analysis and routing](POWER_ROUTING.md), [numerics](numerics.md) and
 [validation](validation.md) for the models and reproducible test commands.
+
+## Hard maximum temperature
+
+[Maximum operating temperature](temperature-limits.md) defines the explicit
+project hard-limit contract, accepted transient states, CLI code 3 and the
+separation of numerical convergence from engineering acceptance. Warning
+thresholds and named measurement constraints retain their existing meaning.
