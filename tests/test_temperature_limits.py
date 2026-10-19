@@ -228,3 +228,42 @@ def test_limit_free_archives_preserve_prelimit_configuration_and_omit_new_field(
     project.temperature_limits = [TemperatureLimit(enabled=False)]
     assert project.to_dict()["temperature_limits"][0]["enabled"] is False
     assert configuration_hash(project) != expected_hash
+
+
+@pytest.mark.parametrize("clipped", [False, True])
+def test_legacy_point_touch_temperature_cannot_certify_hard_limit(clipped):
+    from test_power_local_fields import triangles
+
+    from etlayout.simulation.temperature import finalize_temperature_limits
+
+    project, mesh = triangles()
+    project.solver.mode = "thermal"
+    region = RegionSpec(polygons=[{"bounds": [.1, .1, .2, .2]}]) if clipped else None
+    project.temperature_limits = [TemperatureLimit(maximum_temperature=450., geometry=region)]
+    result = solve_thermal(project, mesh)
+    assert result.converged and result.metrics["engineering_accepted"]
+    assert result.metrics["thermal_limit_compliance"]["status"] == "passed"
+    # A real solved pair of independent domains has different limits at their
+    # common planar node. Legacy storage retains only its rendering average.
+    assert result.fields["metal"]["temperature"][0] == pytest.approx(350.)
+    result.element_fields = {}
+    result.field_version = 1
+    report = evaluate_temperature_limits(project, result)
+    assert report["status"] == "unavailable"
+    assert report["limits"][0]["peak"] is None
+    assert "Recompute" in report["limits"][0]["reason"]
+    finalize_temperature_limits(project, result)
+    assert result.converged and not result.metrics["engineering_accepted"]
+    assert any("recompute" in item.message.lower() for item in result.diagnostics)
+
+
+def test_unambiguous_connected_legacy_temperature_remains_supported():
+    project, mesh = steady_fixture()
+    project.temperature_limits = [TemperatureLimit(maximum_temperature=311.)]
+    result = solve_thermal(project, mesh)
+    before = evaluate_temperature_limits(project, result)
+    result.element_fields = {}
+    result.field_version = 1
+    report = evaluate_temperature_limits(project, result)
+    assert report["status"] == "passed"
+    assert report["limits"][0]["peak"]["temperature"] == pytest.approx(before["limits"][0]["peak"]["temperature"])
