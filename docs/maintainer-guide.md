@@ -84,6 +84,14 @@ has no bypass: required checks, resolved conversations and the exact tested
 head must still pass. Read back both rulesets before merging; do not disable
 quality rules or give an integration a bypass to clear this message.
 
+For stacked PRs, refresh each dependent branch against current main after its
+prerequisites are squash-merged. Preserve its own changes and prerequisite fixes,
+inspect the refreshed diff, retarget to main and rerun both required checks on
+the new exact head. An earlier green check on a different review base does not
+satisfy strict up-to-date protection. Record the new head and merge receipt;
+validate the resulting main commit. Never temporarily relax strict checks or use
+a quality bypass to finish a batch.
+
 ## Validation and CI trust
 
 PR updates run `source-quality`: publication/workflow contracts, redacted bounded

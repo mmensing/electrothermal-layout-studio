@@ -13,7 +13,7 @@ import re
 import subprocess
 from pathlib import Path, PurePosixPath
 
-DOCUMENT_NAMES = frozenset({"README.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE",
+DOCUMENT_NAMES = frozenset({"README.md", "CHANGELOG.md", "CONTRIBUTING.md", "SECURITY.md", "LICENSE",
     "THIRD_PARTY_NOTICES.md", "CODE_OF_CONDUCT.md"})
 DOCUMENT_SUFFIXES = frozenset({".md", ".rst", ".txt", ".png", ".jpg", ".jpeg", ".svg", ".webp", ".html"})
 

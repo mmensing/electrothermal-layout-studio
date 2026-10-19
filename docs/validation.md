@@ -26,6 +26,39 @@ wheel lock. Keep those patch versions explicit in receipts and inspect actual
 GitHub checks for the public commit; local execution does not establish a hosted
 CI pass. See [runtime availability](windows.md#python-runtime-and-verification-scope).
 
+## Reviewed 0.4.x combined snapshot
+
+The public [combined source 676414f4](https://github.com/mmensing/electrothermal-layout-studio/commit/676414f4cb4ee91b5c7c88b74f214224b75cd84a)
+was measured before merging the feature PRs. It is a reproducible source
+checkpoint, not a tagged release or a claim that every later main commit was
+tested by that run.
+
+| Collection | Passed | Statement coverage | Branch coverage | Pytest wall (s) |
+| --- | ---: | ---: | ---: | ---: |
+| Public v0.4.0 main f592e82c | 2,328 | 23,920/27,492 (87.0071%) | 7,712/10,072 (76.5687%) | 1,704.57 |
+| Combined 0.4.x 676414f4 | 2,550 | 25,985/29,683 (87.5417%) | 8,466/10,930 (77.4565%) | 2,260.12 |
+
+Both runs have zero failures/errors/skips and zero excluded lines. Baseline is
+hosted Windows CPython 3.12.10; final is Windows 11 CPython 3.12.14 with the same
+locked scientific stack. Host load and collections differ: these runtimes do
+not establish a speedup. Full-source results and required PR checks are separate;
+inspect the checks attached to the exact proposed merge head.
+
+Forty-five real current-crowding/corner-radius calculations retain independent
+reference and conservation evidence. All forty original nominal examples were
+calculated without substituting their inputs; seventeen optional thermal
+scenarios and nine device configurations have separate observations. See
+[the example audit](example-science.md), [thermal scenarios](thermal-example-scenarios.md)
+and [device studies](device-engineering-examples.md).
+
+A private candidate of the same combined snapshot passed ten fresh frozen
+checks and two installed-wheel native lifecycle cycles (42.393 s). Native
+100%/150% compact-source captures were inspected separately; the frozen GUI
+evidence covers eager reopening/rendering, not interactive frozen time navigation.
+Clean-machine, physical monitor-DPI and screen-reader checks were not performed.
+The original intermittent Qt/Shiboken GC failure remains unisolated. No candidate
+was published; these checks do not waive release, license or source obligations.
+
 ## Local current and heat verification
 
 See [current crowding](current-crowding.md) for ten independent reference geometries,

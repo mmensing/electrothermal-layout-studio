@@ -3,7 +3,7 @@
 This historical guide describes **version 0.2.0** and its four-part ribbon.
 For the current 0.4.0 desktop, use the [guided workflow](desktop-workflow.md) and
 [layout editor guide](layout-editor.md). This older ribbon is retained only as a compatibility reference. Install the current
-source edition using the [README](../README.md#start-from-source-on-windows);
+source edition using the [README](../README.md#run-from-source);
 no historical binary is advertised as a public MPL release.
 
 Start `ElectrothermalLayoutStudio.exe` from the complete extracted Windows folder,
