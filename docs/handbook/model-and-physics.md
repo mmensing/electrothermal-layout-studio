@@ -66,9 +66,12 @@ Finite electrical interfaces dissipate
 $$P_{ij}=\int_{A_{ij}} g_{ij}(V_i-V_j)^2\,dA.$$
 
 The solver integrates that expression with the consistent P1 mass matrix and
-assigns half the contact heat to each adjacent sheet. This is an explicit,
-energy-conserving partition assumption. Ideal interfaces identify electrical
-unknowns and generate no interface loss.
+defaults to assigning half the contact heat to each adjacent sheet. The interface
+editor supports a calibrated endpoint partition or complete deposition into a
+named physical thermal sheet covering the interface. Neither choice changes the
+electrical loss or resolves a 3D internal heat profile. Ideal interfaces identify
+electrical unknowns and generate no interface loss. See the measured
+[passivation and thermal-stack comparisons](../thermal-stacks.md).
 
 ## Thermal conduction
 

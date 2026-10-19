@@ -23,7 +23,7 @@ from etlayout.models import (
     checkpoint,
 )
 from etlayout.physics.constitutive import ELEMENTARY_CHARGE, mobility, sheet_conductance
-from etlayout.simulation.execution import map_independent, record_linear_solve
+from etlayout.simulation.execution import map_independent, record_linear_solve, record_phase
 
 from .fem import (
     Assembly,
@@ -37,6 +37,7 @@ from .fem import (
     reduce_vector,
     stiffness,
 )
+from .heat_deposition import deposit_interface_heat
 
 
 @dataclass
@@ -291,6 +292,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
     linear_layers = {}
 
     def assemble(v: np.ndarray, jacobian: bool = False):
+        assembly_started = time.perf_counter()
         checkpoint(cancel)
 
         def prepare_layer(item):
@@ -338,6 +340,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
         derivative_matrix = (matrix + layer_matrix([prepared[key][1] for key in space.layers], size)
                              if jacobian else matrix)
         conductances = {key: prepared[key][2] for key in space.layers}
+        record_phase("electrical_assembly", time.perf_counter() - assembly_started)
         return matrix, derivative_matrix, conductances
 
     if initial is not None and len(initial) == size:
@@ -464,10 +467,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
         contact_power += power
         transfer = np.einsum("eij,ej->ei", blocks, difference).sum()
         contact_metrics[interface.id] = {"power": power, "current_a_to_b": float(transfer)}
-        heat[interface.layer_a][elements] += powers / (2. * space.areas[elements])
-        heat[interface.layer_b][elements] += powers / (2. * space.areas[elements])
-        result.fields[interface.layer_a]["contact_density"][elements] += powers / (2. * space.areas[elements])
-        result.fields[interface.layer_b]["contact_density"][elements] += powers / (2. * space.areas[elements])
+        deposit_interface_heat(project, mesh, result, heat, interface, elements, powers, space.areas)
     report_contacts(project, space, result, contacts, v, loss_entries)
     reaction = matrix @ (v - offset_full)
     for load in density_loads.values():

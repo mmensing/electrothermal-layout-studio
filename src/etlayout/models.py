@@ -158,6 +158,9 @@ class Interface:
     purpose: str = "connection"  # connection or device_load
     reference_temperature: float = 300.
     temperature_coefficient: float = 0.
+    # Calibrated thermal deposition; electrical loss and interface transfer are unchanged.
+    heat_to_layer_a_fraction: float = .5
+    heat_layer_id: str = ""  # empty splits between endpoints; otherwise all loss goes to this sheet
 
 
 @dataclass
@@ -457,6 +460,21 @@ class PowerSettings:
 
 
 @dataclass
+class TemperatureLimit:
+    """Absolute maximum over authoritative thermal P1 fields; SI kelvin.
+
+    An empty layer list covers every active thermal sheet. Optional geometry
+    clips support exactly, including partial elements. Equality fails acceptance.
+    """
+    id: str = "maximum_temperature"
+    enabled: bool = True
+    maximum_temperature: float = 423.15
+    layer_ids: list[str] = field(default_factory=list)
+    geometry: RegionSpec | None = None
+    evaluation: str = "fail_after"  # fail_after or stop_transient
+
+
+@dataclass
 class Project:
     name: str = "Untitled"
     schema_version: int = 2
@@ -478,12 +496,25 @@ class Project:
     thresholds: dict[str, float] = field(default_factory=dict)
     notes: str = ""
     power: PowerSettings = field(default_factory=PowerSettings)
+    temperature_limits: list[TemperatureLimit] = field(default_factory=list)
 
     def layer(self, layer_id: str) -> PhysicalLayer:
         return next(x for x in self.layers if x.id == layer_id)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        # Unused additive contracts must not rewrite legacy full configuration
+        # identities or make old strict archive readers reject unchanged setups.
+        for interface in data["interfaces"]:
+            if interface.get("heat_to_layer_a_fraction") == .5:
+                interface.pop("heat_to_layer_a_fraction")
+            if interface.get("heat_layer_id") == "":
+                interface.pop("heat_layer_id")
+        # Preserve pre-limit full configuration identities and limit-free
+        # archives for strict older readers. Explicit disabled records persist.
+        if not data["temperature_limits"]:
+            data.pop("temperature_limits")
+        return data
 
 
 @dataclass

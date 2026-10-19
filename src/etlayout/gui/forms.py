@@ -44,6 +44,7 @@ from etlayout.models import MeasurementSpec, PropertyModel, RegionSpec, Simulati
 from etlayout.power.measurement_contract import QUANTITIES, validate_limits
 
 ENUMS = {
+    ("TemperatureLimit", "evaluation"): ["fail_after", "stop_transient"],
     ("PhysicalLayer", "role"): ["conductor", "insulator", "thermal"],
     ("Material", "category"): ["metal", "film", "semiconductor", "dielectric", "2deg", "custom"],
     ("PropertyModel", "kind"): ["constant", "linear", "polynomial", "table"],
@@ -85,6 +86,7 @@ UNITS = {
     "minimum_sheet_conductance": "S", "thermal_resistance_area": "m² K/W",
     "averaging_length": "µm", "effective_thickness": "µm", "active_width": "µm", "active_area": "m²",
     "enclosure": "µm", "resistance": "Ω", "thermal_fraction": "fraction", "dbu": "µm",
+    "heat_to_layer_a_fraction": "fraction",
     "via_size": "µm", "via_pitch": "µm", "via_spacing": "µm", "via_enclosure": "µm", "minimum_notch": "µm",
     "max_exceedance_fraction": "fraction",
     "minimum_bend_radius": "µm", "required_current": "A", "compliance_voltage": "V",
@@ -102,6 +104,8 @@ HELP = {
     "kind": "Select the constitutive model or boundary condition. Units for values are given below.",
     "electrical_kind": "specific: Ω m²; lumped: Ω; conductance: S/m²; via: material resistivity × height; ideal: exact shared electrical potential.",
     "thermal_kind": "conductance: W/(m² K); resistance: m² K/W; stack: half-thickness material path plus declared interface resistance.",
+    "heat_to_layer_a_fraction": "Fraction of interface/device-load loss deposited in layer A; the remainder goes to B. Legacy default is 0.5. Calibrate the partition; no internal 3D contact profile is resolved.",
+    "heat_layer_id": "Optional physical-layer ID receiving all interface/device-load heat at the same x-y support. Empty uses the endpoint split. The layer must cover the complete contact. Keep the split at 0.5 when selecting a named layer.",
     "floating_policy": "error requires references for every active electrical net. reference explicitly permits a gauge for isolated passive nets.",
     "gate_regions": "Comma-separated gate-terminal IDs. Empty means the entire sheet uses the model gate voltage.",
     "coefficients": "Ascending powers of (T − reference temperature). Enter comma-separated SI coefficients, including the constant term.",
@@ -427,7 +431,7 @@ class ModelDialog(QDialog):
                     widget.addItem("Automatic / none", None)
                 elif widget.findData(value) < 0:
                     widget.addItem(str(value), value)
-                widget.setEditable(name in {"id", "material_id", "layer_id", "layer_a", "layer_b"})
+                widget.setEditable(name in {"id", "material_id", "layer_id", "layer_a", "layer_b", "heat_layer_id"})
                 widget.setCurrentIndex(widget.findData(value))
             elif isinstance(value, bool):
                 widget = QCheckBox()
@@ -730,6 +734,10 @@ class ModelDialog(QDialog):
         if model_name == "Interface":
             if model.electrical_kind in {"specific", "lumped", "conductance"} and model.electrical_value <= 0:
                 errors["electrical_value"] = "Resistance or conductance must be positive."
+            if not 0 <= model.heat_to_layer_a_fraction <= 1:
+                errors["heat_to_layer_a_fraction"] = "Use a fraction between 0 and 1."
+            if model.heat_layer_id and model.heat_to_layer_a_fraction != .5:
+                errors["heat_to_layer_a_fraction"] = "Reset to 0.5 when using a named heat-deposition layer."
             if model.thermal_kind in {"conductance", "resistance"} and model.thermal_value <= 0:
                 errors["thermal_value"] = "Thermal resistance or conductance must be positive."
         if model_name == "SweepSpec" and not model.values:

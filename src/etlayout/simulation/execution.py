@@ -250,7 +250,7 @@ def execution_provenance() -> dict[str, Any]:
             "linear_factorizations": state.linear_factorizations if state else 0,
             "reused_factorizations": state.reused_factorizations if state else 0,
             "timings_seconds": dict(state.timings) if state else {},
-            "timing_definition": "Measured wall time; sparse linear solves are a subset of numerical time. Cached runs record retrieval only.",
+            "timing_definition": "Measured wall time; electrical_assembly, thermal_assembly and sparse_linear_solves are separately measured subsets of numerical time. Assembly times cover the assemble calls, including material validation/operator-cache lookup; they exclude initial space/contact/boundary preparation. Cached runs record retrieval only.",
             "effective_cpu_threads": settings.cpu_threads,
             "process_id": os.getpid(), "scope": "whole_run",
             "acceleration_scope": ("parallel_fem_assembly_and_native_cpu_thread_pools"

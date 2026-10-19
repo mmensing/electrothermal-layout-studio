@@ -222,23 +222,25 @@ def test_preflight_grid_and_storage_estimates_are_explicit():
     assert estimate["estimated_history_bytes"] > 0
 
 
-def test_time_step_study_fixes_output_cadence_and_duration(monkeypatch):
+def test_time_step_study_fixes_output_cadence_and_duration(tmp_path):
+    from etlayout.examples import make_example
     from etlayout.simulation import sweep
-    project, mesh = thermal_fixture(dt=.2, stop=1.)
-    project.transient.output_interval = .5
-    calls = []
-    def fake_run(candidate, **kwargs):
-        calls.append(deepcopy(candidate))
-        return solve(candidate, mesh)
-    monkeypatch.setattr(sweep, "run_project", fake_run)
-    rows = sweep.time_step_convergence_study(project, [.2, .1, .05], execution=ExecutionSettings(study_workers=1))
+    project = make_example("E17", tmp_path)
+    project.transient.stop_time = 300e-6
+    project.transient.output_interval = 100e-6
+    original = deepcopy(project.to_dict())
+    rows = sweep.time_step_convergence_study(project, [50e-6, 25e-6, 12.5e-6],
+                                             execution=ExecutionSettings(study_workers=1))
     assert all(not row.error for row in rows)
-    assert [p.transient.output_interval for p in calls] == [.5, .5, .5]
-    assert [p.transient.stop_time for p in calls] == [1., 1., 1.]
+    assert [row.result.configuration["transient"]["output_interval"] for row in rows] == [100e-6] * 3
+    assert [row.result.configuration["transient"]["stop_time"] for row in rows] == [300e-6] * 3
     assert rows[-1].metrics["transient_peak_temperature_absolute_change"] > 0
     assert rows[-1].metrics["transient_energy_balance_error"] < 1e-15
+    assert len({row.metrics["time_study_mesh_sha256"] for row in rows}) == 1
+    assert all(row.metrics["time_study_fixed_mesh"] for row in rows)
+    assert project.to_dict() == original
     with pytest.raises(SimulationError, match="strictly decreasing"):
-        sweep.time_step_convergence_study(project, [.1, .2])
+        sweep.time_step_convergence_study(project, [25e-6, 50e-6])
 
 
 def test_refinement_profile_uses_selected_time_region_and_discloses_nearest_frame(monkeypatch):
