@@ -28,6 +28,21 @@ See current crowd around a bend, follow heat into a substrate, or watch a device
 | How do larger power structures share current? | [E20–E24: power guide](power-examples.md) | [GaN fingers and banks](power-examples.md#e21), [SiC source collection](power-examples.md#e24) |
 | What should I explore after the foundations? | [E25–E40: extended walkthroughs](extended-examples.md) | [Contact coupons](extended-examples.md#e27), [thermal paths](extended-examples.md#e35), [device sharing](extended-examples.md#e39) |
 
+## Choose an operating scenario
+
+After opening a reference, use **File → Choose example operating scenario…**.
+Keep **Original reference** for its recorded analytical/nominal calculation;
+choose a named Joule-only, thermal, pulse/limit or device study to explore a
+specific physical change. Scenario selection does not start a run or rewrite the
+original example. Review the new current/voltage, heat sources, reservoir and
+limits in **Operating conditions** before validation and meshing.
+
+Follow [thermal demonstrations](thermal-example-scenarios.md) for heating and
+cooldown, [device engineering](device-engineering-examples.md) for GaN/SiC/package
+questions, and [contact extraction](contact-extraction.md) for E27 TLM. Use
+[the scientific audit](example-science.md) to distinguish a converged calculation
+from selected mesh/time evidence, material validity and physical calibration.
+
 ## All examples
 
 | Example | Focus | Level | Gallery analysis |

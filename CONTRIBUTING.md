@@ -17,7 +17,7 @@ to relicense unrelated third-party code. Discuss incompatible material before su
 
 ## Development
 
-Follow the Windows/Python 3.12 installation in the [README](https://github.com/mmensing/electrothermal-layout-studio/blob/main/README.md#start-from-source-on-windows).
+Follow the Windows/Python 3.12 installation in the [README](https://github.com/mmensing/electrothermal-layout-studio/blob/main/README.md#run-from-source).
 The exact wheel lock includes test/build tools. Use a feature branch in your fork.
 
 ```powershell

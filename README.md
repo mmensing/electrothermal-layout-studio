@@ -46,7 +46,10 @@ do not change your physical setup.
 | **Safe layout editing** | Drag polygon or hole vertices, enter coordinates, insert/delete points and undo changes in a project-owned copy. | [Edit a layout without overwriting its source](docs/layout-editor.md). |
 | **DC and electrothermal analysis** | Run isothermal electrical, steady thermal or coupled calculations with finite contacts, feeds and thermal paths. | [Find current crowding at a bend](docs/examples.md#e2). |
 | **Pulses and thermal memory** | Set pulse/PWL drives, initialization and saved-state continuation; inspect time-dependent maps and histories. | [Follow heating and cooldown](docs/examples.md#e17). |
-| **Results you can interrogate** | Select layers/regions, probe fields, draw profiles, integrate branch current and synchronize comparison maps. | [Read a map and check its support](docs/handbook/results-and-validation.md). |
+| **Results you can interrogate** | Select layers/regions, probe fields, draw profiles, integrate branch current and synchronize comparison maps. Read E, K, metal J, heat and temperature over identical physical support. | [Follow a hotspot through its electrical and thermal causes](docs/engineering-results.md). |
+| **Thermal limits and engineering evidence** | Set global/layer/region temperature limits; retain failed fields, stop a transient when requested, and separate convergence from conservation, mesh/time evidence and calibration. | [Set a maximum operating temperature](docs/temperature-limits.md). |
+| **Physical local meshing** | Review corner-radius, contact-transfer, gate and via sizing, optional bounded flux guidance and graded refinement; inspect three-level per-metric confidence. | [Resolve a physical feature](docs/local-meshing.md). |
+| **Thermal paths and source depth** | Add thermal-only passivation/dielectric films and choose interface/device-loss deposition without adding artificial power. | [Compare thermal-stack assumptions](docs/thermal-stacks.md). |
 | **Power-interconnect analysis** | Inspect device groups, via/port loading, contact loss, source-potential spread and passive multiport exports. | [Explore GaN and SiC feeds](docs/power-examples.md). |
 | **Studies and constrained routing** | Run parameter sweeps, mesh/time studies and bounded routing experiments; check equal service and mesh-verified finalists. | [Compare alternatives fairly](docs/POWER_ROUTING.md). |
 | **Portable work and reporting** | Choose PNG/PDF/SVG figures or standalone reports, selected CSV/NPZ/VTU data, or a complete ETL experiment with embedded layout and retained runs. | [Save a result you can reopen](docs/handbook/first-calculation.md). |
@@ -106,11 +109,32 @@ a new output folder. Follow the [device guide](docs/device-engineering-examples.
 and [contact-extraction guide](docs/contact-extraction.md) for GUI steps,
 measured observations and model limitations.
 
+## Read a result as an engineering decision
+
+At **Results → Metrics & loss budget → Engineering**, read the independent
+evidence states before accepting a design. A converged solution can still exceed
+a temperature limit, lie outside checked material ranges or have an unresolved
+corner peak. Use **Same support** to relate local field, sheet current, metal
+current density, heat and temperature over one physical area.
+
+For a pulse, compare **Peak frame** with **Last frame**. The displayed frame may
+have cooled while the whole run remains failed. The retained peak time, first
+violating accepted state and requested/actual duration remain explicit; sampling
+does not establish the exact threshold-crossing time.
+
+The [thermal scenario guide](docs/thermal-example-scenarios.md) shows deliberate
+Joule-only, heating, cooldown and limit-failure experiments without replacing
+the forty original references. The [scientific example audit](docs/example-science.md)
+records the configured service, losses, temperatures and model limitations.
+[Unreleased engineering notes](docs/releases/0.4.x.md) summarize compatibility
+and measured verification.
+
 ## Install on Windows
 
-**Development / unreleased 0.4.x:** The new operating scenarios, finite-contact
-TLM studies, hard temperature limits and engineering results require the matching
-source checkout. Published 0.4.0 Windows binaries do not include these additions.
+**Development / unreleased 0.4.x:** Physical mesh confidence, thermal-stack and
+heat-deposition controls, new operating scenarios, finite-contact TLM studies,
+hard temperature limits and engineering results require the matching source
+checkout. Published 0.4.0 Windows binaries do not include these additions.
 
 **0.4.0 · research prototype · MPL-2.0 original source.**
 Windows 11 x64 is the validated desktop platform. Download a published Windows
@@ -121,6 +145,8 @@ extract the whole folder, and start `ElectrothermalLayoutStudio.exe`. Keep
 redistribute its installer or DLLs. Windows bundles use the documented
 [GPL larger-work route](docs/licensing.md), with source, build information,
 third-party notices and checksums alongside them.
+
+<a id="start-from-source-on-windows"></a>
 
 ### Run from source
 
@@ -169,7 +195,8 @@ remain SI.
 
 ## Keep exploring
 
-- [Feature catalog](docs/features.md) and [guided desktop workflow](docs/desktop-workflow.md).
+- [Feature catalog](docs/features.md), [guided desktop workflow](docs/desktop-workflow.md)
+  and [engineering result interpretation](docs/engineering-results.md).
 - [Use-case gallery](docs/examples.md), [power devices](docs/power-examples.md),
   [pulsed operation](docs/handbook/transient.md) and the [physics handbook](docs/handbook/README.md).
 - [Developer guide](docs/developer-guide.md), [validation](docs/validation.md),

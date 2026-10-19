@@ -1,8 +1,10 @@
 # Implementation status
 
-This untagged public source edition retains the established Windows desktop,
-CLI and file compatibility. It has no public binary release. Current checks
-and reproduction commands are documented in [validation](validation.md).
+The public [v0.4.0 Windows release](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.0)
+retains the established desktop, CLI and file compatibility. This source checkout
+also contains unreleased 0.4.x engineering additions; the existing 0.4.0 binaries
+do not acquire them automatically. See [engineering notes](releases/0.4.x.md)
+and [validation](validation.md) for capabilities, exact evidence and reproduction.
 Historical receipts describe their original geometry and environment; they are
 not automatically measurements of the sanitized public edition.
 
@@ -16,14 +18,23 @@ not automatically measurements of the sanitized public edition.
 | Connectivity and mesh | Edge-connected networks; voltage/current/density/floating/gate terminals; Kelvin references; conforming Gmsh mesh with layer/contact/corner refinement, quality and resource budgets | [Numerics](numerics.md); `test_connectivity`, `test_meshing`, `test_planar_references` |
 | Steady calculations | Selectable electrical, prescribed-source or Joule-heated thermal, and self-consistent electrothermal operation; semiconductor and local-bias HEMT sheet laws; reaction-current, power and heat-balance diagnostics | [Workflows](handbook/workflows.md); `test_electrical`, `test_thermal`, `test_coupled`, `test_hemt` |
 | Transient and pulses | Separate steady/transient selection; backward-Euler thermal storage with quasi-static electrical states; pulse/PWL drives, retained peak fields, uniform/steady/saved initialization, continuation, periodic detection and time-step studies | [Transient handbook](handbook/transient.md); `test_transient*` |
-| Results workbench | Explicit layer and region selection, synchronized comparison panels, colormaps, automatic/manual and logarithmic scales, histories, probes/profiles/sections/cuts, thresholds, differences and recorded-run inspection | [Visualization](visualization-workbench.md); result visualization and transient exploration tests |
+| Results workbench | Explicit layer/region selection, synchronized comparison panels, colormaps/ranges, histories and profiles; separate frame/run peaks, independent engineering evidence and exact same-support field/heat/temperature inspection | [Visualization](visualization-workbench.md); result visualization and transient exploration tests |
 | Studies | Parameter sweeps, design comparisons and mesh/time refinement; requested/applied values, retained failed rows, separate failed markers and gaps in accepted trends; fixed physical horizon during transient refinement | [Guided workflow](desktop-workflow.md); `test_workflows`, `test_study_execution`, `test_transient_studies` |
 | Power interconnects | Scoped physical metrics, individual contact loading, finite-feed ports, passive probes, device groups, reservoir heat flows, disjoint loss ledger and fixed-state passive multiports | [Power guide](POWER_ROUTING.md); `test_power_solver*`, `test_power_measurements` |
 | Routing experiments | Protected GDS/OASIS source edits, bounded bus/feed/strap/via recipes, equal-service scenarios, resumable failures, separate coarse/refined Pareto plots and verified exported finalists | [Power guide](POWER_ROUTING.md); `test_power_routing*`, `test_power_optimization*`, `test_power_ui`, `test_power_cli` |
 | Responsive execution | GUI/main-thread widget updates separated from spawned calculations and result deserialization; bounded larger FEM assembly threads and parallel study processes; actual worker provenance and measured Jobs stage timings; exact batched power reporting with cancellation; serialized preparation before queued solves | [Performance](performance.md); `test_reporting_performance`, `test_gui`, `test_execution*`, `test_parallel_fem`, `test_study_execution`, `test_gui_state_regressions` |
 | Reproducibility and exports | Portable ETL archives with embedded layouts, immutable run configurations, typed JSON/non-pickled arrays and hashes; aggregate archive limits with atomic replacement; CSV/JSON/VTU/PNG/SVG/HTML exports with layer/region/time context | `test_persistence`, `test_archive_budgets`, `test_transient_io`, `test_transient_export_context` |
 | Desktop and help | Seven numbered workflow stages, contextual inspectors, purpose-based panels, unit-aware forms, inline validation, undo/redo, recovery, light/dark themes, saved workspaces, packaged offline Help and repository handbook | [Guided workflow](desktop-workflow.md), [handbook](handbook/README.md); desktop acceptance scripts |
-| Examples and distribution | 24 portable reference projects: 19 introductory/analytical examples and five parameterized power-device families; coplanar GaN combs, insulated gate networks and protected SiC margins; compact/reference/large presets and versioned benchmark provenance; Python API/CLI and Windows GUI/console package | [Gallery](examples.md), [Power examples](power-examples.md), [Windows packaging](windows.md) |
+| Examples and distribution | 40 portable reference projects: E1–E19 teaching references, E20–E24 parameterized power-device families and E25–E40 analytical/device/package experiments; coplanar GaN combs, insulated gate networks and protected SiC margins; compact/reference/large presets and versioned benchmark provenance; Python API/CLI and Windows GUI/console package | [Gallery](examples.md), [Power examples](power-examples.md), [Windows packaging](windows.md) |
+
+Hard [temperature limits](temperature-limits.md), [thermal-only films and heat
+placement](thermal-stacks.md), [physical local meshing](local-meshing.md) and
+[engineering evidence](engineering-results.md) are integrated with the normal
+GUI/CLI and archives. [Named scenarios](thermal-example-scenarios.md),
+[device studies](device-engineering-examples.md) and [finite-contact TLM](contact-extraction.md)
+retain original references and state their model limits. Scientific source changes
+require both source-quality and scientific-regression; complete main validation
+and frozen/clean-machine evidence remain separate scopes.
 
 The [desktop workflow](desktop-workflow.md) describes the current shell.
 [Scientific acceptance](scientific-acceptance.md) defines measurement, export and

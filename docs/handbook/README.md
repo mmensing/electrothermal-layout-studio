@@ -9,7 +9,7 @@ These pages live in the repository so documentation, examples and implementation
 can be reviewed together in GitHub pull requests. They render directly on GitHub,
 work in a local Markdown reader, and require no separate wiki service.
 The instructions cover the current source application, retaining 0.3.1 file and
-CLI compatibility. Install from the [repository README](../../README.md#start-from-source-on-windows).
+CLI compatibility. Install from the [repository README](../../README.md#run-from-source).
 This public source edition does not supply a tagged binary release.
 The [historical engineering notes](../releases/0.3.1.md) retain earlier measurements;
 only checks tied to the current public revision validate this edition.

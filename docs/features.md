@@ -13,7 +13,7 @@ available tools, not a claim that every physical model is calibrated for your pr
 | GDSII/OASIS and hierarchy | **File → Import layout…**, **Layout & Region**, **View → Hierarchy / layers / nets** | Inspect cells and instances, frame geometry and choose an explicit simulation scope. New masks start display-only until mapped. |
 | Purposeful regions | **Layout & Region**, **Model → Define measurement support**, **Model → Define routing keepout**, **View → Draw view crop** | Keep physical domain, reporting support, routing protection and camera framing separate. Preview and commit the stated purpose. |
 | Project-owned vertex editor | **Edit → Edit layout polygon vertices**, **Ctrl+Shift+E** | Move polygons or individual exterior/hole vertices, enter coordinates, insert/delete points and apply an undoable copy. The imported source file is preserved. |
-| Physical stack and materials | **Layers & Materials**, **Model → Materials and library** | Assign sheet roles, thickness, bottom elevation and electrical/thermal material models. Review a stack cross-section. |
+| Physical stack and materials | **Layers & Materials**, **Model → Materials and library** | Assign sheet roles, thickness, bottom elevation and electrical/thermal material models. Review a stack cross-section. Thermal-only films and explicit loss-deposition controls preserve the default 50/50 endpoint split; [avoid double counting thermal paths](thermal-stacks.md). |
 | Reusable technology mapping | **Layers & Materials → Technology templates…** | Preview and apply physical mappings/material snapshots to chosen masks; project drives and thermal boundaries remain a separate setup task. |
 | Connections | **Contacts & Connections** | Define boundary terminals, finite-feed physical ports, interlayer contacts, passive probes, floating electrodes and supported gate controls. Projected overlap alone is not a physical interface. |
 | Operating conditions | **Operating Conditions** | Configure electrical drive, prescribed heat, thermal reservoirs and numerical/initial conditions; dormant settings survive analysis-mode changes. |
@@ -48,8 +48,9 @@ switching-parasitic model. See [transient operation](handbook/transient.md).
 | --- | --- | --- |
 | Validate and mesh | **Mesh & Checks**, **F6**, **F7** | Issues carry severity and object/location where available. **Locate** frames evidence; **Fix** opens its editing task. |
 | Enforce maximum temperature | **Operating conditions → Maximum operating temperature…** | Optional global °C/K and exact layer/region limits fail engineering acceptance at equality/exceedance while retaining converged fields; transients can stop at a violating accepted state. [Thermal-limit guide](temperature-limits.md). |
-| Review local refinement | **Mesh & Checks → Suggest local refinement** | Inspect bounded contact/channel/hotspot suggestions and resource estimates before applying them. A suggestion is not proof of convergence. |
-| Explore maps | **Results** | Select result, layer, quantity, physical region and transient time. Colormaps/manual ranges change display, not the saved fields. |
+| Review local refinement | **Mesh & Checks → Suggest local refinement** | Inspect physical radius/contact-transfer/gate/via sizing, optional bounded flux guidance, grading and resource estimates. A suggestion is not proof of convergence; inspect [three-level per-metric confidence](local-meshing.md). |
+| Explore maps | **Results** | Select result, layer, quantity, physical region and transient time. Peak frame/Last frame distinguish the retained peak from cooldown; whole-run failure survives cool-frame inspection. Colormaps/manual ranges change display, not the saved fields. |
+| Explain a hotspot | **Results → Metrics & loss budget → Engineering → Same support** | Integrate E, K, physically defined metal J, local power and T/ΔT on the same exact layer/region or probe square, including partial elements and holes. [Interpret the independent evidence axes](engineering-results.md). |
 | Sample and integrate | Result probes; **Results → Draw line profile**, **Integrate branch current**, **Contacts, devices and loss budget** | Use component-local fields and physical support. Keep sheet current, metal volumetric current density and contact-normal loading distinct. |
 | Compare results | **Results → Compare layers…**, **Compare field maps…**, **Load field difference…** | Compare the intended layer, support, scale and time; inspect a numerical difference alongside the maps. |
 | Revisit a run | **History**, **Results → Inspect saved runs** | Historical context is read-only. **Return to working setup** restores editing; retained runs keep their original configuration identity. |
@@ -77,6 +78,13 @@ check → Evaluate → Compare / verify**.
 - Review mesh verification and exported-layout reimport before accepting a
   finalist. Lower delivered current is not a routing improvement.
 - Export supported passive multiports with electrical-response fidelity checks.
+
+**File → Choose example operating scenario…** selects optional thermal/device
+experiments; original references stay available. **Studies → Run configured
+study…** executes their bounded sweeps. For E27, **Studies → Finite-contact TLM
+study (E27)…** solves four distinct finite-contact coupons and fits sheet/contact
+parameters; see [contact extraction](contact-extraction.md) and the
+[device study guide](device-engineering-examples.md).
 
 The [power guide](POWER_ROUTING.md) describes the controls and acceptance checks.
 The [power-device examples](power-examples.md) keep active geometry, device law,

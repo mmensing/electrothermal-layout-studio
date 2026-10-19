@@ -4,7 +4,7 @@
 
 This example checks the entire import-to-result path against a resistance you can
 calculate by hand. Start from the repository root with the dependencies installed
-using the [README instructions](../../README.md#start-from-source-on-windows).
+using the [README instructions](../../README.md#run-from-source).
 
 ## Open the experiment
 

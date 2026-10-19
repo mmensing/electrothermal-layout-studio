@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased 0.4.x — engineering evidence and thermal acceptance
+
+- Add independent current-crowding/Joule references, fixed-area hotspot metrics,
+  physical local refinement, graded sizing and selected-metric mesh confidence.
+- Add global/layer/region hard temperature limits, retained failure diagnostics,
+  accepted-state transient stopping and independent engineering status.
+- Support explicit thermal-only films and configured interface/device heat
+  deposition while preserving default source splitting and legacy identities.
+- Audit all forty exact original references; add opt-in thermal scenarios,
+  GaN/SiC/package studies and finite-contact, multiple-spacing TLM extraction.
+- Separate displayed transient frames from run/segment peaks; link E/K/metal-J,
+  heat and temperature on exact shared support and preserve whole-run failure
+  during metadata-first history inspection.
+- Require scientific PR checks, release completed worker resources, record
+  assembly phases and use one verified mesh in temporal refinement studies.
+- Refresh GUI-led documentation, feature discovery, publication-status wording
+  and setup links. These additions are source changes, not a new binary release.
+
+See [engineering notes](docs/releases/0.4.x.md) for compatibility, measured
+verification and remaining limitations. The original intermittent Qt/Shiboken
+GC access violation remains unisolated; the worker cleanup is not a causal fix.
+
 ## 0.4.0 — extended examples and Windows distribution
 
 - Add 16 distinct ready-to-open examples, E25–E40, spanning analytical/contact
