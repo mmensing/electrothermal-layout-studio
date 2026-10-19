@@ -104,8 +104,10 @@ class LayoutBuilder:
 
 
 def make_example(name: str, directory: str | Path, *, preset=None, variant=None, current=None, thermal=None, pulse=False,
-                 fingers=None, gate_width_um=None, stress=False, scenario=None) -> Project:
+                 fingers=None, gate_width_um=None, stress=False, scenario=None, tlm_spacing_um=None) -> Project:
     name = example_info(name).name
+    if tlm_spacing_um is not None and name != "E27_transfer_length_coupon":
+        raise ValueError("Contact spacing is supported only for the E27 TLM coupon")
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     builder = LayoutBuilder(name)
@@ -127,7 +129,9 @@ def make_example(name: str, directory: str | Path, *, preset=None, variant=None,
     else:
         if pulse or stress or any(value is not None for value in (preset, variant, current, thermal, fingers, gate_width_um)):
             raise ValueError("Preset/variant/current/thermal options require a power-device family (E20–E24)")
-        if build(name, builder, p) is False:
+        built = (build(name, builder, p, tlm_spacing_um=tlm_spacing_um)
+                 if tlm_spacing_um is not None else build(name, builder, p))
+        if built is False:
             raise ValueError(f"Example has no builder: {name}")
         p.solver.mode = example_info(name).recommended_mode
     if not p.thermal_boundaries:
