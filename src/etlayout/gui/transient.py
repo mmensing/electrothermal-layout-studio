@@ -73,17 +73,17 @@ class HistoryPlot(pg.PlotWidget):
 def drive_target_labels(project):
     labels = {}
     for terminal in project.terminals:
-        labels[f"terminals.{terminal.id}.value"] = f"Terminal Â· {getattr(terminal, 'name', '') or terminal.id} Â· {terminal.kind}"
+        labels[f"terminals.{terminal.id}.value"] = f"Terminal · {getattr(terminal, 'name', '') or terminal.id} · {terminal.kind}"
     for source in project.heat_sources:
-        labels[f"heat_sources.{source.id}.value"] = f"Heat source Â· {getattr(source, 'name', '') or source.id}"
+        labels[f"heat_sources.{source.id}.value"] = f"Heat source · {getattr(source, 'name', '') or source.id}"
     for port in project.power.ports:
-        labels[f"power.ports.{port.id}.value"] = f"Power port Â· {port.name or port.id} Â· {port.kind}"
+        labels[f"power.ports.{port.id}.value"] = f"Power port · {port.name or port.id} · {port.kind}"
     return labels
 
 
 def drive_targets(project):
     targets = []
-    units = {"voltage": "V", "current": "A", "density": "A/mÂ²", "gate": "V"}
+    units = {"voltage": "V", "current": "A", "density": "A/m²", "gate": "V"}
     owned = {landing.terminal_id for port in project.power.ports for landing in port.landings}
     for terminal in project.terminals:
         if terminal.kind in units and terminal.id not in owned:
@@ -93,7 +93,7 @@ def drive_targets(project):
         if port.kind in {"voltage", "current"}:
             targets.append((f"power.ports.{port.id}.value", units[port.kind]))
     for source in project.heat_sources:
-        targets.append((f"heat_sources.{source.id}.value", "W" if source.kind == "total" else "W/mÂ²"))
+        targets.append((f"heat_sources.{source.id}.value", "W" if source.kind == "total" else "W/m²"))
     return targets
 
 
@@ -111,7 +111,7 @@ class TransientDialog(QDialog):
         self.setWindowTitle("Transient and pulsed operation")
         self.resize(780, 690)
         layout = QVBoxLayout(self)
-        info = QLabel("Transient heat flow includes thermal mass. Electrical fields are quasi-static. Engineering units are accepted, for example 25 Âµs and 20 mV.")
+        info = QLabel("Transient heat flow includes thermal mass. Electrical fields are quasi-static. Engineering units are accepted, for example 25 µs and 20 mV.")
         info.setWordWrap(True)
         layout.addWidget(info)
         tabs = QTabWidget()
@@ -314,7 +314,7 @@ class TransientDialog(QDialog):
     def refresh_list(self, selected=-1):
         self.drive_list.blockSignals(True)
         self.drive_list.clear()
-        self.drive_list.addItems([f"{self.target_labels.get(drive.target, drive.target)} Â· {drive.waveform.kind}" for drive in self.drives])
+        self.drive_list.addItems([f"{self.target_labels.get(drive.target, drive.target)} · {drive.waveform.kind}" for drive in self.drives])
         self.drive_list.setCurrentRow(selected)
         self.drive_list.blockSignals(False)
 
@@ -460,7 +460,7 @@ class TransientDialog(QDialog):
                 if ratio > 200:
                     cycles = 5
                     stop = min(stop, wave.delay + cycles * wave.period)
-                    caption += " Â· first 5 periods"
+                    caption += " · first 5 periods"
                 else:
                     cycles = int(np.ceil(ratio))
                 for cycle in range(cycles):
@@ -471,7 +471,7 @@ class TransientDialog(QDialog):
                 knots = wave.times
                 if len(knots) > 2000:
                     knots = np.asarray(knots)[np.linspace(0, len(knots) - 1, 2000).astype(int)]
-                    caption += " Â· sampled knots"
+                    caption += " · sampled knots"
             samples = sorted(set([*np.linspace(0, stop, 401), *(t for t in knots if 0 <= t <= stop)]))
             # Draw both sides at the same x coordinate. Ideal edges remain
             # visible even when a pulse is narrower than regular preview samples.
@@ -535,7 +535,7 @@ class TransientDialog(QDialog):
             info = estimate_transient_resources(estimate_project, self.mesh, start_time=start)
             memory = info.get("estimated_history_bytes")
             memory_note = f"Estimated field history: {memory / 1024**2:.1f} MiB." if memory is not None else "Memory estimate is available after meshing."
-            self.estimates.setText(f"Preflight estimate: {info['steps']:,} steps Â· {info['output_snapshots']:,} scheduled fields "
+            self.estimates.setText(f"Preflight estimate: {info['steps']:,} steps · {info['output_snapshots']:,} scheduled fields "
                                    f"+ {info['peak_reserve_snapshots']:,} peak reserve. {memory_note}" +
                                    (" Exceeds the configured field budget." if not info['fits_snapshot_budget'] else "") +
                                    (" Exceeds the configured memory budget." if info['fits_history_budget'] is False else ""))
@@ -572,7 +572,7 @@ class TimeNavigation(QWidget):
         self.displayed_metrics = {}
         self.run_completed = None
         self._frame_metrics = []
-        previous = QPushButton("â€¹")
+        previous = QPushButton("‹")
         previous.setAccessibleName("Previous saved time")
         previous.setMinimumWidth(32)
         previous.setMaximumWidth(36)
@@ -583,7 +583,7 @@ class TimeNavigation(QWidget):
         self.slider.valueChanged.connect(self.changed)
         self.slider.sliderReleased.connect(self.flush_selection)
         row.addWidget(self.slider, 1)
-        following = QPushButton("â€º")
+        following = QPushButton("›")
         following.setAccessibleName("Next saved time")
         following.setMinimumWidth(32)
         following.setMaximumWidth(36)
@@ -591,7 +591,7 @@ class TimeNavigation(QWidget):
         row.addWidget(following)
         self.time_input = QLineEdit()
         self.time_input.setAccessibleName("Jump to time; nearest retained field")
-        self.time_input.setToolTip("Enter a time such as 25 Âµs; Enter selects the nearest retained field.")
+        self.time_input.setToolTip("Enter a time such as 25 µs; Enter selects the nearest retained field.")
         self.time_input.setMaximumWidth(95)
         self.time_input.returnPressed.connect(self.jump_to_input)
         row.addWidget(self.time_input)
@@ -703,9 +703,9 @@ class TimeNavigation(QWidget):
         peak, time = self.run_metrics.get("transient_peak_temperature"), self.run_metrics.get("transient_peak_time")
         if peak is not None and time is not None:
             scope = "Segment peak" if self.run_metrics.get("transient_peak_scope") == "current_segment" else "Accepted-run peak" if self.run_completed is False else "Run peak"
-            text += f" Â· {scope} " + engineering(peak, "K") + " at " + engineering(time, "s")
+            text += f" · {scope} " + engineering(peak, "K") + " at " + engineering(time, "s")
             if not np.any(np.isclose(self.times, time, rtol=1e-10, atol=0)):
-                text += " Â· peak spatial field not retained"
+                text += " · peak spatial field not retained"
         self.temperature_summary.setText(text)
         self._place_actions()
 
@@ -797,10 +797,10 @@ class TimeHistoryPanel(QWidget):
         self.metric_selector.currentIndexChanged.connect(self.refresh)
         self.metric_selector.setAccessibleName("Time history quantity")
         row.addRow("Quantity", self.metric_selector)
-        export = QPushButton("Export time historyâ€¦")
+        export = QPushButton("Export time history…")
         export.clicked.connect(self.export_history)
         row.addRow(export)
-        self.load_history = QPushButton("Load local historyâ€¦")
+        self.load_history = QPushButton("Load local history…")
         self.load_history.setAccessibleName("Load complete saved fields for this local time history")
         self.load_history.setToolTip("Explicitly load and validate this run's saved fields in a cancellable worker. "
                                     "The local cache budget applies.")
@@ -896,7 +896,7 @@ class TimeHistoryPanel(QWidget):
         if scope == "global":
             if not rows:
                 self.description.setText("Stored step summaries are unavailable. Load the complete history to inspect this trace.")
-                self.load_history.setText("Load complete time historyâ€¦")
+                self.load_history.setText("Load complete time history…")
                 self.load_history.show()
                 return
             times = [row["time_s"] for row in rows]
@@ -914,15 +914,15 @@ class TimeHistoryPanel(QWidget):
                 return
             if self.record is not None:
                 self.description.setText("Local history fields are not loaded. Load this run's saved fields to calculate the selected trace.")
-                self.load_history.setText("Load local historyâ€¦")
+                self.load_history.setText("Load local history…")
                 self.load_history.show()
                 return
             times, values = local_history(self.result, self.layer, region=self.region,
                                          reduction="maximum" if key == "temperature_max" else "mean",
                                          probe=self.probe if scope == "probe" else None)
-            context = f"{self.layer} Â· {self.region or 'all regions'} Â· saved fields"
+            context = f"{self.layer} · {self.region or 'all regions'} · saved fields"
             if scope == "probe":
-                context += f" Â· probe ({engineering(self.probe[0], 'm')}, {engineering(self.probe[1], 'm')})"
+                context += f" · probe ({engineering(self.probe[0], 'm')}, {engineering(self.probe[1], 'm')})"
                 self.plot.setLabel("left", "Probe temperature", units="K")
         self.trace_times, self.trace_values = np.asarray(times), np.asarray(values)
         if unit == "W":
@@ -938,8 +938,8 @@ class TimeHistoryPanel(QWidget):
         else:
             status = "Stored completed" if metadata.get("completed", False) else "Stored incomplete"
             count = len(self.record.times)
-            context += " Â· numerical fields not loaded"
-        self.description.setText(f"{status} Â· {count} saved fields\n{context}")
+            context += " · numerical fields not loaded"
+        self.description.setText(f"{status} · {count} saved fields\n{context}")
         self.description.setToolTip(f"{len(rows) - 1} accepted integration steps. Click the trace to select the nearest retained field. "
                                     "Whole-device histories include every accepted step; local histories sample retained fields only. " +
                                     ("Stored summaries do not validate unloaded numerical fields." if self.record is not None else ""))
