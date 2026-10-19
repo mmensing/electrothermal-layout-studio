@@ -276,3 +276,20 @@ once independent save leases finish; those leases must not be deleted to reduce
 apparent retention. Abnormal process termination can leave operating-system temp
 remnants. Inspect those only after all application processes/readers stop; no
 automatic deletion of arbitrary archive paths is introduced.
+
+## Fixed spatial mesh for time-step studies
+
+Time-step convergence prepares one conforming mesh and sends a verified reference
+to every study point, including parallel processes. The reference contains only
+mesh coordinates, connectivity and tagged supports. It is checked against the
+verified source geometry/mesh settings and exact mesh fingerprint; it never acts
+as an invented thermal initial result. Uniform, saved and resumed initialization
+retain their independent physical-state contracts.
+
+Rows record `time_study_mesh_sha256`, `time_study_fixed_mesh`, the study-wide common
+preparation cost, and `time_study_status`. Temporal deltas are available only for
+successful, complete same-duration results on that exact spatial mesh. An
+incomplete/thermally stopped point or a mesh mismatch cannot certify time-step
+convergence. This prevents native mesher variations between workers from being
+misreported as temporal sensitivity. Field outputs still use the requested
+cadence, and equal effective step counts remain explicitly diagnosed.
