@@ -8,7 +8,7 @@ import pytest
 from gui_test_helpers import _answer_dialog, _fill, _idle
 from gui_test_helpers import guided_window as guided_window
 from gui_test_helpers import solved_e1 as solved_e1
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QPointF, Qt, QTimer
 from solver_helpers import all_region, rectangle
 
 from etlayout.gui.transient import TimeNavigation
@@ -53,8 +53,16 @@ def test_background_same_support_readout_is_readonly_and_uses_real_process(guide
     window.engineering_panel.request_support()
     assert window.job is None and window.engineering_panel.support_error.text()
     window.engineering_panel.window_side.setText("2")
+    window.load_difference_result(deepcopy(result))
+    assert window.view_mode.currentData() == "difference"
     window.select_engineering_quantity("sheet_current")
     assert window.field_combo.currentData() == "sheet_current"
+    assert window.view_mode.currentData() == "original" and window.view.result is result
+    window.view.scale(20., 20.)
+    window.view.centerOn(-10000., -10000.)
+    window.locate_engineering_support(report)
+    x, y = report["crowding"]["peak_xy"]
+    assert window.view.viewport().rect().contains(window.view.mapFromScene(QPointF(x * 1e6, -y * 1e6)))
     assert window.project.to_dict() == before[0]
     # A new run with identical settings/time must not reuse an old report.
     window.show_result(deepcopy(result))
@@ -231,3 +239,18 @@ def test_on_demand_cooled_pulse_keeps_the_whole_run_temperature_failure(guided_w
     qtbot.waitUntil(lambda: not window.history_workflow.loader.jobs)
     assert window.result.transient is not None
     check_run_failure()
+
+
+def test_applying_a_physical_draft_cannot_inspect_an_invalidated_result(guided_window, qtbot, solved_e1):
+    window = guided_window
+    use_solved(window, qtbot, solved_e1)
+    window.guided.navigate("connections")
+    window.guided.edit_model("terminals", "drain")
+    _fill(window, "value", "125 mV")
+    _answer_dialog("Apply")
+    window.inspect_engineering_support()
+    _idle(window, qtbot)
+    assert window.result is None and window.job is None
+    assert window.engineering_panel.support_report is None
+    assert window.project.terminals[1].value == .125
+    assert "Run an analysis" in window.engineering_panel.support_error.text()

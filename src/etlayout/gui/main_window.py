@@ -2716,8 +2716,11 @@ class MainWindow(QMainWindow):
         return (self.document_epoch, id(self.result), frame.metrics.get("time_s") if frame else None)
 
     def inspect_engineering_support(self, side=None):
+        if self.job or not self.guided.resolve_draft():
+            return
         result = self.view_source_result()
-        if result is None or self.job or not self.guided.resolve_draft():
+        if result is None:
+            self.engineering_panel.support_error.setText("Run an analysis or inspect a recorded run before inspecting physical support.")
             return
         layer = self.field_layer.currentData()
         if not layer:
@@ -2751,6 +2754,7 @@ class MainWindow(QMainWindow):
         if index < 0:
             self.engineering_panel.support_error.setText("This integral is not a layer map. Generated interface heat is distinct from its allocated sheet heat.")
             return
+        self.view_mode.setCurrentIndex(self.view_mode.findData("original"))
         self.field_combo.setCurrentIndex(index)
         self.guided.canvas_tabs.setCurrentIndex(0)
         self.locate_engineering_support(record, peak=False)
@@ -2763,6 +2767,7 @@ class MainWindow(QMainWindow):
         self.view.show_region(shape, "Engineering support · " + record["layer_id"])
         if peak and record.get("crowding"):
             point = Point(record["crowding"]["peak_xy"])
+            self.view.centerOn(point.x * 1e6, -point.y * 1e6)
             self.view.show_callouts([dict(id="engineering-peak", label="Raw peak · unverified", layer_id=record["layer_id"], point=point.coords[0])])
 
     def locate_hotspot(self):

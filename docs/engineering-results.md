@@ -118,10 +118,11 @@ as incomplete even when the last PDE solution converged. Use time-step and mesh
 studies before interpreting a pulse peak as resolved. On-demand archives keep
 metadata and the currently loaded frame distinct until the requested frame loads.
 
-![E18 peak field and separate displayed-frame/run-peak labels](images/transient-peak-frame.png)
+![Cooled E18 final field with separate displayed-frame and run-peak labels](images/transient-peak-frame.png)
 
 Actual nominal E18 calculation: 323.59 K at 295 µs, versus 301.44 K at the
-400 µs final frame. Both maps use the same across-time color range. These are
+400 µs final frame. The final map uses the across-time color range for comparison
+with the peak view. These are
 source-app captures, not packaged-build or clean-machine validation.
 
 On compact windows, tables scroll and the Same support page scrolls vertically;
