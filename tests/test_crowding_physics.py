@@ -141,3 +141,26 @@ def test_annular_bend_local_field_against_exact_harmonic_solution():
     assert np.average(abs(measured / expected - 1), weights=mesh.areas) < 0.001
     assert result.metrics["joule_power"] == pytest.approx(0.01**2 / exact_r, rel=0.001)
     assert result.converged
+
+
+@pytest.mark.numerical
+@pytest.mark.parametrize("archive_format", [2, 3])
+def test_crowding_complete_typed_archive_identity(tmp_path, archive_format):
+    import importlib.util
+    from pathlib import Path
+
+    from etlayout.io.project import load_project, save_project
+
+    spec = importlib.util.spec_from_file_location(
+        "crowding_archive_benchmark",
+        Path(__file__).resolve().parents[1] / "scripts/benchmark_archive_history.py")
+    benchmark = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(benchmark)
+    project = benchmark_project("sharp_L", 4e-6)
+    result = run_project(project)
+    assert isinstance(result.analysis["current_crowding"]["metal"]["peak_xy"], list)
+    path = tmp_path / ("crowding-" + str(archive_format) + ".etl")
+    before = benchmark.result_digest(result)
+    save_project(project, path, result, archive_format=archive_format)
+    _, restored = load_project(path)
+    assert benchmark.result_digest(restored) == before
