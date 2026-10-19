@@ -86,6 +86,31 @@ on-state collection, with reference projects, compact generation presets and opt
 benchmarks. The reference projects open in the GUI; generating other preset/variant
 combinations uses the optional CLI.
 
+## Run a device operating study
+
+Open a reference through **File → Ready-to-run examples**, then use **File →
+Choose example operating scenario…**. E37 adds voltage-controlled GaN output,
+transfer and contact studies; E38 adds genuinely parallel banks and explicit
+mismatch choices; E39 offers a lower-current 2 A reference and semiconductor heat
+placement alongside the original 10 A stress experiment. E40 retains its 5 A
+interposer reference. Generation opens an editable project without running it.
+
+**Studies → Run configured study…** selects a stored specification with its
+actual values and analysis mode. For E27, **Studies → Finite-contact TLM study
+(E27)…** generates and calculates four contact spacings in a background job.
+Choose a parent folder: the GUI creates a new empty child directory, preserving
+existing projects. A supplied TLM output directory must be empty. The fit reports
+sheet/contact resistance, specific contact resistivity, transfer length and
+numerical residual uncertainty; that scatter does not establish experimental
+calibration. See the [contact-extraction guide](contact-extraction.md).
+
+For E40, **Results → Device and fixture observations…** separates internal loss
+and feed-deembedded operating-point resistance from external fixture power.
+Locally deposited feed heat still belongs in the thermal balance; subtract all
+feed electrical loss when deembedding. An undefined multiport service does not
+receive a scalar resistance. The [device guide](device-engineering-examples.md)
+explains the GUI cases, equal-service caveats and recorded checks.
+
 ## Keep and share the experiment
 
 Use **File → Save project as…** for your working configuration, embedded layout,

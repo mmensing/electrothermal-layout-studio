@@ -92,3 +92,11 @@ observations independently of later optional operating scenarios.
 For stronger Joule heating with unchanged reference geometry/material/cooling,
 see [editable thermal operating scenarios](thermal-example-scenarios.md). The
 original reference is always available; failed engineering limits retain fields.
+
+## Follow device-specific operating studies
+
+[Device engineering examples](device-engineering-examples.md) link the original
+GaN/SiC models to voltage-driven coupon/bank studies, lower-current SiC operation,
+semiconductor heat placement and package fixture deembedding. The
+[combined all-forty index](example-science/device-observations.json) joins original,
+thermal-scenario and engineering observations without repeating field archives.
