@@ -508,3 +508,12 @@ etlayout archive-convert experiment-v3.etlayout experiment-legacy.etlayout --arc
 Conversion preserves the current result and every retained run, then checks a full
 reopen. It refuses to overwrite an existing destination. External resource grants
 are still explicit; a format choice never authorizes a declared file or network path.
+
+### Hard temperature acceptance
+
+Use **Operating conditions → Maximum operating temperature…** for an optional
+global °C/K limit and layer/region limits. An accepted temperature at or above
+the limit fails engineering acceptance while retaining numerical fields.
+Transient operation can stop at the first violating accepted state.
+See [maximum operating temperature](temperature-limits.md) for status, history,
+CLI exit-code and compatibility details. Existing warning thresholds remain warnings.

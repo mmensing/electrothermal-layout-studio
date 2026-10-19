@@ -318,9 +318,10 @@ def assess(project: Project, geometry=None, diagnostics: Iterable[Diagnostic] | 
             except (ValueError, TypeError):
                 fresh = False
         stages["results"] = StageReadiness(
-            "Needs review" if fresh is None else "Out of date" if not fresh else "Ready" if result.converged else "Needs review",
+            "Needs review" if fresh is None else "Out of date" if not fresh else "Failed engineering" if result.metrics.get("engineering_accepted") is False and result.converged else "Ready" if result.converged else "Needs review",
             "Result applicability awaits source-identity validation in the background worker." if fresh is None else
             "Recorded run differs from the working setup and remains available for inspection." if not fresh else
+            "Maximum-temperature compliance failed or is unavailable; numerical fields remain available." if result.metrics.get("engineering_accepted") is False and result.converged else
             "Selected run converged. Mesh verification requires separate study evidence." if result.converged else
             "Selected run did not converge; inspect its diagnostics before using numerical conclusions.")
     return Assessment(ordered, stages, identity, checked, fresh)

@@ -172,7 +172,11 @@ def _solve_point(point, execution, workers=1, progress=None, cancel=None):
                                  initial_result=point.initial_result, resume=point.resume)
         result.metrics["study_execution"] = {**execution.to_dict(), "actual_workers": workers,
                                               "cpu_threads_per_worker": threads, "process_id": os.getpid()}
-        return result, "" if result.converged else "Solver did not converge"
+        if not result.converged:
+            return result, "Solver did not converge"
+        if not result.metrics.get("engineering_accepted", True):
+            return result, "Engineering acceptance failed: maximum-temperature limit violated or unavailable"
+        return result, ""
     except Cancelled:
         raise
     except (SimulationError, ValueError) as error:

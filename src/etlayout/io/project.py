@@ -168,6 +168,8 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
     for refinement in data["mesh"]["refinements"]:
         if not refinement.get("axis_sizes"):
             refinement.pop("axis_sizes", None)
+    if not any(limit["enabled"] for limit in data.get("temperature_limits", [])):
+        data.pop("temperature_limits", None)
     if data.get("power") == asdict(PowerSettings()):
         data.pop("power", None)
     for layer in data["layers"]:
@@ -253,6 +255,9 @@ def annotated_result(result: SimulationResult, project: Project, *, run: Simulat
     # used as an initial/restart state. Whole-run annotations are separate.
     metrics = dict(result.metrics)
     if run is not result:
+        for key in ("thermal_limit_compliance", "engineering_accepted"):
+            if key in run.metrics:
+                metrics[key] = deepcopy(run.metrics[key])
         metrics["whole_run_metrics"] = {key: value for key, value in run.metrics.items() if key.startswith("transient_")}
     diagnostics = list(run.diagnostics)
     diagnostics.extend(item for item in result.diagnostics if item not in diagnostics)

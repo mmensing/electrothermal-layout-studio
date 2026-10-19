@@ -61,7 +61,12 @@ def _validate_times(history, result, project, snapshot_count):
         raise SimulationError("Transient snapshot times must start at the recorded start time and increase strictly")
     if len(times) != snapshot_count or len(times) > min(project.transient.max_snapshots, MAX_SNAPSHOTS):
         raise SimulationError("Transient snapshot count is inconsistent or exceeds its budget")
-    if type(history.completed) is not bool or history.completed != result.converged:
+    thermal_stop = (not history.completed and result.converged
+                    and result.metrics.get("transient_stop_reason") == "maximum_temperature"
+                    and result.metrics.get("thermal_limit_compliance", {}).get("status") == "failed"
+                    and result.metrics.get("thermal_limit_compliance", {}).get("stopped_early") is True
+                    and any(limit.enabled and limit.evaluation == "stop_transient" for limit in project.temperature_limits))
+    if type(history.completed) is not bool or (history.completed != result.converged and not thermal_stop):
         raise SimulationError("Transient completion and result convergence disagree")
     tolerance = max(project.transient.stop_time * 1e-12, np.finfo(float).tiny)
     if times[-1] > project.transient.stop_time + tolerance:
@@ -126,7 +131,7 @@ def validate_history(result, project):
                 raise SimulationError("Transient snapshots must share the result mesh")
         _validate_result_arrays(result.mesh, snapshot.fields, snapshot.converged)
         _validate_local_fields(snapshot)
-        if history.completed and not snapshot.converged:
+        if result.converged and not snapshot.converged:
             raise SimulationError("Completed transient history contains an unconverged snapshot")
         if not isinstance(snapshot.metrics, dict) or "time_s" not in snapshot.metrics:
             raise SimulationError("Transient snapshot needs numeric time_s metadata")
@@ -136,6 +141,14 @@ def validate_history(result, project):
     used += len(_encoded_metadata(history))
     if used > min(project.transient.max_history_bytes, MAX_HISTORY_BYTES):
         raise SimulationError("Transient history exceeds its byte budget")
+    if result.converged and not history.completed:
+        from etlayout.simulation.temperature import evaluate_temperature_limits, stop_requested
+        actual = evaluate_temperature_limits(project, result, time_s=float(times[-1]))
+        report = result.metrics.get("thermal_limit_compliance", {})
+        if (not stop_requested(actual) or report.get("actual_stop_time") != float(times[-1])
+                or report.get("requested_stop_time") != project.transient.stop_time
+                or result.metrics.get("engineering_accepted") is not False):
+            raise SimulationError("Thermal-stop metadata must match an actual violating accepted state and requested time")
     if project.transient.initialization in {"saved", "resume"}:
         from etlayout.solvers.transient import configure_initial_state
         if not project.transient.initial_state_digest:

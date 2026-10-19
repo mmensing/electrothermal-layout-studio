@@ -346,7 +346,7 @@ def main(argv=None):
             result = run_project(project, progress=progress, initial_result=initial_result, resume=resume, execution=execution)
             export_results(result, args.output, plots=not args.no_plots)
             print(_json_dump({"converged": result.converged, "metrics": result.metrics, "terminals": result.terminals}))
-            return 0 if result.converged else 2
+            return 2 if not result.converged else 3 if not result.metrics.get("engineering_accepted", True) else 0
         if args.command == "sweep":
             if args.parameter:
                 if args.values:

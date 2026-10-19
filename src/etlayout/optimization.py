@@ -344,6 +344,8 @@ def _evaluate(project, experiment, folder, *, cancel=None, progress=None, execut
             needed = {o.measurement_id for o in experiment.objectives} | set(experiment.constraints)
             if not result.converged:
                 status, reason = "nonconverged", "Numerical solve did not converge"
+            elif not result.metrics.get("engineering_accepted", True):
+                status, reason = "thermal_limit_failure", "Maximum-temperature limit violated or unavailable"
             elif not _balance_ok(setup, result):
                 status, reason = "balance_failure", "Conservation tolerance exceeded or unavailable"
             elif any("outside" in d.message.lower() and ("temperature" in d.message.lower() or "range" in d.message.lower()) for d in result.diagnostics):

@@ -719,6 +719,7 @@ class MainWindow(QMainWindow):
         settings_layout = QVBoxLayout(settings_widget)
         for label, callback in [("Mesh settings…", lambda: self.edit_settings("mesh")),
                                 ("Solver settings…", lambda: self.edit_settings("solver")),
+                                ("Maximum operating temperature…", self.edit_temperature_limits),
                                 ("Engineering warning thresholds…", self.edit_thresholds),
                                 ("Save simulation preset…", self.save_preset),
                                 ("Load simulation preset…", self.load_preset),
@@ -1953,7 +1954,9 @@ class MainWindow(QMainWindow):
             self.show_result(output)
             self.dirty = True
             self.update_title()
-            self.log(f"Simulation {'converged' if output.converged else 'did not converge'} in {output.elapsed_seconds:.3f} s.")
+            self.log(f"Simulation {'converged' if output.converged else 'did not converge'} in {output.elapsed_seconds:.3f} s."
+                     + (" Engineering acceptance failed: maximum-temperature compliance."
+                        if output.metrics.get("thermal_limit_compliance", {}).get("status") in {"failed", "unavailable"} else ""))
 
         if hasattr(self, "guided"):
             self.guided.job_completed(operation, context)
@@ -2282,10 +2285,28 @@ class MainWindow(QMainWindow):
         run = self.result if self.result and self.result.transient else result
         status = ("Transient run completed" if run.converged else "TRANSIENT RUN INCOMPLETE") if run.transient else (
             "Converged" if result.converged else "NOT CONVERGED")
+        compliance = run.metrics.get("thermal_limit_compliance", {})
+        thermal_text = ""
+        if compliance.get("status") in {"failed", "unavailable"}:
+            status = "FAILED — Maximum temperature exceeded" if compliance["status"] == "failed" else "FAILED — Temperature compliance unavailable"
+            failed_limits = [row for row in compliance.get("limits", []) if row["status"] == "failed"]
+            violation = max(failed_limits, key=lambda row: row["peak"]["temperature"]) if failed_limits else None
+            if violation:
+                peak = violation["peak"]
+                thermal_text = (f"Limit {violation['maximum_temperature'] - 273.15:.6g} °C; "
+                    f"actual {peak['temperature'] - 273.15:.6g} °C on {peak['layer_id']} "
+                    f"at ({peak['location'][0] * 1e6:.6g}, {peak['location'][1] * 1e6:.6g}) µm. "
+                    + (f"Peak sampled at t={peak['time_s']:.9g} s. " if peak['time_s'] is not None else "")
+                    + (f"First violation observed at t={compliance['first_violation']['peak']['time_s']:.9g} s. "
+                       if compliance.get("first_violation", {}).get("peak", {}).get("time_s") is not None else "")
+                    + (f"Rise {peak['temperature_rise']:.6g} K relative to {peak.get('reference', {}).get('method', 'selected reference')}. " if peak.get("temperature_rise") is not None else "")
+                    + f"Numerical convergence: {'yes' if run.converged else 'no'}. "
+                    + ("Stopped early; accepted history retained. " if compliance.get("stopped_early") else ""))
         self.result_status.setText(
             f"{status} · {len(result.mesh.triangles):,} triangles · "
             f"{run.elapsed_seconds:.3f} s · configuration {result.configuration_hash[:12]}\n"
             + (f"Selected transient snapshot: t = {result.metrics['time_s']:.9g} s. " if "time_s" in result.metrics else "")
+            + thermal_text
             + "Select a field above; probe or draw a line profile. Peak current at sharp corners is mesh-sensitive.")
         metrics = {**result.metrics, **{key: value for key, value in run.metrics.items() if key.startswith("transient_")}}
         scalar_metrics = [(key, value) for key, value in metrics.items() if isinstance(value, (int, float, str))]
@@ -3668,7 +3689,20 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getSaveFileName(self, "Save simulation preset", "preset.json", "JSON (*.json)")
         if path:
             Path(path).write_text(json.dumps({"mesh": asdict(self.project.mesh), "solver": asdict(self.project.solver),
-                                             "transient": asdict(self.project.transient)}, indent=2), encoding="utf-8")
+                                             "transient": asdict(self.project.transient),
+                                             "temperature_limits": [asdict(item) for item in self.project.temperature_limits]}, indent=2), encoding="utf-8")
+
+    def edit_temperature_limits(self):
+        if self.model_locked():
+            return
+        if hasattr(self, "guided") and not self.guided.resolve_draft():
+            return
+        from etlayout.gui.temperature_limits import TemperatureLimitsDialog
+        dialog = TemperatureLimitsDialog(self.project, self, mask_keys=self.mask_keys())
+        if dialog.exec():
+            self.before_edit()
+            self.project.temperature_limits = dialog.limits
+            self.changed()
 
     def edit_thresholds(self):
         if self.model_locked():
@@ -3735,7 +3769,7 @@ class MainWindow(QMainWindow):
             try:
                 data = json.loads(Path(path).read_text(encoding="utf-8"))
                 config = self.project.to_dict()
-                config.update({key: data[key] for key in ("mesh", "solver", "transient") if key in data})
+                config.update({key: data[key] for key in ("mesh", "solver", "transient", "temperature_limits") if key in data})
                 # Legacy steady presets must not silently inherit active pulses.
                 if "transient" not in data:
                     config["transient"] = {}

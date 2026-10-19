@@ -457,6 +457,21 @@ class PowerSettings:
 
 
 @dataclass
+class TemperatureLimit:
+    """Absolute maximum over authoritative thermal P1 fields; SI kelvin.
+
+    An empty layer list covers every active thermal sheet. Optional geometry
+    clips support exactly, including partial elements. Equality fails acceptance.
+    """
+    id: str = "maximum_temperature"
+    enabled: bool = True
+    maximum_temperature: float = 423.15
+    layer_ids: list[str] = field(default_factory=list)
+    geometry: RegionSpec | None = None
+    evaluation: str = "fail_after"  # fail_after or stop_transient
+
+
+@dataclass
 class Project:
     name: str = "Untitled"
     schema_version: int = 2
@@ -478,6 +493,7 @@ class Project:
     thresholds: dict[str, float] = field(default_factory=dict)
     notes: str = ""
     power: PowerSettings = field(default_factory=PowerSettings)
+    temperature_limits: list[TemperatureLimit] = field(default_factory=list)
 
     def layer(self, layer_id: str) -> PhysicalLayer:
         return next(x for x in self.layers if x.id == layer_id)
