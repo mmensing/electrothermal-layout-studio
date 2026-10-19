@@ -27,9 +27,12 @@ python -m pytest --basetemp=.pytest_full
 ```
 
 The full suite includes numerical and desktop integration and takes longer.
-PR CI runs fast contracts and package-policy checks. Main and owner-requested
-validation run the complete numerical/desktop suite. Frozen builds and large
-benchmarks are deliberate maintainer tasks, not required for every edit.
+PR CI requires source-quality contracts and a stable scientific-regression check.
+Scientific changes run real numerical tests; recognized documentation-only changes
+receive a lightweight scope check. Unknown paths require numerical validation.
+Main scientific changes and owner-requested validation run the complete source
+and desktop suite. Frozen builds and large benchmarks are deliberate maintainer
+tasks, not required for every edit.
 See [validation](https://github.com/mmensing/electrothermal-layout-studio/blob/main/docs/validation.md) for commands and evidence scopes.
 
 Use SI internally and label units at display/export boundaries. Backend modules

@@ -23,7 +23,7 @@ from etlayout.models import (
     checkpoint,
 )
 from etlayout.physics.constitutive import ELEMENTARY_CHARGE, mobility, sheet_conductance
-from etlayout.simulation.execution import map_independent, record_linear_solve
+from etlayout.simulation.execution import map_independent, record_linear_solve, record_phase
 
 from .fem import (
     Assembly,
@@ -291,6 +291,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
     linear_layers = {}
 
     def assemble(v: np.ndarray, jacobian: bool = False):
+        assembly_started = time.perf_counter()
         checkpoint(cancel)
 
         def prepare_layer(item):
@@ -338,6 +339,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
         derivative_matrix = (matrix + layer_matrix([prepared[key][1] for key in space.layers], size)
                              if jacobian else matrix)
         conductances = {key: prepared[key][2] for key in space.layers}
+        record_phase("electrical_assembly", time.perf_counter() - assembly_started)
         return matrix, derivative_matrix, conductances
 
     if initial is not None and len(initial) == size:
