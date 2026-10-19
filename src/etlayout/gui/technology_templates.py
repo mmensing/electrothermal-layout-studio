@@ -156,7 +156,7 @@ def propose_template(project, template, mask_mapping, selected_layers, available
     layer_ids = {layer.id for layer in candidate.layers}
     layer_map = {layer.id: _unique(layer.id, layer_ids) for layer in template.layers if layer.id in selected}
     links = [link for link in template.interfaces
-             if {link.layer_a, link.layer_b, *link.replaces_layers} <= selected]
+             if {link.layer_a, link.layer_b, *link.replaces_layers, *([link.heat_layer_id] if link.heat_layer_id else [])} <= selected]
     regions = [layer.geometry for layer in template.layers if layer.id in selected] + [link.geometry for link in links]
     required_masks = {key for region in regions for key in (*region.sources, *region.exclude_sources)}
     available = set(available_masks)
@@ -191,6 +191,8 @@ def propose_template(project, template, mask_mapping, selected_layers, available
         link.id = _unique(link.id, interface_ids)
         link.layer_a, link.layer_b = layer_map[link.layer_a], layer_map[link.layer_b]
         link.replaces_layers = [layer_map[key] for key in link.replaces_layers]
+        if link.heat_layer_id:
+            link.heat_layer_id = layer_map[link.heat_layer_id]
         if link.material_id:
             link.material_id = material_map[link.material_id]
         link.geometry.sources = [mask_mapping[key] for key in link.geometry.sources]

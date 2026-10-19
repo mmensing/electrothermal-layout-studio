@@ -51,6 +51,8 @@ def reference_materials() -> dict[str, Material]:
         ("sio2", "SiO₂", "dielectric", 1e16, 1.4, 2200., 703.),
         ("sin", "SiN", "dielectric", 1e14, 3., 3100., 700.),
         ("alumina", "Al₂O₃", "dielectric", 1e14, 30., 3950., 880.),
+        ("aln", "AlN (synthetic thermal seed)", "dielectric", 1e14, 100., 3260., 740.),
+        ("polyimide", "Polyimide (synthetic thermal seed)", "dielectric", 1e14, .2, 1400., 1100.),
         ("substrate", "Custom substrate", "dielectric", 1e14, 10., 2500., 700.),
     ]
     for key, name, category, rho, k, density, cp in others:
@@ -64,6 +66,10 @@ def reference_materials() -> dict[str, Material]:
                    category in {"semiconductor", "2deg"} else
                    "Representative dielectric/substrate seed, not process-calibrated. SiN film k varies strongly."),
             reference=True)
+    for key in ("aln", "polyimide"):
+        result[key].source = "Synthetic sensitivity-study assumption; not measured process data or a certified product value."
+        result[key].notes = ("Uncalibrated 300 K constant isotropic seed. Replace k_parallel, k_z, density and heat capacity "
+                             "with measured film/package data and temperature validity bounds. No semiconductor electrostatics.")
     return result
 
 

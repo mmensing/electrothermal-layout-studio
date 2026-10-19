@@ -9,7 +9,7 @@ from etlayout.models import PropertyModel, SimulationError
 
 def test_all_reference_materials_have_positive_properties():
     materials = reference_materials()
-    assert len(materials) == 18
+    assert {"sin", "sio2", "alumina", "aln", "polyimide", "gan", "sic"} <= materials.keys()
     for material in materials.values():
         assert evaluate_property(material.resistivity, 300.) > 0
         assert evaluate_property(material.thermal_conductivity, 300.) > 0
@@ -51,7 +51,7 @@ def test_immutable_reference_and_persistent_customization(tmp_path):
     assert db.get(custom.id).name == "Process Cu"
     exported = tmp_path / "materials.json"
     db.export_json(exported)
-    assert len(db.import_json(exported)) == 19
+    assert len(db.import_json(exported)) == len(reference_materials()) + 1
     db.delete(custom.id)
     with pytest.raises(KeyError):
         db.get(custom.id)

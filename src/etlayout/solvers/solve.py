@@ -101,9 +101,11 @@ def electrical_heat(result: SimulationResult) -> dict[str, np.ndarray]:
         raise SimulationError("Cannot use heating from a nonconverged electrical result")
     if "electrical_power" not in result.metrics:
         raise SimulationError("Result does not contain an electrical solution")
-    return {layer: np.nan_to_num(fields["joule_density"], nan=0.) +
-                   np.nan_to_num(fields.get("contact_density", np.zeros(len(result.mesh.triangles))), nan=0.)
-            for layer, fields in result.fields.items() if "joule_density" in fields}
+    zero = np.zeros(len(result.mesh.triangles))
+    return {layer: np.nan_to_num(fields.get("joule_density", zero), nan=0.) +
+                   np.nan_to_num(fields.get("contact_density", zero), nan=0.)
+            for layer, fields in result.fields.items()
+            if "joule_density" in fields or "contact_density" in fields}
 
 
 def solve(project: Project, mesh: PlanarMesh, progress: Progress | None = None,

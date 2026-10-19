@@ -99,9 +99,13 @@ and current crowding remain part of a general layout solution. This is not a
 zero-size circuit element attached to two arbitrarily selected points.
 
 Contact loss is the integral of `g (Va−Vb)^2` over the true mask, evaluated with
-the consistent triangular mass matrix. Exactly half of each contact element's
-heat is assigned to each adjacent sheet. This documented partition conserves
-energy but does not resolve a contact's internal vertical temperature profile.
+the consistent triangular mass matrix. The default assigns half of each contact
+element's heat to each adjacent sheet, preserving existing projects. A calibrated
+`heat_to_layer_a_fraction` may change that partition; alternatively `heat_layer_id`
+deposits the complete interface/device-load loss into a named physical thermal
+sheet on identical x–y support. Missing support is rejected, not clipped or
+renormalized. Electrical loss remains unchanged. These explicit assumptions
+conserve energy without resolving an internal vertical temperature profile.
 Ideal interfaces dissipate no interface power. `joule_density` contains lateral
 loss, `contact_density` contains allocated contact loss, and thermal
 `heat_density` includes both plus any prescribed source.
@@ -122,6 +126,12 @@ An interface of kind `stack` uses the sum
 The gap term is present only when an interface material is assigned. Height
 alone does not invent a gap material. These terms connect sheet midplanes and
 must be chosen consistently with any external half-thickness sink boundary.
+An explicit dielectric film replaces the corresponding material-filled effective
+gap; use adjacent stack links so its two half-thickness contributions add to one
+full film resistance. Preparation rejects a gap occupying an explicit intervening
+sheet and diagnoses legacy direct bridges that can create parallel bypass paths.
+See [thermal stacks](thermal-stacks.md) for GUI setup, deposition assumptions,
+measured sensitivities and the unverified external 3D reference protocol.
 
 Fixed-temperature boundaries constrain selected nodes to an absolute temperature.
 An area coefficient h gives `q_out'' = h*(T−Tambient)`. Area resistance is its

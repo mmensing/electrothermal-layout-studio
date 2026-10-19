@@ -25,6 +25,7 @@ from PySide6.QtWidgets import (
 )
 
 from etlayout.io.reporting import csv_writer
+from etlayout.materials.models import evaluate_property
 from etlayout.simulation.analysis import FIELD_UNITS
 from etlayout.visualization.formatting import distinct_labels, series_context_range
 from etlayout.visualization.sampling import DISPLAY_FIELD_LABELS as FIELD_LABELS
@@ -156,28 +157,62 @@ class CrossSectionPanel(QWidget):
         self.plot = pg.PlotWidget()
         self.plot.setLabel("bottom", "Distance along cut", units="µm")
         self.plot.setLabel("left", "Elevation z", units="µm")
+        self.plot.getAxis("bottom").enableAutoSIPrefix(False)
+        self.plot.getAxis("left").enableAutoSIPrefix(False)
         self.plot.showGrid(x=False, y=True, alpha=.12)
         layout.addWidget(self.plot)
         self.intervals = {}
+        self.stack_summary = QLabel("Conductors carry current and heat; insulators and thermal sheets carry heat only. Dashed links are effective transfer paths, not solid material.")
+        self.stack_summary.setWordWrap(True)
+        self.stack_summary.setAccessibleName("Thermal stack interpretation")
+        layout.addWidget(self.stack_summary)
+        self.layer_table = QTableWidget(0, 6)
+        self.layer_table.setHorizontalHeaderLabels(["Layer", "Role", "Material", "Thickness (µm)", "Bottom z (µm)", "Nominal k x/y/z (W/m K)"])
+        self.layer_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.layer_table.setMaximumHeight(155)
+        self.layer_table.setAccessibleName("Physical thermal stack layers")
+        self.layer_table.horizontalHeader().setStretchLastSection(True)
+        layout.addWidget(self.layer_table)
 
     def show_cut(self, project, geometry, start, end):
         self.plot.clear()
         self.intervals = {}
+        self.layer_table.setRowCount(0)
+        span_z = max(layer.z + layer.thickness for layer in project.layers) - min(layer.z for layer in project.layers)
         length = np.linalg.norm(np.asarray(end) - np.asarray(start))
         for layer in project.layers:
             if not layer.visible or layer.id not in geometry.layers:
                 continue
             intervals = cross_section_intervals(geometry.layers[layer.id], start, end)
             self.intervals[layer.id] = intervals
+            material = project.materials[layer.material_id]
+            role = {"conductor": "conductor", "thermal": "thermal-only", "insulator": "insulator (thermal-only)"}[layer.role]
             color = QColor(layer.color)
             color.setAlphaF(min(layer.opacity, .25) if layer.role == "insulator" else layer.opacity)
             for a, b in intervals:
                 rect = QGraphicsRectItem(QRectF(a * 1e6, layer.z * 1e6, (b - a) * 1e6, layer.thickness * 1e6))
                 rect.setBrush(color)
                 rect.setPen(pg.mkPen(layer.color, width=1))
-                rect.setToolTip(f"{layer.name} · {layer.material_id}\nz={layer.z * 1e6:.5g} µm, t={layer.thickness * 1e6:.5g} µm")
+                kz = material.thermal_conductivity_z
+                rect.setToolTip(f"{layer.name} · {layer.material_id} · {role}\n"
+                                f"z={layer.z * 1e6:.5g} µm, t={layer.thickness * 1e6:.5g} µm\n"
+                                f"Lateral k multipliers x,y: {material.thermal_anisotropy}; "
+                                f"k_z: {kz if kz is not None else 'same material law as lateral k'} W/(m K)\n"
+                                f"{material.notes}\nSource: {material.source}")
                 self.plot.addItem(rect)
             if intervals:
+                row = self.layer_table.rowCount()
+                self.layer_table.insertRow(row)
+                base_k = float(evaluate_property(material.thermal_conductivity, material.thermal_conductivity.reference_temperature))
+                k_label = (f"{base_k * material.thermal_anisotropy[0]:.4g} / "
+                           f"{base_k * material.thermal_anisotropy[1]:.4g} / "
+                           f"{material.thermal_conductivity_z if material.thermal_conductivity_z is not None else base_k:.4g}")
+                for column, text in enumerate((layer.name, role, material.name, f"{layer.thickness * 1e6:.5g}",
+                                               f"{layer.z * 1e6:.5g}", k_label)):
+                    item = QTableWidgetItem(text)
+                    item.setToolTip("Nominal property value at its declared reference temperature; process calibration is required. " + material.notes)
+                    self.layer_table.setItem(row, column, item)
+            if intervals and layer.thickness > span_z * .04:
                 widest = max(intervals, key=lambda ab: ab[1] - ab[0])
                 label = pg.TextItem(f"{layer.name} · {layer.thickness * 1e6:.3g} µm", color="#171717", anchor=(.5, .5))
                 label.setPos(sum(widest) * .5e6, (layer.z + layer.thickness / 2) * 1e6)
@@ -194,7 +229,10 @@ class CrossSectionPanel(QWidget):
                     center = (left + right) * .5e6
                     link = pg.PlotDataItem([center, center], [low * 1e6, high * 1e6],
                                           pen=pg.mkPen("#7E8982", width=1, style=Qt.PenStyle.DashLine))
-                    link.setToolTip(f"{interface.id}: thermal {interface.thermal_kind}")
+                    gap = (f"gap {interface.height * 1e6:.5g} µm / {interface.material_id}" if interface.material_id else "no implicit gap material")
+                    path = "includes both half-sheet resistances" if interface.thermal_kind == "stack" else "declared effective sheet-to-sheet link"
+                    link.setToolTip(f"{interface.id}: thermal {interface.thermal_kind}; {path}; {gap}\n"
+                                    f"Extra interface area resistance: {interface.thermal_resistance_area:.5g} m² K/W")
                     self.plot.addItem(link)
                 elif high > low:
                     rect = QGraphicsRectItem(QRectF(left * 1e6, low * 1e6, (right - left) * 1e6, (high - low) * 1e6))
@@ -205,6 +243,26 @@ class CrossSectionPanel(QWidget):
                 else:
                     self.plot.plot([left * 1e6, right * 1e6], [high * 1e6, high * 1e6],
                                    pen=pg.mkPen("#986B43", width=2))
+        self.layer_table.resizeColumnsToContents()
+        boundaries = []
+        for boundary in project.thermal_boundaries:
+            support = geometry.thermal_boundaries.get(boundary.id)
+            if support is not None and cross_section_intervals(support, start, end):
+                temperature = boundary.value if boundary.kind == "temperature" else boundary.ambient
+                boundaries.append(f"{boundary.id} on {boundary.layer_id}: {boundary.kind}, reservoir {temperature:.5g} K")
+        deposition = []
+        for interface in project.interfaces:
+            if not interface.enabled or interface.electrical_kind in {"none", "ideal"}:
+                continue
+            model = (f"all to {interface.heat_layer_id}" if interface.heat_layer_id else
+                     f"{interface.heat_to_layer_a_fraction:.0%} to {interface.layer_a}, "
+                     f"{1-interface.heat_to_layer_a_fraction:.0%} to {interface.layer_b}")
+            deposition.append(f"{interface.id}: {model}")
+        self.stack_summary.setText("Thermal-only sheets carry no DC current. Dashed links are effective transfer paths; "
+            "gaps without declared material have no automatic heat path. "
+            + ("Boundaries on cut: " + "; ".join(boundaries) + ". " if boundaries else "No reservoir boundary on this cut. ")
+            + ("Interface/device heat: " + "; ".join(deposition) + ". " if deposition else "")
+            + "Thickness-averaged 2.5D model; independent lateral/z scales; no resolved 3D internal heat profile.")
         self.plot.setXRange(0, length * 1e6, padding=.03)
         self.plot.enableAutoRange(axis="y", enable=True)
         self.description.setText(f"Cut ({start[0] * 1e6:.4g}, {start[1] * 1e6:.4g}) → ({end[0] * 1e6:.4g}, {end[1] * 1e6:.4g}) µm · separate x/z scales")

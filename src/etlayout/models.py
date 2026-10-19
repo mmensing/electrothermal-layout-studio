@@ -158,6 +158,9 @@ class Interface:
     purpose: str = "connection"  # connection or device_load
     reference_temperature: float = 300.
     temperature_coefficient: float = 0.
+    # Calibrated thermal deposition; electrical loss and interface transfer are unchanged.
+    heat_to_layer_a_fraction: float = .5
+    heat_layer_id: str = ""  # empty splits between endpoints; otherwise all loss goes to this sheet
 
 
 @dataclass

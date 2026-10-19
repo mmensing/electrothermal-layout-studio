@@ -37,6 +37,7 @@ from .fem import (
     reduce_vector,
     stiffness,
 )
+from .heat_deposition import deposit_interface_heat
 
 
 @dataclass
@@ -464,10 +465,7 @@ def solve_state(project: Project, mesh: PlanarMesh, temperatures: dict[str, np.n
         contact_power += power
         transfer = np.einsum("eij,ej->ei", blocks, difference).sum()
         contact_metrics[interface.id] = {"power": power, "current_a_to_b": float(transfer)}
-        heat[interface.layer_a][elements] += powers / (2. * space.areas[elements])
-        heat[interface.layer_b][elements] += powers / (2. * space.areas[elements])
-        result.fields[interface.layer_a]["contact_density"][elements] += powers / (2. * space.areas[elements])
-        result.fields[interface.layer_b]["contact_density"][elements] += powers / (2. * space.areas[elements])
+        deposit_interface_heat(project, mesh, result, heat, interface, elements, powers, space.areas)
     report_contacts(project, space, result, contacts, v, loss_entries)
     reaction = matrix @ (v - offset_full)
     for load in density_loads.values():
