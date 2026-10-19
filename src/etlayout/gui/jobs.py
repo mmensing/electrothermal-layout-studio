@@ -105,6 +105,10 @@ def _execute_worker(messages, project, operation, argument):
             geometry = prepare_geometry(project, progress=progress)
             plan = suggest_refinements(project, geometry=geometry, progress=progress, **(argument or {}))
             output = {"plan": plan.to_dict(), "geometry": geometry}
+        elif operation == "contact-study":
+            from etlayout.contact_studies import transfer_length_study
+            output = transfer_length_study(progress=progress, **argument)
+            output = {"report": output["report"]}
         elif operation == "sweep":
             from etlayout.simulation.sweep import run_sweep
             options = dict(argument) if isinstance(argument, dict) else {"spec": argument}

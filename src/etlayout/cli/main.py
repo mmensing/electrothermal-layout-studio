@@ -36,6 +36,7 @@ def parser():
     ex = sub.add_parser("examples", help="Generate actual GDS/OASIS and ready-to-run projects")
     ex.add_argument("directory", nargs="?", default="examples")
     ex.add_argument("--name", help="Stable example ID or full name; omit to generate reference layouts only (no solves)")
+    ex.add_argument("--tlm-spacing-um", type=float, help="E27 contact gap in micrometers; generates a project without solving")
     ex.add_argument("--scenario", help="Named operating scenario; see example-science documentation")
     ex.add_argument("--preset", help="Power-device size: compact/reference/large; GaN also small, banks also stress")
     ex.add_argument("--variant", help="Family routing/feed variant; see power-examples documentation")
@@ -45,6 +46,11 @@ def parser():
     ex.add_argument("--fingers", type=int, help="Actual gated paths per GaN bank, independently of conducting width")
     ex.add_argument("--gate-width-um", type=float, help="GaN conducting gate width along each finger, in micrometers")
     ex.add_argument("--stress", action="store_true", help="Label an overload point and disable verified-ranking experiments")
+    contact = sub.add_parser('contact-study', help='Calculate and fit four finite-contact E27 spacing coupons')
+    contact.add_argument('directory')
+    contact.add_argument('--spacings-um', type=float, nargs='+', default=[40., 80., 120., 160.])
+    contact.add_argument('--mesh-factor', type=float, default=1.)
+    execution_arguments(contact)
     info = sub.add_parser("project-info", help="Inspect project metadata/resource declarations without accessing external layouts")
     info.add_argument("project")
     resource_arguments(info)
@@ -177,13 +183,20 @@ def main(argv=None):
                 print(f"[{fraction:6.1%}] {message}", file=sys.stderr))
             print(_json_dump(report))
             return exit_code
+        if args.command == 'contact-study':
+            from etlayout.contact_studies import transfer_length_study
+            output = transfer_length_study(args.directory, args.spacings_um, mesh_factor=args.mesh_factor,
+                execution={'cpu_threads': args.cpu_threads, 'study_workers': args.study_workers if args.study_workers is not None else args.cpu_threads},
+                progress=lambda fraction, message: print(message, file=sys.stderr))
+            print(_json_dump(output['report']))
+            return 0
         if args.command == "capabilities":
             from etlayout.simulation.execution import detect_capabilities
             print(_json_dump(detect_capabilities()))
             return 0
         if args.command == "examples":
             from etlayout.examples import generate_all, make_example
-            options = dict(scenario=args.scenario, preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
+            options = dict(tlm_spacing_um=args.tlm_spacing_um, scenario=args.scenario, preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
                            fingers=args.fingers, gate_width_um=args.gate_width_um)
             if not args.name and (args.pulse or args.stress or any(value is not None for value in options.values())):
                 raise ValueError("Preset/variant/current/thermal options require --name")

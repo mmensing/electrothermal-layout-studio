@@ -930,3 +930,11 @@ The generator reads existing projects from `examples/` and creates missing ones.
 
 
 See the [scientific evidence audit](example-science.md) for applicability levels, exact nominal measurements, model limits and reproduction commands.
+
+## Choose device operating questions
+
+The [device engineering guide](device-engineering-examples.md) adds optional
+voltage-driven E37 characteristics, truly parallel E38 bank sharing, a lower-current
+E39 reference and named semiconductor heat placement. E40's read-only fixture
+observations separate package and external feed losses. E27 now has a background
+multi-spacing TLM fit. All original reference projects remain selectable.

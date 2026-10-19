@@ -1843,6 +1843,8 @@ class MainWindow(QMainWindow):
         snapshot = deepcopy(self.project)
         self.job_context = {"project": snapshot, "physics_hash": physics_hash(snapshot), "operation": operation,
                             "supplied_initial_state": isinstance(argument, dict) and argument.get("initial_result") is not None}
+        if operation == 'sweep' and isinstance(argument, dict) and argument.get('spec') is not None:
+            self.job_context['study_parameter'] = argument['spec'].parameter
         job = ComputeJob(snapshot, operation, deepcopy(argument), self, execution=self.execution_settings)
         self.job = job
         job.progress.connect(lambda fraction, message: self.job_progress(fraction, message) if job is self.job else None)
@@ -1926,11 +1928,17 @@ class MainWindow(QMainWindow):
             self.log(f"Validation: {counts['error']} errors · {counts['warning']} warnings · {len(self.net_report.nets)} electrical nets. Select a diagnostic or net to inspect it.")
             self.highlight_nets()
             self.show_analysis_page(self.diagnostics)
+        elif operation == "contact-study":
+            from etlayout.gui.contact_study import ContactStudyDialog
+            self.contact_study_report = output["report"]
+            self.contact_study_dialog = ContactStudyDialog(output["report"], self)
+            self.contact_study_dialog.show()
+            self.log("Transfer-length study complete; fitted measurements and editable coupon projects were saved.")
         elif operation == "refinement-guidance":
             QTimer.singleShot(0, lambda: self.guided.review_refinements(output))
         elif operation in {"sweep", "compare", "convergence", "time_convergence", "local-refine"}:
             self.studies = output
-            parameter = (self.project.sweeps[-1].parameter if operation == "sweep" else "Mesh size (m)"
+            parameter = (context.get("study_parameter", self.project.sweeps[-1].parameter) if operation == "sweep" else "Mesh size (m)"
                          if operation == "convergence" else "Local refinement factor" if operation == "local-refine"
                          else "Maximum time step (s)" if operation == "time_convergence" else "Design")
             self.study_panel.set_rows(output, parameter)
@@ -2851,6 +2859,48 @@ class MainWindow(QMainWindow):
         refresh()
         dialog.exec()
 
+    def show_engineering_observations(self):
+        result = self.view_source_result()
+        if result is None:
+            self.statusBar().showMessage('Calculate or inspect a saved result first.')
+            return
+        try:
+            from etlayout.device_scenarios import engineering_observations
+            from etlayout.gui.contact_study import EngineeringObservationsDialog
+            report = engineering_observations(project_from_dict(result.configuration), result)
+            self.engineering_dialog = EngineeringObservationsDialog(report, self)
+            self.engineering_dialog.show()
+        except Exception as error:
+            self.error('Engineering observations unavailable', error)
+
+    def run_contact_study(self):
+        if self.model_locked() or not self.guided.resolve_draft():
+            return
+        if not self.project.name.startswith('E27_'):
+            self.statusBar().showMessage('Open the E27 contact coupon before running its transfer-length study.')
+            return
+        directory = QFileDialog.getExistingDirectory(self, 'Parent folder for a new four-spacing TLM study')
+        if not directory:
+            return
+        destination = Path(directory) / ('tlm-study-' + uuid.uuid4().hex[:8])
+        self.start_job('contact-study', {'output_directory': str(destination)})
+
+    def run_configured_study(self):
+        if self.model_locked() or not self.guided.resolve_draft():
+            return
+        if not self.project.sweeps:
+            self.statusBar().showMessage('This project has no configured study; use Parameter sweep to define one.')
+            return
+        labels = [f'{index+1}. {spec.name}' for index, spec in enumerate(self.project.sweeps)]
+        label, accepted = QInputDialog.getItem(self, 'Run configured study', 'Run the stored values and analysis mode in a background job.', labels, 0, False)
+        if accepted:
+            spec = deepcopy(self.project.sweeps[labels.index(label)])
+            try:
+                initial = self.initial_state_argument() or {}
+                self.start_job('sweep', {'spec': spec, **initial})
+            except ValueError as error:
+                self.error('Initial state needed', error)
+
     def run_sweep_dialog(self):
         if self.model_locked():
             return
@@ -3134,7 +3184,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Open a built-in example first to choose a named operating scenario.")
             return
         labels = [item.title for item in choices]
-        selected, accepted = QInputDialog.getItem(self, "Example operating scenario", "Regenerate an editable project; pending edits are resolved first.\nJoule demonstrations change electrical drives, preserving layout/materials/cooling.\nFailure scenarios use a chosen engineering limit, not a material rating.", labels, 0, False)
+        selected, accepted = QInputDialog.getItem(self, "Example operating scenario", "Regenerate an editable project; pending edits are resolved first.\nReview the chosen scenario inputs and saved studies before running.\nFailure scenarios use a chosen engineering limit, not a material rating.", labels, 0, False)
         if accepted:
             self.load_example(self.project.name, choices[labels.index(selected)].id)
 

@@ -11,8 +11,8 @@ finite copper electrodes, distributed finite feeds and a uniform effective
 
 Open E27 from the example browser. The two floating cross-section probes measure
 the central film; Results also retains external terminal power, metal loss,
-interface loss and finite-feed loss. Use the **Finite-contact TLM study** action
-in Studies to choose an empty output directory and run all four coupons in a background
+interface loss and finite-feed loss. Use the **Finite-contact TLM study (E27)…** action
+in Studies to choose a parent folder; the application creates a new empty study folder and runs all four coupons in a background
 job. Inspect fitted parameters, residuals and individual observations. Reopen a
 generated ETL through File > Open to inspect or edit a particular spacing.
 
@@ -88,3 +88,11 @@ with an explicit TLM spacing. Source tests cover short/long-contact inversion,
 negative fits, exact reference identity, actual multi-gap conservation,
 deembedding, format equality and solved-project reopening. Large fields and
 performance logs belong in generated artifacts, not maintained source.
+
+![Actual native Windows source GUI: fitted finite-contact TLM observations](images/contact-TLM-dialog.png)
+
+GUI and CLI use the same extraction function. Run `etlayout contact-study
+artifacts/tlm --cpu-threads 4 --study-workers 1` for a new output folder, or
+`etlayout examples examples-local --name E27 --tlm-spacing-um 80` to generate
+one editable coupon without calculating it. No physical result is replaced by
+the fit dialog; the working E27 project and its selected run remain unchanged.
