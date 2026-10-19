@@ -271,3 +271,25 @@ def test_local_receipt_checks_actual_selected_controls(local_sequences, change, 
     receipt = local_mesh_verification(project, rows, plan, selected)
     assert receipt["status"] == "unavailable"
     assert reason in receipt["reason"]
+
+
+@pytest.mark.numerical
+def test_engineering_readout_matches_real_receipt_support_without_reusing_it_on_other_windows(local_sequences):
+    from etlayout.io.project import from_dict
+    from etlayout.models import RegionSpec
+    from etlayout.power.engineering import scoped_engineering
+
+    _, _, _, rows = local_sequences["rounded_L"]
+    result = rows[-1].result
+    receipt = result.analysis["local_mesh_verification"]
+    support = from_dict(RegionSpec, receipt["layers"]["metal"]["support"])
+    report = scoped_engineering(result, "metal", window=support)
+    assert report["mesh_evidence"]["status"] == "selected_metric_evidence"
+    assert report["mesh_evidence"]["metrics"] == receipt["layers"]["metal"]["metrics"]
+    assert report["mesh_evidence"]["physical_qualification"] is False
+    shape = resolve_region(support, {})
+    center = shape.representative_point()
+    tiny = RegionSpec(polygons=[dict(bounds=[center.x-.02e-6, center.y-.02e-6, center.x+.02e-6, center.y+.02e-6])])
+    other = scoped_engineering(result, "metal", window=tiny)
+    assert other["mesh_evidence"]["status"] == "not_established"
+    assert "different physical support" in other["mesh_evidence"]["reason"]

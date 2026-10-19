@@ -62,7 +62,7 @@ def display_limits(support_limits, *, limits=None, logarithmic=False, colormap="
         low, high = center - padding, center + padding
     elif limits is None and high > low:
         scale = max(abs(low), abs(high))
-        if high - low <= 8 * np.finfo(float).eps * scale:
+        if high - low <= 64 * np.finfo(float).eps * scale:
             center = low / 2 + high / 2
             maximum = np.finfo(float).max
             if logarithmic:

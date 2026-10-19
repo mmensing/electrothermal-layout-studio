@@ -452,3 +452,16 @@ def test_forged_catalog_summaries_are_isolated_before_any_field_read(saved_histo
             store.acquire(store.current_run_id)
         with store.acquire(store.history[0].run_id) as valid:
             assert valid.fields["m"]["temperature"][0] == 310.
+
+
+@pytest.mark.parametrize("unsupported", [float("inf"), np.array([300., 400.])])
+def test_thermal_compliance_accessor_rejects_nonplain_evidence_without_array_reads(tmp_path, monkeypatch, unsupported):
+    project, result = small_result()
+    result.metrics["thermal_limit_compliance"] = {"status": "passed", "unsupported": unsupported}
+    path = tmp_path / "unsupported-report.etlayout"
+    save_project(project, path, result, archive_format=3)
+    arrays = track_arrays(monkeypatch)
+    with open_history_catalog(path) as store:
+        with pytest.raises(SimulationError, match="finite plain metadata"):
+            store.thermal_compliance(store.current_run_id)
+        assert arrays == [] and store.stats.resident_bytes == 0

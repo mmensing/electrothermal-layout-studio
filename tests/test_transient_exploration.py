@@ -75,6 +75,7 @@ def test_drag_selection_coalesces_and_release_flushes_final_frame(qtbot):
     widget.slider.setSliderDown(True)
     widget.slider.setValue(0)
     widget.slider.setValue(1)
+    assert widget.displayed_metrics["time_s"] == 2.  # Canvas has not accepted a coalesced frame yet.
     widget.slider.setValue(2)
     assert not selections
     widget.slider.setSliderDown(False)
@@ -127,6 +128,8 @@ def test_comparison_links_nearest_actual_times_and_can_decouple(qtbot, tmp_path)
     assert dialog.selected_result(0).metrics["time_s"] == 1.
     assert dialog.selected_result(1).metrics["time_s"] == .8
     assert "right: 0.8 s" in dialog.legend.text()
+    assert dialog.time_navigations[0].displayed_metrics["time_s"] == 1.
+    assert dialog.time_navigations[1].displayed_metrics["time_s"] == .8
     dialog.link_times.setChecked(False)
     dialog.time_navigations[0].select_time(0.)
     assert dialog.selected_result(1).metrics["time_s"] == .8

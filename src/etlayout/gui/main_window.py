@@ -6,7 +6,7 @@ import json
 import logging
 import uuid
 from copy import deepcopy
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -48,11 +48,13 @@ from PySide6.QtWidgets import (
     QWizard,
     QWizardPage,
 )
+from shapely import from_wkt
 from shapely.geometry import LineString, Point
 from shapely.ops import unary_union
 
 from etlayout import __version__
 from etlayout.geometry.prepare import resolve_region
+from etlayout.gui.engineering import EngineeringPanel
 from etlayout.gui.field_scale import FieldScaleControl
 from etlayout.gui.forms import ModelDialog, region_summary
 from etlayout.gui.history_opening import HistoryOpener
@@ -760,7 +762,14 @@ class MainWindow(QMainWindow):
             table.setShowGrid(False)
             table.horizontalHeader().setStretchLastSection(True)
             results_splitter.addWidget(table)
-        results_layout.addWidget(results_splitter)
+        self.engineering_panel = EngineeringPanel()
+        self.engineering_panel.inspect_requested.connect(self.inspect_engineering_support)
+        self.engineering_panel.quantity_requested.connect(self.select_engineering_quantity)
+        self.engineering_panel.locate_requested.connect(self.locate_engineering_support)
+        self.result_detail_tabs = QTabWidget()
+        self.result_detail_tabs.addTab(self.engineering_panel, "Engineering")
+        self.result_detail_tabs.addTab(results_splitter, "All recorded metrics")
+        results_layout.addWidget(self.result_detail_tabs)
         self.analysis_tabs.addTab(results_widget, "Results")
         self.profiles = ProfilePanel()
         self.analysis_tabs.addTab(self.profiles, "Line profiles")
@@ -1108,6 +1117,8 @@ class MainWindow(QMainWindow):
     def clear_analysis(self, message="No result for this project.", clear_studies=False):
         self.result = None
         self.transient_frame = None
+        self._engineering_probe = None
+        self.engineering_panel.clear(message)
         self.time_navigation.set_result(None)
         self.time_history.set_result(None)
         self.mesh = None
@@ -1820,12 +1831,12 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def start_job(self, operation, argument=None):
-        if self.model_locked():
+        if self.job or self.model_locked() and operation != "engineering-support":
             return
         if not self.project.layers and operation != "import":
             self.error("No physical stack", "Import a layout and assign at least one physical layer.")
             return
-        if getattr(self.project, "_resource_unresolved", False) and operation != "import":
+        if getattr(self.project, "_resource_unresolved", False) and operation not in {"import", "engineering-support"}:
             self.error("Unresolved resources", "Review project resources or relink the layout before computation.")
             return
         self.cancel_catalog()
@@ -1911,7 +1922,17 @@ class MainWindow(QMainWindow):
                 self.update_title()
             self.log("The project changed during computation. The completed run was retained in history; it was not attached to the current setup.")
             return
-        if operation == "import":
+        if operation == "engineering-support":
+            if output.get("view_context") != self.engineering_context():
+                message = "Displayed run/frame changed during inspection; inspect its support again."
+                self.engineering_panel.support_error.setText(message)
+                self.log(message)
+            else:
+                self.engineering_panel.set_support_report(output)
+                self.result_detail_tabs.setCurrentIndex(0)
+                self.show_analysis_page(self.results_page)
+                self.view.show_region(from_wkt(output["support_wkt"]), "Engineering support")
+        elif operation == "import":
             self.finish_import(SimpleNamespace(**output))
         elif operation == "mesh":
             self.geometry, self.mesh = output
@@ -2293,10 +2314,28 @@ class MainWindow(QMainWindow):
     def render_result_metrics(self, result):
         self.mesh = result.mesh
         self.sampler = None
+        self.time_navigation.set_frame_metrics(result.metrics)
+        from etlayout.power.engineering import engineering_summary
+        recorded = self.history_workflow.record
+        run_metrics = self.result.metrics if self.result else result.metrics
+        on_demand = bool(recorded and recorded.times and not (self.result and self.result.transient))
+        if on_demand:
+            run_metrics = dict(recorded.metrics)
+            compliance = self.history_workflow.store.thermal_compliance(recorded.run_id)
+            if compliance is not None:
+                run_metrics["thermal_limit_compliance"] = compliance
+        completed = (self.result.transient.completed if self.result and self.result.transient else None)
+        if completed is None and recorded and recorded.times:
+            completed = recorded.transient_metadata.get("completed")
+        summary = engineering_summary(result, run_metrics=run_metrics, completed=completed)
+        summary["view_context"] = self.engineering_context()
+        self.engineering_panel.set_report(summary)
         run = self.result if self.result and self.result.transient else result
-        status = ("Transient run completed" if run.converged else "TRANSIENT RUN INCOMPLETE") if run.transient else (
+        transient = bool(run.transient or on_demand)
+        numerical_converged = recorded.converged if on_demand else run.converged
+        status = ("Transient run completed" if completed else "TRANSIENT STOPPED BEFORE REQUESTED END" if numerical_converged else "TRANSIENT RUN INCOMPLETE") if transient else (
             "Converged" if result.converged else "NOT CONVERGED")
-        compliance = run.metrics.get("thermal_limit_compliance", {})
+        compliance = next(row["evidence"] for row in summary["axes"] if row["axis"] == "Temperature limits")
         thermal_text = ""
         if compliance.get("status") in {"failed", "unavailable"}:
             status = "FAILED — Maximum temperature exceeded" if compliance["status"] == "failed" else "FAILED — Temperature compliance unavailable"
@@ -2313,13 +2352,18 @@ class MainWindow(QMainWindow):
                     + (f"Rise {peak['temperature_rise']:.6g} K relative to {peak.get('reference', {}).get('method', 'selected reference')}. " if peak.get("temperature_rise") is not None else "")
                     + f"Numerical convergence: {'yes' if run.converged else 'no'}. "
                     + ("Stopped early; accepted history retained. " if compliance.get("stopped_early") else ""))
+        concerns = [row["axis"] + ": " + row["status"].replace("_", " ") for row in summary["axes"]
+                    if row["status"] in {"failed", "outside_declared_range", "stopped_early"}]
+        self.result_status.setProperty("error", bool(concerns))
+        self.result_status.style().unpolish(self.result_status)
+        self.result_status.style().polish(self.result_status)
         self.result_status.setText(
-            f"{status} · {len(result.mesh.triangles):,} triangles · "
-            f"{run.elapsed_seconds:.3f} s · configuration {result.configuration_hash[:12]}\n"
+            ("ENGINEERING ATTENTION — " + "; ".join(concerns) + "\n" if concerns else "") + f"{status} · {len(result.mesh.triangles):,} triangles · "
+            f"{recorded.elapsed_seconds if on_demand else run.elapsed_seconds:.3f} s · configuration {result.configuration_hash[:12]}\n"
             + (f"Selected transient snapshot: t = {result.metrics['time_s']:.9g} s. " if "time_s" in result.metrics else "")
             + thermal_text
             + "Select a field above; probe or draw a line profile. Peak current at sharp corners is mesh-sensitive.")
-        metrics = {**result.metrics, **{key: value for key, value in run.metrics.items() if key.startswith("transient_")}}
+        metrics = {**result.metrics, **{key: value for key, value in run_metrics.items() if key.startswith("transient_")}}
         scalar_metrics = [(key, value) for key, value in metrics.items() if isinstance(value, (int, float, str))]
         self.metrics_table.setRowCount(len(scalar_metrics))
         for row, (key, value) in enumerate(scalar_metrics):
@@ -2334,10 +2378,10 @@ class MainWindow(QMainWindow):
             if key in result.metrics:
                 headlines.append(f"{title}: {engineering(result.metrics[key], unit)}")
         current_ref = result.metrics.get("resistance_current_terminal", "")
-        if run.transient:
-            scope = "Resumed-segment peak" if run.metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
-            headlines.append(f"{scope}: {run.metrics['transient_peak_temperature']:.6g} K at {engineering(run.metrics['transient_peak_time'], 's')}")
-            if run.metrics.get("transient_energy_scope") == "cumulative_from_origin":
+        if transient and "transient_peak_temperature" in run_metrics:
+            scope = "Resumed-segment peak" if run_metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
+            headlines.append(f"{scope}: {run_metrics['transient_peak_temperature']:.6g} K at {engineering(run_metrics['transient_peak_time'], 's')}")
+            if run_metrics.get("transient_energy_scope") == "cumulative_from_origin":
                 headlines.append("Energy totals include the source run; fields cover the resumed segment.")
         self.key_metrics.setText("  ·  ".join(headlines) + "\nTerminal current is positive into the device."
                                  + (f" Resistance current reference: {current_ref}." if current_ref else ""))
@@ -2353,6 +2397,8 @@ class MainWindow(QMainWindow):
             for col, key in enumerate(keys, start=1):
                 self.terminals_table.setItem(row, col, QTableWidgetItem(engineering(values.get(key, "—"), {"current": "A", "voltage": "V", "power": "W"}.get(key, ""))))
         self.terminals_table.resizeColumnsToContents()
+        if on_demand:
+            run = replace(run, metrics=run_metrics, diagnostics=recorded.diagnostics_copy())
         annotations = annotated_result(result, self.project, run=run)
         self.show_diagnostics(annotations.diagnostics)
 
@@ -2460,6 +2506,7 @@ class MainWindow(QMainWindow):
             else:
                 index = self.difference_time.slider.value()
             comparison = comparison.transient.snapshots[index]
+            self.difference_time.set_frame_metrics(comparison.metrics)
         self.difference_time.setEnabled(not self.difference_link_time.isChecked() or "time_s" not in source.metrics)
         key = (id(source), id(comparison), layer, field)
         if key not in self._difference_cache:
@@ -2662,11 +2709,74 @@ class MainWindow(QMainWindow):
         if "time_s" in active_result.metrics:
             scope += f"t = {active_result.metrics['time_s']:.9g} s · "
         row = f"{label}: {value:.8g} {unit}" if np.isfinite(value) else f"{label}: outside active region"
+        self._engineering_probe = {"x": x, "y": y, "layer": layer, "region": self.field_region.currentData() or "",
+                                   "configuration_hash": active_result.configuration_hash, "time_s": active_result.metrics.get("time_s"),
+                                   "view_context": self.engineering_context()}
         self.log(f"Probe {layer} · {self.field_region.currentText()} · {scope}"
                  f"at ({x * 1e6:.6g}, {y * 1e6:.6g}) µm\n{row}")
         if self.result.transient and self.display_result is None:
             self.time_history.set_context(layer, self.field_region.currentData() or "", probe=(x, y))
         self.statusBar().showMessage(f"{layer} · {row} · ({x * 1e6:.6g}, {y * 1e6:.6g}) µm", 12000)
+
+    def engineering_context(self):
+        """Ephemeral displayed-run identity; equal configuration is not equal run."""
+        frame = self.view_source_result()
+        return (self.document_epoch, id(self.result), frame.metrics.get("time_s") if frame else None)
+
+    def inspect_engineering_support(self, side=None):
+        if self.job or not self.guided.resolve_draft():
+            return
+        result = self.view_source_result()
+        if result is None:
+            self.engineering_panel.support_error.setText("Run an analysis or inspect a recorded run before inspecting physical support.")
+            return
+        layer = self.field_layer.currentData()
+        if not layer:
+            self.engineering_panel.support_error.setText("Choose a solved physical layer first.")
+            return
+        window = None
+        if side is not None:
+            probe = getattr(self, "_engineering_probe", None)
+            if not probe or (probe["view_context"], probe["layer"]) != (self.engineering_context(), layer):
+                self.engineering_panel.support_error.setText("Place a map probe on this recorded layer/frame before inspecting its physical window.")
+                return
+            x, y = probe["x"], probe["y"]
+            window = RegionSpec(polygons=[{"bounds": [x-side/2, y-side/2, x+side/2, y+side/2]}]).__dict__
+        self.start_job("engineering-support", {"result": result, "layer_id": layer,
+            "region": self.field_region.currentData() or "", "geometry": self.geometry if physics_hash(result.configuration) == physics_hash(self.project) else None,
+            "window": window, "view_context": self.engineering_context()})
+
+    def select_engineering_quantity(self, field):
+        record = self.engineering_panel.support_report
+        active = self.view_source_result()
+        if not record or active is None or record.get("view_context") != self.engineering_context():
+            self.engineering_panel.support_error.setText("This support report belongs to another recorded state; inspect again before linking its map.")
+            return
+        layer_index = self.field_layer.findData(record["layer_id"])
+        if layer_index >= 0:
+            self.field_layer.setCurrentIndex(layer_index)
+        region_index = self.field_region.findData(record["region"])
+        if region_index >= 0:
+            self.field_region.setCurrentIndex(region_index)
+        index = self.field_combo.findData(field)
+        if index < 0:
+            self.engineering_panel.support_error.setText("This integral is not a layer map. Generated interface heat is distinct from its allocated sheet heat.")
+            return
+        self.view_mode.setCurrentIndex(self.view_mode.findData("original"))
+        self.field_combo.setCurrentIndex(index)
+        self.guided.canvas_tabs.setCurrentIndex(0)
+        self.locate_engineering_support(record, peak=False)
+
+    def locate_engineering_support(self, record, peak=True):
+        if not record or record.get("view_context") != self.engineering_context():
+            self.engineering_panel.support_error.setText("Inspect this recorded state again before locating its peak.")
+            return
+        shape = from_wkt(record["support_wkt"])
+        self.view.show_region(shape, "Engineering support · " + record["layer_id"])
+        if peak and record.get("crowding"):
+            point = Point(record["crowding"]["peak_xy"])
+            self.view.centerOn(point.x * 1e6, -point.y * 1e6)
+            self.view.show_callouts([dict(id="engineering-peak", label="Raw peak · unverified", layer_id=record["layer_id"], point=point.coords[0])])
 
     def locate_hotspot(self):
         if not self.result:

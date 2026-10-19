@@ -422,6 +422,12 @@ unneeded saved runs, or rerun with a longer output interval and remove the
 superseded larger run before saving. Changing the interval affects future solves;
 it does not thin snapshots already retained in a result.
 
+The Results time controls show **displayed-frame Tmax** and **run peak/time**
+separately. **Peak frame** selects its retained spatial field; **Last frame**
+returns to the last accepted saved state. If the peak field is absent, **Nearest
+to peak** explains the approximation. Segment peaks and early stopping remain
+explicit. See [engineering results](../engineering-results.md).
+
 ## Save and export time-dependent results
 
 The portable `.etl` archive stores one shared mesh, scalar history and the saved

@@ -13,6 +13,11 @@ field snapshots and identify that sampling scope. Storage means instantaneous ge
 not equal outward heat flow. Use the [transient energy balance](transient.md#read-energy-and-completion-correctly)
 when assessing that run.
 
+The [engineering results workbench](../engineering-results.md) keeps numerical,
+conservation, temperature-limit, material-range, mesh/time and calibration evidence
+separate. Open **Metrics & loss budget → Engineering** to inspect those states and
+link local E/K/J/heat/T/ΔT on one physical support.
+
 ## Read one physical field at a time
 
 Choose the result layer, then the quantity and region. Different layers have
