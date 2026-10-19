@@ -119,3 +119,5 @@ solutions, exact partial-element P1 support, layer scopes, equality failures,
 intermediate pulse heating/cooling, intentional early stops, both archive formats,
 CLI code 3, equal-service optimization rejection and native Qt controls. They do
 not establish process calibration, full 3D thermal accuracy or a universal rating.
+
+Legacy nodal-only results remain usable when their component temperatures are unambiguous. At point-only contacts, old rendering averages cannot recover independent thermal states. Such support is reported as unavailable and cannot pass a hard temperature limit; recompute it with authoritative element-local fields. Region clipping does not recover missing P1 vertex values.
