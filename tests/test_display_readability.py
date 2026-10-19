@@ -199,3 +199,21 @@ def test_extracted_deployment_refuses_archive_traversal(tmp_path):
         archive.writestr("../unsafe.dll", b"unsafe path")
     with pytest.raises(RuntimeError, match="unsafe extraction path"):
         builder["verify_extracted_archive"](archive_path, tmp_path, builder["isolated_environment"]())
+
+
+@pytest.mark.parametrize("span", [1.1e-12, 1e-8])
+def test_absolute_temperature_auto_scale_does_not_amplify_solve_roundoff(span, qtbot):
+    result = _thermal_result((23.5922646106102, 23.5922646106102 + span, 23.5922646106102))
+    original = result.fields["metal"]["temperature"].copy()
+    support = field_support(result, "metal", "temperature")
+    view = LayoutView()
+    qtbot.addWidget(view)
+    view.show_field(result, "metal", "temperature")
+    if span < 1e-10:
+        assert view.field_limits[0] < support.limits[0] < support.limits[1] < view.field_limits[1]
+        assert np.ptp(original) / np.ptp(view.field_limits) < 1e-6
+    else:
+        assert view.field_limits == support.limits
+    # Explicitly chosen ranges and numerical fields remain untouched.
+    assert display_limits(support.limits, limits=support.limits) == support.limits
+    np.testing.assert_array_equal(original, result.fields["metal"]["temperature"])

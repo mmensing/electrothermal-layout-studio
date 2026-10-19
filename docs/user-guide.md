@@ -188,6 +188,16 @@ Eligible assembly can use worker threads; geometry work and sparse direct factor
 can remain serial. A larger budget does
 not guarantee a faster single solve. GPU acceleration is not included.
 
+## Engineering evidence and linked hotspots
+
+**Results → Metrics & loss budget → Engineering** groups independent evidence,
+device/contact loss records and **Same support** readouts. Inspect one physical
+layer/region or a fixed square around a map probe; E, K, metal J, heat integrals,
+T and ΔT share exactly that support. Read raw-peak qualifications before accepting
+a hotspot. **Peak frame** and **Last frame** distinguish the transient maximum
+from a cooled final state; missing peak fields are identified explicitly. See the
+[engineering results guide](engineering-results.md) for the complete GUI workflow.
+
 ## Inspect multiple layers and regions
 
 The persistent **Result layer** selector shows each physical layer's name and ID.

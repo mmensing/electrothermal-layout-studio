@@ -1011,6 +1011,35 @@ class ArchiveV3Reader:
         result._storage_descriptor = self._records[run_id]["descriptor"]["$ref"]
         return result
 
+    def thermal_compliance(self, run_id):
+        """Detached outer-run report from verified metadata; no array payload read.
+
+        The catalog already checks/caches this bounded metadata graph. Retained
+        frames hold per-state checks, which cannot replace the accepted-run peak.
+        """
+        if run_id in self._errors:
+            raise SimulationError(self._errors[run_id])
+        descriptor = self._descriptor(run_id)
+        metadata = self._metadata(descriptor["metadata"], _CATALOG, None)
+        report = metadata["metrics"].get("thermal_limit_compliance")
+        if report is None:
+            return None
+        def plain(value):
+            if value is None or type(value) in (str, bool, int):
+                return True
+            if type(value) is float:
+                return math.isfinite(value)
+            if isinstance(value, list):
+                return all(plain(item) for item in value)
+            if isinstance(value, dict):
+                return all(isinstance(key, str) and plain(item) for key, item in value.items())
+            # In particular, reject catalog NumPy sentinels. This accessor never
+            # loads an array to turn unsupported evidence into an acceptance.
+            return False
+        if not isinstance(report, dict) or not plain(report):
+            raise SimulationError("Stored thermal compliance must contain finite plain metadata")
+        return deepcopy(report)
+
     def transient_metadata(self, run_id):
         """Explicit row metadata access; no mesh/frame array is loaded."""
         if run_id in self._errors:

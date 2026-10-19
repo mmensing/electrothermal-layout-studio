@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSlider,
     QSplitter,
     QStackedWidget,
@@ -561,8 +562,16 @@ class TimeNavigation(QWidget):
         self._drag_timer.setInterval(34)
         self._drag_timer.setSingleShot(True)
         self._drag_timer.timeout.connect(self.flush_selection)
-        row = QHBoxLayout(self)
-        row.setContentsMargins(0, 0, 0, 0)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
+        row = QHBoxLayout()
+        self._navigation_row = row
+        layout.addLayout(row)
+        self.run_metrics = {}
+        self.displayed_metrics = {}
+        self.run_completed = None
+        self._frame_metrics = []
         previous = QPushButton("‹")
         previous.setAccessibleName("Previous saved time")
         previous.setMinimumWidth(32)
@@ -583,26 +592,72 @@ class TimeNavigation(QWidget):
         self.time_input = QLineEdit()
         self.time_input.setAccessibleName("Jump to time; nearest retained field")
         self.time_input.setToolTip("Enter a time such as 25 µs; Enter selects the nearest retained field.")
-        self.time_input.setMaximumWidth(115)
+        self.time_input.setMaximumWidth(95)
         self.time_input.returnPressed.connect(self.jump_to_input)
         row.addWidget(self.time_input)
         self.peak_button = QPushButton("Peak")
         self.peak_button.setAccessibleName("Jump to whole-run peak temperature time")
         self.peak_button.setToolTip("Select the saved field nearest the whole-run peak temperature.")
         self.peak_button.clicked.connect(self.jump_to_peak)
-        row.addWidget(self.peak_button)
+        self.last_button = QPushButton("Last frame")
+        self.last_button.setAccessibleName("Return to last accepted saved frame")
+        self.last_button.clicked.connect(self.jump_to_last)
         self.label = QLabel()
-        self.label.setMinimumWidth(105)
+        self.label.setMinimumWidth(70)
         row.addWidget(self.label)
+        self.temperature_summary = QLabel()
+        self.temperature_summary.setWordWrap(True)
+        self.temperature_summary.setAccessibleName("Displayed frame and accepted-run or segment peak temperatures")
+        self.temperature_summary.setMinimumWidth(0)
+        self.temperature_summary.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        actions = QHBoxLayout()
+        actions.addWidget(self.peak_button)
+        actions.addWidget(self.last_button)
+        actions.addWidget(self.temperature_summary, 1)
+        layout.addLayout(actions)
+        self._actions_row = actions
+        self._navigation_controls = (previous, following, self.time_input, self.label,
+                                     self.peak_button, self.last_button)
+        self._actions_in_navigation = False
         self.hide()
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self._place_actions()
+
+    def _place_actions(self):
+        # Keep the summary on its own short line when the saved-time controls
+        # fit. Narrow inspectors retain the two grouped action/summary rows.
+        row = self._navigation_row
+        spacing = max(0, row.spacing())
+        needed = sum(min(widget.sizeHint().width(), widget.maximumWidth())
+                     for widget in self._navigation_controls)
+        needed += self.slider.minimumSizeHint().width() + spacing * len(self._navigation_controls)
+        inline = self.width() >= needed
+        if inline == self._actions_in_navigation:
+            return
+        self._actions_in_navigation = inline
+        for index, button in enumerate((self.peak_button, self.last_button)):
+            if inline:
+                self._actions_row.removeWidget(button)
+                row.insertWidget(row.indexOf(self.label), button)
+            else:
+                row.removeWidget(button)
+                self._actions_row.insertWidget(index, button)
+        self.updateGeometry()
 
     def set_result(self, result):
         history = result.transient if result else None
+        self.run_completed = history.completed if history else None
+        self._frame_metrics = [snapshot.metrics for snapshot in history.snapshots] if history else []
         self._set_times(history.times if history else (), result.metrics if history else {},
                         present=history is not None)
+        self.set_frame_metrics(history.snapshots[-1].metrics if history and history.snapshots else result.metrics if result else {})
 
     def set_record(self, record, index=None):
         """Navigate exact stored indices without manufacturing a numerical result."""
+        self._frame_metrics = []
+        self.run_completed = getattr(record, "transient_metadata", {}).get("completed") if record else None
         self._set_times(record.times if record else (), record.metrics if record else {},
                         present=bool(record and record.times), index=index, stored=True)
 
@@ -611,28 +666,53 @@ class TimeNavigation(QWidget):
         self._pending_index = None
         self.slider.blockSignals(True)
         self.times = np.asarray(times)
+        self.run_metrics = dict(metrics)
         self.peak_time = metrics.get("transient_peak_time") if present else None
         self.peak_button.setEnabled(self.peak_time is not None)
         peak_scope = "Segment peak" if present and metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
-        self.peak_button.setText("Segment peak" if peak_scope == "Segment peak" else "Peak")
+        self.peak_button.setText("Segment peak frame" if peak_scope == "Segment peak" else "Peak frame")
         self.peak_button.setAccessibleName(f"Jump to {peak_scope.lower()} temperature time")
         if self.peak_time is not None:
             retained = bool(np.any(np.isclose(self.times, self.peak_time, rtol=1e-10, atol=0)))
+            if not retained:
+                self.peak_button.setText("Nearest to peak")
             self.peak_button.setToolTip(f"{peak_scope} at {engineering(self.peak_time, 's')}. " +
                                        ("Its field is retained." if retained else "Peak field was not retained; selects the nearest retained time.") +
                                        (" Stored metadata; a selected field is validated when loaded." if stored else ""))
+        self.last_button.setEnabled(bool(len(self.times)))
         self.slider.setRange(0, max(0, len(self.times) - 1))
         selected = len(self.times) - 1 if index is None else index
         self.slider.setValue(max(0, min(selected, len(self.times) - 1)))
         self.slider.blockSignals(False)
         self.setVisible(present)
         self.update_label()
+        self.set_frame_metrics(self.displayed_metrics)
 
     def update_label(self):
         if len(self.times):
             self.time_input.setText(engineering(self.times[self.slider.value()], "s"))
             self.label.setText(f"Saved {self.slider.value() + 1}/{len(self.times)}")
             self.label.setToolTip(f"Retained time: {self.times[self.slider.value()]:.12g} s")
+
+    def set_frame_metrics(self, metrics):
+        self.displayed_metrics = dict(metrics)
+        now = metrics.get("time_s")
+        maximum = metrics.get("temperature_max")
+        text = ("Displayed " + engineering(now, "s") + ": " if now is not None else "Displayed frame: ")
+        text += "Tmax " + engineering(maximum, "K") if maximum is not None else "temperature unavailable"
+        peak, time = self.run_metrics.get("transient_peak_temperature"), self.run_metrics.get("transient_peak_time")
+        if peak is not None and time is not None:
+            scope = "Segment peak" if self.run_metrics.get("transient_peak_scope") == "current_segment" else "Accepted-run peak" if self.run_completed is False else "Run peak"
+            text += f" · {scope} " + engineering(peak, "K") + " at " + engineering(time, "s")
+            if not np.any(np.isclose(self.times, time, rtol=1e-10, atol=0)):
+                text += " · peak spatial field not retained"
+        self.temperature_summary.setText(text)
+        self._place_actions()
+
+    def jump_to_last(self):
+        if len(self.times):
+            self.slider.setValue(len(self.times) - 1)
+            self.flush_selection()
 
     def jump_to_input(self):
         try:
@@ -663,13 +743,21 @@ class TimeNavigation(QWidget):
         else:
             self._drag_timer.stop()
             self._pending_index = None
-            self.snapshot_changed.emit(index)
+            self._emit_selection(index)
 
     def flush_selection(self):
         self._drag_timer.stop()
         if self._pending_index is not None:
             index, self._pending_index = self._pending_index, None
-            self.snapshot_changed.emit(index)
+            self._emit_selection(index)
+
+
+    def _emit_selection(self, index):
+        # A dragged/requested time is not yet the displayed frame. Advance the
+        # summary together with the coalesced field-selection event only.
+        if 0 <= index < len(self._frame_metrics):
+            self.set_frame_metrics(self._frame_metrics[index])
+        self.snapshot_changed.emit(index)
 
 
 class TimeHistoryPanel(QWidget):
