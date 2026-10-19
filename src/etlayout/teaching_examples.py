@@ -104,7 +104,7 @@ def _finish(builder, project, bounds, *, hotspot_layer, hotspot_size=20., nomina
     )
 
 
-def build_teaching_example(name, builder, p):
+def build_teaching_example(name, builder, p, *, tlm_spacing_um=120.):
     """Build an explicitly registered coupon; unknown IDs leave the project alone."""
     from etlayout.examples import UM, _metal, rectangle
 
@@ -140,18 +140,24 @@ def build_teaching_example(name, builder, p):
                    "sharp taper-end point maxima remain mesh-sensitive. This is a crowding coupon, not a fuse model.")
         _finish(builder, p, (-20, -20, 340, 140), hotspot_layer="metal", nominal="0.5 A coupled DC.")
     elif name == "E27_transfer_length_coupon":
-        builder.rect(1, 0, 0, 240, 40)
-        for bounds in ((0, 0, 60, 40), (180, 0, 240, 40)):
+        import math
+
+        if not math.isfinite(tlm_spacing_um) or tlm_spacing_um <= 0:
+            raise ValueError("TLM contact spacing must be finite and positive in micrometres")
+        gap = float(tlm_spacing_um)
+        end = 120. + gap
+        builder.rect(1, 0, 0, end, 40)
+        for bounds in ((0, 0, 60, 40), (60. + gap, 0, end, 40)):
             builder.rect(2, *bounds)
             builder.rect(10, *bounds)
         p.layers = [_film("film", 1, 10.), _metal("pads", "2/0", 1.2e-6, 2e-6, "Copper contact electrodes")]
         p.interfaces = [Interface("film_contacts", "film", "pads", RegionSpec(sources=["10/0"]),
             "specific", 1e-9, thermal_kind="conductance", thermal_value=1e7, model_kind="physical_contact", height_mode="stack", height=0.)]
         _feed(p, "source", "pads", rectangle(0, 0, 10, 40))
-        _feed(p, "drain", "pads", rectangle(230, 0, 240, 40), .001)
+        _feed(p, "drain", "pads", rectangle(end - 10., 0, end, 40), .001)
         from etlayout.examples import edge
-        p.terminals += [Terminal("sense_a", "film", edge(80, 0, 80, 40), "floating"),
-                        Terminal("sense_b", "film", edge(160, 0, 160, 40), "floating")]
+        p.terminals += [Terminal("sense_a", "film", edge(60. + gap / 6., 0, 60. + gap / 6., 40), "floating"),
+                        Terminal("sense_b", "film", edge(60. + gap * 5. / 6., 0, 60. + gap * 5. / 6., 40), "floating")]
         p.solver.resistance_terminals = ["sense_b", "sense_a"]
         p.power.measurements.append(MeasurementSpec("film_sheet_loading", "sheet_current",
                                                    SupportSelector(layers=["film"]), "percentile", percentile=95.))
@@ -164,7 +170,14 @@ def build_teaching_example(name, builder, p):
                    "cross-section probes at x=80 and 160 µm are equipotential and can perturb nonuniform "
                    "fields; here the intervening uniform strip gives a 20 Ω Kelvin reference. Terminal "
                    "two-terminal resistance additionally includes finite contact, pad and external-feed losses.")
-        _finish(builder, p, (-20, -20, 260, 60), hotspot_layer="film", nominal="1 mA DC electrical Kelvin reference.")
+        if gap != 120.:
+            p.notes = (f"TLM coupon: {end:g} x 40 micrometres; gap {gap:g} micrometres; "
+                       "two 60 micrometre copper contacts on a 10 ohm/square effective film, "
+                       "specific contact resistivity 1e-9 ohm m2 at 300 K. "
+                       f"Floating Kelvin probes span {gap * 2 / 3:g} micrometres of the gap. "
+                       "Fixed-temperature 1 mA finite-feed reference; finite-contact extraction "
+                       "retains sheet loss beneath contacts and deembeds actual metal/feed losses.")
+        _finish(builder, p, (-20, -20, end + 20., 60), hotspot_layer="film", nominal="1 mA DC electrical Kelvin reference.")
     elif name == "E28_t_junction_splitter":
         builder.add(1, [(0, 80), (140, 80), (140, 0), (180, 0), (180, 80), (320, 80),
                         (320, 120), (0, 120)])
