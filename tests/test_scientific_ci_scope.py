@@ -12,6 +12,7 @@ SCOPE = runpy.run_path(str(ROOT / "scripts/ci_scientific_scope.py"))
 @pytest.mark.parametrize("paths,required", [
     (["README.md", "docs/examples.md", "docs/images/result.png"], False),
     (["src/etlayout/data/user-guide.html"], False),
+    (["CHANGELOG.md"], False),
     (["src/etlayout/solvers/thermal.py"], True),
     (["src/etlayout/models.py"], True),
     (["src/etlayout/gui/main_window.py"], True),
