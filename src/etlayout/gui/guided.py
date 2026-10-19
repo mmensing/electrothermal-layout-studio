@@ -484,8 +484,8 @@ class GuidedWorkspace(QObject):
                 and (key.startswith(("simulation.", "studies.")) and key not in {"simulation.cancel", "studies.saved"}
                      or key in {"edit.layout", "file.save", "file.save_as"})):
             return "Review project resources or relink the layout before this operation."
-        if key == "file.example_scenario" and self.window.inspection_context:
-            return "Return to the working setup before choosing an example operating scenario."
+        if key in {"file.example_scenario", "studies.contact", "studies.configured"} and self.window.inspection_context:
+            return "Return to the working setup before changing example inputs or starting a study."
         if key == "simulation.cancel":
             return busy or bool(self.window.prepare_job or self.window.hierarchy_jobs)
         if busy and not read_only and key not in {"file.save", "file.save_as", "file.exit"}:
@@ -595,6 +595,7 @@ class GuidedWorkspace(QObject):
                                ("hotspot", "Locate hotspot", w.locate_hotspot),
                                ("profile", "Draw line profile", lambda: w.set_tool("profile")),
                                ("branch", "Integrate branch current", lambda: w.set_tool("branch_current")),
+                               ("engineering", "Device and fixture observations…", w.show_engineering_observations),
                                ("analysis", "Contacts, devices and loss budget", lambda: self.open_studies("analysis")),
                                ("export", "Export task", self.export_task)):
             self.register("results." + key, label, fn, self.menus["Results"])
@@ -605,6 +606,8 @@ class GuidedWorkspace(QObject):
                                ("routing", "Routing & optimization", self.open_studies),
                                ("saved", "Saved study results", lambda: self.show_page(w.study_panel, "Study results"))):
             self.register("studies." + key, label, fn, self.menus["Studies"], action=w.power_action if key == "routing" else None)
+        self.register("studies.configured", "Run configured study…", w.run_configured_study, self.menus["Studies"])
+        self.register("studies.contact", "Finite-contact TLM study (E27)…", w.run_contact_study, self.menus["Studies"])
         self.register("view.fit", "Fit layout", w.view.fit_all, self.menus["View"], "Home")
         self.register("view.selection", "Fit selection / ROI", self.fit_selection_or_roi, self.menus["View"], "Shift+Home")
         self.register("view.crop", "Draw view crop", lambda: self.begin_selection("view_crop"), self.menus["View"])
@@ -2038,7 +2041,10 @@ class GuidedWorkspace(QObject):
                   ("reporting", "Reporting"), ("cached_result_load", "Cache retrieval"), ("total", "Total"))
         self.job_timings.setText(" · ".join(f"{label}: {timings[key]:.2f} s" for key, label in labels if key in timings))
         linear = timings.get("sparse_linear_solves")
-        self.job_timings.setToolTip((f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
+        assembly = " · ".join(f"{label}: {timings[key]:.2f} s" for key, label in
+                              (("electrical_assembly", "Electrical assembly"), ("thermal_assembly", "Thermal assembly"))
+                              if key in timings)
+        self.job_timings.setToolTip((assembly + "\n" if assembly else "") + (f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
             "Measured wall time for the recorded run. CPU budget and assembly concurrency do not imply a total speedup.")
 
     def initial_state_key(self):

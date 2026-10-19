@@ -19,10 +19,11 @@ class ExampleScenario:
     id: str
     title: str
     purpose: str
-    changes: tuple[tuple[str, float], ...] = ()
+    changes: tuple[tuple[str, float | str], ...] = ()
     joule_only: bool = False
     maximum_temperature_K: float | None = None
     evaluation: str = "fail_after"
+    studies: tuple[tuple[str, tuple[float, ...], str], ...] = ()
 
 
 def scenarios(identifier):
@@ -54,6 +55,10 @@ def scenarios(identifier):
         if key in {"E18", "E36"}:
             choices.append(ExampleScenario("thermal_stop", "Stop at accepted hot state",
                 "Stop only after an accepted physical state reaches the 310 K engineering limit. The first observed time is not an exactly localized threshold crossing.", changes, False, 310., "stop_transient"))
+    from etlayout.device_scenarios import device_scenarios
+    choices.extend(device_scenarios(key))
+    if key == 'E39':
+        choices[0] = ExampleScenario('reference', 'Original SiC stress reference (10 A)', 'Retain the original 10 A stress experiment unchanged; not a continuous rating.')
     return tuple(choices)
 
 
@@ -64,6 +69,8 @@ def apply_scenario(project, identifier):
     scenario = choices[identifier]
     if identifier == "reference":
         return project
+    from etlayout.device_scenarios import configure_device_scenario
+    configure_device_scenario(project, identifier)
     for path, value in scenario.changes:
         set_parameter(project, path, value)
     if scenario.joule_only:
@@ -72,7 +79,9 @@ def apply_scenario(project, identifier):
     if scenario.maximum_temperature_K is not None:
         project.temperature_limits = [TemperatureLimit("example_maximum", maximum_temperature=scenario.maximum_temperature_K,
                                                        evaluation=scenario.evaluation)]
-    if scenario.changes:
+    if scenario.studies:
+        project.sweeps = [SweepSpec(path, list(values), project.solver.mode, label) for path, values, label in scenario.studies]
+    elif scenario.changes:
         path, maximum = next(((path, value) for path, value in scenario.changes
             if path.startswith("transient.drives.") and path.endswith(".waveform.high")), scenario.changes[0])
         project.sweeps = [SweepSpec(path, [maximum * .5, maximum * .75, maximum], project.solver.mode,
@@ -89,6 +98,11 @@ def apply_scenario(project, identifier):
             drain = next((port for port in project.power.ports if port.id == "drain"), None)
             if drain:
                 data["requested_current_A"] = drain.value
+            voltage_ports = [port for port in project.power.ports if port.id.startswith('drain') and port.kind == 'voltage']
+            if voltage_ports:
+                data.pop('requested_current_A', None)
+                data['drain_reservoir_voltage_V'] = {port.id: port.value for port in voltage_ports}
+                data['service_definition'] = 'Voltage controlled; delivered current is calculated, not prescribed'
             for drive in project.transient.drives:
                 if drive.target == "power.ports.drain.value":
                     data["pulse_high_A"] = drive.waveform.high

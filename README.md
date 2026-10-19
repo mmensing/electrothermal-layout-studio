@@ -96,7 +96,21 @@ add E25–E40: analytical coupons, contacts and networks, thermal experiments,
 pulsed constrictions, independently driven GaN banks, SiC active islands and
 a package interposer.
 
+For a device operating question, open E37–E39 and use **File → Choose example
+operating scenario…**: explore voltage-driven GaN characteristics, parallel-bank
+sharing or lower-current SiC operation while retaining the original references.
+E40 keeps its 5 A interposer reference for separating internal and external-feed
+losses. **Studies → Run configured study…** runs the stored experiment;
+**Studies → Finite-contact TLM study (E27)…** fits four actual contact coupons in
+a new output folder. Follow the [device guide](docs/device-engineering-examples.md)
+and [contact-extraction guide](docs/contact-extraction.md) for GUI steps,
+measured observations and model limitations.
+
 ## Install on Windows
+
+**Development / unreleased 0.4.x:** The new operating scenarios, finite-contact
+TLM studies, hard temperature limits and engineering results require the matching
+source checkout. Published 0.4.0 Windows binaries do not include these additions.
 
 **0.4.0 · research prototype · MPL-2.0 original source.**
 Windows 11 x64 is the validated desktop platform. Download a published Windows

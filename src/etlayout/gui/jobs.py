@@ -109,6 +109,10 @@ def _execute_worker(messages, project, operation, argument):
             geometry = prepare_geometry(project, progress=progress)
             plan = suggest_refinements(project, geometry=geometry, progress=progress, **(argument or {}))
             output = {"plan": plan.to_dict(), "geometry": geometry}
+        elif operation == "contact-study":
+            from etlayout.contact_studies import transfer_length_study
+            output = transfer_length_study(progress=progress, **argument)
+            output = {"report": output["report"]}
         elif operation == "sweep":
             from etlayout.simulation.sweep import run_sweep
             options = dict(argument) if isinstance(argument, dict) else {"spec": argument}
@@ -164,6 +168,10 @@ class ComputeJob(QObject):
         self.timer.setInterval(80)
         self.timer.timeout.connect(self.poll)
         self.done = False
+        self._cleanup_complete = False
+        self._cleanup_timer = QTimer(self)
+        self._cleanup_timer.setSingleShot(True)
+        self._cleanup_timer.timeout.connect(self.cleanup)
 
     def start(self):
         self.process.start()
@@ -259,10 +267,26 @@ class ComputeJob(QObject):
         self.cleanup()
 
     def cleanup(self):
+        """Release the native QObject graph only after its owned resources stop.
+
+        Signals are delivered before deferred deletion. Python process metadata
+        remains readable by callers after completion; no process handle is closed
+        underneath cancellation diagnostics.
+        """
+        if self._cleanup_complete:
+            return
+        self._cleanup_timer.stop()
         self._receiver_stop.set()
         if self.process.is_alive():
             self.process.join(timeout=.1)
         if self._receiver is not None:
             self._receiver.join(timeout=.2)
+        if self.process.is_alive() or (self._receiver is not None and self._receiver.is_alive()):
+            self._cleanup_timer.start(50)
+            return
         self.messages.close()
         self.messages.cancel_join_thread()
+        self._cleanup_complete = True
+        self.done = True
+        if self.parent() is not None:
+            self.deleteLater()

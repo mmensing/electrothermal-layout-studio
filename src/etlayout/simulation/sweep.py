@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import multiprocessing
 import os
+import time
 from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
 from copy import deepcopy
 from dataclasses import dataclass, fields, is_dataclass, replace
@@ -160,6 +161,7 @@ class _StudyPoint:
     project: Project
     initial_result: SimulationResult | None = None
     resume: bool = False
+    mesh_reference: Any = None  # internal verified geometry/mesh authority; contains no physical fields
 
 
 def _solve_point(point, execution, workers=1, progress=None, cancel=None):
@@ -169,7 +171,8 @@ def _solve_point(point, execution, workers=1, progress=None, cancel=None):
         threads = max(1, execution.cpu_threads // workers)
         with execution_context(replace(execution, cpu_threads=threads, study_workers=1)):
             result = run_project(point.project, progress=progress, cancel=cancel,
-                                 initial_result=point.initial_result, resume=point.resume)
+                                 initial_result=point.initial_result, resume=point.resume,
+                                 _mesh_reference=point.mesh_reference)
         result.metrics["study_execution"] = {**execution.to_dict(), "actual_workers": workers,
                                               "cpu_threads_per_worker": threads, "process_id": os.getpid()}
         if not result.converged:
@@ -456,6 +459,15 @@ def time_step_convergence_study(project: Project, time_steps: list[float], progr
             or any(later >= earlier for earlier, later in zip(time_steps, time_steps[1:]))):
         raise SimulationError("Time-step study requires strictly decreasing finite positive steps in seconds")
     options = resolve_study_initial_state(project, initial_result=initial_result, resume=resume)
+    from .execution import execution_context
+    from .runner import _capture_mesh_reference, mesh_fingerprint, prepare_mesh
+    shared_setup = deepcopy(project)
+    preparation_started = time.perf_counter()
+    with execution_context(execution):
+        _, shared_mesh = prepare_mesh(shared_setup, progress=progress, cancel=cancel,
+            initial_state_supplied=options["initial_result"] is not None, initial_result=options["initial_result"])
+    mesh_reference = _capture_mesh_reference(shared_setup, shared_mesh)
+    preparation_seconds = time.perf_counter() - preparation_started
     rows, points = [], []
     tracked = ("transient_peak_temperature", "transient_peak_time", "transient_input_energy",
                "transient_output_energy", "transient_stored_energy", "transient_energy_balance_error")
@@ -466,7 +478,7 @@ def time_step_convergence_study(project: Project, time_steps: list[float], progr
         # Compare the same physical duration even when the production setup uses
         # early periodic stopping. Different stop times confound discretization.
         candidate.transient.periodic_tolerance = 0.
-        points.append(_StudyPoint(candidate, **options))
+        points.append(_StudyPoint(candidate, **options, mesh_reference=mesh_reference))
     for step, (result, error) in zip(time_steps, _solve_points(points, progress, cancel, execution)):
         checkpoint(cancel)
         if result is None:
@@ -475,8 +487,19 @@ def time_step_convergence_study(project: Project, time_steps: list[float], progr
         try:
             result.metrics.update(time_study_step_s=float(step),
                                   time_study_output_interval_s=project.transient.output_interval,
-                                  time_study_stop_time_s=project.transient.stop_time)
-            if rows and rows[-1].result and rows[-1].result.converged and result.converged:
+                                  time_study_stop_time_s=project.transient.stop_time,
+                                  time_study_mesh_sha256=mesh_fingerprint(result.mesh),
+                                  time_study_common_preparation_seconds=preparation_seconds)
+            matching_mesh = result.metrics["time_study_mesh_sha256"] == mesh_reference.digest
+            result.metrics["time_study_fixed_mesh"] = matching_mesh
+            if not matching_mesh:
+                error = "Time-step verification requires an identical physical mesh at every integration step setting"
+            complete = result.transient is not None and result.transient.completed
+            result.metrics["time_study_status"] = "mesh_mismatch" if not matching_mesh else "incomplete" if not complete else "available"
+            if (rows and rows[-1].result and not rows[-1].error and not error
+                    and rows[-1].result.converged and result.converged and complete
+                    and rows[-1].metrics.get("time_study_status") == "available"
+                    and rows[-1].metrics.get("transient_time") == result.metrics.get("transient_time")):
                 previous = rows[-1].metrics
                 for metric in tracked:
                     old, new = previous.get(metric), result.metrics.get(metric)
