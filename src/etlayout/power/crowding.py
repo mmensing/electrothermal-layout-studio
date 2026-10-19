@@ -18,6 +18,27 @@ from etlayout.geometry.prepare import polygon_parts
 from etlayout.models import SimulationError
 
 
+def _same_circular_run(xy, turns, index, seed, radius):
+    """Check seed-circle support, including a genuinely tangent end segment."""
+    origin = xy[seed]
+    vectors = xy[[(seed - 1) % len(xy), (seed + 1) % len(xy)]] - origin
+    center = origin + np.linalg.solve(2 * vectors, np.sum(vectors**2, axis=1))
+    nearby = [(index - 1) % len(xy), index, (index + 1) % len(xy)]
+    on_circle = np.isclose(np.linalg.norm(xy[nearby] - center, axis=1), radius,
+                           rtol=.01, atol=1e-15)
+    if not on_circle[1]:
+        return False
+    if on_circle[0] and on_circle[2]:
+        return True
+    if not (on_circle[0] or on_circle[2]) or not math.isclose(
+            abs(turns[index]), abs(turns[seed]) / 2, rel_tol=.15, abs_tol=1e-8):
+        return False
+    outside = nearby[2] if on_circle[0] else nearby[0]
+    edge = xy[outside] - xy[index]
+    radial = xy[index] - center
+    return abs(float(np.dot(edge, radial))) <= .01 * np.linalg.norm(edge) * radius
+
+
 def corner_features(shape):
     """Classify oriented boundary vertices; curved facets are only inferred.
 
@@ -25,6 +46,7 @@ def corner_features(shape):
     adjacent low-angle facets is reported as an estimate, never calibration.
     """
     features = []
+    rings = []
     for part in polygon_parts(shape):
         part = orient(part, sign=1.0)
         for ring in (part.exterior, *part.interiors):
@@ -33,6 +55,7 @@ def corner_features(shape):
             outgoing = np.roll(xy, -1, axis=0) - xy
             cross = incoming[:, 0] * outgoing[:, 1] - incoming[:, 1] * outgoing[:, 0]
             turns = np.arctan2(cross, np.sum(incoming * outgoing, axis=1))
+            ring_features = {}
             for i, turn in enumerate(turns):
                 if abs(turn) < 1e-8:
                     continue
@@ -56,23 +79,34 @@ def corner_features(shape):
                         "physical_radius_verified": False,
                     }
                 )
-    # Tangent-to-facet joins have half the interior arc turn. Infer continuity
-    # only from an adjacent stable circular run, never a large sharp turn.
-    for feature in features:
-        if feature["inferred_radius_m"] is not None or abs(180 - feature["interior_angle_deg"]) >= 45:
-            continue
-        candidates = [
-            other
-            for other in features
-            if other["kind"] == "faceted_curve"
-            and abs(180 - other["interior_angle_deg"]) < 45
-            and (180 - other["interior_angle_deg"]) * (180 - feature["interior_angle_deg"]) > 0
-        ]
-        if candidates:
-            closest = min(candidates, key=lambda f: np.linalg.norm(np.array(f["xy"]) - feature["xy"]))
-            radius = closest["inferred_radius_m"]
-            if radius and np.linalg.norm(np.array(closest["xy"]) - feature["xy"]) < radius * 0.3:
-                feature.update(kind="faceted_curve", inferred_radius_m=radius)
+                ring_features[i] = features[-1]
+            rings.append((ring_features, turns, xy))
+    # A join may be one or two facets from the first stable circular triple.
+    # Require a contiguous low-angle run on this exact ring. Nearby holes or
+    # disconnected shapes cannot establish curvature at another boundary.
+    for ring_features, turns, xy in rings:
+        count = len(turns)
+        seeds = frozenset(i for i, f in ring_features.items() if f["inferred_radius_m"] is not None)
+        for index, feature in ring_features.items():
+            if feature["inferred_radius_m"] is not None or abs(turns[index]) >= math.pi / 4:
+                continue
+            candidates = []
+            for shift in (-2, -1, 1, 2):
+                other_index = (index + shift) % count
+                direction = 1 if shift > 0 else -1
+                contiguous = all(
+                    0 < abs(turns[(index + direction * step) % count]) < math.pi / 4
+                    and turns[(index + direction * step) % count] * turns[index] > 0
+                    for step in range(1, abs(shift) + 1))
+                if (other_index in seeds and contiguous
+                        and _same_circular_run(xy, turns, index, other_index,
+                                              ring_features[other_index]["inferred_radius_m"])):
+                    candidates.append(ring_features[other_index])
+            if candidates:
+                closest = min(candidates, key=lambda f: np.linalg.norm(np.array(f["xy"]) - feature["xy"]))
+                radius = closest["inferred_radius_m"]
+                if radius and np.linalg.norm(np.array(closest["xy"]) - feature["xy"]) < radius * .3:
+                    feature.update(kind="faceted_curve", inferred_radius_m=radius)
     return features
 
 
