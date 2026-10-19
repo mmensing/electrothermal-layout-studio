@@ -39,9 +39,13 @@ def template_file(tmp_path):
     return project, path
 
 
-def test_portable_mapping_roundtrip_keeps_material_models_contacts_and_provenance(template_file):
+@pytest.mark.parametrize("heat_fraction", [.5, .25])
+def test_portable_mapping_roundtrip_keeps_material_models_contacts_and_provenance(template_file, heat_fraction):
     source, path = template_file
-    before = source.to_dict()
+    source.interfaces[0].heat_to_layer_a_fraction = heat_fraction
+    # Portable templates preserve the complete model; legacy project serialization
+    # intentionally omits inactive additive defaults for strict older readers.
+    before = asdict(source)
     source.layers[0].electrical.gate_regions = ["project-specific-gate"]
     save_template(source, path)
     template = load_template(path)

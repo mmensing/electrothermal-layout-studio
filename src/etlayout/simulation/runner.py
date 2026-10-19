@@ -90,7 +90,8 @@ def _geometry_key(project):
     fields = {
         "layers": {"id", "name", "geometry", "role", "thickness", "z"},
         "interfaces": {"id", "layer_a", "layer_b", "geometry", "enabled", "electrical_kind", "model_kind",
-                       "height_mode", "height", "enclosure", "allow_partial", "replaces_layers"},
+                       "height_mode", "height", "enclosure", "allow_partial", "replaces_layers",
+                       "thermal_kind", "material_id", "heat_layer_id"},
         "terminals": {"id", "layer_id", "geometry", "kind"},
         "thermal_boundaries": {"id", "layer_id", "geometry", "kind"},
         "heat_sources": {"id", "layer_id", "geometry", "kind"},

@@ -158,6 +158,9 @@ class Interface:
     purpose: str = "connection"  # connection or device_load
     reference_temperature: float = 300.
     temperature_coefficient: float = 0.
+    # Calibrated thermal deposition; electrical loss and interface transfer are unchanged.
+    heat_to_layer_a_fraction: float = .5
+    heat_layer_id: str = ""  # empty splits between endpoints; otherwise all loss goes to this sheet
 
 
 @dataclass
@@ -500,6 +503,13 @@ class Project:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        # Unused additive contracts must not rewrite legacy full configuration
+        # identities or make old strict archive readers reject unchanged setups.
+        for interface in data["interfaces"]:
+            if interface.get("heat_to_layer_a_fraction") == .5:
+                interface.pop("heat_to_layer_a_fraction")
+            if interface.get("heat_layer_id") == "":
+                interface.pop("heat_layer_id")
         # Preserve pre-limit full configuration identities and limit-free
         # archives for strict older readers. Explicit disabled records persist.
         if not data["temperature_limits"]:

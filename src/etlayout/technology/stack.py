@@ -103,3 +103,47 @@ def validate_physical_stack(project, geometry, masks):
         if (same_pair or min(ta, tb) > max(za, zb)) and ga.intersection(gb).area > 1e-30:
             raise SimulationError(f"Physical connections {a.id} and {b.id} double-define overlapping via/contact volume")
     return footprints
+
+
+def validate_thermal_stack(project, geometry):
+    """Reject duplicate explicit/effective dielectric volumes, diagnose bypasses.
+
+    Effective legacy links keep their stated conductance/resistance. A direct
+    link over an explicit film can be a deliberate parallel approximation, so
+    report it rather than silently deleting a path or changing a coefficient.
+    A stack-material gap occupying an explicit film is unambiguously duplicated
+    and requires an explicit correction by the author.
+    """
+    for interface in project.interfaces:
+        if not interface.enabled or interface.id not in geometry.interfaces:
+            continue
+        support = geometry.interfaces[interface.id]
+        if support.is_empty:
+            continue
+        if interface.heat_layer_id:
+            if interface.heat_layer_id not in geometry.layers:
+                raise SimulationError(f"Interface {interface.id}: missing heat-deposition layer {interface.heat_layer_id}")
+            missing = support.difference(geometry.layers[interface.heat_layer_id])
+            if missing.area > max(support.area * 1e-9, 1e-30):
+                raise SimulationError(f"Interface {interface.id}: heat-deposition layer must cover the complete interface support")
+        if interface.thermal_kind == "none" or interface.model_kind != "effective":
+            continue
+        lower, upper = sorted((project.layer(interface.layer_a), project.layer(interface.layer_b)),
+                              key=lambda layer: layer.z)
+        low, high = lower.z + lower.thickness, upper.z
+        if high <= low:
+            continue
+        for layer in project.layers:
+            if layer.id in {lower.id, upper.id}:
+                continue
+            z_overlap = min(high, layer.z + layer.thickness) - max(low, layer.z)
+            overlap = support.intersection(geometry.layers[layer.id])
+            if z_overlap <= min(layer.thickness, high - low) * 1e-9 or overlap.area <= max(support.area * 1e-9, 1e-30):
+                continue
+            if interface.thermal_kind == "stack" and interface.material_id and interface.height > 0:
+                raise SimulationError(f"Interface {interface.id}: effective gap duplicates explicit thermal layer {layer.id}; "
+                                      "replace the bridge with adjacent sheet-to-sheet stack links and remove its gap material/height")
+            geometry.diagnostics.append(Diagnostic("warning",
+                f"Thermal link {interface.id} bypasses explicit layer {layer.id}. Check for a duplicated parallel heat path; "
+                "keep this effective bridge only if it is deliberately calibrated. Adjacent stack links include half-sheet resistances.",
+                interface.id, list(overlap.bounds)))

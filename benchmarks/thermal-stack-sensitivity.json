@@ -1,0 +1,17 @@
+{
+  "baseline_main": "f592e82c29479b26682444ec5eb3fbc753e4de81",
+  "date": "2026-10-19",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.14",
+  "cpu": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+  "logical_cpus": 16,
+  "cpu_threads": 4,
+  "scope": "100 actual source calculations: 48 coupon steady mesh-level solves, 48 coupon transient time-step solves, four configured-device comparisons; all saved and reopened.",
+  "csv_sha256": "bfc6a6154bab42efbc5cb67cda601ffc31c736811d39a6553ce3c50bf9ce08e4",
+  "memory_definition": "Windows process lifetime peak working set after each case, not isolated per-case incremental memory.",
+  "timing_definition": "Measured wall time in a shared development session; geometry/mesh caches are retained within each generator invocation; no speedup claim.",
+  "model": "Synthetic, uncalibrated thickness-averaged 2.5D thermal screening; prescribed coupons are distinct from Joule-heated configured E37/E39.",
+  "verification": "Three spatial levels for coupons and three time steps on identical meshes. E37/E39 are converged reference comparisons, not mesh verified. No external 3D or experimental validation.",
+  "external_3d_reference": "Not performed; reproducible protocol in docs/thermal-stacks.md",
+  "generated_fields": "No solved-field arrays, raw logs, private paths or third-party font binaries are stored in this receipt."
+}

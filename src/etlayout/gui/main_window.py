@@ -1039,7 +1039,7 @@ class MainWindow(QMainWindow):
     def choices(self):
         layer_ids = [layer.id for layer in self.project.layers]
         return {"material_id": sorted(self.project.materials), "layer_id": layer_ids,
-                "layer_a": layer_ids, "layer_b": layer_ids}
+                "layer_a": layer_ids, "layer_b": layer_ids, "heat_layer_id": {"": "Endpoint partition", **{key: key for key in layer_ids}}}
 
     def mask_keys(self):
         return [layer["key"] for layer in self.document.layers] if self.document else list(self.masks)
@@ -1501,7 +1501,8 @@ class MainWindow(QMainWindow):
         objects[:] = [x for x in objects if x.id != identifier]
         if key == "layers":
             self.project.terminals = [x for x in self.project.terminals if x.layer_id != identifier]
-            self.project.interfaces = [x for x in self.project.interfaces if identifier not in (x.layer_a, x.layer_b)]
+            self.project.interfaces = [x for x in self.project.interfaces
+                                       if identifier not in (x.layer_a, x.layer_b, x.heat_layer_id, *x.replaces_layers)]
             self.project.thermal_boundaries = [x for x in self.project.thermal_boundaries if x.layer_id != identifier]
             self.project.heat_sources = [x for x in self.project.heat_sources if x.layer_id != identifier]
         self.changed()
