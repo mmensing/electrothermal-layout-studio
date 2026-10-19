@@ -164,3 +164,18 @@ def test_crowding_complete_typed_archive_identity(tmp_path, archive_format):
     save_project(project, path, result, archive_format=archive_format)
     _, restored = load_project(path)
     assert benchmark.result_digest(restored) == before
+
+
+@pytest.mark.fast
+def test_nearby_circular_hole_cannot_round_an_unchanged_sharp_exterior():
+    from shapely.geometry import Point
+
+    exterior = Polygon(np.array([(-5, -5), (5, -5), (5, 1), (0, 0), (-5, 1)]) * 1e-6)
+    with_hole = exterior.difference(Point(0., -1.1e-6).buffer(1e-6, quad_segs=16))
+    assert with_hole.is_valid and len(with_hole.interiors) == 1
+    assert exterior.exterior.equals(with_hole.exterior)
+    for shape in (exterior, with_hole):
+        tip = next(f for f in corner_features(shape) if f["xy"] == [0., 0.])
+        assert tip["interior_angle_deg"] == pytest.approx(202.61986494804043)
+        assert tip["kind"] == "sharp_reentrant"
+        assert tip["inferred_radius_m"] is None
