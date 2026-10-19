@@ -38,7 +38,11 @@ def engineering_summary(result, *, run_metrics=None, completed=None):
     axes.append({"axis": "Conservation", "status": "passed" if balances and all(row["passed"] for row in balances)
                  else "failed" if balances else "unavailable", "detail": "Displayed-state residuals against recorded solver criteria.",
                  "checks": balances})
-    compliance = run.get("thermal_limit_compliance", metrics.get("thermal_limit_compliance", {}))
+    compliance = run.get("thermal_limit_compliance")
+    if not isinstance(compliance, dict):
+        configured = any(limit.enabled for limit in project.temperature_limits)
+        compliance = {"status": "unavailable" if configured or run.get("engineering_accepted") is False else "not_configured",
+                      "reason": "Whole-run temperature evidence not recorded/available; a cooled frame cannot establish run acceptance."}
     axes.append({"axis": "Temperature limits", "status": compliance.get("status", "not_configured"),
                  "detail": "Accepted physical states; limit compliance does not alter numerical convergence.",
                  "evidence": deepcopy(compliance)})

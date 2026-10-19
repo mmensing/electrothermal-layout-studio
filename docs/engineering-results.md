@@ -32,6 +32,11 @@ The axis is partially checked when transient heat-capacity, semiconductor transp
 or used via/gap/through-plane law envelopes remain unestablished; checked laws and
 omissions are listed separately.
 
+On-demand transient inspection reads the authoritative outer-run temperature report
+from bounded, verified metadata without loading the other spatial fields. Selecting
+a cool or initial frame cannot erase an earlier failure. Missing whole-run evidence
+is unavailable, never replaced by a passing per-frame check.
+
 A property-range check does not validate HEMT high-field transport, fabricated
 corner radius, breakdown, switching or full 3D heat spreading. User-supplied data
 does not establish calibration. Reducing a solver tolerance does not supply any

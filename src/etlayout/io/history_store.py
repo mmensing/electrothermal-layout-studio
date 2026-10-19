@@ -96,6 +96,12 @@ class RunRecord:
     def __deepcopy__(self, memo):
         return self
 
+    def diagnostics_copy(self):
+        """Return validated ordinary diagnostics isolated from the immutable catalog."""
+        from etlayout.io.project import from_dict
+        from etlayout.models import Diagnostic
+        return [from_dict(Diagnostic, _thaw(item)) for item in self.diagnostics]
+
     def configuration_copy(self):
         """Return ordinary model-compatible JSON containers, isolated from the catalog."""
         return _thaw(self.configuration)
@@ -343,6 +349,12 @@ class ResultStore:
         with self._read_lock:
             self._checkpoint()
             return self._reader.resolve_project()
+
+    def thermal_compliance(self, run_id):
+        """Read a detached whole-run report without loading mesh/history arrays."""
+        with self._read_lock:
+            self._checkpoint()
+            return self._reader.thermal_compliance(run_id)
 
     def transient_metadata(self, run_id):
         """Read already-validated scalar step summaries without loading fields."""

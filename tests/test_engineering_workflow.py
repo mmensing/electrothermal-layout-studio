@@ -174,3 +174,60 @@ def test_evidence_button_opens_real_unavailable_receipt_without_claiming_converg
     QTimer.singleShot(0, close_confidence)
     qtbot.mouseClick(window.engineering_panel.mesh_details, Qt.MouseButton.LeftButton)
     assert seen
+
+
+def test_on_demand_cooled_pulse_keeps_the_whole_run_temperature_failure(guided_window, qtbot, tmp_path, monkeypatch):
+    from test_lazy_history_store import track_arrays
+
+    from etlayout.examples import make_example
+    from etlayout.io.history_store import open_history_catalog
+    from etlayout.io.project import save_project
+    from etlayout.models import TemperatureLimit
+    from etlayout.simulation.runner import run_project
+
+    project = make_example("E18", tmp_path / "pulsed-input")
+    project.temperature_limits = [TemperatureLimit(maximum_temperature=310.)]
+    result = run_project(project)
+    assert result.converged and result.transient.completed
+    report = result.metrics["thermal_limit_compliance"]
+    assert report["status"] == "failed"
+    assert result.metrics["temperature_max"] < 310.
+    assert result.transient.snapshots[-1].metrics["thermal_limit_compliance"]["status"] == "passed"
+    source = tmp_path / "cooled-failed-run.etlayout"
+    save_project(project, source, result, archive_format=3)
+    arrays = track_arrays(monkeypatch)
+    with open_history_catalog(source) as catalog:
+        detached = catalog.thermal_compliance(catalog.current_run_id)
+        assert detached == report and arrays == []
+        detached["limits"].clear()
+        assert catalog.thermal_compliance(catalog.current_run_id) == report
+        assert catalog.stats.resident_bytes == catalog.stats.pinned_bytes == 0
+    window = guided_window
+    working, loaded = window.load_project_data(source, lazy=True)
+    window.set_project(working, loaded, source)
+    qtbot.waitUntil(lambda: window.result is not None or bool(window.guided.last_error_detail), timeout=30000)
+    assert window.result is not None, window.guided.last_error_detail
+    qtbot.waitUntil(lambda: not window.history_workflow.loader.jobs)
+    store = window.history_workflow.store
+    assert store.current_run_id == window.history_workflow.record.run_id
+    assert window.result.transient is None
+    assert window.result.metrics["thermal_limit_compliance"]["status"] == "passed"
+    def check_run_failure():
+        axis = next(row for row in window.engineering_panel.report["axes"] if row["axis"] == "Temperature limits")
+        assert axis["status"] == "failed" and axis["evidence"] == report
+        assert "Maximum temperature exceeded" in window.result_status.text()
+        assert "Whole-run peak" in window.key_metrics.text()
+        assert window.engineering_panel.report["run_peak_temperature_K"] == result.metrics["transient_peak_temperature"]
+    check_run_failure()
+    window.time_navigation.slider.setValue(0)
+    qtbot.waitUntil(lambda: not window.history_workflow.loader.jobs)
+    assert window.result.metrics["time_s"] == 0.
+    check_run_failure()
+    qtbot.mouseClick(window.time_navigation.last_button, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not window.history_workflow.loader.jobs)
+    assert window.result.metrics["time_s"] == result.transient.times[-1]
+    check_run_failure()
+    window.history_workflow.full("trace")
+    qtbot.waitUntil(lambda: not window.history_workflow.loader.jobs)
+    assert window.result.transient is not None
+    check_run_failure()

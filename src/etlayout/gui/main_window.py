@@ -6,7 +6,7 @@ import json
 import logging
 import uuid
 from copy import deepcopy
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -2309,7 +2309,13 @@ class MainWindow(QMainWindow):
         self.time_navigation.set_frame_metrics(result.metrics)
         from etlayout.power.engineering import engineering_summary
         recorded = self.history_workflow.record
-        run_metrics = (recorded.metrics if recorded and recorded.times else self.result.metrics if self.result else result.metrics)
+        run_metrics = self.result.metrics if self.result else result.metrics
+        on_demand = bool(recorded and recorded.times and not (self.result and self.result.transient))
+        if on_demand:
+            run_metrics = dict(recorded.metrics)
+            compliance = self.history_workflow.store.thermal_compliance(recorded.run_id)
+            if compliance is not None:
+                run_metrics["thermal_limit_compliance"] = compliance
         completed = (self.result.transient.completed if self.result and self.result.transient else None)
         if completed is None and recorded and recorded.times:
             completed = recorded.transient_metadata.get("completed")
@@ -2317,9 +2323,11 @@ class MainWindow(QMainWindow):
         summary["view_context"] = self.engineering_context()
         self.engineering_panel.set_report(summary)
         run = self.result if self.result and self.result.transient else result
-        status = ("Transient run completed" if run.transient.completed else "TRANSIENT STOPPED BEFORE REQUESTED END" if run.converged else "TRANSIENT RUN INCOMPLETE") if run.transient else (
+        transient = bool(run.transient or on_demand)
+        numerical_converged = recorded.converged if on_demand else run.converged
+        status = ("Transient run completed" if completed else "TRANSIENT STOPPED BEFORE REQUESTED END" if numerical_converged else "TRANSIENT RUN INCOMPLETE") if transient else (
             "Converged" if result.converged else "NOT CONVERGED")
-        compliance = run.metrics.get("thermal_limit_compliance", {})
+        compliance = next(row["evidence"] for row in summary["axes"] if row["axis"] == "Temperature limits")
         thermal_text = ""
         if compliance.get("status") in {"failed", "unavailable"}:
             status = "FAILED — Maximum temperature exceeded" if compliance["status"] == "failed" else "FAILED — Temperature compliance unavailable"
@@ -2343,11 +2351,11 @@ class MainWindow(QMainWindow):
         self.result_status.style().polish(self.result_status)
         self.result_status.setText(
             ("ENGINEERING ATTENTION — " + "; ".join(concerns) + "\n" if concerns else "") + f"{status} · {len(result.mesh.triangles):,} triangles · "
-            f"{run.elapsed_seconds:.3f} s · configuration {result.configuration_hash[:12]}\n"
+            f"{recorded.elapsed_seconds if on_demand else run.elapsed_seconds:.3f} s · configuration {result.configuration_hash[:12]}\n"
             + (f"Selected transient snapshot: t = {result.metrics['time_s']:.9g} s. " if "time_s" in result.metrics else "")
             + thermal_text
             + "Select a field above; probe or draw a line profile. Peak current at sharp corners is mesh-sensitive.")
-        metrics = {**result.metrics, **{key: value for key, value in run.metrics.items() if key.startswith("transient_")}}
+        metrics = {**result.metrics, **{key: value for key, value in run_metrics.items() if key.startswith("transient_")}}
         scalar_metrics = [(key, value) for key, value in metrics.items() if isinstance(value, (int, float, str))]
         self.metrics_table.setRowCount(len(scalar_metrics))
         for row, (key, value) in enumerate(scalar_metrics):
@@ -2362,10 +2370,10 @@ class MainWindow(QMainWindow):
             if key in result.metrics:
                 headlines.append(f"{title}: {engineering(result.metrics[key], unit)}")
         current_ref = result.metrics.get("resistance_current_terminal", "")
-        if run.transient:
-            scope = "Resumed-segment peak" if run.metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
-            headlines.append(f"{scope}: {run.metrics['transient_peak_temperature']:.6g} K at {engineering(run.metrics['transient_peak_time'], 's')}")
-            if run.metrics.get("transient_energy_scope") == "cumulative_from_origin":
+        if transient and "transient_peak_temperature" in run_metrics:
+            scope = "Resumed-segment peak" if run_metrics.get("transient_peak_scope") == "current_segment" else "Whole-run peak"
+            headlines.append(f"{scope}: {run_metrics['transient_peak_temperature']:.6g} K at {engineering(run_metrics['transient_peak_time'], 's')}")
+            if run_metrics.get("transient_energy_scope") == "cumulative_from_origin":
                 headlines.append("Energy totals include the source run; fields cover the resumed segment.")
         self.key_metrics.setText("  ·  ".join(headlines) + "\nTerminal current is positive into the device."
                                  + (f" Resistance current reference: {current_ref}." if current_ref else ""))
@@ -2381,6 +2389,8 @@ class MainWindow(QMainWindow):
             for col, key in enumerate(keys, start=1):
                 self.terminals_table.setItem(row, col, QTableWidgetItem(engineering(values.get(key, "—"), {"current": "A", "voltage": "V", "power": "W"}.get(key, ""))))
         self.terminals_table.resizeColumnsToContents()
+        if on_demand:
+            run = replace(run, metrics=run_metrics, diagnostics=recorded.diagnostics_copy())
         annotations = annotated_result(result, self.project, run=run)
         self.show_diagnostics(annotations.diagnostics)
 

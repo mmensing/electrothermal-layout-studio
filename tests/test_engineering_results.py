@@ -195,3 +195,14 @@ def test_used_via_material_law_scope_remains_explicitly_partial(expanded_nominal
     assert {row["property"] for row in axis["checked_properties"]} == {"bulk resistivity", "thermal conductivity"}
     assert any("Via/gap/through-plane" in row["reason"] for row in axis["unverified"])
     assert not axis["physical_qualification"]
+
+
+def test_a_frame_cannot_substitute_for_missing_whole_run_compliance(strip_solution):
+    project, result = strip_solution
+    project.temperature_limits = [TemperatureLimit(maximum_temperature=330.)]
+    result.configuration = project.to_dict()
+    result.metrics["thermal_limit_compliance"] = {"status": "passed", "limits": []}
+    report = engineering_summary(result, run_metrics={"engineering_accepted": False})
+    axis = next(row for row in report["axes"] if row["axis"] == "Temperature limits")
+    assert axis["status"] == "unavailable"
+    assert "cooled frame" in axis["evidence"]["reason"]
