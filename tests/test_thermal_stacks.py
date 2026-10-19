@@ -116,8 +116,8 @@ def test_legacy_default_deposition_preserves_physics_identity():
     project, _ = contact_fixture()
     legacy = project.to_dict()
     for interface in legacy["interfaces"]:
-        interface.pop("heat_to_layer_a_fraction")
-        interface.pop("heat_layer_id")
+        interface.pop("heat_to_layer_a_fraction", None)
+        interface.pop("heat_layer_id", None)
     assert physics_hash(project_from_dict(legacy)) == physics_hash(project)
     changed = deepcopy(project)
     changed.interfaces[0].heat_to_layer_a_fraction = .4
@@ -210,3 +210,25 @@ def test_explicit_film_has_lateral_anisotropy_and_conservative_heat_capacity():
     assert capacity.sum() == pytest.approx(expected, rel=1e-13)
     electrical_space = Space(project, mesh, electrical=True)
     assert set(electrical_space.layers) == {"metal"}
+
+
+def test_unused_deposition_fields_preserve_legacy_full_configuration_hash():
+    from dataclasses import asdict
+
+    from etlayout.io.project import configuration_hash
+
+    project, _ = contact_fixture()
+    legacy = asdict(project)
+    for interface in legacy["interfaces"]:
+        interface.pop("heat_to_layer_a_fraction")
+        interface.pop("heat_layer_id")
+    assert configuration_hash(project) == configuration_hash(legacy)
+    assert configuration_hash(project_from_dict(legacy)) == configuration_hash(legacy)
+    assert project.to_dict()["interfaces"] == legacy["interfaces"]
+    project.interfaces[0].heat_to_layer_a_fraction = .25
+    assert configuration_hash(project) != configuration_hash(legacy)
+    assert project.to_dict()["interfaces"][0]["heat_to_layer_a_fraction"] == .25
+    project.interfaces[0].heat_to_layer_a_fraction = .5
+    project.interfaces[0].heat_layer_id = "device"
+    assert configuration_hash(project) != configuration_hash(legacy)
+    assert project.to_dict()["interfaces"][0]["heat_layer_id"] == "device"

@@ -224,9 +224,10 @@ full-3D heat-flow accuracy.
 ## Compatibility
 
 Old projects decode to the unchanged 0.5 endpoint split. Default deposition
-fields are omitted from the physical hash, preserving retained-result identity.
-Nondefault deposition is physical configuration and changes identity. New fields
+fields are omitted from project serialization and both full-configuration and
+physical identities, preserving unchanged archives for old strict readers.
+Nondefault deposition is physical configuration and changes identity. Nondefault heat-deposition fields
 are saved explicitly; older 0.4.0 applications with strict model decoding may
-reject new archives and should be upgraded rather than having fields silently
+reject archives that use this capability and should be upgraded rather than having fields silently
 removed. Heat-deposition targets are remapped with layer IDs in technology
 templates; excluding the target sheet omits that dependent link.

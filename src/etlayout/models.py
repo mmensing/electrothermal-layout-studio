@@ -503,10 +503,15 @@ class Project:
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
-        # Preserve pre-limit full configuration identities and limit-free
-        # archives for strict older readers. Explicit disabled records persist.
+        # Unused additive contracts preserve legacy full configuration identity
+        # and limit-free/default-deposition archives for strict older readers.
         if not data["temperature_limits"]:
             data.pop("temperature_limits")
+        for interface in data["interfaces"]:
+            if interface.get("heat_to_layer_a_fraction") == .5:
+                interface.pop("heat_to_layer_a_fraction")
+            if interface.get("heat_layer_id") == "":
+                interface.pop("heat_layer_id")
         return data
 
 
