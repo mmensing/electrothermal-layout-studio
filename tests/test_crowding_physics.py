@@ -179,3 +179,17 @@ def test_nearby_circular_hole_cannot_round_an_unchanged_sharp_exterior():
         assert tip["interior_angle_deg"] == pytest.approx(202.61986494804043)
         assert tip["kind"] == "sharp_reentrant"
         assert tip["inferred_radius_m"] is None
+
+
+@pytest.mark.fast
+def test_sharp_kink_adjacent_to_circular_facets_is_not_a_tangent_join():
+    from shapely.geometry import Point
+
+    hole = list(Point(0., 0.).buffer(1e-6, quad_segs=16).exterior.coords)
+    hole[-2] = (9.667459675604486e-7, 9.232938850721083e-8)
+    shape = Polygon(box(-2e-6, -2e-6, 2e-6, 2e-6).exterior.coords, [hole])
+    assert shape.is_valid
+    tip = next(f for f in corner_features(shape) if f["xy"] == [1e-6, 0.])
+    assert tip["interior_angle_deg"] == pytest.approx(202.61986494804043)
+    assert tip["kind"] == "sharp_reentrant"
+    assert tip["inferred_radius_m"] is None
