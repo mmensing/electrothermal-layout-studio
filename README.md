@@ -108,6 +108,10 @@ measured observations and model limitations.
 
 ## Install on Windows
 
+**Development / unreleased 0.4.x:** The new operating scenarios, finite-contact
+TLM studies, hard temperature limits and engineering results require the matching
+source checkout. Published 0.4.0 Windows binaries do not include these additions.
+
 **0.4.0 · research prototype · MPL-2.0 original source.**
 Windows 11 x64 is the validated desktop platform. Download a published Windows
 ZIP from [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases),
