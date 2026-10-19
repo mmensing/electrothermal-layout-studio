@@ -254,3 +254,26 @@ def test_applying_a_physical_draft_cannot_inspect_an_invalidated_result(guided_w
     assert window.engineering_panel.support_report is None
     assert window.project.terminals[1].value == .125
     assert "Run an analysis" in window.engineering_panel.support_error.text()
+
+
+def test_engineering_labels_keep_literal_names_and_errors(qtbot, solved_e1):
+    from etlayout.gui.engineering import EngineeringPanel
+    from etlayout.power.engineering import engineering_summary, scoped_engineering
+
+    panel = EngineeringPanel()
+    qtbot.addWidget(panel)
+    _, result = deepcopy(solved_e1)
+    report = engineering_summary(result)
+    report["family"] = "<b>family</b>"
+    panel.set_report(report)
+    support = scoped_engineering(result, "metal")
+    support.update(layer_id="<b>layer</b>", region="<i>region</i>")
+    support["crowding"]["nearby_boundaries"] = [{"kind": "interface_edge", "id": "<b>contact</b>"}]
+    panel.set_support_report(support)
+    panel.support_error.setText("<b>failure</b>")
+    for label in (panel.heading, panel.support_description, panel.support_error, panel.crowding):
+        assert label.textFormat() == Qt.TextFormat.PlainText
+    assert "<b>family</b>" in panel.heading.text()
+    assert "<b>layer</b> / <i>region</i>" in panel.support_description.text()
+    assert "<b>contact</b>" in panel.crowding.text()
+    assert panel.support_error.text() == "<b>failure</b>"

@@ -117,6 +117,8 @@ class EngineeringPanel(QWidget):
         support_scroll.setWidgetResizable(True)
         support_scroll.setWidget(support_page)
         self.tabs.addTab(support_scroll, "Same support")
+        for label in (self.heading, self.support_description, self.support_error, self.crowding):
+            label.setTextFormat(Qt.TextFormat.PlainText)
         layout.addWidget(self.tabs, 1)
 
     def clear(self, message="Select a recorded result to inspect engineering evidence."):
