@@ -148,7 +148,7 @@ def local_crowding(project, result, layer_id, *, support=None, geometry=None, re
         "reference_sheet_current_A_per_m": reference_sheet_current,
         "crowding_factor": float(sheet.max() / reference_sheet_current) if reference_sheet_current else None,
         "peak_element": peak_element,
-        "peak_xy": peak_shape.centroid.coords[0],
+        "peak_xy": list(peak_shape.centroid.coords[0]),
         "nearby_geometry": near,
         "nearby_boundaries": boundaries,
         "raw_peak_status": status,
