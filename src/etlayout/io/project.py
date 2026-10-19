@@ -176,7 +176,8 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
                 layer.pop(key, None)
     defaults = {"model_kind": "effective", "height_mode": "explicit", "enclosure": 0.,
                 "allow_partial": False, "replaces_layers": [], "resistance_semantics": "array",
-                "purpose": "connection", "reference_temperature": 300., "temperature_coefficient": 0.}
+                "purpose": "connection", "reference_temperature": 300., "temperature_coefficient": 0.,
+                "heat_to_layer_a_fraction": .5, "heat_layer_id": ""}
     for interface in data["interfaces"]:
         if interface.get("height_mode") == "stack" and interface.get("model_kind") != "effective":
             endpoints = [layer for layer in data["layers"] if layer["id"] in {interface["layer_a"], interface["layer_b"]}]

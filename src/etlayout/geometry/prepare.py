@@ -255,6 +255,8 @@ def prepare_geometry(project: Project, progress=None, cancel=None, *,
             if any(project.layer(key).role != "conductor" for key in (interface.layer_a, interface.layer_b)):
                 raise SimulationError(f"Electrical interface {interface.id} is assigned to an insulating/thermal-only layer")
         geometry.interfaces[interface.id] = region
+    from etlayout.technology.stack import validate_thermal_stack
+    validate_thermal_stack(project, geometry)
     groups = [(project.terminals, geometry.terminals, "Terminal"),
               (project.thermal_boundaries, geometry.thermal_boundaries, "Thermal boundary"),
               (project.heat_sources, geometry.heat_sources, "Heat source")]

@@ -32,6 +32,7 @@ converged calculations, mesh sensitivity and resource-limited benchmarks.
 | Choose a GUI use case | [Guided example gallery](../examples.md) |
 | Run a first calculation | [First calculation: a copper strip](first-calculation.md) |
 | Understand what is being solved | [Model and physics](model-and-physics.md) |
+| Compare passivation, dielectric heat paths and source depth | [Thermal-stack setup and verification](../thermal-stacks.md) |
 | Build a model from your own GDS/OASIS | [Geometry, materials and boundary conditions](setup-and-boundaries.md) |
 | Move layout vertices while preserving an import | [Project-owned layout editor](../layout-editor.md) |
 | Choose electrical, thermal or coupled operation | [Calculation workflows](workflows.md) |

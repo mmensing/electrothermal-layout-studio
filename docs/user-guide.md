@@ -77,7 +77,7 @@ Reordering the list does not silently change physical z coordinates: edit z expl
 
 Choose **Electrical / thermal / Interfaces** to declare which two layers connect and where. Select ideal, lumped,
 specific-contact, via or distributed electrical conductance as appropriate; independently
-choose the thermal link. Coincident x/y coordinates alone never connect different layers.
+choose the thermal link. Coincident x/y coordinates alone never connect different layers. For explicit dielectric/passivation sheets, half-thickness resistance, source-depth calibration and cross-section interpretation, see [thermal stacks](thermal-stacks.md).
 The cross-section uses solid shapes for physical layers/conductive vias and dashed links
 for effective thermal-only coupling. Thermal coefficients do not imply a solid material.
 

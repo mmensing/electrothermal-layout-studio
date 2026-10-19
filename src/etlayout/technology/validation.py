@@ -73,6 +73,12 @@ def validate_project(project: Project, raise_errors: bool = True, *, initial_sta
             error("Interface purpose must be connection or device_load", interface.id)
         if not math.isfinite(interface.temperature_coefficient) or not math.isfinite(interface.reference_temperature) or interface.reference_temperature <= 0:
             error("Interface temperature coefficient must be finite and its reference temperature positive", interface.id)
+        if not math.isfinite(interface.heat_to_layer_a_fraction) or not 0 <= interface.heat_to_layer_a_fraction <= 1:
+            error("Heat fraction to layer A must be finite and in [0, 1]", interface.id)
+        if interface.heat_layer_id and interface.heat_layer_id not in layer_ids:
+            error("Heat-deposition layer is missing; select an existing thermal sheet", interface.id)
+        if interface.heat_layer_id and interface.heat_to_layer_a_fraction != .5:
+            error("Named heat-deposition layer and endpoint split are alternatives; reset the split to 0.5", interface.id)
         if interface.electrical_kind == "via" and interface.material_id not in project.materials:
             error("Conductive via requires a material snapshot", interface.id)
         if interface.thermal_kind in {"conductance", "resistance"} and interface.thermal_value <= 0:

@@ -1038,7 +1038,7 @@ class MainWindow(QMainWindow):
     def choices(self):
         layer_ids = [layer.id for layer in self.project.layers]
         return {"material_id": sorted(self.project.materials), "layer_id": layer_ids,
-                "layer_a": layer_ids, "layer_b": layer_ids}
+                "layer_a": layer_ids, "layer_b": layer_ids, "heat_layer_id": {"": "Endpoint partition", **{key: key for key in layer_ids}}}
 
     def mask_keys(self):
         return [layer["key"] for layer in self.document.layers] if self.document else list(self.masks)
