@@ -437,6 +437,9 @@ def mesh_refinement_study(project: Project, sizes: list[float], progress=None, c
             if local_plan is not None:
                 result.diagnostics.append(Diagnostic("warning", "Local mesh study measurement unavailable: " + str(exc)))
             rows.append(SweepRow(size, result if local_plan is not None else None, str(exc)))
+    if local_plan is not None and rows and rows[-1].result is not None:
+        from etlayout.meshing.physical import local_mesh_verification
+        rows[-1].result.analysis["local_mesh_verification"] = local_mesh_verification(project, rows, local_plan, selected)
     checkpoint(cancel, progress, 1., "Mesh study complete")
     return rows
 

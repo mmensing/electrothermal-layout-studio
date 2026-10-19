@@ -10,6 +10,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path(__file__).resolve().parents[1] / "examples")
     parser.add_argument("--examples", nargs="+", help="IDs such as E11 E12; omit to regenerate the complete library and index")
+    parser.add_argument("--scenario")
     parser.add_argument("--preset")
     parser.add_argument("--variant")
     parser.add_argument("--current", type=float)
@@ -19,7 +20,7 @@ if __name__ == "__main__":
     parser.add_argument("--gate-width-um", type=float)
     parser.add_argument("--stress", action="store_true")
     args = parser.parse_args()
-    options = [argument for key in ("preset", "variant", "current", "thermal", "fingers", "gate_width_um") if getattr(args, key) is not None
+    options = [argument for key in ("scenario", "preset", "variant", "current", "thermal", "fingers", "gate_width_um") if getattr(args, key) is not None
                for argument in ("--" + key.replace("_", "-"), str(getattr(args, key)))]
     if args.pulse:
         options.append("--pulse")

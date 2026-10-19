@@ -76,7 +76,7 @@ ENUMS = {
 
 UNITS = {
     "thickness": "µm", "z": "µm", "height": "µm", "mesh_size": "µm",
-    "max_size": "µm", "min_size": "µm", "contact_size": "µm", "size": "µm",
+    "max_size": "µm", "min_size": "µm", "contact_size": "µm", "size": "µm", "grading_length": "µm",
     "density": "kg/m³", "specific_heat": "J/(kg K)", "thermal_conductivity_z": "W/(m K)",
     "reference_temperature": "K", "minimum_temperature": "K", "maximum_temperature": "K",
     "initial_temperature": "K", "ambient": "K", "alpha": "1/K", "carrier_density": "1/m³",
@@ -94,6 +94,7 @@ UNITS = {
 }
 
 HELP = {
+    "grading_length": "Optional smooth sizing transition outside this exact numerical refinement support, in meters. Zero preserves legacy sizing; physical geometry is unchanged.",
     "axis_sizes": "Optional [x, y] spacings in meters on rectangular partition faces. Scalar refinements still apply. Empty uses ordinary meshing; geometry and solver equations are preserved.",
     "threshold": "Exceedance sample threshold in the quantity's SI units; independent of the permitted fraction.",
     "threshold_units": "Canonical sample units (V, K, A/m², etc.). Exceedance result units are fraction.",
@@ -710,7 +711,7 @@ class ModelDialog(QDialog):
             errors["opacity"] = "Use a fraction between 0 and 1."
         if hasattr(model, "min_size") and model.min_size > model.max_size:
             errors["min_size"] = "Minimum size must not exceed maximum size."
-        for name in ("thermal_resistance_area", "background_sheet_density"):
+        for name in ("thermal_resistance_area", "background_sheet_density", "grading_length"):
             if hasattr(model, name) and getattr(model, name) < 0:
                 errors[name] = "Enter zero or a positive value."
         if isinstance(model, PropertyModel):

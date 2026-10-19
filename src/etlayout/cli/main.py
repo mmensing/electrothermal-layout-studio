@@ -36,6 +36,7 @@ def parser():
     ex = sub.add_parser("examples", help="Generate actual GDS/OASIS and ready-to-run projects")
     ex.add_argument("directory", nargs="?", default="examples")
     ex.add_argument("--name", help="Stable example ID or full name; omit to generate reference layouts only (no solves)")
+    ex.add_argument("--scenario", help="Named operating scenario; see example-science documentation")
     ex.add_argument("--preset", help="Power-device size: compact/reference/large; GaN also small, banks also stress")
     ex.add_argument("--variant", help="Family routing/feed variant; see power-examples documentation")
     ex.add_argument("--current", type=float, help="Requested total current in A; never silently reduced")
@@ -91,6 +92,7 @@ def parser():
             q.add_argument("--selected", help="Comma-separated suggestion IDs; default selects all")
             q.add_argument("--profiles", help="JSON file: list of {layer_id,field,start,end,count} profile requests in SI")
         if command == "mesh-plan":
+            q.add_argument("--field-driven", action="store_true", help="Propose bounded flux-jump guidance from a compatible saved result")
             q.add_argument("--memory-mib", type=int, default=4096, help="Additional numerical-memory screen, excluding process baseline; not a peak-RSS guarantee")
             q.add_argument("--max-elements", type=int, help="Explicit reviewed candidate element budget")
             q.add_argument("--max-dofs", type=int, help="Explicit reviewed candidate DOF budget")
@@ -182,7 +184,7 @@ def main(argv=None):
             return 0
         if args.command == "examples":
             from etlayout.examples import generate_all, make_example
-            options = dict(preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
+            options = dict(scenario=args.scenario, preset=args.preset, variant=args.variant, current=args.current, thermal=args.thermal,
                            fingers=args.fingers, gate_width_um=args.gate_width_um)
             if not args.name and (args.pulse or args.stress or any(value is not None for value in options.values())):
                 raise ValueError("Preset/variant/current/thermal options require --name")
@@ -299,7 +301,8 @@ def main(argv=None):
                 raise SimulationError("Memory planning budget must be positive")
             plan = suggest_refinements(project, loaded_result, progress=progress,
                                        max_memory_bytes=args.memory_mib * 1024**2,
-                                       averaging_length=args.averaging_length, hotspot_layer=args.hotspot_layer)
+                                       averaging_length=args.averaging_length, hotspot_layer=args.hotspot_layer,
+                                       field_driven=args.field_driven)
             if args.max_elements is not None:
                 plan.max_elements = args.max_elements
             if args.max_dofs is not None:

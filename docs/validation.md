@@ -32,6 +32,9 @@ See [current crowding](current-crowding.md) for ten independent reference geomet
 fixed-area metrics, singular-peak diagnostics, three-mesh evidence and equal-current
 corner-radius studies. Numerical convergence does not establish process calibration.
 
+See [physical local meshing](local-meshing.md) for radius/contact/via sizing,
+bounded flux guidance, graded fields, resource screens and per-metric receipts.
+
 ## Source checks
 
 Install the locked Windows dependencies and editable package, then run:

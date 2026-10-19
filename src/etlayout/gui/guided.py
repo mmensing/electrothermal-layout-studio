@@ -484,6 +484,8 @@ class GuidedWorkspace(QObject):
                 and (key.startswith(("simulation.", "studies.")) and key not in {"simulation.cancel", "studies.saved"}
                      or key in {"edit.layout", "file.save", "file.save_as"})):
             return "Review project resources or relink the layout before this operation."
+        if key == "file.example_scenario" and self.window.inspection_context:
+            return "Return to the working setup before choosing an example operating scenario."
         if key == "simulation.cancel":
             return busy or bool(self.window.prepare_job or self.window.hierarchy_jobs)
         if busy and not read_only and key not in {"file.save", "file.save_as", "file.exit"}:
@@ -530,6 +532,7 @@ class GuidedWorkspace(QObject):
             "Save content-addressed copy…": ("save_v3", lambda: w.save_as(archive_format=3)),
             "Save legacy-compatible copy…": ("save_legacy", lambda: w.save_as(archive_format=2)),
             "Duplicate project…": ("duplicate", w.duplicate_project),
+            "Choose example operating scenario…": ("example_scenario", w.choose_example_scenario),
             "Relink layout…": ("relink", w.relink_layout), "Exit": ("exit", w.close),
             "Export / share results…": ("export_share", lambda: w.share_export()),
             "Export complete numerical bundle (confidential)…": ("export_full", w.export_results),
@@ -1118,6 +1121,10 @@ class GuidedWorkspace(QObject):
         self.page_layout.addWidget(self.editor_host, 1)
         self.open_editor("mesh", self.window.project.mesh)
         self.page_layout.addWidget(button("Add local refinement", lambda: self.new_model("refinements")))
+        self.refinement_flux = QCheckBox("Include bounded flux-jump guidance from current result")
+        self.refinement_flux.setObjectName("refinement_flux_guidance")
+        self.refinement_flux.setToolTip("Optional error indicator; a compatible converged result is required. Does not automatically change or rerun the mesh.")
+        self.page_layout.addWidget(self.refinement_flux)
         self.page_layout.addWidget(button("Suggest local refinement…", self.suggest_local_refinement))
         self.page_layout.addWidget(button("Preview existing mesh", self.preview_mesh))
         self.set_primary("Generate / update mesh", self.mesh)
@@ -1933,7 +1940,8 @@ class GuidedWorkspace(QObject):
             if layer_id and self.window.project.solver.mode == "electrical" and self.window.project.layer(layer_id).role != "conductor":
                 layer_id = None
             self.window.start_job("refinement-guidance", {"result": self.window.result,
-                                   "hotspot_layer": layer_id})
+                                   "hotspot_layer": layer_id,
+                                   "field_driven": self.refinement_flux.isChecked()})
 
     def review_refinements(self, data):
         from etlayout.gui.refinement import RefinementPreview, RefinementReviewDialog
