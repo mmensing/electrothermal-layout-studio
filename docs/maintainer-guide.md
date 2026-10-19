@@ -44,7 +44,7 @@ file or CODEOWNERS:
 - `main` is the default branch. mmensing is the sole human writer/administrator.
   Contributions use forks and PRs with manual owner merging. Use squash merging;
   disable auto-merge/merge queues and delete merged feature branches as appropriate.
-- Protect main with PRs, the stable `source-quality` check, resolved conversations,
+- Protect main with PRs, stable `source-quality` and `scientific-regression` checks, resolved conversations,
   no force pushes and no deletion. Zero approving reviews avoids impossible owner
   self-approval; owner-only write authority and manual merging remain the boundary.
 - Keep quality rules separate from ref-ownership rules. Quality has no bypass.
@@ -87,11 +87,34 @@ quality rules or give an integration a bypass to clear this message.
 ## Validation and CI trust
 
 PR updates run `source-quality`: publication/workflow contracts, redacted bounded
-source inspection, lint, fast/package-policy tests and CLI metadata/import. Main
-and owner-requested validation run the full source collection and real offscreen
-desktop workflows. The owner may dispatch full source validation on a controlled
-feature branch before merging. Expensive benchmarks and native frozen validation
-are deliberate owner requests; candidate builds are main-only.
+source inspection, lint, fast/package-policy tests and CLI metadata/import.
+The stable `scientific-regression` check independently compares actual Git paths
+against the PR base. Physical models, solvers, geometry/meshing, persistence,
+result interpretation, example layouts, tests, dependencies/configuration and
+unknown paths require the real numerical regression collection before merging.
+The classifier fails closed if its Git comparison is unavailable. It does not
+use PR titles, labels or other untrusted prose to skip scientific work.
+
+Only explicitly recognized prose/images/templates avoid expensive numerical PR
+execution. The required check still runs and records an explicit lightweight
+result; workflow-level path filters cannot leave a required check pending.
+Main runs complete source/desktop validation for scientific changes; docs-only
+pushes avoid those jobs. Owner-requested workflow dispatch always requests full
+validation. Numerical PR runs and complete main runs are separate scopes; neither
+is evidence of frozen-build or clean-machine correctness.
+
+Activate the new required check **after its workflow is present in every open
+scientific PR branch**. Read back the main quality ruleset, preserve its complete
+current payload, and add GitHub Actions' `scientific-regression` context alongside
+`source-quality` with the same integration identity and strict up-to-date policy.
+Do not remove existing checks, conversation resolution, linear history, force-push
+or deletion protections; quality retains no bypass. Confirm both contexts in the
+server-side readback. Committing this guide or workflow does not enable that rule.
+Merge the quality workflow first when necessary, then update dependent branches;
+never temporarily weaken the rule to merge an older branch.
+
+Expensive benchmarks and native frozen validation remain deliberate owner
+requests; candidate builds are main-only. No workflow obtains a publishing token.
 
 All workflows are read-only. They do not push, merge, tag, publish releases or
 upload packages. Only clean privacy reports are uploaded; other evidence has
