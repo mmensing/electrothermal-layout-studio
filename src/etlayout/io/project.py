@@ -168,6 +168,8 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
     for refinement in data["mesh"]["refinements"]:
         if not refinement.get("axis_sizes"):
             refinement.pop("axis_sizes", None)
+        if refinement.get("grading_length") == 0.:
+            refinement.pop("grading_length", None)
     if data.get("power") == asdict(PowerSettings()):
         data.pop("power", None)
     for layer in data["layers"]:

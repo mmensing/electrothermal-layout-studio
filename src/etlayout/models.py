@@ -198,6 +198,7 @@ class RefinementRegion:
     geometry: RegionSpec
     size: float
     axis_sizes: list[float] = field(default_factory=list)  # optional x/y spacing on conforming rectangular faces
+    grading_length: float = 0.  # optional smooth distance transition outside exact support [m]
 
 
 @dataclass
@@ -483,7 +484,11 @@ class Project:
         return next(x for x in self.layers if x.id == layer_id)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        for refinement in data["mesh"]["refinements"]:
+            if refinement["grading_length"] == 0.:
+                refinement.pop("grading_length")
+        return data
 
 
 @dataclass
