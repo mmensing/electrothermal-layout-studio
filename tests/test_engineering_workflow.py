@@ -148,3 +148,29 @@ def test_superseded_inspection_completion_cannot_replace_current_state(guided_wi
     window.clear_analysis()
     assert window.engineering_panel.report is None
     assert not window.engineering_panel.inspect_button.isEnabled()
+
+
+def test_evidence_button_opens_real_unavailable_receipt_without_claiming_convergence(guided_window, qtbot, solved_e1):
+    from PySide6.QtWidgets import QApplication, QLabel
+
+    from etlayout.meshing.physical import local_mesh_verification
+    from etlayout.simulation.sweep import SweepRow
+
+    window = guided_window
+    result = use_solved(window, qtbot, solved_e1)
+    receipt = local_mesh_verification(window.project, [SweepRow(1., result)], None, [])
+    assert receipt["status"] == "unavailable"
+    result.analysis["local_mesh_verification"] = receipt
+    window.render_result_metrics(result)
+    window.show_analysis_page(window.results_page)
+    window.engineering_panel.tabs.setCurrentIndex(0)
+    seen = []
+    def close_confidence():
+        dialog = QApplication.activeModalWidget()
+        assert dialog.objectName() == "local_mesh_confidence"
+        assert any(receipt["reason"] == label.text() for label in dialog.findChildren(QLabel))
+        seen.append(True)
+        dialog.accept()
+    QTimer.singleShot(0, close_confidence)
+    qtbot.mouseClick(window.engineering_panel.mesh_details, Qt.MouseButton.LeftButton)
+    assert seen

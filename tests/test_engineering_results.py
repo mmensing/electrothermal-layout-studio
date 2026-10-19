@@ -113,6 +113,8 @@ def test_early_thermal_stop_keeps_numerical_and_requested_duration_distinct(stri
     assert axes["Requested duration"]["status"] == "stopped_early"
     assert axes["Requested duration"]["actual_stop_s"] < axes["Requested duration"]["requested_stop_s"]
     assert axes["Time confidence"]["status"] == "not_established"
+    assert axes["Material/model range"]["status"] == "partially_checked"
+    assert any("density/specific-heat" in row["reason"] for row in axes["Material/model range"]["unverified"])
 
 
 def test_contact_transfer_uses_existing_recorded_state_estimate(tmp_path):
@@ -167,3 +169,29 @@ def test_bulk_semiconductor_readout_uses_declared_thickness_without_changing_str
     assert measured["status"] == "available" and measured["reporting_only"]
     assert measured["value"] == pytest.approx(rows["sheet_current"]["mean"]["value"] / layer.thickness, rel=1e-12)
     assert "metal_current_density" not in rows
+
+
+def test_legacy_point_touch_temperature_cannot_claim_property_range_validity():
+    from test_power_local_fields import triangles
+
+    from etlayout.solvers import solve_thermal
+    project, mesh = triangles()
+    project.solver.mode = "thermal"
+    result = solve_thermal(project, mesh)
+    first = next(row for row in engineering_summary(result)["axes"] if row["axis"] == "Material/model range")
+    assert first["status"] == "within_declared_ranges"
+    result.element_fields.clear()
+    result.fields["metal"]["temperature"] = np.nan_to_num(result.fields["metal"]["temperature"], nan=350.)
+    legacy = next(row for row in engineering_summary(result)["axes"] if row["axis"] == "Material/model range")
+    assert legacy["status"] == "unavailable"
+    assert not legacy["checked_properties"]
+    assert any("Ambiguous legacy" in row["reason"] for row in legacy["unverified"])
+
+
+def test_used_via_material_law_scope_remains_explicitly_partial(expanded_nominal_factory):
+    _, result = expanded_nominal_factory("E39")
+    axis = next(row for row in engineering_summary(result)["axes"] if row["axis"] == "Material/model range")
+    assert axis["status"] == "partially_checked"
+    assert {row["property"] for row in axis["checked_properties"]} == {"bulk resistivity", "thermal conductivity"}
+    assert any("Via/gap/through-plane" in row["reason"] for row in axis["unverified"])
+    assert not axis["physical_qualification"]

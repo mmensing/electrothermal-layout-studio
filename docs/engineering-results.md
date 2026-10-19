@@ -21,11 +21,16 @@ separate:
 | Numerical solve | Recorded convergence for the displayed physical state |
 | Conservation | Current, electrical-power and thermal residuals against the recorded solver tolerances |
 | Temperature limits | Existing hard-limit compliance over accepted states; a failed run remains inspectable |
-| Material/model range | Displayed temperatures against the property ranges actually declared for each used material/model |
+| Material/model range | Authoritative displayed temperatures against checked layer thermal-k/bulk-ρ/sheet-Rs ranges; omitted laws explicitly not established |
 | Mesh confidence | A recorded local refinement receipt, scoped to its selected metrics; otherwise not established |
 | Time confidence | Recorded time-refinement changes; an individual time step does not establish accuracy |
 | Requested duration | Complete, stopped early or unavailable; separate from numerical convergence |
 | Calibration | Reference/synthetic material seeds and the need to calibrate material/interface/backside data |
+
+Ambiguous legacy point-touch temperatures cannot establish a property-range pass.
+The axis is partially checked when transient heat-capacity, semiconductor transport
+or used via/gap/through-plane law envelopes remain unestablished; checked laws and
+omissions are listed separately.
 
 A property-range check does not validate HEMT high-field transport, fabricated
 corner radius, breakdown, switching or full 3D heat spreading. User-supplied data

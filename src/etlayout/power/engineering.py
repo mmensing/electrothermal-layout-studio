@@ -44,7 +44,9 @@ def engineering_summary(result, *, run_metrics=None, completed=None):
                  "evidence": deepcopy(compliance)})
     violations = []
     seeds = []
-    checked_temperature = False
+    checked_properties, unverified = [], []
+    has_electrical = any("sheet_current" in fields for fields in result.fields.values())
+    has_thermal = "thermal_power" in metrics
     for layer in project.layers:
         ids = result.mesh.elements(layer.id)
         if not len(ids) or layer.id not in result.fields:
@@ -53,30 +55,54 @@ def engineering_summary(result, *, run_metrics=None, completed=None):
         if material.reference or any(word in (material.notes + " " + material.source).lower()
                                      for word in ("uncalibrated", "synthetic", "representative", "illustrative")):
             seeds.append(material.id)
-        local = result.element_fields.get(layer.id, {}).get("temperature")
-        if local is None and "temperature" in result.fields[layer.id]:
-            local = np.asarray(result.fields[layer.id]["temperature"])[result.mesh.triangles]
-        if local is None:
+        from etlayout.visualization.sampling import element_nodal_values
+        try:
+            values = np.asarray(element_nodal_values(result, layer.id, "temperature"))[ids]
+        except (KeyError, ValueError):
+            unverified.append(dict(owner=layer.id, reason="Authoritative temperature unavailable"))
             continue
-        checked_temperature = True
-        values = np.asarray(local)[ids]
         if not np.all(np.isfinite(values)):
-            violations.append(dict(layer=layer.id, reason="Nonfinite active temperature support"))
+            unverified.append(dict(owner=layer.id, reason="Ambiguous legacy or nonfinite component-local temperature"))
             continue
         low, high = float(values.min()), float(values.max())
         laws = [("thermal conductivity", material.thermal_conductivity)] if "thermal_power" in metrics else []
-        if layer.role == "conductor":
+        electrical_layer = "sheet_current" in result.fields[layer.id]
+        if electrical_layer and layer.role == "conductor":
             if layer.electrical.kind == "bulk":
                 laws.append(("bulk resistivity", material.resistivity))
             elif layer.electrical.kind == "sheet":
                 laws.append(("sheet resistance", layer.electrical.sheet_resistance))
         for name, law in laws:
+            checked = dict(layer=layer.id, material=material.id, property=name,
+                minimum_temperature=low, maximum_temperature=high,
+                declared_range=[law.minimum_temperature, law.maximum_temperature])
+            checked_properties.append(checked)
             if low < law.minimum_temperature or high > law.maximum_temperature:
-                violations.append(dict(layer=layer.id, material=material.id, property=name,
-                    minimum_temperature=low, maximum_temperature=high,
-                    declared_range=[law.minimum_temperature, law.maximum_temperature]))
-    axes.append({"axis": "Material/model range", "status": "outside_declared_range" if violations else "within_declared_ranges" if checked_temperature else "unavailable",
-                 "detail": "Displayed-state declared property ranges only; no validation of high-field transport, breakdown or full 3D heat flow.",
+                violations.append(checked)
+        if electrical_layer and layer.role == "conductor" and layer.electrical.kind in {"semiconductor", "hemt"}:
+            unverified.append(dict(owner=layer.id, reason="Semiconductor/HEMT transport validity envelope not declared"))
+    if "time_s" in metrics or "transient_peak_temperature" in run:
+        unverified.append(dict(owner="thermal storage", reason="Transient density/specific-heat temperature validity not established"))
+    for link in project.interfaces:
+        if not link.enabled or not len(result.mesh.regions.get("interface:" + link.id, [])):
+            continue
+        via_law = has_electrical and link.electrical_kind == "via" and link.material_id
+        stack_law = has_thermal and link.thermal_kind == "stack" and (link.material_id or any(
+            project.materials[project.layer(key).material_id].thermal_conductivity_z is not None
+            for key in (link.layer_a, link.layer_b)))
+        if via_law or stack_law:
+            unverified.append(dict(owner=link.id, reason="Via/gap/through-plane material-law ranges not fully checked"))
+        if has_electrical and link.electrical_kind == "load" and link.temperature_coefficient:
+            unverified.append(dict(owner=link.id, reason="Interface/load temperature-law envelope not declared"))
+    model_status = ("outside_declared_range" if violations else "unavailable" if not checked_properties
+                    else "partially_checked" if unverified else "within_declared_ranges")
+    names = ", ".join(sorted({row["property"] for row in checked_properties})) or "none"
+    detail = "Displayed-state layer property ranges checked: " + names + "."
+    if unverified:
+        detail += " Not established: " + "; ".join(sorted({row["reason"] for row in unverified})) + "."
+    detail += " No validation of high-field transport, breakdown, fabricated radius or full 3D heat flow."
+    axes.append({"axis": "Material/model range", "status": model_status, "detail": detail,
+                 "checked_properties": checked_properties, "unverified": unverified,
                  "violations": violations, "physical_qualification": False})
     mesh = result.analysis.get("local_mesh_verification", {})
     axes.append({"axis": "Mesh confidence", "status": "selected_metric_evidence" if mesh.get("status") == "available" else "not_established",
