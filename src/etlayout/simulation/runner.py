@@ -7,10 +7,13 @@ import time
 import warnings
 from collections import OrderedDict
 from copy import deepcopy
+from dataclasses import dataclass
 from pathlib import Path
 
+import numpy as np
+
 from etlayout.io.project import configuration_hash, file_hash, physics_hash
-from etlayout.models import Diagnostic, Project, SimulationError, SimulationResult, checkpoint
+from etlayout.models import Diagnostic, PlanarMesh, Project, SimulationError, SimulationResult, checkpoint
 from etlayout.technology.validation import validate_project
 
 _MESH_CACHE: OrderedDict = OrderedDict()
@@ -111,8 +114,56 @@ def _mesh_key(project):
     return hashlib.sha256(json.dumps(selected, sort_keys=True).encode()).hexdigest()
 
 
+@dataclass(frozen=True)
+class _MeshReference:
+    """Internal immutable authority for a mesh, never an initial physical state."""
+    mesh_key: str
+    geometry_key: str
+    digest: str
+    mesh: PlanarMesh
+
+
+def mesh_fingerprint(mesh: PlanarMesh) -> str:
+    """Exact coordinates/connectivity/support identity independent of field values."""
+    digest = hashlib.sha256(b"etlayout-planar-mesh-v1")
+    arrays = [("points", np.asarray(mesh.points, dtype="<f8")),
+              ("triangles", np.asarray(mesh.triangles, dtype="<i8"))]
+    for group in ("regions", "terminal_nodes", "boundary_nodes", "boundary_edges"):
+        arrays.extend((group + ":" + key, np.asarray(value, dtype="<i8"))
+                      for key, value in sorted(getattr(mesh, group).items()))
+    for name, array in arrays:
+        digest.update(json.dumps([name, list(array.shape)], ensure_ascii=True).encode("ascii"))
+        if array.size:
+            digest.update(memoryview(np.ascontiguousarray(array)).cast("B"))
+    return digest.hexdigest()
+
+
+def _capture_mesh_reference(project: Project, mesh: PlanarMesh) -> _MeshReference:
+    from etlayout.io.project import _validate_result_arrays
+    _validate_result_arrays(mesh, {}, False)
+    return _MeshReference(_mesh_key(project), _geometry_key(project), mesh_fingerprint(mesh), deepcopy(mesh))
+
+
+def _reference_mesh(project, reference, *, initial_result=None):
+    if (not isinstance(reference, _MeshReference) or reference.mesh_key != _mesh_key(project)
+            or reference.geometry_key != _geometry_key(project)):
+        raise SimulationError("Shared study mesh does not match the verified source geometry and mesh settings")
+    if mesh_fingerprint(reference.mesh) != reference.digest:
+        raise SimulationError("Shared study mesh changed after its geometry verification")
+    if initial_result is not None and mesh_fingerprint(initial_result.mesh) != reference.digest:
+        raise SimulationError("Shared study mesh must match the exact saved initial-state mesh")
+    mesh = reference.mesh
+    if len(mesh.triangles) > project.mesh.max_elements:
+        raise SimulationError("Shared study mesh exceeds the element budget")
+    dofs = sum(len(np.unique(mesh.triangles[mesh.elements(layer.id)])) * (2 if layer.role == "conductor" else 1)
+               for layer in project.layers)
+    if dofs > project.mesh.max_dofs:
+        raise SimulationError("Shared study mesh exceeds the combined electrical/thermal DOF budget")
+    return deepcopy(mesh)
+
+
 def prepare_mesh(project: Project, progress=None, cancel=None, *, initial_state_supplied: bool = False,
-                 initial_result: SimulationResult | None = None):
+                 initial_result: SimulationResult | None = None, _mesh_reference=None):
     from etlayout.geometry.prepare import prepare_geometry
     from etlayout.meshing.generate import generate_mesh
     from etlayout.simulation.execution import record_phase
@@ -144,7 +195,10 @@ def prepare_mesh(project: Project, progress=None, cancel=None, *, initial_state_
     record_phase("preparation", time.perf_counter() - geometry_started)
     mesh_started = time.perf_counter()
     key = _mesh_key(project)
-    if initial_result is not None:
+    if _mesh_reference is not None:
+        mesh = _reference_mesh(project, _mesh_reference, initial_result=initial_result)
+        checkpoint(cancel, progress, .35, "Reusing exact verified study mesh")
+    elif initial_result is not None:
         from etlayout.io.project import project_from_dict
         if not initial_result.configuration or _mesh_key(project_from_dict(initial_result.configuration)) != key:
             raise SimulationError("Saved thermal states require the original geometry and mesh settings. Use uniform or steady initialization for a changed mesh.")
@@ -168,7 +222,7 @@ def prepare_mesh(project: Project, progress=None, cancel=None, *, initial_state_
 
 def run_project(project: Project, progress=None, cancel=None, use_cache: bool = False, *,
                 initial_result: SimulationResult | None = None, resume: bool = False,
-                execution=None) -> SimulationResult:
+                execution=None, _mesh_reference=None) -> SimulationResult:
     """Run in the caller's process with bounded native CPU threads.
 
     Desktop callers isolate this function in a spawned process; study workers use
@@ -178,7 +232,7 @@ def run_project(project: Project, progress=None, cancel=None, use_cache: bool = 
     with execution_context(execution, reset_counts=True):
         with phase_timer("total"):
             result = _run_project(project, progress, cancel, use_cache,
-                                  initial_result=initial_result, resume=resume)
+                                  initial_result=initial_result, resume=resume, _mesh_reference=_mesh_reference)
         result.execution = execution_provenance()
         if result.transient is not None:
             for snapshot in result.transient.snapshots:
@@ -187,7 +241,8 @@ def run_project(project: Project, progress=None, cancel=None, use_cache: bool = 
 
 
 def _run_project(project: Project, progress=None, cancel=None, use_cache: bool = False, *,
-                 initial_result: SimulationResult | None = None, resume: bool = False) -> SimulationResult:
+                 initial_result: SimulationResult | None = None, resume: bool = False,
+                 _mesh_reference=None) -> SimulationResult:
     from etlayout.solvers.solve import solve
     start = time.perf_counter()
     project = deepcopy(project)
@@ -197,7 +252,7 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
     _verify_layout(project)
     from etlayout.simulation.execution import current_execution, phase_seconds, phase_timer, record_phase
     key = (configuration_hash(project), current_execution())
-    if use_cache and initial_result is None and not resume and key in _RESULT_CACHE:
+    if use_cache and _mesh_reference is None and initial_result is None and not resume and key in _RESULT_CACHE:
         checkpoint(cancel, progress, 1., "Loaded identical cached simulation")
         with phase_timer("cached_result_load"):
             cached = deepcopy(_RESULT_CACHE[key])
@@ -206,7 +261,7 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always", RuntimeWarning)
         geometry, mesh = prepare_mesh(project, progress, cancel, initial_state_supplied=initial_result is not None,
-                                      initial_result=initial_result)
+                                      initial_result=initial_result, _mesh_reference=_mesh_reference)
         key = configuration_hash(project)  # layout import may update its actual database unit
         solve_started = time.perf_counter()
         prior_reporting = phase_seconds("reporting")
@@ -221,6 +276,9 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
     if result.transient is not None:
         for snapshot in result.transient.snapshots:
             snapshot.elapsed_seconds = result.elapsed_seconds
+    from etlayout.power.crowding import attach_crowding
+    with phase_timer("reporting"):
+        attach_crowding(project, result, geometry)
     result.diagnostics = geometry.diagnostics + result.diagnostics
     for message in dict.fromkeys(str(w.message) for w in caught):
         result.diagnostics.append(Diagnostic("warning", message))

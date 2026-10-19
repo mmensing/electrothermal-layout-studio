@@ -26,6 +26,15 @@ wheel lock. Keep those patch versions explicit in receipts and inspect actual
 GitHub checks for the public commit; local execution does not establish a hosted
 CI pass. See [runtime availability](windows.md#python-runtime-and-verification-scope).
 
+## Local current and heat verification
+
+See [current crowding](current-crowding.md) for ten independent reference geometries,
+fixed-area metrics, singular-peak diagnostics, three-mesh evidence and equal-current
+corner-radius studies. Numerical convergence does not establish process calibration.
+
+See [physical local meshing](local-meshing.md) for radius/contact/via sizing,
+bounded flux guidance, graded fields, resource screens and per-metric receipts.
+
 ## Source checks
 
 Install the locked Windows dependencies and editable package, then run:
@@ -41,8 +50,11 @@ python -m ruff check .
 ```
 
 Tests group the same collection into `fast`, `numerical`, `desktop` and `packaging`
-markers using `tests/conftest.py`. PR CI runs fast and packaging contracts; main and owner-requested validation add
-independent numerical and Qt regression groups. Main coverage includes all groups
+markers using `tests/conftest.py`. PR CI runs fast and packaging contracts plus
+a stable path-aware `scientific-regression` gate for physical/source/data/test
+changes. Documentation-only paths retain an explicit successful lightweight check.
+Main scientific changes and owner-requested validation add the complete source and
+Qt desktop journeys; documentation-only main pushes avoid those expensive jobs. Main coverage includes all groups
 and spawned workers. The unfiltered
 command above retains all tests and is used for comparable baseline/final measurements.
 No difficult modules are excluded and no physical tolerances are relaxed.
@@ -234,3 +246,59 @@ solve, results and read-only History. `--catalog` opens all 40 references throug
 all seven stages. Omit `--offscreen` for native Windows and add `--scale 1.25` for
 application scaling. Inspect readable captures and font receipts. This does not
 certify clean-machine deployment or physical mixed-monitor DPI.
+
+## Native lifecycle diagnostics and measured operator phases
+
+Use the repeatable source diagnostic without disabling Python garbage collection:
+
+```powershell
+python scripts/scientific_lifecycle_acceptance.py --cycles 8 --output .artifacts/native-lifecycle
+python scripts/scientific_lifecycle_acceptance.py --offscreen --cycles 4 --output .artifacts/offscreen-lifecycle
+```
+
+The journey performs actual solved operating points, durable asynchronous recovery
+and schema-3 saves, repeated historical inspection/return, transient frame/project
+switching, cancellation and closing during an actual subprocess, deferred native
+Qt deletion, and explicit Python GC. Its receipt records versions, phases, elapsed
+time and observed memory; faulthandler records Python stacks on native faults or
+long stalls. Store receipts, captures and logs as CI/local artifacts. Passing this
+journey does **not** identify or prove a fix for the intermittent Qt/Shiboken
+access violation observed during earlier full-suite GC.
+
+A separate regression demonstrates a concrete ownership defect: completed parented
+compute jobs formerly accumulated as native Qt children. Completion now waits for
+its owned process/receiver to exit and schedules native deletion through Qt's
+event loop. Tests retain readable process diagnostics after completion and verify
+no native children accumulate across repeated actual workers. This resource fix
+is narrower than a claim about the cause of the intermittent crash.
+
+Execution provenance now includes independently measured `electrical_assembly`
+and `thermal_assembly` assemble-call wall times alongside `sparse_linear_solves`.
+They are subsets of numerical time, include material checks and operator-cache
+lookups, and exclude initial space/contact/boundary preparation. They are never
+estimated by subtracting solve time. The Jobs timing tooltip exposes the measured
+operator phases; machine timings do not participate in physical identity.
+
+On-demand history already uses a bounded private disk snapshot per selected
+archive and a separate bounded array cache. Closing the store disposes its copy
+once independent save leases finish; those leases must not be deleted to reduce
+apparent retention. Abnormal process termination can leave operating-system temp
+remnants. Inspect those only after all application processes/readers stop; no
+automatic deletion of arbitrary archive paths is introduced.
+
+## Fixed spatial mesh for time-step studies
+
+Time-step convergence prepares one conforming mesh and sends a verified reference
+to every study point, including parallel processes. The reference contains only
+mesh coordinates, connectivity and tagged supports. It is checked against the
+verified source geometry/mesh settings and exact mesh fingerprint; it never acts
+as an invented thermal initial result. Uniform, saved and resumed initialization
+retain their independent physical-state contracts.
+
+Rows record `time_study_mesh_sha256`, `time_study_fixed_mesh`, the study-wide common
+preparation cost, and `time_study_status`. Temporal deltas are available only for
+successful, complete same-duration results on that exact spatial mesh. An
+incomplete/thermally stopped point or a mesh mismatch cannot certify time-step
+convergence. This prevents native mesher variations between workers from being
+misreported as temporal sensitivity. Field outputs still use the requested
+cadence, and equal effective step counts remain explicitly diagnosed.

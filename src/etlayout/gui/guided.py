@@ -1124,6 +1124,10 @@ class GuidedWorkspace(QObject):
         self.page_layout.addWidget(self.editor_host, 1)
         self.open_editor("mesh", self.window.project.mesh)
         self.page_layout.addWidget(button("Add local refinement", lambda: self.new_model("refinements")))
+        self.refinement_flux = QCheckBox("Include bounded flux-jump guidance from current result")
+        self.refinement_flux.setObjectName("refinement_flux_guidance")
+        self.refinement_flux.setToolTip("Optional error indicator; a compatible converged result is required. Does not automatically change or rerun the mesh.")
+        self.page_layout.addWidget(self.refinement_flux)
         self.page_layout.addWidget(button("Suggest local refinement…", self.suggest_local_refinement))
         self.page_layout.addWidget(button("Preview existing mesh", self.preview_mesh))
         self.set_primary("Generate / update mesh", self.mesh)
@@ -1939,7 +1943,8 @@ class GuidedWorkspace(QObject):
             if layer_id and self.window.project.solver.mode == "electrical" and self.window.project.layer(layer_id).role != "conductor":
                 layer_id = None
             self.window.start_job("refinement-guidance", {"result": self.window.result,
-                                   "hotspot_layer": layer_id})
+                                   "hotspot_layer": layer_id,
+                                   "field_driven": self.refinement_flux.isChecked()})
 
     def review_refinements(self, data):
         from etlayout.gui.refinement import RefinementPreview, RefinementReviewDialog
@@ -2031,7 +2036,10 @@ class GuidedWorkspace(QObject):
                   ("reporting", "Reporting"), ("cached_result_load", "Cache retrieval"), ("total", "Total"))
         self.job_timings.setText(" · ".join(f"{label}: {timings[key]:.2f} s" for key, label in labels if key in timings))
         linear = timings.get("sparse_linear_solves")
-        self.job_timings.setToolTip((f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
+        assembly = " · ".join(f"{label}: {timings[key]:.2f} s" for key, label in
+                              (("electrical_assembly", "Electrical assembly"), ("thermal_assembly", "Thermal assembly"))
+                              if key in timings)
+        self.job_timings.setToolTip((assembly + "\n" if assembly else "") + (f"Sparse linear solves: {linear:.2f} s (included in Numerical).\n" if linear is not None else "") +
             "Measured wall time for the recorded run. CPU budget and assembly concurrency do not imply a total speedup.")
 
     def initial_state_key(self):

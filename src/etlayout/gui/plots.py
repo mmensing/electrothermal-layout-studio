@@ -295,6 +295,11 @@ class StudyPanel(QWidget):
         compare.clicked.connect(self.compare_requested.emit)
         row.addWidget(compare)
         layout.addLayout(row)
+        self.mesh_confidence = QPushButton("Local mesh confidence…")
+        self.mesh_confidence.setObjectName("study_mesh_confidence")
+        self.mesh_confidence.setVisible(False)
+        self.mesh_confidence.clicked.connect(self.show_mesh_confidence)
+        layout.addWidget(self.mesh_confidence)
         self.summary = QLabel()
         self.summary.setWordWrap(True)
         self.summary.setAccessibleName("Study completion summary")
@@ -317,6 +322,9 @@ class StudyPanel(QWidget):
 
     def set_rows(self, rows, parameter="Design"):
         self.rows = rows
+        self.mesh_receipt = next((row.result.analysis["local_mesh_verification"] for row in reversed(rows)
+                                  if row.result and "local_mesh_verification" in row.result.analysis), None)
+        self.mesh_confidence.setVisible(self.mesh_receipt is not None)
         self.parameter = parameter
         self.populate_metrics(default=True)
 
@@ -346,6 +354,15 @@ class StudyPanel(QWidget):
                 break
         self.metric_combo.blockSignals(False)
         self.refresh()
+
+    def show_mesh_confidence(self):
+        from etlayout.gui.refinement import MeshVerificationDialog
+        if self.mesh_receipt is not None:
+            dialog = MeshVerificationDialog(self.mesh_receipt, self)
+            try:
+                dialog.exec()
+            finally:
+                dialog.deleteLater()
 
     def rows_as_table(self):
         metric = self.metric_combo.currentData() or ""

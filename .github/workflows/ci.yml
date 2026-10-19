@@ -60,6 +60,8 @@ jobs:
         run: python -m ruff check .
       - name: Run fast contracts and package policy
         run: python -m pytest -m "fast or packaging" --basetemp=.pytest_fast --junitxml=artifacts/pytest-fast.xml
+      - name: Guard compact transient map and result-state workflow
+        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
       - name: Exercise public CLI
         run: |
           python -m etlayout --version
@@ -73,6 +75,14 @@ jobs:
         with:
           name: source-quality
           path: artifacts/pytest-fast.xml
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Retain bounded compact-workflow evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: compact-transient-workflow
+          path: artifacts/pytest-compact.xml
           if-no-files-found: warn
           retention-days: 7
 
@@ -201,7 +211,7 @@ jobs:
           $journeys = @('gui_acceptance', 'visualization_workbench_acceptance', 'workflow_ui_acceptance', 'reporting_performance_acceptance', 'transient_acceptance', 'transient_workflow_acceptance', 'power_workflow_acceptance', 'guided_workflow_acceptance', 'local_refinement_acceptance', 'power_examples_desktop_acceptance', 'layout_editor_acceptance', 'readability_acceptance')
           $journeys += 'workspace_panels_acceptance'
           $failedJourneys = @()
-          $journeys += 'export_acceptance', 'archive_history_acceptance'
+          $journeys += 'export_acceptance', 'archive_history_acceptance', 'scientific_lifecycle_acceptance'
           foreach ($journey in $journeys) {
             python "scripts/$journey.py" --offscreen --output "artifacts/desktop-$journey"
             if ($LASTEXITCODE -ne 0) { $failedJourneys += $journey }
@@ -218,5 +228,6 @@ jobs:
             artifacts/desktop-*/*.json
             artifacts/desktop-*/**/font-verification.json
             artifacts/desktop-*/**/*.png
+            artifacts/desktop-scientific_lifecycle_acceptance/native-faults.log
           if-no-files-found: warn
           retention-days: 7
