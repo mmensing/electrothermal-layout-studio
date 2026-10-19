@@ -25,6 +25,8 @@ def test_extended_reference_opens_complete_setup_without_starting_a_solve(guided
     category = next(menu for menu in categories if menu.title() == info.category)
     action = next(action for action in category.actions() if action.text().startswith(info.id + " ·"))
     assert info.physical_scope in action.toolTip()
+    assert info.evidence_level in action.toolTip()
+    assert "not mesh verification" in action.toolTip()
     action.trigger()
     _idle(window, qtbot)
     assert window.project.name == name

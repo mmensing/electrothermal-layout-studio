@@ -60,6 +60,7 @@ def test_library_index_links_complete_download_sets(tmp_path):
     assert [entry["name"] for entry in entries] == EXAMPLE_NAMES
     for entry, project in zip(entries, projects, strict=True):
         assert entry["title"] and entry["category"] and entry["learning_goal"]
+        assert entry["evidence_level"] == example_info(project.name).evidence_level
         for key in ("project", "gds", "oasis"):
             assert (tmp_path / entry[key]).is_file()
         assert entry["source_sha256"] == project.layout.sha256

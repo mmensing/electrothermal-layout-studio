@@ -144,7 +144,7 @@ def reference_summary(name):
 def _physical_via(identifier, a, b, mask, p, *, enclosure=.25):
     lower, upper = sorted((p.layer(a), p.layer(b)), key=lambda layer: layer.z)
     return Interface(identifier, a, b, RegionSpec(sources=[f"{mask}/0"]), "via", material_id="copper",
-                     height=upper.z - lower.z - lower.thickness, thermal_kind="stack", model_kind="physical_via",
+                     height=upper.z - (lower.z + lower.thickness), thermal_kind="stack", model_kind="physical_via",
                      height_mode="stack", enclosure=enclosure * UM)
 
 

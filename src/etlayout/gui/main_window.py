@@ -870,7 +870,8 @@ class MainWindow(QMainWindow):
             if info.family:
                 from etlayout.power_examples import reference_summary
                 detail = "\n" + reference_summary(name) + detail
-            action.setToolTip(info.learning_goal + detail)
+            action.setToolTip(info.learning_goal + detail + "\nEvidence: " + info.evidence_level
+                + "; material seeds are uncalibrated; a converged solve is not mesh verification.")
             categories[info.category].addAction(action)
         files.addSeparator()
         files.addAction(self.action("Review project resources…", self.review_project_resources))
