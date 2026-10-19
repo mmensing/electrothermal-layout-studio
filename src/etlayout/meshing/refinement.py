@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Reviewable local sizing suggestions, not an a posteriori error estimator.
+"""Reviewable local sizing and bounded flux indicators, not guaranteed error bounds.
 
 Supports are exact prepared geometry. Estimates deliberately count overlapping
 refinements independently; they are planning screens, not peak-RSS guarantees.
@@ -35,6 +35,7 @@ class RefinementSuggestion:
     size: float
     reason: str
     length: float
+    grading_length: float = 0.
 
 
 @dataclass
@@ -48,6 +49,7 @@ class RefinementPlan:
     sharing_groups: list[str] = field(default_factory=list)
     hotspot_measurements: list[str] = field(default_factory=list)
     generated_hotspot: MeasurementSpec | None = None
+    indicators: dict = field(default_factory=dict)
 
     def to_dict(self):
         return {"version": 1, **asdict(self)}
@@ -93,14 +95,43 @@ def contact_transfer_estimate(project, interface, layer_id, states=()):
         elements = state.mesh.regions.get("interface:" + interface.id, [])
         if values is not None and len(elements):
             selected = np.asarray(values)[elements]
-            conductances.extend(selected[np.isfinite(selected) & (selected > 0)].ravel())
+            valid = selected[np.isfinite(selected) & (selected > 0)]
+            if valid.size:
+                conductances.append(float(valid.min()))
     if not conductances and layer.electrical.kind in {"bulk", "sheet", "semiconductor"}:
         conductances.extend(sheet_conductance(layer, project.materials[layer.material_id],
             np.array([project.solver.initial_temperature])).ravel())
         estimate = "constitutive sheet conductance at declared initial temperature"
-    if not conductances or interface.electrical_value <= 0:
+    specific = interface.electrical_value
+    if interface.electrical_kind == "via":
+        from etlayout.materials.models import evaluate_property
+        material = project.materials.get(interface.material_id)
+        if material is None or interface.height <= 0:
+            return None, "Via transfer estimate requires a material and positive physical height"
+        temperatures = [project.solver.initial_temperature]
+        from etlayout.visualization.sampling import element_nodal_values
+
+        for state in states:
+            elements = np.asarray(state.mesh.regions.get("interface:" + interface.id, []), dtype=int)
+            if not len(elements) or any("temperature" not in state.fields.get(key, {})
+                                        for key in (interface.layer_a, interface.layer_b)):
+                continue
+            # Match electrical._conductance: both component-local P1 traces,
+            # averaged per interface element. Unrelated hot islands and the
+            # lossy legacy shared-node view cannot set this contact's scale.
+            local = [element_nodal_values(state, key, "temperature")[elements].mean(axis=1)
+                     for key in (interface.layer_a, interface.layer_b)]
+            values = (local[0] + local[1]) / 2
+            temperatures.extend(values[np.isfinite(values)].tolist())
+        # The shortest L_T over recorded temperatures is a conservative sizing
+        # choice, not a prediction of a universal contact transfer length.
+        specific = float(np.min(evaluate_property(material.resistivity, np.asarray(temperatures)))) * interface.height
+        estimate += "; via rho(T) × physical height at minimum sampled resistivity"
+    if not conductances or specific <= 0:
+        if layer.electrical.kind == "hemt":
+            return None, "solve the biased HEMT before estimating contact transfer length"
         return None, "Local sheet conductance unavailable for transfer-length estimate"
-    return math.sqrt(interface.electrical_value / (1. / min(conductances))), estimate
+    return math.sqrt(specific * min(conductances)), estimate
 
 
 def _physical_selector_support(project, result, geometry, selector):
@@ -178,7 +209,8 @@ def _physical_selector_support(project, result, geometry, selector):
 
 
 def suggest_refinements(project, result=None, *, geometry=None, progress=None, cancel=None,
-                        max_memory_bytes=4 * 1024**3, averaging_length=None, hotspot_layer=None):
+                        max_memory_bytes=4 * 1024**3, averaging_length=None, hotspot_layer=None,
+                        field_driven=False):
     from etlayout.physics.constitutive import sheet_conductance
     from etlayout.power.analysis import _context_error, evaluate_measurement, selected_support
     from etlayout.simulation.runner import _verify_layout
@@ -222,23 +254,31 @@ def suggest_refinements(project, result=None, *, geometry=None, progress=None, c
 
     for interface in project.interfaces:
         checkpoint(cancel)
-        if not interface.enabled or interface.electrical_kind != "specific" or interface.purpose == "device_load":
+        if not interface.enabled or interface.electrical_kind not in {"specific", "via"} or interface.purpose == "device_load":
             continue
-        if not math.isfinite(interface.electrical_value) or interface.electrical_value <= 0:
+        if interface.electrical_kind == "specific" and (not math.isfinite(interface.electrical_value) or interface.electrical_value <= 0):
             continue
         support = geometry.interfaces.get(interface.id)
         if support is None:
             continue
+        estimates = {layer_id: contact_transfer_estimate(
+            project, interface, layer_id, [result] if compatible else [])
+            for layer_id in (interface.layer_a, interface.layer_b)}
         for layer_id in (interface.layer_a, interface.layer_b):
             layer = project.layer(layer_id)
             if layer.role != "conductor":
                 continue
-            length, estimate = contact_transfer_estimate(project, interface, layer_id, [result] if compatible else [])
+            length, estimate = estimates[layer_id]
             if length is None:
-                plan.warnings.append(f"{interface.id}/{layer_id}: solve the biased HEMT before estimating contact transfer length.")
+                plan.warnings.append(f"{interface.id}/{layer_id}: {estimate}")
                 continue
             add(f"contact-{interface.id}-{layer_id}", "Contact transfer", f"{interface.id}/{layer_id}",
                 support, length, f"Four elements per L_T = sqrt(rho_c G_s), using {estimate}; estimate varies with bias/temperature.")
+        bounds = [estimate[0] for estimate in estimates.values()]
+        if all(value is not None and value > 0 for value in bounds):
+            bound = 1. / math.sqrt(sum(1. / value**2 for value in bounds))
+            add("coupled-transfer-"+interface.id, "Coupled transfer bound", interface.id, support, bound,
+                "Four elements per conservative two-sheet L_T = sqrt(rho_c/(Rs_a+Rs_b)). An ideal equipotential electrode can have a longer one-sheet transfer length; this bound does not claim a full 2D error estimate.")
 
     for port in project.power.ports:
         for landing in port.landings:
@@ -312,6 +352,12 @@ def suggest_refinements(project, result=None, *, geometry=None, progress=None, c
             add("hotspot-" + identifier, "Averaged hotspot", identifier, support, spec.averaging_length,
                 "Four elements across this solved physical averaging window; its location is fixed throughout the study.")
     checkpoint(cancel, progress, 1., f"Prepared {len(plan.suggestions)} local refinement suggestions")
+    from etlayout.meshing.physical import flux_suggestions, geometry_suggestions
+    geometry_suggestions(project, geometry, plan)
+    if field_driven:
+        if not compatible:
+            raise SimulationError("Flux-jump guidance requires a converged result of this applied configuration")
+        flux_suggestions(project, result, geometry, plan)
     return plan
 
 
@@ -370,7 +416,10 @@ def apply_refinement_plan(project, plan, selected=None, *, factor=1.):
         if not math.isfinite(size) or size <= 0 or suggestion.geometry.line:
             raise SimulationError(f"Suggestion {suggestion.id} requires positive finite area sizing")
         identifier = "guided-" + suggestion.id
-        refinement = RefinementRegion(identifier, deepcopy(suggestion.geometry), size)
+        if not math.isfinite(suggestion.grading_length) or suggestion.grading_length < 0:
+            raise SimulationError("Refinement grading length must be finite and nonnegative")
+        refinement = RefinementRegion(identifier, deepcopy(suggestion.geometry), size,
+                                      grading_length=suggestion.grading_length)
         if identifier in existing:
             candidate.mesh.refinements[existing[identifier]] = refinement
         else:
@@ -394,6 +443,10 @@ def estimate_resources(project, *, geometry=None):
     controls += [(geometry.refinements[item.id], min(item.axis_sizes or [item.size]))
                  for item in project.mesh.refinements]
     controls += [(geometry.layers[item.id], item.mesh_size) for item in project.layers if item.mesh_size]
+    # A grading halo is conservatively screened at the finest requested size.
+    # Its actual smooth transition is coarser; overlapping halos overcount.
+    controls += [(geometry.refinements[item.id].buffer(item.grading_length).intersection(geometry.domain), item.size)
+                 for item in project.mesh.refinements if item.grading_length > 0]
     for support, size in controls:
         extra += 2.31 * support.area * max(0., 1 / size**2 - 1 / project.mesh.max_size**2)
     elements = math.ceil(base + extra)

@@ -201,6 +201,7 @@ class RefinementRegion:
     geometry: RegionSpec
     size: float
     axis_sizes: list[float] = field(default_factory=list)  # optional x/y spacing on conforming rectangular faces
+    grading_length: float = 0.  # optional smooth distance transition outside exact support [m]
 
 
 @dataclass
@@ -512,6 +513,9 @@ class Project:
                 interface.pop("heat_to_layer_a_fraction")
             if interface.get("heat_layer_id") == "":
                 interface.pop("heat_layer_id")
+        for refinement in data["mesh"]["refinements"]:
+            if refinement["grading_length"] == 0.:
+                refinement.pop("grading_length")
         return data
 
 

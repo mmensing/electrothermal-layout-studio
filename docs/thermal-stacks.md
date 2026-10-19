@@ -189,8 +189,8 @@ python scripts/verify_thermal_stacks.py --output "$evidence/fine" --mesh-size 5e
 python -m pytest tests/test_thermal_stacks.py tests/test_gui_thermal_stacks.py tests/test_thermal.py tests/test_coupled.py tests/test_power_stack.py
 ```
 
-The [machine-readable CSV](../benchmarks/thermal-stack-sensitivity.csv) and
-[scope receipt](../benchmarks/thermal-stack-sensitivity.json) retain 100 actual
+The online/source [machine-readable CSV](https://github.com/mmensing/electrothermal-layout-studio/blob/ee0b8d285dfafdeb532828866d75c8f747b1a151/benchmarks/thermal-stack-sensitivity.csv) and
+[scope receipt](https://github.com/mmensing/electrothermal-layout-studio/blob/ee0b8d285dfafdeb532828866d75c8f747b1a151/benchmarks/thermal-stack-sensitivity.json) retain 100 actual
 calculations, mesh hashes, conserved powers, fixed-region averages, energies,
 element/DOF counts, preparation/meshing/numerical/linear/reporting wall times,
 archive sizes and save/reopen costs. The Windows source environment was Python
@@ -201,6 +201,9 @@ was below 194 MB. These are shared-session observations with within-invocation
 geometry/mesh caches, not isolated performance guarantees. The native Windows
 source screenshot was inspected for readable glyphs; this work does not claim
 a rebuilt frozen package or clean-machine validation.
+
+The benchmark files are available online and in source checkouts; they are not
+bundled with packaged offline documentation.
 
 ## External 3D reference protocol — not performed
 
