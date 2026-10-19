@@ -27,8 +27,17 @@ class ExampleInfo:
     def id(self) -> str:
         return self.name.split("_", 1)[0]
 
+    @property
+    def evidence_level(self) -> str:
+        """Applicability class, independent of numerical convergence status."""
+        if self.id in {"E1", "E17"}:
+            return "analytical reference"
+        if self.reference_tier == "engineering" or self.id == "E39":
+            return "engineering / stress experiment"
+        return "synthetic functional demonstration"
+
     def to_dict(self) -> dict[str, str]:
-        return {"id": self.id, **asdict(self)}
+        return {"id": self.id, **asdict(self), "evidence_level": self.evidence_level}
 
 
 _ENTRIES = (
