@@ -887,3 +887,11 @@ The generator reads existing projects from `examples/` and creates missing ones.
 
 
 See the [scientific evidence audit](example-science.md) for applicability levels, exact nominal measurements, model limits and reproduction commands.
+
+## Compare electrical operating scenarios
+
+[Meaningful Joule thermal demonstrations](thermal-example-scenarios.md) add
+optional editable scenarios through **File → Choose example operating scenario…**.
+They keep the E1–E40 reference inputs available and distinguish failed engineering
+limits from numerical convergence. The guide includes actual maps, losses,
+pulse peaks and mesh/time sensitivity observations.

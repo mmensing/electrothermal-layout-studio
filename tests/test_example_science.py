@@ -99,6 +99,8 @@ def test_stack_derived_via_height_is_canonical_at_generation(identifier, tmp_pat
 def test_maintained_nominal_matrix_covers_the_catalog_and_disjoint_loss_ledger():
     path = Path(__file__).resolve().parents[1] / "docs/example-science/nominal-reference.json"
     manifest = json.loads(path.read_text(encoding="utf-8"))
+    assert manifest["units"]["current_density"] == "A/m\u00b2"
+    assert manifest["units"]["joule_density"] == "W/m\u00b2"
     records = manifest["examples"]
     assert {row["name"] for row in records} == set(EXAMPLE_CATALOG)
     assert len(records) == 40
