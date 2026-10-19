@@ -1390,6 +1390,10 @@ class GuidedWorkspace(QObject):
         if support.is_empty:
             raise ValueError("Choose a nonempty geometric support before applying.")
         layer_ids = [model.layer_a, model.layer_b] if key == "interfaces" else [model.layer_id]
+        if key == "interfaces" and model.heat_layer_id:
+            target = geometry.layers.get(model.heat_layer_id)
+            if target is None or support.difference(target).area > max(support.area * 1e-9, 1e-30):
+                raise ValueError("The heat-deposition layer must cover the complete interface support. Choose a supported layer or correct its geometry.")
         for layer_id in layer_ids:
             layer = geometry.layers.get(layer_id)
             if layer is None or support.intersection(layer).is_empty:

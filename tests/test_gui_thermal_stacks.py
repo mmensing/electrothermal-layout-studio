@@ -65,3 +65,34 @@ def test_template_remaps_heat_depth_and_omits_link_when_deposition_layer_not_sel
     assert (link.layer_a, link.layer_b, link.heat_layer_id) == ("bottom_2", "top_2", "film_2")
     limited = propose_template(existing, template, {}, ["bottom", "top"], [])
     assert len(limited.project.interfaces) == len(existing.interfaces)
+
+
+def test_guided_apply_checks_heat_target_and_layer_removal_cleans_dependent_interfaces(qtbot, tmp_path, monkeypatch):
+    from PySide6.QtWidgets import QMessageBox
+
+    from etlayout.gui.main_window import MainWindow
+
+    project = project_stack()
+    link = Interface("device", "bottom", "top", RegionSpec(full_domain=True), electrical_kind="load", heat_layer_id="film")
+    project.interfaces.append(link)
+    window = MainWindow(project, database_path=tmp_path / "materials.sqlite3", recover=False)
+    qtbot.addWidget(window, before_close_func=lambda widget: setattr(widget, "dirty", False))
+    window.show()
+    qtbot.waitUntil(lambda: window.prepare_job is None, timeout=30000)
+    assert window.geometry is not None
+    # Apply validates the requested support; it must not silently crop a contact
+    # merely to make the separately selected heat-deposition target cover it.
+    target = window.geometry.layers["film"]
+    from shapely.geometry import box
+    window.geometry.layers["film"] = target.intersection(box(0, 0, 5e-6, 10e-6))
+    with pytest.raises(ValueError, match="complete interface support"):
+        window.guided.validate_support(link, "interfaces")
+    window.geometry.layers["film"] = target
+    window.guided.validate_support(link, "interfaces")
+    monkeypatch.setattr(window.panels["layers"], "selected_id", lambda: "film")
+    monkeypatch.setattr(QMessageBox, "question", lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    window.remove_object("layers")
+    qtbot.waitUntil(lambda: window.prepare_job is None, timeout=30000)
+    assert "film" not in {layer.id for layer in window.project.layers}
+    assert not window.project.interfaces
+    window.dirty = False
