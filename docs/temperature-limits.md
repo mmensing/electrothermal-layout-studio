@@ -80,7 +80,9 @@ Other service, conservation, physical-model and mesh criteria remain unchanged.
 
 ## Persistence and existing constraints
 
-The typed `Project.temperature_limits` list is the hard-temperature mechanism:
+The typed `Project.temperature_limits` list is the hard-temperature mechanism.
+Empty lists are omitted from serialized project dictionaries to preserve existing
+full configuration hashes and limit-free compatibility with strict older readers:
 
 ```json
 {
@@ -98,8 +100,9 @@ both numerical behavior and legacy physical identity. Disabled-only lists do not
 change physical identity. Active limits do participate in identity because an
 early stop can change the accepted history. New simulation presets include the
 limits; loading an older numerical preset preserves the project's existing limits.
-Older application versions that do not recognize this field reject it rather
-than silently ignoring its safety meaning.
+Projects with explicit enabled or disabled limit records retain that nondefault
+configuration. Older application versions that do not recognize it reject it
+rather than silently ignoring its safety meaning.
 
 Existing `Project.thresholds` remain **warning-only annotations**, including
 `temperature_max` and `transient_peak_temperature`. They are not silently

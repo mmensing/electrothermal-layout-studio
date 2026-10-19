@@ -499,7 +499,12 @@ class Project:
         return next(x for x in self.layers if x.id == layer_id)
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        # Preserve pre-limit full configuration identities and limit-free
+        # archives for strict older readers. Explicit disabled records persist.
+        if not data["temperature_limits"]:
+            data.pop("temperature_limits")
+        return data
 
 
 @dataclass

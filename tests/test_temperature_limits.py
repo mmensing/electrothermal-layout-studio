@@ -1,13 +1,22 @@
 # SPDX-License-Identifier: MPL-2.0
 """Hard thermal acceptance uses physical states, exact P1 support and real solves."""
+import json
+import zipfile
 from copy import deepcopy
+from dataclasses import asdict
 
 import numpy as np
 import pytest
 from solver_helpers import all_region, rectangle
 from test_transient import thermal_fixture
 
-from etlayout.io.project import load_project, physics_hash, project_from_dict, save_project
+from etlayout.io.project import (
+    configuration_hash,
+    load_project,
+    physics_hash,
+    project_from_dict,
+    save_project,
+)
 from etlayout.models import (
     HeatSource,
     RegionSpec,
@@ -175,8 +184,10 @@ def test_invalid_limit_configuration_is_actionable(change):
 
 def test_default_legacy_and_disabled_limits_preserve_physics_identity():
     project, mesh = steady_fixture()
-    legacy = project.to_dict()
+    legacy = asdict(project)
     legacy.pop("temperature_limits")
+    assert "temperature_limits" not in project.to_dict()
+    assert configuration_hash(project) == configuration_hash(legacy)
     original = physics_hash(legacy)
     assert physics_hash(project_from_dict(legacy)) == original
     project.temperature_limits = [TemperatureLimit(enabled=False)]
@@ -193,3 +204,27 @@ def test_legacy_warning_and_measurement_constraints_are_not_promoted_to_hard_lim
     assert result.converged and result.metrics["engineering_accepted"]
     assert any("Engineering threshold exceeded" in d.message for d in result.diagnostics)
     assert result.metrics["thermal_limit_compliance"]["status"] == "disabled"
+
+
+@pytest.mark.parametrize("archive_format", [2, 3])
+def test_limit_free_archives_preserve_prelimit_configuration_and_omit_new_field(tmp_path, archive_format):
+    project, mesh = steady_fixture()
+    legacy = asdict(project)
+    legacy.pop("temperature_limits")
+    expected_hash = configuration_hash(legacy)
+    result = solve(project, mesh)
+    assert result.configuration_hash == expected_hash
+    target = tmp_path / f"limit-free-{archive_format}.etl"
+    save_project(project, target, result, archive_format=archive_format)
+    reopened, restored = load_project(target)
+    assert reopened.temperature_limits == []
+    assert configuration_hash(reopened) == expected_hash
+    assert restored.configuration_hash == expected_hash
+    assert "temperature_limits" not in restored.configuration
+    if archive_format == 2:
+        with zipfile.ZipFile(target) as archive:
+            assert "temperature_limits" not in json.loads(archive.read("project.json"))["project"]
+    # Nonempty disabled records are deliberate user configuration, not lost drafts.
+    project.temperature_limits = [TemperatureLimit(enabled=False)]
+    assert project.to_dict()["temperature_limits"][0]["enabled"] is False
+    assert configuration_hash(project) != expected_hash
