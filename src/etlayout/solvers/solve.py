@@ -24,6 +24,10 @@ from .thermal import solve_state as thermal_state
 
 
 def _validate(project: Project, mesh: PlanarMesh) -> None:
+    from etlayout.simulation.temperature import validate_temperature_limits
+    errors = validate_temperature_limits(project)
+    if errors:
+        raise SimulationError("\n".join(item.message for item in errors))
     settings = project.solver
     if settings.initial_temperature <= 0 or not np.isfinite(settings.initial_temperature):
         raise SimulationError("Initial temperature must be finite and above zero kelvin")
@@ -52,6 +56,8 @@ def _finish(result: SimulationResult, project: Project, started: float, progress
     result.configuration_hash = configuration_hash(result.configuration)
     result.physics_hash = physics_hash(project)
     result.elapsed_seconds = time.perf_counter() - started
+    from etlayout.simulation.temperature import finalize_temperature_limits
+    finalize_temperature_limits(project, result)
     refresh_threshold_diagnostics(result, project)
     if project.power.measurements or project.power.devices:
         from etlayout.power.analysis import analyze_power

@@ -131,6 +131,8 @@ def validate_project(project: Project, raise_errors: bool = True, *, initial_sta
             if material and (not math.isfinite(material.density) or material.density <= 0
                              or not math.isfinite(material.specific_heat) or material.specific_heat <= 0):
                 error("Transient density (kg/m³) and specific heat (J/kg/K) must be finite and positive", layer.id)
+    from etlayout.simulation.temperature import validate_temperature_limits
+    messages.extend(validate_temperature_limits(project))
     from .power_validation import validate_power_settings
     messages.extend(validate_power_settings(project))
     if raise_errors and any(x.severity == "error" for x in messages):

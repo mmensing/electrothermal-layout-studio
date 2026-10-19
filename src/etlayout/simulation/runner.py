@@ -276,6 +276,9 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
     if result.transient is not None:
         for snapshot in result.transient.snapshots:
             snapshot.elapsed_seconds = result.elapsed_seconds
+    from etlayout.power.crowding import attach_crowding
+    with phase_timer("reporting"):
+        attach_crowding(project, result, geometry)
     result.diagnostics = geometry.diagnostics + result.diagnostics
     for message in dict.fromkeys(str(w.message) for w in caught):
         result.diagnostics.append(Diagnostic("warning", message))

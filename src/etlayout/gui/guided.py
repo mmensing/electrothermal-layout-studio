@@ -1017,6 +1017,7 @@ class GuidedWorkspace(QObject):
         w = self.window
         self.heading.setText("Operating conditions")
         self.description.setText(next(x.summary for x in ANALYSES if x.key == analysis_key(w.project)))
+        self.page_layout.addWidget(button("Maximum operating temperature…", w.edit_temperature_limits))
         self.condition_kind = QComboBox()
         for text, key in (("Electrical inputs / gate controls", "terminals"), ("External port drives", "ports"),
                            ("Thermal boundaries / reservoirs", "thermal_boundaries"), ("Prescribed heat inputs", "heat_sources"),
@@ -1793,13 +1794,15 @@ class GuidedWorkspace(QObject):
                                                 f"{result_state} · "
                                                 f"{'Solver converged' if result.converged else 'Solver did not converge'}\n"
                                                 "Mesh convergence: not established for this run")
+                    if result.metrics.get("thermal_limit_compliance", {}).get("status") in {"failed", "unavailable"}:
+                        self.result_evidence.setText(w.result_status.text())
                     self.result_metrics.setText(w.key_metrics.text())
                     self.stage_buttons["results"].setToolTip(result_state + ". Fields and metrics retain this run's recorded configuration.")
                 else:
                     self.result_evidence.setText("No selected result. Run the current setup or inspect History.")
                 self.primary.setEnabled(bool(result))
             busy = bool(w.job or (self.power and self.power.job))
-            self.drawer_toggle.setText(f"{len(self.assessment.blockers)} blockers · {len(self.assessment.issues) + bool(self.last_error)} issues · "
+            self.drawer_toggle.setText(f"{len(self.assessment.blockers)} blockers · {self.visible_issue_count} issues · "
                                        f"{'Job running · Cancel: Shift+F5' if busy else self.execution_state} · History {len(w.run_history)}")
             self.drawer_toggle.setToolTip(self.drawer_toggle.text())
             self.inspector.setEnabled(not busy or self.stage in {"run", "results"})
@@ -1815,10 +1818,18 @@ class GuidedWorkspace(QObject):
         if not hasattr(self, "assessment"):
             return
         issues = list(self.assessment.issues)
+        result = self.window.result
+        if result is not None:
+            issues.extend(WorkflowIssue(f"result.temperature.{index}", diagnostic.severity,
+                diagnostic.message, detail=diagnostic.message, object_id=diagnostic.object_id,
+                bounds=tuple(diagnostic.bounds) if diagnostic.bounds else None, stage="conditions")
+                for index, diagnostic in enumerate(result.diagnostics)
+                if diagnostic.message.startswith("Maximum temperature limit:"))
         if self.last_error:
             issues.insert(0, WorkflowIssue("job.failed", "error", "Last computation failed: " + self.last_error,
                                         detail=self.last_error_detail or "Open the setup, correct inputs and retry. Logs contain the worker traceback.",
                                         stage=self.last_error_stage))
+        self.visible_issue_count = len(issues)
         wanted = self.severity.currentText()
         query = self.issue_search.text().lower()
         rows = [issue for issue in issues if (wanted == "All severities" or issue.severity == wanted)
@@ -1836,13 +1847,17 @@ class GuidedWorkspace(QObject):
             locate = button("Locate", lambda item=issue: self.fix_issue(item, locate_only=True))
             locate.setEnabled(bool(issue.bounds or issue.object_id))
             layout.addWidget(locate)
-            layout.addWidget(button("Open setup" if issue.key == "job.failed" else "Fix…", lambda item=issue: self.fix_issue(item)))
+            layout.addWidget(button("Open setup" if issue.key == "job.failed" or issue.key.startswith("result.temperature.") else "Fix…", lambda item=issue: self.fix_issue(item)))
             self.issue_table.setCellWidget(row, 3, controls)
         self.issue_table.resizeRowsToContents()
         self.drawer.setTabText(0, f"Issues ({len(issues)})")
 
     def fix_issue(self, issue, locate_only=False):
         if not locate_only and not self.resolve_draft():
+            return
+        if not locate_only and issue.key.startswith("result.temperature."):
+            self.navigate("conditions")
+            self.window.edit_temperature_limits()
             return
         if not locate_only:
             for key in ("measurements", "devices", "recipes", "experiments"):
@@ -1984,6 +1999,8 @@ class GuidedWorkspace(QObject):
     def job_completed(self, operation, source):
         w = self.window
         self.execution_state = operation.capitalize() + " completed"
+        if operation == "solve" and w.result and w.result.metrics.get("thermal_limit_compliance", {}).get("status") in {"failed", "unavailable"}:
+            self.execution_state = "Failed engineering · maximum-temperature compliance"
         self.refresh_job_timings()
         if source and source.get("supplied_initial_state"):
             self.initial_state_evidence = self.initial_state_key()

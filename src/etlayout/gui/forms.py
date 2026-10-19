@@ -44,6 +44,7 @@ from etlayout.models import MeasurementSpec, PropertyModel, RegionSpec, Simulati
 from etlayout.power.measurement_contract import QUANTITIES, validate_limits
 
 ENUMS = {
+    ("TemperatureLimit", "evaluation"): ["fail_after", "stop_transient"],
     ("PhysicalLayer", "role"): ["conductor", "insulator", "thermal"],
     ("Material", "category"): ["metal", "film", "semiconductor", "dielectric", "2deg", "custom"],
     ("PropertyModel", "kind"): ["constant", "linear", "polynomial", "table"],
