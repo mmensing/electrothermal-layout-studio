@@ -153,5 +153,5 @@ def scientific_record(project, result):
             settings=asdict(project.mesh), statistics=deepcopy(result.mesh.statistics)),
         performance=deepcopy(result.execution), diagnostics=[asdict(item) for item in result.diagnostics],
         units=dict(length="m", temperature="K", temperature_rise="K", power="W", current="A",
-            voltage="V", resistance="ohm", sheet_current="A/m", current_density="A/mÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²",
-            electric_field="V/m", joule_density="W/mÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â²", time="s", energy="J"))
+            voltage="V", resistance="ohm", sheet_current="A/m", current_density="A/m\u00b2",
+            electric_field="V/m", joule_density="W/m\u00b2", time="s", energy="J"))
