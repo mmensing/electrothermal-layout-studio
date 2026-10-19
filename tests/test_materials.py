@@ -62,3 +62,17 @@ def test_csv_property_import(tmp_path):
     source.write_text("temperature_K,value\n300,1.6e-8\n400,2.2e-8\n")
     prop = MaterialDatabase.import_property_csv(source)
     assert float(evaluate_property(prop, 350)) == pytest.approx(1.9e-8)
+
+
+def test_new_library_seeds_preserve_an_original_example_identity(tmp_path):
+    from copy import deepcopy
+
+    from etlayout.examples import make_example
+    from etlayout.io.project import physics_hash
+
+    project = make_example("E1", tmp_path)
+    legacy = deepcopy(project)
+    legacy.materials = {key: value for key, value in reference_materials().items()
+                        if key not in {"aln", "polyimide"}}
+    assert {"aln", "polyimide"} <= reference_materials().keys()
+    assert physics_hash(project) == physics_hash(legacy)
