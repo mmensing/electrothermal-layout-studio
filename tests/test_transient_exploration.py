@@ -49,17 +49,27 @@ def test_local_trace_mean_and_probe_follow_exact_region_support():
     assert history_field_limits(result, "metal", "temperature", region="heat:left") == (300, 320)
 
 
-def test_direct_time_and_peak_navigation_use_nearest_retained_frame(qtbot):
+@pytest.mark.parametrize("width", [380, 900])
+def test_direct_time_and_peak_navigation_use_nearest_retained_frame(qtbot, width):
     widget = TimeNavigation()
     qtbot.addWidget(widget)
+    widget.setFixedWidth(width)
     widget.set_result(history_result())
+    widget.adjustSize()
+    qtbot.wait(10)
+    assert widget.width() == width
+    for control in (widget.time_input, widget.slider, widget.peak_button, widget.last_button):
+        assert control.isVisible() and widget.rect().contains(control.geometry())
     widget.time_input.setText("800 ms")
     qtbot.keyClick(widget.time_input, Qt.Key.Key_Return)
     assert widget.slider.value() == 1
     assert "nearest retained" in widget.label.toolTip()
     widget.slider.setValue(0)
-    widget.jump_to_peak()
+    qtbot.mouseClick(widget.peak_button, Qt.MouseButton.LeftButton)
     assert widget.slider.value() == 1
+    qtbot.mouseClick(widget.last_button, Qt.MouseButton.LeftButton)
+    assert widget.slider.value() == 2
+    widget.select_time(.8)
     widget.time_input.setText("bad")
     widget.jump_to_input()
     assert widget.slider.value() == 1
