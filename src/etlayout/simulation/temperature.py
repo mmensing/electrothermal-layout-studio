@@ -13,6 +13,7 @@ from copy import deepcopy
 import numpy as np
 
 from etlayout.models import Diagnostic, SupportSelector
+from etlayout.visualization.sampling import element_nodal_values
 
 PREFIX = "Maximum temperature limit:"
 
@@ -68,12 +69,7 @@ def evaluate_temperature_limits(project, result, *, time_s=None, _support_cache=
         peak = None
         missing_support = False
         for layer, ids in selected.items():
-            local = result.element_fields.get(layer, {}).get("temperature")
-            if local is None:
-                nodal = result.fields.get(layer, {}).get("temperature")
-                if nodal is None:
-                    continue
-                local = np.asarray(nodal)[result.mesh.triangles]
+            local = element_nodal_values(result, layer, "temperature")
             values = np.asarray(local)[ids]
             xy = result.mesh.points[result.mesh.triangles[ids]]
             if clips.get(layer) is not None:
@@ -94,6 +90,9 @@ def evaluate_temperature_limits(project, result, *, time_s=None, _support_cache=
                             if result.metrics.get("thermal_reference") is not None else None}
         record = {"id": limit.id, "maximum_temperature": limit.maximum_temperature,
                   "evaluation": limit.evaluation, "status": "unavailable", "peak": peak}
+        if peak is None or missing_support:
+            record["reason"] = ("No authoritative finite component-local thermal support. "
+                                "Recompute legacy point-touch fields and inspect the layer/region selection.")
         if peak is not None and not missing_support:
             record.update(status="failed" if peak["temperature"] >= limit.maximum_temperature else "passed",
                           excess=max(0., peak["temperature"] - limit.maximum_temperature))
@@ -143,5 +142,6 @@ def finalize_temperature_limits(project, result):
                     "Engineering acceptance failed; numerical convergence and retained fields are unchanged.",
                     peak["layer_id"], [*peak["location"], *peak["location"]]))
             elif row["status"] == "unavailable":
-                result.diagnostics.append(Diagnostic("error", f"{PREFIX} {row['id']}: no finite thermal support; "
-                    "inspect its layer/region selection. Engineering acceptance cannot be established.", row["id"]))
+                reason = row.get("reason", "No authoritative finite thermal support; inspect its layer/region selection.")
+                result.diagnostics.append(Diagnostic("error", f"{PREFIX} {row['id']}: {reason} "
+                    "Engineering acceptance cannot be established.", row["id"]))
