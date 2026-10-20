@@ -133,6 +133,18 @@ resource/identity policy; they do not establish that a frozen executable runs.
 Shared numerical fixtures are immutable or deep-copied for each mutating consumer.
 Shared Qt fixtures create separate working projects, settings and worker lifecycles.
 
+Desktop journeys wait for the complete owned operation set before interacting:
+project opening and historical readers, pending project application, geometry,
+calculations, queued durable saves, and process/receiver cleanup. Existing geometry
+is not proof that an asynchronous Open has finished. After opening an archive,
+assert its path, document identity and physical inputs before Run or field changes.
+The shared `scripts/desktop_acceptance_support.py` helpers provide bounded waits,
+explicit expected-modal handling and cancellation/join before temporary-window
+teardown. They are acceptance utilities; normal application transition policy and
+intentional held-reader tests retain their own guards. The readability journey
+uses the shipped E21 layout, E15 thermal solve and E1 two-mesh current study;
+receipts record the actual project and result identity for every capture.
+
 The independent references include linear strip resistance/field integrals,
 thermal energy balances, HEMT gate response, individual contact currents and heat,
 passive port circuits, mesh/time refinement and equal-service routing experiments.
