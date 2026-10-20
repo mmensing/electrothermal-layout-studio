@@ -128,8 +128,11 @@ def test_eager_read_leaves_event_loop_live_and_rejects_cancelled_or_stale_comple
         finished(window, qtbot)
 
 
-def test_eager_decode_error_is_visible_and_retains_working_context(guided_window, qtbot, tmp_path):
+@pytest.mark.parametrize("drawer_visible", [False, True])
+def test_eager_decode_error_is_visible_and_retains_working_context(guided_window, qtbot, tmp_path, drawer_visible):
     window = guided_window
+    window.guided.panels.set_visible("drawer", drawer_visible)
+    QApplication.processEvents()
     source = tmp_path / "broken.etlayout"
     source.write_bytes(b"not a project archive")
     project, view = window.project, window.capture_view_state()

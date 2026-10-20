@@ -109,6 +109,34 @@ def main(argv=None):
         capture(window, "actual-e1-verification-guidance")
         receipt["checks"].append({"name": "Actual E1 electrical result; truthful missing-mesh evidence with guarded direct action",
                                    "effective_resistance_ohm": result.metrics["effective_resistance"]})
+
+        window.field_combo.setCurrentIndex(window.field_combo.findData("current_density"))
+        window.colormap_combo.setCurrentIndex(window.colormap_combo.findData("viridis"))
+        window.legend_scale.minimum.setText("0 mA/µm²")
+        window.legend_scale.maximum.setText("20 mA/µm²")
+        window.legend_scale.lock.setChecked(True)
+        assert window.legend_scale.validated_limits() == (0., 2e10)
+        window.guided.panels.set_visible("drawer", False)
+        wait_desktop_events()
+        before = window.capture_view_state()
+        working = window.project
+        broken = output / "invalid-project.etlayout"
+        broken.write_bytes(b"not an ETLayout archive")
+        window.open_project(broken)
+        deadline = time.monotonic() + 30
+        while window.history_opener.jobs or window.history_workflow.loader.jobs or window.prepare_job:
+            if time.monotonic() > deadline:
+                raise TimeoutError("Failed project opening did not finish")
+            wait_desktop_events()
+        wait_desktop_events()
+        assert window.project is working and window.result is result
+        assert window.guided.panels.visible("drawer") and window.guided.drawer.currentIndex() == 0
+        assert "Opening the selected project failed" in window.guided.last_error_detail
+        assert window.capture_view_state() == before
+        capture(window, "e1-failed-open-with-retained-camera")
+        assert window.capture_view_state() == before
+        receipt["checks"].append({"name": "Actual invalid archive opens Issues from a collapsed drawer without changing project, result or camera",
+                                   "camera_center": list(before["center"])})
         receipt["status"] = "passed"
         receipt["elapsed_seconds"] = time.monotonic() - started
         (output / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
