@@ -7,7 +7,7 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-from PySide6.QtWidgets import QTableWidgetItem
+from PySide6.QtWidgets import QLineEdit, QPushButton, QSlider, QTableWidgetItem
 
 from etlayout.examples import make_example
 from etlayout.gui.main_window import MainWindow
@@ -33,7 +33,7 @@ def transient_window(qtbot, tmp_path):
     return window
 
 
-def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run(transient_window, tmp_path):
+def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run(transient_window, tmp_path, qtbot):
     window = transient_window
     run = window.result
     original = deepcopy(run.fields)
@@ -50,11 +50,34 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     assert "t = 0 s" in window.result_status.text()
     assert window.time_navigation.isVisible()
     assert not window.analysis_dock.isVisible()
-    assert window.view.height() >= 350
+    # Native styles and display scaling change the available logical pixels.
+    # Protect usable fitted fields and time controls instead of a pixel budget.
+    view = window.view
+    canvas = window.guided.canvas_tabs.currentWidget()
+    assert view.viewport().height() > canvas.height() / 2
+    window.fit_result_layer()
+    support = view.mapFromScene(view.overlay_item.sceneBoundingRect()).boundingRect()
+    assert view.viewport().rect().contains(support)
+    navigation = window.time_navigation
+    for kind in (QPushButton, QLineEdit, QSlider):
+        for control in navigation.findChildren(kind):
+            assert control.isVisible() and control.accessibleName()
+            assert control.visibleRegion().contains(control.rect())
     window.time_navigation.slider.setValue(5)
     selected = window.active_view_result()
     assert selected is run.transient.snapshots[5]
     assert window.get_sampler().sample(layer, "temperature", np.asarray([point]))[0] > 300
+    provenance = window.displayed_provenance()
+    area = view.viewport().width() * view.viewport().height()
+    panels = window.guided.panels
+    panels.maximize_action.trigger()
+    qtbot.waitUntil(lambda: view.viewport().width() * view.viewport().height() > area * 1.7)
+    assert window.active_view_result() is selected and view.result is selected and window.result is run
+    assert window.displayed_provenance() == provenance
+    panels.maximize_action.trigger()
+    qtbot.waitUntil(lambda: panels.visible("left") and panels.visible("right"))
+    assert window.active_view_result() is selected and view.result is selected and window.result is run
+    assert window.displayed_provenance() == provenance
     state = window.capture_view_state()
     window.time_navigation.slider.setValue(0)
     window.restore_view_state(state)

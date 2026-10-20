@@ -39,7 +39,11 @@ Public CI uses only isolated GitHub-hosted Windows runners. The stable
 `source-quality` check runs lint, publication/workflow contracts and fast/package
 policy tests for PRs and main. Full numerical/desktop regression and acceptance
 journeys run on main or a deliberate owner request on an owner-controlled branch. Superseded PR jobs cancel;
-main runs do not duplicate feature-branch pushes. No workflow publishes packages,
+main runs do not duplicate feature-branch pushes. The complete source job has a
+bounded 60-minute budget for coverage, CLI/handbook calculations and the exact
+extended-example nominal projects; the measured full source collection alone
+takes about 40 minutes on a hosted runner. PR check budgets remain separate.
+No workflow publishes packages,
 releases or tags, writes repository contents or holds publishing credentials.
 
 See [`ci.yml`](../.github/workflows/ci.yml) and
@@ -48,7 +52,8 @@ settings. Manual frozen-build evidence is distinct from source tests. Native
 UI inspection and extracted executable checks remain build-host evidence, not
 clean-machine, screen-reader or physical mixed-monitor DPI certification.
 
-Run the ordinary pytest command for a quick local check or the coverage sequence
+Use `pytest -m "fast or packaging"` for focused local contracts. The ordinary
+pytest command runs the full collection; use the coverage sequence
 for an audited full run. Coverage configuration in `pyproject.toml` includes
 branches, multiprocessing/thread workers and subprocesses. The tested Windows
 lock includes coverage.py. Read statement and branch percentages separately:
