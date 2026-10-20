@@ -400,3 +400,12 @@ in 117.828 s with default automatic GC and no explicit collection. An earlier
 30-cycle attempt reached 18 cycles before its 190 s diagnostic budget expired;
 that attempt is incomplete, not a passing stress test. Source diagnostics remain
 separate from final frozen-package and clean-machine validation.
+
+
+The strengthened release journey also passed on the native Windows source build
+in 17.031 s: two real inactive recovery sessions, the actual recovery chooser,
+two MainWindows with independent asynchronous opens, each window's historical
+inspection/return, guarded discard and secondary-window native deletion. Automatic
+GC remained enabled with unchanged settings; no explicit collection was used.
+This bounded production-lifecycle observation does not fix the retained-reference
+fault and must still be repeated in the final frozen candidate.
