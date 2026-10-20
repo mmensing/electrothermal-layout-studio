@@ -5,6 +5,8 @@
 - Move default eager archive/JSON opening, legacy fallback and resource-review
   retries into owned workers. Keep draft/save/history guards and exact resource
   grants; discard cancelled or obsolete generations without replacing the setup.
+- Preserve the exact camera and field range when opening the issue/history drawer;
+  distinguish project-open failures from computation failures.
 - Record ordinary run build provenance; expose it in About, CLI, archives and
   reports. Scope result-cache reuse to that identity; retain unavailable identity
   for older saved results.
