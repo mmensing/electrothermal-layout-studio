@@ -14,10 +14,19 @@ Opening an example prepares the project without solving it.
 
 ## Reference projects
 
-Choose **File → Ready-to-run examples** and select the example by its ID. The
-power examples appear under a section heading in that same menu. Each opens in
-**Coupled DC electrothermal** mode with physical landings, layer mappings,
-measurements and bounded studies already configured.
+Choose **File → Browse example library…** and search E20–E24 by ID or question.
+The references open in **Coupled DC electrothermal** mode with physical landings,
+layer mappings, measurements and bounded studies configured. The direct
+**File → Ready-to-run examples** shortcuts retain the original references.
+
+**Size preset** selects dimensions and their declared current request;
+**Routing variant** selects a supported feed/collection arrangement; **Thermal
+boundary** selects the declared attachment assumption. Review all three before
+**Open example**. A named **Operating scenario** is a separate experiment and
+cannot be combined with family-generation choices in the browser. Large/stress
+presets are explicit choices, and opening never starts a calculation. The
+[cross-generation learning paths](example-paths.md) connect these families to
+smaller conductor, gate-control and sensing examples.
 
 | ID / reference | Dimensions | Nominal request | Purpose / limitations |
 | :-- | --: | --: | :-- |
@@ -82,8 +91,8 @@ than assuming every via in an array carries the same current.
 **Try next:** use **Sweeps & convergence → Parameter sweep…** to investigate the
 physical-port current or collection-metal thickness. Keep current fixed when
 comparing routing changes. Uniform, graded, distributed and intentionally poor
-feed variants are available through the advanced generator below; the GUI menu
-opens the reference configuration.
+feed variants are selectable in **Browse example library…** and reproducible
+through the generator below. Direct menu shortcuts open the reference.
 
 <a id="e21"></a>
 ### E21 · How evenly are long GaN fingers fed?
@@ -108,8 +117,9 @@ finite routing and contact resistance. Every intended source-to-drain channel
 path crosses a gate-controlled region; the total conducting gate width is 16 mm.
 
 **Try next:** compare collection-metal thickness at the same requested current,
-or use the bounded collection study below. Single, dual and distributed feed
-projects can be generated separately without changing active channel geometry.
+or use the bounded collection study below. Choose single, dual or distributed
+feeds in **Browse example library…** without changing active channel geometry;
+review each generated project's requested service before comparing it.
 The local gate model does not establish saturation, breakdown, trapping or
 switching performance.
 
@@ -181,7 +191,8 @@ For a constrained routing comparison:
 
 The experiment does not promise an improvement. Stress and pulsed projects do
 not inherit a verified steady-state routing ranking. Additional geometry presets
-and feed variants are generated on demand; there is no GUI preset/variant picker.
+and feed variants are generated on demand through **Browse example library…**
+or the CLI; they do not inherit the reference's calculation or verification.
 
 ## Engineering reference and reproduction
 

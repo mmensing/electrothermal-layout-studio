@@ -59,7 +59,12 @@ def test_geometry_only_build_has_real_downloads_and_no_result_claim(tmp_path):
     for target in re.findall(r"\]\(([^)]+)\)", document):
         if target.startswith("#"):
             continue
-        assert (markdown.parent / target).is_file(), target
+        file_name, _, fragment = target.partition("#")
+        destination = markdown.parent / file_name
+        assert destination.is_file(), target
+        if fragment:
+            source = destination.read_text(encoding="utf-8")
+            assert f'id="{fragment}"' in source, target
     for target in record["downloads"].values():
         assert (output / target).is_file()
     assert (output / "E1_straight.png").stat().st_size > 10_000
@@ -146,3 +151,129 @@ def test_actual_desktop_capture_is_scoped_to_the_extended_bridge_guide(kind, tmp
         assert "zero blockers and one electrically connected network" in text
         assert "Do not add a direct Drain–Collector contact" in text
         assert "rather than turning warnings off" in text
+
+
+@pytest.mark.parametrize("prefix,suffix", [
+    ("Maintained introduction\n", "\n## Scenario guidance\nKeep [thermal](thermal-example-scenarios.md).\n"),
+    ("", "\nKeep [device](device-engineering-examples.md) and [evidence](example-science.md).\n"),
+    ("Maintained Windows introduction\r\n", "\r\nKeep mixed-newline appendices exactly.\n"),
+])
+def test_regeneration_preserves_contributor_guidance_and_evidence_links(tmp_path, prefix, suffix):
+    root = _SCRIPT.parents[1]
+    path = tmp_path / "guide.md"
+    records = json.loads((root / "docs/example-gallery/manifest.json").read_text(encoding="utf-8"))["examples"][:1]
+    path.write_bytes((prefix + gallery.GENERATED_BEGIN + "\nold generated content\n" + gallery.GENERATED_END + suffix).encode("utf-8"))
+    gallery.write_markdown(records, root / "docs/example-gallery", path, root / "examples")
+    once = path.read_bytes().decode("utf-8")
+    gallery.write_markdown(records, root / "docs/example-gallery", path, root / "examples")
+    assert path.read_bytes().decode("utf-8") == once
+    assert once.startswith(prefix + gallery.GENERATED_BEGIN)
+    assert once.endswith(gallery.GENERATED_END + suffix)
+    assert "nominal-reference.md" in once and "example-science.md" in once
+    assert "old generated content" not in once
+
+
+@pytest.mark.parametrize("existing", ["Contributor prose", gallery.GENERATED_BEGIN + " incomplete",
+                                      gallery.GENERATED_END + gallery.GENERATED_BEGIN])
+def test_regeneration_refuses_unmarked_or_broken_contributor_documents(tmp_path, existing):
+    path = tmp_path / "guide.md"
+    path.write_text(existing, encoding="utf-8")
+    with pytest.raises(ValueError, match="markers|generated-content"):
+        gallery._write_managed(path, "replacement")
+    assert path.read_text(encoding="utf-8") == existing
+
+
+def test_markdown_only_keeps_result_manifests_and_images_byte_identical(tmp_path):
+    root = _SCRIPT.parents[1]
+    output = tmp_path / "assets"
+    output.mkdir()
+    source = root / "docs/example-gallery/manifest.json"
+    record = json.loads(source.read_text(encoding="utf-8"))["examples"][0]
+    manifest = output / "manifest.json"
+    manifest.write_text(json.dumps({"examples": [record]}), encoding="utf-8")
+    image = output / (record["name"] + ".png")
+    image.write_bytes((source.parent / image.name).read_bytes())
+    before = {path.name: path.read_bytes() for path in output.iterdir()}
+    markdown = tmp_path / "guide.md"
+    assert gallery.main(["--markdown-only", "--output", str(output), "--markdown", str(markdown)]) == 0
+    assert {path.name: path.read_bytes() for path in output.iterdir()} == before
+    text = markdown.read_text(encoding="utf-8")
+    assert "historical result illustrations" in text and "not been recalculated" in text
+    assert "source hashes" in text or "hashes" in text
+
+
+@pytest.mark.parametrize("value,unit,expected", [(.002, "W", "2 mW"), (1e-6, "J", "1 µJ"),
+                                               (20e-6, "s", "20 µs"), (-.1, "A", "-100 mA"),
+                                               (300., "K", "300 K"), (0., "A", "0 A")])
+def test_scalar_readings_use_engineering_units_without_changing_values(value, unit, expected):
+    assert gallery._number(value, unit) == expected
+
+
+def test_high_aspect_ratio_support_retains_equal_physical_scale(tmp_path):
+    from matplotlib import pyplot as plt
+
+    mesh = PlanarMesh(np.array([[0., 0.], [1e-6, 0.], [0., 100e-6], [1e-6, 100e-6]]),
+                     np.array([[0, 1, 2], [1, 2, 3]]), {"layer:metal": np.array([0, 1])})
+    result = SimulationResult(mesh, fields={"metal": {"potential": np.array([0., 0., .02, .02])}})
+    gallery._style()
+    figure, axis = plt.subplots()
+    _, details = gallery.draw_field(axis, result, example_info("E1"))
+    figure.canvas.draw()
+    assert axis.get_aspect() == 1.
+    assert details["support_aspect_ratio"] == pytest.approx(100.)
+    assert details["support_bounds_m"] == pytest.approx([0., 0., 1e-6, 100e-6])
+    assert details["display_unit"] == "mV" and details["display_maximum"] == pytest.approx(20.)
+    assert details["minimum"] == 0. and details["maximum"] == .02
+    plt.close(figure)
+
+
+@pytest.mark.parametrize("name,link", [("examples.md", "thermal-example-scenarios.md"),
+                                       ("extended-examples.md", "device-engineering-examples.md")])
+def test_maintained_scenario_guidance_remains_outside_generated_regions(name, link):
+    document = (_SCRIPT.parents[1] / "docs" / name).read_text(encoding="utf-8")
+    assert document.count(gallery.GENERATED_BEGIN) == document.count(gallery.GENERATED_END) == 1
+    maintained = document.split(gallery.GENERATED_END, 1)[1]
+    assert link in maintained
+
+
+def test_partial_manifest_cannot_replace_the_canonical_chooser(tmp_path, monkeypatch):
+    root = _SCRIPT.parents[1]
+    records = json.loads((root / "docs/example-gallery/manifest.json").read_text(encoding="utf-8"))["examples"][:1]
+    monkeypatch.setattr(gallery, "ROOT", tmp_path)
+    path = tmp_path / "docs/examples.md"
+    with pytest.raises(ValueError, match="complete foundational manifest"):
+        gallery.write_markdown(records, root / "docs/example-gallery", path, root / "examples")
+    assert not path.exists()
+
+
+def test_recommended_device_exercises_distinguish_original_current_and_voltage_control(tmp_path):
+    root = _SCRIPT.parents[1]
+    records = json.loads((root / "docs/example-gallery/extended/manifest.json").read_text(encoding="utf-8"))["examples"]
+    path = tmp_path / "device-guide.md"
+    gallery.write_markdown([row for row in records if row["catalog"]["id"] in {"E37", "E38", "E39"}],
+                           root / "docs/example-gallery/extended", path, root / "examples")
+    text = path.read_text(encoding="utf-8")
+    e37 = text.split('## E37 ·', 1)[1].split('## E38 ·', 1)[0]
+    assert "Voltage-controlled GaN coupon" in e37
+    assert "drain voltage stays fixed and current emerges" in e37
+    assert "Original reference instead holds delivered current" in e37
+    e38 = text.split('## E38 ·', 1)[1].split('## E39 ·', 1)[0]
+    assert "Independent drain drives" in e38 and "both requested currents" in e38
+    e39 = text.split('## E39 ·', 1)[1]
+    assert "Lower-current SiC reference (2 A)" in e39
+    assert "original stress case is the one shown in the historical preview" in e39
+    assert "calculate the lower-current scenario separately" in e39
+
+
+def test_partial_generation_cannot_overwrite_canonical_evidence_before_document_rejection(tmp_path, monkeypatch):
+    monkeypatch.setattr(gallery, "ROOT", tmp_path)
+    output = tmp_path / "docs/example-gallery"
+    output.mkdir(parents=True)
+    evidence = output / "manifest.json"
+    evidence.write_bytes(b'original numerical evidence')
+    path = tmp_path / "docs/examples.md"
+    with pytest.raises(ValueError, match="separate --output and --markdown"):
+        gallery.build_gallery(["E1"], output, path, tmp_path / "examples", tmp_path / "cache", no_solve=True)
+    assert evidence.read_bytes() == b'original numerical evidence'
+    assert not (tmp_path / "examples").exists()
+    assert not (tmp_path / "cache").exists()

@@ -8,10 +8,12 @@ using the [README instructions](../../README.md#run-from-source).
 
 ## Open the experiment
 
-Launch the desktop after the one-time installation, then select **File →
-Ready-to-run examples → Fundamentals → E1 · Straight conductor**. The project already contains the
-layout, copper material snapshot, physical layer and terminal conditions. No
-scripting or JSON editing is needed.
+Launch the desktop after the one-time installation. Choose **File → Browse
+example library…**, search **E1**, and select **Straight conductor** with
+**Original reference**. Press **Open example**. The project contains the layout,
+copper material snapshot, physical layer and terminal conditions. No scripting or
+JSON editing is needed. Direct reference shortcuts remain under **File →
+Ready-to-run examples → Conductors and current sharing**.
 
 You will check a known answer, learn the field controls, and save a result before
 moving on to a less uniform layout.

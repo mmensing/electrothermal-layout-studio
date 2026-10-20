@@ -44,6 +44,34 @@ FAMILIES = {
 THERMAL_SCENARIOS = {"attached": 2e-6, "resistive_attach": 1e-5}  # m² K/W, synthetic package interfaces
 METADATA_MARKER = "\n\nExample configuration (SI):\n"
 
+# Shared generation choices: builders and library navigation use the same tables.
+FAMILY_VARIANTS = {
+    "rdl": ("uniform_single", "graded_single", "uniform_distributed", "graded_distributed", "poor_single"),
+    "gan": ("single", "dual", "distributed"),
+    "gan_banks": ("single", "dual", "distributed", "asymmetric"),
+    "sic_stripes": ("narrow", "wide", "cross"),
+    "sic_cells": ("bonds", "clip", "bumps"),
+}
+DEFAULT_VARIANTS = {"rdl": "uniform_single", "gan": "single", "gan_banks": "distributed",
+                    "sic_stripes": "cross", "sic_cells": "bonds"}
+_SIC_PRESETS = {"compact": (250., .25), "reference": (1000., 10.), "large": (2000., 40.)}
+FAMILY_PRESETS = {
+    "gan": {"compact": (4, 60., .075), "small": (16, 250., 1.5),
+            "reference": (32, 500., 5.), "large": (64, 1000., 20.)},
+    "gan_banks": {"compact": (2, 2, 2, 60., .15), "reference": (2, 2, 16, 500., 10.),
+                  "large": (2, 4, 16, 500., 20.), "stress": (2, 4, 16, 500., 30.)},
+    "rdl": {"compact": (200., 1.), "reference": (1000., 10.), "large": (2000., 20.)},
+    "sic_stripes": _SIC_PRESETS,
+    "sic_cells": _SIC_PRESETS,
+}
+
+
+def family_choices(name):
+    """Enumerate builder-supported options without generating geometry or solving."""
+    family = FAMILIES[name]
+    return dict(presets=tuple(FAMILY_PRESETS[family]), variants=FAMILY_VARIANTS[family],
+                thermal=tuple(THERMAL_SCENARIOS))
+
 
 @dataclass(frozen=True)
 class ExampleSettings:
@@ -66,32 +94,22 @@ class ExampleSettings:
 def settings(name, *, preset=None, variant=None, current=None, thermal=None, fingers=None, gate_width_um=None):
     family = FAMILIES[name]
     preset = preset or "reference"
-    variant = variant or {"rdl": "uniform_single", "gan": "single", "gan_banks": "distributed",
-                          "sic_stripes": "cross", "sic_cells": "bonds"}[family]
-    variants = {"rdl": ("uniform_single", "graded_single", "uniform_distributed", "graded_distributed", "poor_single"),
-                "gan": ("single", "dual", "distributed"), "gan_banks": ("single", "dual", "distributed", "asymmetric"),
-                "sic_stripes": ("narrow", "wide", "cross"), "sic_cells": ("bonds", "clip", "bumps")}
-    if variant not in variants[family]:
-        raise ValueError(f"{family} variants: {', '.join(variants[family])}")
+    variant = variant or DEFAULT_VARIANTS[family]
+    if variant not in FAMILY_VARIANTS[family]:
+        raise ValueError(f"{family} variants: {', '.join(FAMILY_VARIANTS[family])}")
+    sizes = FAMILY_PRESETS[family]
     if family == "gan":
-        sizes = {"compact": (4, 60., .075), "small": (16, 250., 1.5),
-                 "reference": (32, 500., 5.), "large": (64, 1000., 20.)}
         if preset not in sizes:
             raise ValueError(f"gan presets: {', '.join(sizes)}")
         count, width, nominal = sizes[preset]
         options = dict(fingers=count, gate_width_um=width, side_um=0.)
     elif family == "gan_banks":
-        sizes = {"compact": (2, 2, 2, 60., .15), "reference": (2, 2, 16, 500., 10.),
-                 "large": (2, 4, 16, 500., 20.), "stress": (2, 4, 16, 500., 30.)}
         if preset not in sizes:
             raise ValueError(f"gan_banks presets: {', '.join(sizes)}")
         columns, rows, count, width, nominal = sizes[preset]
         options = dict(fingers=count, gate_width_um=width, bank_columns=columns, bank_rows=rows,
                        side_um=800. if preset == "compact" else 1200.)
     else:
-        sizes = ({"compact": (200., 1.), "reference": (1000., 10.), "large": (2000., 20.)}
-                 if family == "rdl" else
-                 {"compact": (250., .25), "reference": (1000., 10.), "large": (2000., 40.)})
         if preset not in sizes:
             raise ValueError(f"{family} presets: {', '.join(sizes)}")
         side, nominal = sizes[preset]

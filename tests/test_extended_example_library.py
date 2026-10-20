@@ -50,8 +50,8 @@ def test_gallery_reports_signed_ports_without_owned_zero_drive_placeholders(tmp_
     gallery = load_script("build_example_gallery")
     project = make_example("E28", tmp_path)
     summary, terminals, ports = gallery.operating_point(project)
-    assert "branch -0.1 A (current port" in summary
-    assert "drain 0.3 A (current port" in summary
+    assert "branch -100 mA (current port" in summary
+    assert "drain 300 mA (current port" in summary
     assert "branch_landing 0" not in summary and "drain_landing 0" not in summary
     assert next(item for item in ports if item["id"] == "branch")["value"] == -.1
     # Zero-valued owned placeholders remain available as faithful provenance;
@@ -81,10 +81,10 @@ def test_full_foundation_gallery_links_the_complete_forty_project_catalog(tmp_pa
     examples = tmp_path / "examples"
     generate_all(examples)
     markdown = tmp_path / "all.md"
-    gallery.write_markdown(records, ROOT / "docs/example-gallery", markdown, examples)
+    gallery.write_example_index(markdown, examples)
     text = markdown.read_text(encoding="utf-8")
     assert "The library contains 40 runnable reference examples" in text
-    links = re.findall(r"\| \[(E\d+) · [^\]]+\]\(([^)]+)\)", text)
+    links = re.findall(r"\| <a id=\"e\d+\"></a>\[(E\d+) · [^\]]+\]\(([^)]+)\)", text)
     assert {identifier for identifier, _target in links} == {example_info(name).id for name in EXAMPLE_NAMES}
     index = json.loads((examples / "index.json").read_text(encoding="utf-8"))
     assert [row["name"] for row in index] == EXAMPLE_NAMES
@@ -93,7 +93,31 @@ def test_full_foundation_gallery_links_the_complete_forty_project_catalog(tmp_pa
             assert (examples / row[field]).is_file()
     for identifier, target in links:
         if int(identifier[1:]) <= 19:
-            assert target == "#" + identifier.lower()
+            assert target.endswith("foundation-examples.md#" + identifier.lower())
         else:
             assert target.endswith("#" + identifier.lower())
             assert "extended-examples.md" in target if int(identifier[1:]) >= 25 else "power-examples.md" in target
+
+
+@pytest.mark.fast
+def test_complete_chooser_matches_shared_topics_modes_scenarios_and_workload(tmp_path):
+    from etlayout.example_catalog import EXAMPLE_CATALOG, SUBJECTS
+    from etlayout.example_library import example_card
+
+    gallery = load_script("build_example_gallery")
+    path = tmp_path / "chooser.md"
+    gallery.write_example_index(path, ROOT / "examples")
+    text = path.read_text(encoding="utf-8")
+    assert "See configured walkthrough" not in text
+    for subject in SUBJECTS:
+        assert text.count("## " + subject + "\n") == 1
+    for info in EXAMPLE_CATALOG.values():
+        row = next(line for line in text.splitlines() if f'<a id="{info.id.lower()}"></a>' in line)
+        card = example_card(info.id, scenario=info.recommended_scenario)
+        assert card["project_summary"]["analysis_label"] in row
+        assert info.workload in row
+        scenario = next(item for item in card["choices"]["scenarios"] if item["id"] == info.recommended_scenario)
+        assert scenario["title"] in row
+        assert info.learning_goal in row
+    assert "original is stress" in next(line for line in text.splitlines() if '<a id="e39">' in line)
+    assert "Older diagnostics" in text or "older diagnostics" in text

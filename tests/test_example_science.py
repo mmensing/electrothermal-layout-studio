@@ -19,11 +19,14 @@ def test_every_example_declares_uncalibrated_applicability_without_promoting_mes
     assert len(EXAMPLE_CATALOG) == 40
     for info in EXAMPLE_CATALOG.values():
         record = info.to_dict()
-        assert record["evidence_level"] in {"analytical reference", "engineering / stress experiment",
+        assert record["evidence_level"] in {"analytical reference", "synthetic engineering study",
                                              "synthetic functional demonstration"}
         assert info.physical_scope and info.learning_goal
     assert example_info("E1").evidence_level == "analytical reference"
-    assert example_info("E39").evidence_level == "engineering / stress experiment"
+    assert example_info("E39").evidence_level == "synthetic engineering study"
+    assert example_info("E39").reference_status == "stress"
+    assert example_info("E40").evidence_level == "synthetic engineering study"
+    assert example_info("E40").reference_status == "reference"
     assert not any(info.evidence_level == "calibrated physical reference" for info in EXAMPLE_CATALOG.values())
 
 

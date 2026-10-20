@@ -2,6 +2,13 @@
 
 ## Unreleased 0.4.x — engineering evidence and thermal acceptance
 
+- Unify all forty example IDs under six subjects and shared GUI-led learning paths;
+  expose size, routing, thermal and existing operating scenarios in a focused browser.
+- Keep original quick-menu projects and scientific inputs; distinguish recommended
+  scenarios, stress references, historical figures and current validation evidence.
+- Make both companion routing studies discoverable, ship portable example inputs
+  for installed builds, and preserve maintained guidance during gallery regeneration.
+
 - Add independent current-crowding/Joule references, fixed-area hotspot metrics,
   physical local refinement, graded sizing and selected-metric mesh confidence.
 - Add global/layer/region hard temperature limits, retained failure diagnostics,

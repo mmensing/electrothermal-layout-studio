@@ -25,8 +25,9 @@ This walkthrough uses the current seven-stage workspace. The later ribbon
 references describe the historical interface; use the linked guided workflow
 for current equivalents.
 
-1. Choose **File → Ready-to-run examples → Fundamentals → E1 · Straight conductor**. This opens a real copper
-   conductor with a 2 µm thickness, source reference and 0.02 V drain condition.
+1. Choose **File → Browse example library…**, search **E1**, and select **Straight
+   conductor** with **Original reference**. Press **Open example**. This opens a
+   copper conductor with a 2 µm thickness, source reference and 0.02 V drain condition.
 2. In **Mesh & checks**, select **Run validation** (F6). Inspect the Issues drawer
    and use **Locate** to inspect reported geometry.
 3. Select **Generate / update mesh** (F7). After solving, **Results → Appearance → Show mesh**

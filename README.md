@@ -74,8 +74,10 @@ walkthroughs](docs/examples.md) explain how to reach and interpret these views.
 
 ## Your first GUI calculation
 
-After installation, launch the application and choose **File → Ready-to-run
-examples → Fundamentals → E1 · Straight conductor**. Its configuration is already complete.
+After installation, choose **File → Browse example library…**, search **E1**,
+and open **Straight conductor** with **Original reference**. Its configuration is
+already complete. The categorized **Ready-to-run examples** menu remains a shortcut
+to the original references.
 
 1. Select **DC electrical** in the header. Visit **Layers & Materials** and
    **Contacts & Connections** to see the copper strip and its two terminals.
@@ -90,24 +92,46 @@ examples → Fundamentals → E1 · Straight conductor**. Its configuration is a
    [a bend, a via ladder or a pulsed heater](docs/examples.md).
 
 The [first-calculation guide](docs/handbook/first-calculation.md) explains the
-independent analytical check. For a larger device, the [power-example guide](docs/power-examples.md)
-introduces millimeter RDL, long-finger/multi-bank GaN and SiC on-state source
-collection. All **40 reference projects** open through the categorized example menu;
-opening an example does not automatically start a calculation. Large cases are
-labeled before execution. The [extended GUI walkthroughs](docs/extended-examples.md)
-add E25–E40: analytical coupons, contacts and networks, thermal experiments,
-pulsed constrictions, independently driven GaN banks, SiC active islands and
-a package interposer.
+independent analytical check. All **40 reference projects** remain available;
+opening or generating an example never starts a calculation. Large cases are
+identified before execution.
 
-For a device operating question, open E37–E39 and use **File → Choose example
-operating scenario…**: explore voltage-driven GaN characteristics, parallel-bank
-sharing or lower-current SiC operation while retaining the original references.
-E40 keeps its 5 A interposer reference for separating internal and external-feed
-losses. **Studies → Run configured study…** runs the stored experiment;
-**Studies → Finite-contact TLM study (E27)…** fits four actual contact coupons in
-a new output folder. Follow the [device guide](docs/device-engineering-examples.md)
-and [contact-extraction guide](docs/contact-extraction.md) for GUI steps,
-measured observations and model limitations.
+## Find your next experiment
+
+The [example library](docs/examples.md) brings early references and expanded
+structures together by question. Numbers are stable IDs, not a difficulty order.
+Follow one of the [six GUI learning paths](docs/example-paths.md):
+
+| Engineering question | Start small | Continue toward a device or study |
+| --- | --- | --- |
+| Resistance and current sharing | E1 → E2/E3 | E25/E26 coupons; E28/E32 networks |
+| Contacts and sensing | E6 → E27 | E27 finite-contact TLM study; E14/E31 sensing |
+| Multilayer routing and packages | E4 → E5 | E12/E30 via routes; E20 RDL and E40 interposer |
+| Heat paths and thermal interaction | E10 → E11 | E33 anchors, E34 sensor, E35 die attachment |
+| Pulses and thermal storage | E17 → E18/E19 | E36 constriction, peak/final fields and time-step studies |
+| Semiconductor interconnects | E37 voltage-controlled GaN; E39 lower-current SiC | E16 → E21 → E38/E22 GaN; E23/E24 SiC collection |
+
+In **Browse example library…**, inspect **Size preset**, **Routing variant**,
+**Thermal boundary** and **Operating scenario** where supported. A size preset
+changes scale and its declared operating point; a routing variant changes
+supported feed geometry; a scenario selects a named experiment. The browser
+recommends **Voltage-controlled GaN coupon** for E37 and **Lower-current SiC
+reference (2 A)** for E39. **Original reference** remains explicit: E39's original
+10 A setup is a stress experiment. Existing reference-menu shortcuts keep their
+original inputs. **File → Choose example operating scenario…** also changes the
+scenario of an opened example.
+
+E7/E8 remain deliberate ungated-bypass contrasts, and E9 remains a doped SiC
+resistor. They are distinct lessons from the fully gated GaN and distributed SiC
+on-state models. Follow the [device guide](docs/device-engineering-examples.md)
+and [power-family reference](docs/power-examples.md) for scope and measured evidence.
+
+**Studies → Run configured study…** runs an available stored experiment;
+**Studies → Finite-contact TLM study (E27)…** fits actual contact coupons in a new
+output folder. The [two companion routing experiments](examples/README.md#companion-routing-experiments)
+form a separate collection for bounded optimization. Browse the
+[project downloads](examples/README.md) or [documentation index](docs/README.md)
+without searching through individual GDS/OASIS files.
 
 ## Read a result as an engineering decision
 
@@ -131,10 +155,11 @@ and measured verification.
 
 ## Install on Windows
 
-**Development / unreleased 0.4.x:** Physical mesh confidence, thermal-stack and
-heat-deposition controls, new operating scenarios, finite-contact TLM studies,
-hard temperature limits and engineering results require the matching source
-checkout. Published 0.4.0 Windows binaries do not include these additions.
+**Development / unreleased 0.4.x:** The searchable example library, physical mesh
+confidence, thermal-stack and heat-deposition controls, new operating scenarios,
+finite-contact TLM studies, hard temperature limits and engineering results
+require the matching source checkout. Published 0.4.0 Windows binaries do not
+include these additions.
 
 **0.4.0 · research prototype · MPL-2.0 original source.**
 Windows 11 x64 is the validated desktop platform. Download a published Windows
@@ -197,8 +222,10 @@ remain SI.
 
 - [Feature catalog](docs/features.md), [guided desktop workflow](docs/desktop-workflow.md)
   and [engineering result interpretation](docs/engineering-results.md).
-- [Use-case gallery](docs/examples.md), [power devices](docs/power-examples.md),
-  [pulsed operation](docs/handbook/transient.md) and the [physics handbook](docs/handbook/README.md).
+- [Example catalog](docs/examples.md), [GUI learning paths](docs/example-paths.md),
+  [project downloads](examples/README.md) and the [documentation index](docs/README.md).
+- [Power devices](docs/power-examples.md), [pulsed operation](docs/handbook/transient.md)
+  and the [physics handbook](docs/handbook/README.md).
 - [Developer guide](docs/developer-guide.md), [validation](docs/validation.md),
   [architecture](docs/architecture.md) and [change history](CHANGELOG.md).
 - [Contributing](CONTRIBUTING.md), [security reporting](SECURITY.md) and

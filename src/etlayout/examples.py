@@ -310,14 +310,9 @@ def _build_intro(name, builder, p):
 def generate_all(directory: str | Path) -> list[Project]:
     from etlayout.example_catalog import example_info
     projects = [make_example(name, directory) for name in EXAMPLE_NAMES]
-    manifest = [{"name": p.name, "project": p.name + ".etl", "gds": p.name + ".gds",
+    manifest = [{**example_info(p.name).to_dict(), "project": p.name + ".etl", "gds": p.name + ".gds",
                  "oasis": p.name + ".oas", "description": p.notes,
-                 "title": example_info(p.name).title, "category": example_info(p.name).category,
-                 "learning_goal": example_info(p.name).learning_goal,
-                 "source_sha256": p.layout.sha256,
-                 "level": example_info(p.name).level, "reference_tier": example_info(p.name).reference_tier,
-                 "physical_scope": example_info(p.name).physical_scope,
-                 "evidence_level": example_info(p.name).evidence_level} for p in projects]
+                 "source_sha256": p.layout.sha256} for p in projects]
     Path(directory, "index.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return projects
 

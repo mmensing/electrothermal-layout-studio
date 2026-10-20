@@ -532,6 +532,7 @@ class GuidedWorkspace(QObject):
             "Save content-addressed copy…": ("save_v3", lambda: w.save_as(archive_format=3)),
             "Save legacy-compatible copy…": ("save_legacy", lambda: w.save_as(archive_format=2)),
             "Duplicate project…": ("duplicate", w.duplicate_project),
+            "Browse example library…": ("example_library", w.browse_example_library),
             "Choose example operating scenario…": ("example_scenario", w.choose_example_scenario),
             "Relink layout…": ("relink", w.relink_layout), "Exit": ("exit", w.close),
             "Export / share results…": ("export_share", lambda: w.share_export()),

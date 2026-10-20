@@ -477,7 +477,7 @@ class MainWindow(QMainWindow):
         welcome_actions = QGridLayout()
         for index, (title, callback) in enumerate([("New project", self.new_project), ("Import layout", self.import_layout),
                                 ("Open project", self.open_project), ("Try straight conductor", lambda: self.load_example("E1")),
-                                ("Try GaN HEMT", lambda: self.load_example("E7"))]):
+                                ("Try gated GaN coupon", lambda: self.load_example("E37", "voltage_controlled"))]):
             button = QPushButton(title)
             button.clicked.connect(callback)
             welcome_actions.addWidget(button, index // 3, index % 3)
@@ -866,17 +866,22 @@ class MainWindow(QMainWindow):
         ]:
             files.addAction(self.action(title, callback, shortcut))
         files.addSeparator()
+        files.addAction(self.action("Browse example library…", self.browse_example_library, "Ctrl+Shift+O"))
         examples = files.addMenu("Ready-to-run examples")
-        from etlayout.example_catalog import example_info
+        from etlayout.example_catalog import SUBJECTS, example_info
         from etlayout.examples import EXAMPLE_NAMES
-        categories = {}
+        categories = {subject: examples.addMenu(subject) for subject in SUBJECTS}
         for name in EXAMPLE_NAMES:
             info = example_info(name)
             if info.category not in categories:
                 categories[info.category] = examples.addMenu(info.category)
             label = f"{info.id} · {info.title}"
+            if info.reference_status == "stress":
+                label += " · stress original"
             action = self.action(label, lambda checked=False, example=name: self.load_example(example))
-            detail = "\n" + info.physical_scope
+            detail = (f"\n{info.level} · {info.role} · {info.workload}\n" + info.physical_scope)
+            if info.reference_status == "stress":
+                detail += "\nOriginal reference is a stress experiment. Browse the library for the recommended lower-current scenario."
             if info.family:
                 from etlayout.power_examples import reference_summary
                 detail = "\n" + reference_summary(name) + detail
@@ -3272,15 +3277,28 @@ class MainWindow(QMainWindow):
                 self.import_layout()
             self.update_title()
 
-    def load_example(self, name, scenario=None):
-        if not self.confirm_discard(lambda: self.load_example(name, scenario)):
+    def browse_example_library(self):
+        if self.job or (self.guided.power and self.guided.power.job):
+            self.statusBar().showMessage("Finish or cancel the active computation before opening another example.")
+            return
+        from etlayout.gui.example_library import ExampleLibraryDialog
+
+        dialog = ExampleLibraryDialog(self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_example(**dialog.selection())
+
+    def load_example(self, name, scenario=None, *, preset=None, variant=None, thermal=None):
+        options = dict(preset=preset, variant=variant, thermal=thermal)
+        if not self.confirm_discard(lambda: self.load_example(name, scenario, **options)):
             return
         try:
-            from etlayout.examples import make_example
+            from etlayout.example_library import create_library_example
+
             destination = self.recovery_path.parent / "examples"
-            project = make_example(name, destination, scenario=scenario)
+            project = create_library_example(name, destination, scenario=scenario, **options)
             self.set_project(project)
-            self.log(f"Loaded {project.name}. All physical parameters remain editable. Press F5 to solve.")
+            if self.project is project:
+                self.log(f"Loaded {project.name}. All physical parameters remain editable. Press F5 to solve.")
         except Exception as error:
             self.error("Example could not be loaded", error)
 
@@ -3300,9 +3318,9 @@ class MainWindow(QMainWindow):
 
     def apply_example_view_defaults(self):
         """Choose a useful initial map once when opening a catalog project."""
-        from etlayout.example_catalog import EXAMPLE_CATALOG
+        from etlayout.example_library import library_info_for_project
 
-        info = EXAMPLE_CATALOG.get(self.project.name)
+        info = library_info_for_project(self.project)
         if info is None:
             return
         index = self.field_layer.findData(info.layer)
