@@ -2646,9 +2646,9 @@ class MainWindow(QMainWindow):
                     message = f"Compared with {source_name} · {scope.lower()}."
                     if not active.converged:
                         message = "NOT CONVERGED: one or both source runs. " + message
-            self.field_hint.setText(message)
             if active is not None and "time_s" in active.metrics:
-                self.field_hint.setText(f"t = {active.metrics['time_s']:.6g} s · " + message)
+                message = f"t = {engineering(active.metrics['time_s'], 's')} · " + message
+            self.field_hint.setText(message)
             self.field_hint.setToolTip(message if self.display_result is None else
                                        f"Current − {self.difference_name}\n{self.field_region.currentText()}\n{message}")
             self.field_layer.setToolTip(self.field_layer.currentText() + "\n" + message)

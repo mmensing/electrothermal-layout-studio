@@ -48,6 +48,8 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     assert window.get_sampler().sample(layer, "temperature", np.asarray([point]))[0] == pytest.approx(300)
     assert window.displayed_provenance()["time_s"] == 0.
     assert "t = 0 s" in window.result_status.text()
+    assert window.field_hint.text().startswith("t = 0 s · ")
+    assert window.field_hint.toolTip().startswith("t = 0 s · ")
     assert window.time_navigation.isVisible()
     assert not window.analysis_dock.isVisible()
     # Native styles and display scaling change the available logical pixels.
@@ -66,6 +68,10 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     window.time_navigation.slider.setValue(5)
     selected = window.active_view_result()
     assert selected is run.transient.snapshots[5]
+    assert selected.metrics["time_s"] == pytest.approx(250e-6)
+    selected_time = "t = 250 µs · "
+    assert window.field_hint.text().startswith(selected_time)
+    assert window.field_hint.toolTip().startswith(selected_time)
     assert window.get_sampler().sample(layer, "temperature", np.asarray([point]))[0] > 300
     provenance = window.displayed_provenance()
     area = view.viewport().width() * view.viewport().height()
@@ -83,6 +89,8 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     window.restore_view_state(state)
     assert window.active_view_result() is selected
     assert window.result is run
+    assert window.field_hint.text().startswith(selected_time)
+    assert window.field_hint.toolTip().startswith(selected_time)
     for name, fields in original.items():
         for key, values in fields.items():
             np.testing.assert_array_equal(values, run.fields[name][key])
