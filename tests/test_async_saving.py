@@ -414,7 +414,7 @@ def test_gui_saves_opened_json_as_portable_archive_without_replacing_metadata(sa
     archive_io.save_json(project, source)
     original = source.read_bytes()
     window.open_project(source)
-    qtbot.waitUntil(lambda: not window.prepare_job and not window.hierarchy_jobs, timeout=30000)
+    qtbot.waitUntil(lambda: not window.history_opener.jobs and not window.prepare_job and not window.hierarchy_jobs, timeout=30000)
     assert window.path == source and window.project.name == project.name
     window.project.notes = "edited through the standard GUI workflow"
     window.dirty = True

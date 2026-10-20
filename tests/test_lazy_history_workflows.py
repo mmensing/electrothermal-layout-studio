@@ -290,8 +290,8 @@ def test_reviewed_resources_keep_the_edited_working_document(guided_window, qtbo
     retained_studies = [SweepRow(.02, result)]
     window.studies = retained_studies
     view = window.capture_view_state()
-    window._catalog_revision = window.document_revision
-    window._catalog_review_restore = working
+    window.project_opening.revision = window.document_revision
+    window.project_opening.review_restore = working
     window.history_opener.submit(source, window.document_epoch, policy=policy, inspection=inspection)
     qtbot.waitUntil(lambda: window.history_workflow.store is not None and not window.history_opener.jobs
                     and not window.history_workflow.loader.jobs, timeout=30000)
@@ -335,7 +335,7 @@ def test_catalog_commit_waits_for_a_save_started_after_open_request(
         assert window._queue_save(destination, archive_format=3)
         qtbot.waitUntil(saving_started.is_set)
         permit_catalog.set()
-        qtbot.waitUntil(lambda: window._pending_catalog is not None)
+        qtbot.waitUntil(lambda: window.project_opening.pending is not None)
         qtbot.wait(60)
         assert window.project is original and window.save_job is not None
         permit_save.set()

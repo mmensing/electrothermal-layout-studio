@@ -91,6 +91,21 @@ threads and 49 identical compared fields; its complete four-CPU run was slower.
 Use [validation](validation.md) for measured source, native and frozen checks,
 rather than inferring verification or speedup from a requested CPU count.
 
+Project opening is owned by `gui.project_opening.ProjectOpeningController`.
+The controller applies one final document transition after the shared draft,
+Save/Discard/Stay, active-job and historical-read guards. Its `HistoryOpener`
+performs container inspection, eager schema-1/2/3 and JSON deserialization,
+resource resolution and eager history reads off the GUI thread. Optional
+schema-3 lazy opening retains its bounded private snapshot and field cache.
+Resource dialogs run on the Qt thread; approved retries retain the inspected
+archive bytes or verified catalog digest, rather than granting a replaced file
+at the same path. Relinking also resolves in the worker. Epoch/generation checks
+reject stale success, error and consent replies. Same-document authorization
+preserves edits/view/undo and does not make fields current after a physical edit.
+Cancellation is checked between eager reader phases; an active bounded native
+array decode finishes off-thread before its cancelled reply is discarded.
+No QObject or QThread is destroyed while its owned read is still running.
+
 The desktop coordinator is non-daemon to permit nested study workers. Its queue receiver performs
 deserialization outside the GUI thread, then signals the main thread to update widgets. `psutil`
 supports cancellation of the owned coordinator and descendants. Preparation and hierarchy jobs

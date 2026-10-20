@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Cancellable schema-3 opening with review bound to one private-copy generation."""
+"""Owned background project opening; reviewed grants bind one archive generation."""
 from __future__ import annotations
 
 import json
@@ -10,15 +10,17 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, QThread, Signal, Slot
 
 from etlayout.io.history_store import open_history_catalog
+from etlayout.io.project import load_run_history, resolve_project
 from etlayout.io.resources import (
     ExternalResourcePolicy,
     ProjectInspection,
     ResourceAccessError,
     _canonical_checked,
     classify_resource,
+    inspect_project,
 )
 from etlayout.models import SimulationError
 
@@ -31,6 +33,7 @@ class HistoryOpenRequest:
     policy: ExternalResourcePolicy
     cache_bytes: int
     inspection: ProjectInspection | None = None
+    lazy: bool = True
 
 
 def _schema(path, policy, cancel):
@@ -110,7 +113,6 @@ def catalog_inspection(store):
 class HistoryOpenJob(QThread):
     loaded = Signal(object, object, object)
     review_required = Signal(object, object, object)
-    legacy = Signal(object)
     failed = Signal(object, object)
 
     def __init__(self, request, parent=None):
@@ -122,15 +124,43 @@ class HistoryOpenJob(QThread):
     def cancel(self):
         self._cancel.set()
 
+    def _checkpoint(self):
+        if self._cancel.is_set():
+            raise SimulationError("Project opening was cancelled; the working project was retained")
+
     def run(self):
         request, store = self.request, None
         inspection = request.inspection
         try:
-            # A reviewed retry must verify the digest before interpreting another
-            # generation or resolving any path; do not re-probe/reclassify it.
-            if inspection is None and _schema(request.path, request.policy, self._cancel.is_set) != 3:
-                if not self._cancel.is_set():
-                    self.legacy.emit(request)
+            self._checkpoint()
+            # Keep legacy/JSON and default eager deserialization off the GUI too.
+            # Review retries use the held bytes; grants never transfer to a newly
+            # replaced container at the same filename.
+            lazy = request.lazy and not (inspection and (
+                inspection.relinked or inspection.discard_stale_result
+            ))
+            if inspection is None:
+                if not lazy or _schema(request.path, request.policy, self._cancel.is_set) != 3:
+                    inspection = inspect_project(request.path, allow_network_container=request.policy.allow_network)
+            if (not lazy and inspection is not None and inspection.archive_data is None
+                    and inspection.metadata.get("schema_version") == 3
+                    and getattr(inspection, "_archive_sha256", None)):
+                # A metadata-only review may outlive a changed lazy preference.
+                # Verify its recorded generation before creating an eager reader;
+                # only the owned bounded snapshot supplies bytes for this retry.
+                store = open_history_catalog(inspection, external_policy=request.policy,
+                    cache_bytes=request.cache_bytes, cancel=self._cancel.is_set)
+                inspection = inspect_project(store.source, _archive_data=store._snapshot_path.read_bytes())
+            if not lazy or (inspection and inspection.metadata.get("schema_version") != 3):
+                self._checkpoint()
+                project, result = resolve_project(inspection, external_policy=request.policy)
+                self._checkpoint()
+                history = [] if inspection.relinked else load_run_history(
+                    inspection.source, external_policy=request.policy, _archive_data=inspection.archive_data)
+                self._checkpoint()
+                project._resource_history = history
+                project._opening_result = result
+                self.loaded.emit(request, project, None)
                 return
             store = open_history_catalog(inspection or request.path, external_policy=request.policy,
                                          cache_bytes=request.cache_bytes, cancel=self._cancel.is_set)
@@ -156,10 +186,13 @@ class HistoryOpenJob(QThread):
 
 
 class HistoryOpener(QObject):
-    """Only the current request can replace a document or ask for resource grants."""
+    """Only the current request can replace a document or ask for resource grants.
+
+    Eager decoding is cancellable between bounded reader phases; an in-progress
+    native array decode finishes off-thread before cancellation disposes it.
+    """
     loaded = Signal(object, object, object)
     review_required = Signal(object, object, object)
-    legacy = Signal(object)
     failed = Signal(object, object)
     busy_changed = Signal(bool)
 
@@ -169,18 +202,17 @@ class HistoryOpener(QObject):
         self.request = None
         self.jobs = []
 
-    def submit(self, path, epoch, *, policy=None, cache_bytes=256 * 1024**2, inspection=None):
+    def submit(self, path, epoch, *, policy=None, cache_bytes=256 * 1024**2, inspection=None, lazy=True):
         self.cancel()
         request = HistoryOpenRequest(epoch, self.generation, Path(path), policy or ExternalResourcePolicy(),
-                                     cache_bytes, inspection)
+                                     cache_bytes, inspection, lazy)
         self.request = request
         job = HistoryOpenJob(request, self)
         self.jobs.append(job)
         job.loaded.connect(self._loaded)
         job.review_required.connect(self._review)
-        job.legacy.connect(self._legacy)
         job.failed.connect(self._failed)
-        job.finished.connect(lambda: self._finished(job))
+        job.finished.connect(self._finished)
         self.busy_changed.emit(True)
         job.start()
         return request
@@ -191,25 +223,27 @@ class HistoryOpener(QObject):
         for job in self.jobs:
             job.cancel()
 
+    @Slot(object, object, object)
     def _loaded(self, request, project, store):
         if request != self.request:
-            store.close()
+            if store is not None:
+                store.close()
             return
         self.loaded.emit(request, project, store)
 
+    @Slot(object, object, object)
     def _review(self, request, inspection, error):
         if request == self.request:
             self.review_required.emit(request, inspection, error)
 
-    def _legacy(self, request):
-        if request == self.request:
-            self.legacy.emit(request)
-
+    @Slot(object, object)
     def _failed(self, request, error):
         if request == self.request:
             self.failed.emit(request, error)
 
-    def _finished(self, job):
+    @Slot()
+    def _finished(self):
+        job = self.sender()
         if job in self.jobs:
             self.jobs.remove(job)
         job.deleteLater()

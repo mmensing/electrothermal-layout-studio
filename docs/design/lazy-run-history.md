@@ -7,6 +7,14 @@ an older project does not convert it, and the default writer/recovery format
 remains schema 2. Storage access does not change physical models or acceptance
 criteria.
 
+All desktop File Open paths, including eager legacy and JSON decoding, use the
+owned `ProjectOpeningController` / `HistoryOpener` pipeline. Resource review is a
+Qt-thread interaction; the reviewed reader retry remains off-thread. Eager
+loading semantics and public Python API return types are unchanged. Cancellation
+is checked between bounded eager phases; native array decoding already in
+progress completes in the worker before its reply is discarded. Epoch/generation
+checks and the final shared document transition protect newer edits and views.
+
 ## Using the application
 
 1. Create a portable schema-3 copy with **File → Save content-addressed copy…**.

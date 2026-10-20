@@ -114,6 +114,7 @@ def test_window_geometry_drawing_undo_and_persistence(window, qtbot, tmp_path):
     window.autosave_timer.stop()
     assert window.path.exists()
     window.open_project(window.path)
+    qtbot.waitUntil(lambda: not window.history_opener.jobs and not window.prepare_job, timeout=30000)
     assert window.project.layers[0].id == original.layers[0].id
 
 
