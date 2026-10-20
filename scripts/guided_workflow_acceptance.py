@@ -19,19 +19,14 @@ from dataclasses import asdict
 from pathlib import Path
 
 
-def wait_for_workers(window, process_events, *, timeout=180., check=None):
-    """Deliver Qt events until accepted operations, including queued saves, finish."""
-    deadline = time.monotonic() + timeout
-    while (window.job or window.prepare_job or window.hierarchy_jobs
-           or window.save_job or window._save_queue
-           or (window.guided.power and window.guided.power.job)):
-        if check:
-            check()
-        if time.monotonic() >= deadline:
-            raise TimeoutError("Guided workflow workers did not finish: " + window.console.toPlainText())
-        process_events(40)
-    if check:
-        check()
+def wait_for_workers(window, process_events, *, timeout=180., check=None, allow_modal=None):
+    """Wait for every owned reader, calculation and durable queued save."""
+    if __package__:
+        from .desktop_acceptance_support import wait_desktop_workers
+    else:
+        from desktop_acceptance_support import wait_desktop_workers
+
+    wait_desktop_workers(window, timeout=timeout, process_events=process_events, check=check, allow_modal=allow_modal)
 
 
 def main(argv=None):
@@ -52,11 +47,13 @@ def main(argv=None):
         os.environ.pop("QT_QPA_PLATFORM", None)
     import klayout.db as db
     from desktop_acceptance_support import (
+        assert_desktop_project,
+        close_desktop_window,
         isolate_acceptance_settings,
         prepare_desktop_fonts,
         wait_desktop_events,
     )
-    from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt, QTimer
+    from PySide6.QtCore import QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QMessageBox
 
@@ -105,7 +102,8 @@ def main(argv=None):
         print(name, flush=True)
 
     def idle(timeout=180):
-        wait_for_workers(window, wait_desktop_events, timeout=timeout, check=check_monitor)
+        wait_for_workers(window, wait_desktop_events, timeout=timeout, check=check_monitor,
+            allow_modal=lambda modal: expected_modal and isinstance(modal, expected_modal))
         wait_desktop_events(100)
         check_monitor()
         assert not window.guided.last_error, window.guided.last_error
@@ -162,28 +160,8 @@ def main(argv=None):
     def dispose():
         nonlocal window
         if window:
-            window.autosave_timer.stop()
-            window.cancel_geometry()
-            if window.job:
-                window.cancel_job()
-            if window.guided.power and window.guided.power.job:
-                window.guided.power.cancel_job()
-            # A failed journey must still stop its owned save thread before
-            # destroying Qt objects. Cancellation here never makes a save pass.
-            if monitor_error or receipt.get("result") == "failed":
-                window.cancel_saving()
-            wait_for_workers(window, wait_desktop_events)
-            if window.inspection_context:
-                window.inspection_context["dirty"] = False
-            # Cleanup must not enter another draft dialog after a failed check.
-            window.guided.cancel_selection()
-            window.guided.clear_editor()
-            window.dirty = False
-            assert window.close(), "The acceptance window refused to close after its workers stopped"
-            disposed, window = window, None
-            disposed.deleteLater()
-            QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
-            app.processEvents()
+            close_desktop_window(window)
+            window = None
 
     def monitor():
         nonlocal monitor_error
@@ -374,6 +352,7 @@ def main(argv=None):
             assert {run.configuration_hash for run in archived} == {first.configuration_hash, second.configuration_hash}
             perform("Reopen saved working project", lambda: window.open_project(window.path))
             idle()
+            assert_desktop_project(window, window.path, saved_project)
             assert document_id(window.project) == saved_identity and physics_hash(window.project) == saved_physics
             assert window.project.layers[0].thickness == 3e-6
             record("UX-11/13/17 stale history, immutable export and archive reopen")
