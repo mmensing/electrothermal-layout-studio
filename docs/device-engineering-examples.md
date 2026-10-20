@@ -1,7 +1,9 @@
 # Device engineering studies in the GUI
 
 These scenarios answer specific contact, current-sharing and fixture questions
-with the existing 2.5D models. They retain all forty original references. No
+with the existing 2.5D models. The [semiconductor learning path](example-paths.md#semiconductor-interconnects)
+connects the small coupons to larger families. All forty original references are
+retained. No
 example establishes a transistor rating, full 3D accuracy or experimental
 calibration. The [combined E1–E40 observation index](example-science/device-observations.json)
 joins original, thermal and device observations; the [readable tables](example-science/device-observations.md)
@@ -9,9 +11,13 @@ show the calculated configurations and sensitivity checks.
 
 ## Choose and run a stored experiment
 
-1. Open E37, E38 or E39 through **File → Ready-to-run examples**.
-2. Use **File → Choose example operating scenario…** and select a case below.
-   The project remains editable; generation never starts a calculation.
+1. Choose **File → Browse example library…** and search E37, E38 or E39.
+2. Review **Operating scenario** and choose a case below. E37 recommends
+   **Voltage-controlled GaN coupon**; E39 recommends **Lower-current SiC reference
+   (2 A)**. **Original reference** remains available, including E39's original
+   10 A stress setup. The direct **Ready-to-run examples** shortcuts retain those
+   original inputs. For an already opened example, use **File → Choose example
+   operating scenario…**. Opening prepares an editable project without running it.
 3. Review **Analysis type**, layers, contacts and operating conditions. Validate,
    generate the mesh and run through the numbered workflow.
 4. At **Results**, select a layer and physical quantity, then **Fit layer**.

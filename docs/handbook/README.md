@@ -8,11 +8,14 @@ your question.
 These pages live in the repository so documentation, examples and implementation
 can be reviewed together in GitHub pull requests. They render directly on GitHub,
 work in a local Markdown reader, and require no separate wiki service.
-The instructions cover the current source application, retaining 0.3.1 file and
-CLI compatibility. Install from the [repository README](../../README.md#run-from-source).
-This public source edition does not supply a tagged binary release.
-The [historical engineering notes](../releases/0.3.1.md) retain earlier measurements;
-only checks tied to the current public revision validate this edition.
+The instructions cover the matching source application, retaining supported
+project and CLI compatibility. Install from the
+[repository README](../../README.md#run-from-source). The published
+[0.4.0 Windows release](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.0)
+remains available; newer source-only engineering features do not update that
+binary. Read the [unreleased notes](../releases/0.4.x.md) for those additions.
+Historical observations retain their original source identities; only matching
+checks validate the configuration being inspected.
 
 The [power-routing guide](../POWER_ROUTING.md)
 covers scoped measurements, physical via/port loading, deterministic routing recipes,
@@ -29,7 +32,7 @@ converged calculations, mesh sensitivity and resource-limited benchmarks.
 | Your goal | Start here |
 | --- | --- |
 | Explore the desktop capabilities | [Feature catalog](../features.md) |
-| Choose a GUI use case | [Guided example gallery](../examples.md) |
+| Choose a GUI use case | [All-forty catalog](../examples.md), [six learning paths](../example-paths.md) |
 | Run a first calculation | [First calculation: a copper strip](first-calculation.md) |
 | Understand what is being solved | [Model and physics](model-and-physics.md) |
 | Compare passivation, dielectric heat paths and source depth | [Thermal-stack setup and verification](../thermal-stacks.md) |
@@ -41,7 +44,7 @@ converged calculations, mesh sensitivity and resource-limited benchmarks.
 | Read maps, compare runs and assess accuracy | [Results, exports and validation](results-and-validation.md) |
 | Use Python/CLI or diagnose a problem | [Automation and troubleshooting](automation-and-troubleshooting.md) |
 | Adjust CPU assembly threads or parallelize a study | [CPU execution and Python studies](automation-and-troubleshooting.md#cpu-execution-and-python-studies) |
-| Extend an example experiment | [GUI use cases and example catalog](../examples.md) |
+| Extend an example experiment | [Operating scenarios](../thermal-example-scenarios.md), [device studies](../device-engineering-examples.md), [downloadable projects](../../examples/README.md) |
 | Assess power feeds or optimize bounded routes | [Power interconnects and equal-service routing](../POWER_ROUTING.md) |
 
 Read the first calculation, model and worked-example pages in order for a guided
@@ -119,6 +122,6 @@ Original project source uses [MPL-2.0](../../LICENSE). Dependencies retain their
 own licenses and exceptions; read [licensing](../licensing.md) and
 [third-party notices](../../THIRD_PARTY_NOTICES.md) before redistribution.
 The [maintainer guide](../maintainer-guide.md) governs owner-reviewed publication;
-this source edition does not advertise historical binaries as public releases.
+published binaries and newer source-only capabilities are identified separately.
 
 **Next:** [Run the first calculation →](first-calculation.md)

@@ -241,7 +241,11 @@ def draw_field(ax, result, info):
     active_points = result.mesh.points[np.unique(result.mesh.triangles[ids])]
     _axes(ax, (*active_points.min(axis=0), *active_points.max(axis=0)))
     _fit_ticks(ax)
-    return plotted, {"layer": info.layer, "field": info.field, "unit": FIELD_UNITS[info.field],
+    bounds = (*active_points.min(axis=0), *active_points.max(axis=0))
+    spans = active_points.max(axis=0) - active_points.min(axis=0)
+    ratio = float(spans.max() / spans.min()) if spans.min() > 0 else None
+    return plotted, {"support_bounds_m": list(bounds), "support_aspect_ratio": ratio, "equal_aspect": True,
+                     "layer": info.layer, "field": info.field, "unit": FIELD_UNITS[info.field],
                      "minimum": low, "maximum": high, "display_unit": unit,
                      "display_scale": scale, "normalization": "linear", "uniform": uniform,
                      "display_minimum": lower, "display_maximum": upper}
@@ -291,8 +295,11 @@ def render_example(project, geometry, result, info, output):
         right.text(.5, .5, "Geometry only\nNo solve requested", ha="center", va="center", transform=right.transAxes,
                    color=GRAY, linespacing=1.8)
     count = len(project.layers)
+    support_note = ("Narrow field support is shown at equal x/y scale;\nphysical geometry is never stretched."
+                    if details and details["support_aspect_ratio"] and details["support_aspect_ratio"] > 8 else
+                    "Field panel uses its active-layer extent; scales vary by example.")
     figure.text(.075, .10, f"{count} physical {'layer' if count == 1 else 'layers'} · dashed outlines: interfaces\n"
-                "Field panel uses its active-layer extent; scales vary by example.", fontsize=9.7, color=GRAY)
+                + support_note, fontsize=9.7, color=GRAY)
     for extension in ("png", "svg"):
         target = output.with_suffix("." + extension)
         figure.savefig(target, dpi=192,
@@ -365,6 +372,11 @@ def _relative(path, parent):
 
 
 def _number(value, unit=""):
+    """Use engineering prefixes for scalar readings; retain fixed density conventions."""
+    if unit in {"A", "V", "W", "J", "s", "Ω"} and value and np.isfinite(value):
+        exponent = int(np.clip(3 * np.floor(np.log10(abs(value)) / 3), -12, 9))
+        prefixes = {-12: "p", -9: "n", -6: "µ", -3: "m", 0: "", 3: "k", 6: "M", 9: "G"}
+        return f"{value / 10. ** exponent:.4g} {prefixes[exponent]}{unit}"
     return f"{value:.4g}{' ' + unit if unit else ''}"
 
 
@@ -479,7 +491,7 @@ GUI_EXERCISES = {
             "Use Time-step convergence… and local neck refinement before comparing the peak temperature or the energy deposited per pulse."),
     "E37": ("Inspect channel_a sheet current, the source/drain Contacts records and the bank_a device group; then review gate_a under gate controls.",
             "Every conducting channel path crosses the complete gate-controlled region; localized feeds and finite ohmic contacts remain visible in the loss budget.",
-            "Run the gate-bias sweep at fixed delivered current. Compare required drain voltage and local channel field; conductance-floor current is not predicted leakage."),
+            "In the recommended Voltage-controlled GaN coupon, run the voltage-biased transfer study: drain voltage stays fixed and current emerges as gate bias changes. The Original reference instead holds delivered current; its gate sweep compares required drain voltage. Review local channel field in both; conductance-floor current is not predicted leakage."),
     "E38": ("Compare channel_a and channel_b with a shared manual range, then open bank_a and bank_b in the Analysis Devices table.",
             "Independent drain drives set delivered bank service while the shared source metal and substrate create source-potential and thermal interaction.",
             "Sweep only one bank's gate. Compare its required voltage and field with the other bank while preserving both requested currents."),
@@ -522,119 +534,214 @@ def operating_point(project):
     return "; ".join(applied), terminals, ports
 
 
+GENERATED_BEGIN = "<!-- BEGIN GENERATED EXAMPLE CONTENT -->"
+GENERATED_END = "<!-- END GENERATED EXAMPLE CONTENT -->"
+
+
+def _write_managed(markdown, text):
+    """Replace only a marked region; preserve contributor prose outside it."""
+    markdown = Path(markdown)
+    existing = markdown.read_bytes().decode("utf-8") if markdown.exists() else ""
+    # Contributor appendices can have a different historical newline convention.
+    # Preserve their exact bytes; only the generated block follows its own style.
+    original_block = (existing.split(GENERATED_BEGIN, 1)[-1].split(GENERATED_END, 1)[0]
+                      if GENERATED_BEGIN in existing else existing)
+    crlf = original_block.count("\r\n")
+    newline = "\r\n" if crlf > original_block.count("\n") - crlf else "\n"
+    block = GENERATED_BEGIN + newline + text.rstrip().replace("\r\n", "\n").replace("\n", newline) + newline + GENERATED_END
+    if GENERATED_BEGIN in existing or GENERATED_END in existing:
+        if existing.count(GENERATED_BEGIN) != 1 or existing.count(GENERATED_END) != 1:
+            raise ValueError(f"{markdown}: expected one complete generated-content region")
+        first, last = existing.index(GENERATED_BEGIN), existing.index(GENERATED_END)
+        if first >= last:
+            raise ValueError(f"{markdown}: generated-content markers are out of order")
+        content = existing[:first] + block + existing[last + len(GENERATED_END):]
+    elif existing.strip():
+        raise ValueError(f"{markdown}: add generated-content markers around the section to replace; "
+                         "unmarked contributor documentation will not be overwritten")
+    else:
+        content = block + "\n"
+    markdown.parent.mkdir(parents=True, exist_ok=True)
+    markdown.write_bytes(content.encode("utf-8"))
+
+
+def _guide_link(info, parent):
+    filename = ("foundation-examples.md" if info.reference_tier == "introductory" else
+                "power-examples.md" if info.family else "extended-examples.md")
+    return _relative(ROOT / "docs" / filename, parent) + "#" + info.id.lower()
+
+
+def _evidence_links(info, parent):
+    links = [("Maintained nominal measurements", "example-science/nominal-reference.md"),
+             ("Applicability and verification", "example-science.md")]
+    if info.id in {"E11", "E15", "E18", "E26", "E29", "E30", "E33", "E34", "E35", "E36"}:
+        links.append(("Thermal/scenario observations", "thermal-example-scenarios.md"))
+    if info.id in {"E37", "E38", "E39", "E40"}:
+        links.append(("Device/scenario observations", "device-engineering-examples.md"))
+    if info.id == "E27":
+        links.append(("Contact extraction", "contact-extraction.md"))
+    return " · ".join(f"[{label}]({_relative(ROOT / 'docs' / target, parent)})" for label, target in links)
+
+
+def _recommendation(info, card):
+    selected = next(choice for choice in card["choices"]["scenarios"] if choice["id"] == info.recommended_scenario)
+    operation = card["project_summary"]["analysis_label"] if card["project_summary"] else info.recommended_mode
+    if info.recommended_scenario != "reference":
+        return (f"**Recommended start:** in **File → Choose example operating scenario…**, select "
+                f"**{selected['title']}** (`{selected['id']}`), then review **{operation}**. "
+                "The browser recommends this choice; the quick menu and downloadable ETL retain the original reference. "
+                + ("The original stress case is the one shown in the historical preview; calculate the lower-current scenario separately."
+                   if info.reference_status == "stress" else "")).rstrip()
+    return f"**Starting setup:** **{selected['title']}** · **{operation}**. {card['status_note']}"
+
+
+def _next_step(info, parent):
+    from etlayout.example_catalog import LEARNING_PATHS
+    path = next(item for item in LEARNING_PATHS if info.id in item.examples)
+    position = path.examples.index(info.id)
+    guide = _relative(ROOT / "docs/example-paths.md", parent) + "#" + path.id
+    if position + 1 < len(path.examples):
+        following = example_info(path.examples[position + 1])
+        return f"**Next:** [{following.id} · {following.title}]({_guide_link(following, parent)}) in [{path.title}]({guide})."
+    return f"**Next:** compare saved runs and review the [{path.title} learning path]({guide})."
+
+
+def write_example_index(markdown, examples):
+    """Compact chooser using the desktop browser's topic/scenario/project metadata."""
+    from etlayout.example_catalog import EXAMPLE_CATALOG, SUBJECTS
+    from etlayout.example_library import example_card
+    markdown = Path(markdown)
+    relative = lambda target: _relative(ROOT / "docs" / target, markdown.parent)  # noqa: E731
+    lines = ["# Choose an example", "",
+             f"The library contains {len(EXAMPLE_NAMES)} runnable reference examples, from a straight strip to "
+             "long-finger GaN arrays, SiC on-state collection and package interconnects. IDs are permanent "
+             "references, not a difficulty order. Choose a physical question, then follow its GUI walkthrough.", "",
+             f"Start with the [learning paths]({relative('example-paths.md')}) or **File → Browse example library…**. "
+             "The browser separates **Size preset**, **Routing variant**, **Operating scenario** and "
+             "**Thermal boundary** where supported; opening never starts a calculation.", "",
+             "## Open → inspect → run → compare", "",
+             "1. Open an example in the browser, or use **File → Ready-to-run examples** for the original reference. "
+             "Use **Save project as…** for your copy.",
+             "2. Inspect **Layout & region → Layers & materials → Contacts & connections → Operating conditions**. "
+             "Check the active scenario, drive, named reservoir and independent heat sources.",
+             "3. Validate (F6), mesh (F7), then run (F5). Read the Issues drawer and keep resource limits enabled.",
+             "4. Read Results by layer and quantity; use **Fit layer**, **Metrics & loss budget** and "
+             "**Compare saved runs…**. Change one declared input, keeping delivered service equal when comparing routes.", "",
+             f"[Maintained nominal measurements]({relative('example-science/nominal-reference.md')}) and "
+             f"[scientific scope]({relative('example-science.md')}) describe tested configurations. These single-grid "
+             "observations are not blanket mesh verification or physical calibration. "
+             f"[Historical field previews]({relative('foundation-examples.md')}) keep their original result hashes; "
+             "older diagnostics are not current setup instructions.", ""]
+    for subject in SUBJECTS:
+        lines += ["## " + subject, "", "| Example and walkthrough | Question | Recommended start | Analysis | Workload |",
+                  "| --- | --- | --- | --- | --- |"]
+        for info in EXAMPLE_CATALOG.values():
+            if info.category != subject:
+                continue
+            card = example_card(info.id, scenario=info.recommended_scenario)
+            selected = next(choice for choice in card["choices"]["scenarios"] if choice["id"] == info.recommended_scenario)
+            summary = card["project_summary"]
+            if summary is None:
+                raise ValueError(f"{info.id}: cannot publish a chooser without its configured reference")
+            status = " · original is stress" if info.reference_status == "stress" else ""
+            lines.append(f"| <a id=\"{info.id.lower()}\"></a>[{info.id} · {info.title}]({_guide_link(info, markdown.parent)}) "
+                         f"| {info.learning_goal} | {selected['title']}{status} | {summary['analysis_label']} | {info.workload} |")
+        lines += [""]
+    lines += ["## From field pictures to useful comparisons", "",
+              f"The [foundational walkthroughs]({relative('foundation-examples.md')}), "
+              f"[power-device guide]({relative('power-examples.md')}) and "
+              f"[additional walkthroughs]({relative('extended-examples.md')}) share the same "
+              "open–inspect–run–read–change-one flow. Each links to scientific evidence and states the model's limits.", "",
+              "E7/E8 intentionally include ungated edge bypass; use E37/E16 to learn a fully gated channel. "
+              "E9 is a doped SiC resistor; E23/E24/E39 are SiC MOSFET **on-state interconnect models**. "
+              "The browser recommends E39's lower-current scenario while its original ETL remains a 10 A stress case.", "",
+              f"Two separate [bounded power-routing demonstrations]({relative('POWER_ROUTING.md')}) add feed-generation "
+              "and equal-service optimization workflows. Their source projects remain under `examples/power_routing/`.", "",
+              "**Cost labels describe setup complexity, not measured runtimes.** The browser shows configured "
+              "element/DOF/memory budgets. Size presets and high-current requests do not certify a feasible solve; "
+              f"review the [measured power-example limits]({relative('power-examples.md')}) before running larger cases.", "",
+              "ETL downloads embed the configured project and layout. GDSII/OASIS contain geometry only. "
+              "All existing paths and example IDs are retained.", ""]
+    _write_managed(markdown, "\n".join(lines))
+
+
 def write_markdown(records, output, markdown, examples):
-    from etlayout.power_examples import FAMILIES
+    from etlayout.example_library import example_card
     from etlayout.visualization.sampling import DISPLAY_FIELD_LABELS
     from etlayout.workflow import ANALYSES
 
+    output, markdown, examples = map(Path, (output, markdown, examples))
+    if markdown.resolve() == (ROOT / "docs/examples.md").resolve():
+        if {record["name"] for record in records} != set(ROUTINE_EXAMPLES):
+            raise ValueError("The canonical chooser requires the complete foundational manifest; use --markdown for a partial guide")
+        write_example_index(markdown, examples)
+        markdown = ROOT / "docs/foundation-examples.md"
     asset = lambda name: _relative(output / name, markdown.parent)  # noqa: E731
-    full_catalog = {record["name"] for record in records} == set(ROUTINE_EXAMPLES)
-    power_guide = _relative(ROOT / "docs/power-examples.md", markdown.parent)
-    extended_guide = _relative(ROOT / "docs/extended-examples.md", markdown.parent)
     labels = {(analysis.solver_mode, analysis.transient): analysis.label for analysis in ANALYSES}
-    count = len(EXAMPLE_NAMES)
-    coverage = (f"The library contains {count} runnable reference examples. " if full_catalog else
-                f"This gallery covers {len(records)} of the library's {count} runnable reference examples. ")
     extended_only = {record["name"] for record in records} == set(EXTENDED_EXAMPLES)
-    title = "# From analytical coupons to power devices" if extended_only else "# Explore the examples"
+    title = "# Additional example walkthroughs" if extended_only else "# Foundational example walkthroughs"
     lines = [title, "",
-             "See current crowd around a bend, follow heat into a substrate, or watch a device cool between pulses. "
-             + coverage + "Each project supplies configured geometry, materials, connections and operating conditions. "
-             "These walkthroughs use the desktop controls.", "",
-             "## Open your first example", "",
-             "1. In **File → Ready-to-run examples**, open the appropriate group and choose an example by its stable ID below. "
-             "Opening prepares the project; it does not start a simulation.",
-             "2. Use **Save project as…** to keep your own project. Review the visible **Analysis type**; "
-             "the gallery's analysis column states the mode used for its recorded picture.",
-             "3. Follow **Layout & region → Layers & materials → Contacts & connections → Operating conditions**. "
-             "The example already supplies these inputs; inspect them before changing anything.",
-             "4. In **Mesh & checks**, select **Run validation**, inspect the Issues drawer, then "
-             "**Generate / update mesh**. **Run → Run analysis** starts the background calculation. "
-             "F6, F7 and F5 provide the corresponding shortcuts.",
-             "5. In **Results**, select **Layer** and **Quantity**, then **Fit layer**. "
-             "Use **Appearance** for colors and range, **Metrics & loss budget** for numbers, and **History** for earlier runs.",
-             "6. Try the follow-up question for your example. **Sweeps & convergence** opens parameter, mesh and "
-             "time-step studies; **Compare saved runs…** helps inspect alternatives.", ""]
-    if full_catalog:
-        showcase = _relative(ROOT / "docs/images/showcase/workspace-overview.png", markdown.parent)
-        lines += [f"![Actual application: E12 layout and mesh in the numbered workflow]({showcase})", "",
-                  "*A real E12 workflow view. The large canvas, contextual inspector and Issues/Jobs/History drawer "
-                  "stay together while you move through the numbered stages.*", "",
-                  "## Choose a question", "", "| What do you want to understand? | Start here | Then explore |",
-                  "| --- | --- | --- |",
-                  "| How do geometry and current paths set resistance? | [E1: straight strip](#e1) | [E2: bend and taper](#e2), [E3: parallel paths](#e3) |",
-                  "| Where do multilayer routes become bottlenecks? | [E4: two metals](#e4) | [E5: via array](#e5), [E12: via ladder](#e12), [E13: perforated spreader](#e13) |",
-                  "| What does the voltage probe actually measure? | [E6: Kelvin sensing](#e6) | [E14: resistive bridge](#e14) |",
-                  "| How does a gate change the conducting channel? | [E7: illustrative HEMT](#e7) | [E8: routing resistance](#e8), [E16: fully gated stripes](#e16) |",
-                  "| How far does heat spread? | [E10: layered thermal path](#e10) | [E11: meander heater](#e11), [E15: thermal crosstalk](#e15) |",
-                  "| What happens between pulses? | [E17: heating and cooling](#e17) | [E18: pulsed conductor](#e18), [E19: delayed receiver heating](#e19) |",
-                  f"| How do larger power structures share current? | [E20–E24: power guide]({power_guide}) | [GaN fingers and banks]({power_guide}#e21), [SiC source collection]({power_guide}#e24) |",
-                  f"| What should I explore after the foundations? | [E25–E40: extended walkthroughs]({extended_guide}) | [Contact coupons]({extended_guide}#e27), [thermal paths]({extended_guide}#e35), [device sharing]({extended_guide}#e39) |", ""]
-    if extended_only and any(record["catalog"]["id"] == "E33" for record in records):
+             f"This gallery covers {len(records)} of the library's {len(EXAMPLE_NAMES)} runnable reference examples. "
+             "Use the [complete chooser](" + _relative(ROOT / "docs/examples.md", markdown.parent) + ") "
+             "to select by physical question rather than E-number.", "",
+             "## Read the current evidence before interpreting an old picture", "",
+             "The [maintained nominal matrix](" + _relative(ROOT / "docs/example-science/nominal-reference.md", markdown.parent) + ") "
+             "records all forty configured calculations. [Scientific applicability](" +
+             _relative(ROOT / "docs/example-science.md", markdown.parent) + ") and the linked scenario guides "
+             "separate numerical convergence, engineering acceptance, mesh/time sensitivity and physical calibration.", "",
+             "The scientific previews below are historical result illustrations, retained with their original "
+             "operating points, solver versions and hashes. They have not been recalculated for this documentation edit. "
+             "Their old clipping/overlap diagnostics are superseded as current setup guidance; newly run validation "
+             "and maintained evidence describe the current configuration. A converged picture does not verify "
+             "a different scenario or certify mesh independence.", "",
+             "Every walkthrough follows the same sequence: question, open and inspect, run and read, change one "
+             "thing, evidence, limits and next step. Use the [learning paths](" +
+             _relative(ROOT / "docs/example-paths.md", markdown.parent) + ") for progression across the whole library.", "",
+             "ETL projects embed configuration and geometry; GDSII/OASIS contain geometry only. "
+             "SVG previews retain vector geometry and labels; the finite-element field is rasterized. "
+             "Physical geometry is equal aspect and may appear very narrow for a long finger. "
+             "Use **Fit layer**, meaningful zoom and probes in the GUI; do not infer missing geometry from white space. "
+             "Sheet current uses mA/µm; metal volumetric and via normal current densities are separate quantities "
+             "using mA/µm². New figures use engineering-prefixed scalar units; retained images keep their stated scales.", ""]
+    if extended_only:
         desktop = _relative(ROOT / "docs/images/extended-bridge-results.png", markdown.parent)
         lines += [f"[![Actual E33 bridge temperature results in the Windows application]({desktop})]({desktop})", "",
                   "*Actual 0.4.0 source GUI on native Windows at 125% Qt scale, in a compact 1280 × 800 "
                   "logical-pixel window. The selected bridge temperature map uses the project's 300 K backside "
                   "reservoir. The solver converged; mesh verification is not established for this run. "
-                  "Open the image for full-size controls.*", ""]
-    if extended_only:
-        lines += ["## Choose the question, then inspect the physics", "",
-                  "Start with a compact coupon before moving to a device or package. Keep the supplied nominal "
-                  "inputs for the first calculation; the saved sweeps are follow-up experiments, not validation "
-                  "substitutes. Opening never starts a solve.", "",
-                  "| Question | Start here | Continue with |", "| --- | --- | --- |",
-                  "| Does the numerical result agree with a circuit limit? | [E25: series strip](#e25) | [E28: signed port currents](#e28), [E31: divider taps](#e31) |",
-                  "| How do contacts and routing change local loading? | [E27: Kelvin/contact transfer](#e27) | [E26: neck loading](#e26), [E29: annular paths](#e29), [E30: via banks](#e30), [E32: resistive access](#e32) |",
-                  "| Which thermal path controls the hotspot? | [E33: finite anchors](#e33) | [E34: thermal sensing](#e34), [E35: partial attachment](#e35), [E36: pulse cooling](#e36) |",
-                  "| How do device and package regions share current? | [E37: one gated channel](#e37) | [E38: separately driven banks](#e38), [E39: SiC active islands](#e39), [E40: package interposer](#e40) |", "",
-                  "**Read loading in its physical units.** Channel/film sheet current uses mA/µm; bulk-metal "
-                  "volumetric current density uses mA/µm². Via normal density is a separate interface quantity. "
-                  "A converged field is not automatically mesh verified, and a point corner maximum is not a "
-                  "physically averaged hotspot. Compare delivered service and the loss ledger alongside temperature.", ""]
-    lines += ["## All examples" if full_catalog else "## Examples in this walkthrough", "", "| Example | Focus | Level | Gallery analysis |", "| --- | --- | --- | --- |"]
+                  "This retained screenshot is not a new test of the current checkout.*", ""]
+    lines += ["## Examples in this walkthrough", "", "| Example | Subject | Recorded preview analysis |",
+              "| --- | --- | --- |"]
     for record in records:
-        info = record["catalog"]
+        current = example_info(record["name"])
         label = labels[(record["mode"], bool(record.get("transient")))]
-        lines.append(f"| [{info['id']} · {info['title']}](#{info['id'].lower()}) | {info['category']} | {info['level']} | {label} |")
-    if full_catalog:
-        for name in FAMILIES:
-            info = example_info(name)
-            lines.append(f"| [{info.id} · {info.title}]({power_guide}#{info.id.lower()}) | "
-                         f"{info.category} | {info.level} | Coupled DC electrothermal |")
-        for name in EXTENDED_EXAMPLES:
-            info = example_info(name)
-            lines.append(f"| [{info.id} · {info.title}]({extended_guide}#{info.id.lower()}) | "
-                         f"{info.category} | {info.level} | See configured walkthrough |")
-    versions = {record["result"]["solver_version"] for record in records if record.get("result")}
-    provenance = (f"These previews were computed with solver {__version__} from the supplied configured projects. "
-                  "The manifest records each result's exact configuration, source hashes and diagnostics. "
-                  "They demonstrate numerical behavior under the declared assumptions, not experimental validation. "
-                  if versions == {__version__} else
-                  "The recorded preview details below retain their original operating points, diagnostics and "
-                  "numerical provenance. Some were calculated with earlier solver versions; the manifest records "
-                  "those identities. They are illustrations, not fresh validation of a newly opened project. ")
-    lines += ["", "## Read the pictures, then run your own project", "",
-              "Each scientific preview pairs actual prepared geometry with a recorded computed field. "
-              "All devices are synthetic teaching configurations; deterministic calculations do not supply "
-              "experimental uncertainty or process calibration. A converged solve still needs a mesh study "
-              "before comparing sensitive peaks. Field scales and panel extents differ between pictures.", "",
-              provenance + "Current application screenshots are labeled separately.", "",
-              "ETL projects retain the physical setup and saved sweeps. GDSII/OASIS downloads contain geometry only. "
-              "SVG previews retain vector geometry, axes and text; only the finite-element field is rasterized "
-              "at twice the intended display resolution.", ""]
+        lines.append(f"| [{current.id} · {current.title}](#{current.id.lower()}) | {current.category} | {label} |")
+    lines += [""]
     for record in records:
-        info, name = record["catalog"], record["name"]
+        name = record["name"]
+        current = example_info(name)
+        info = {**record["catalog"], "category": current.category, "title": current.title}
+        card = example_card(name, scenario=current.recommended_scenario)
         action, observation, question = GUI_EXERCISES[info["id"]]
         field_label, field_unit = DISPLAY_FIELD_LABELS[info["field"]]
         analysis = labels[(record["mode"], bool(record.get("transient")))]
         field_alt = (f" and {info['field'].replace('_', ' ')} on {info['layer']}"
                      if record.get("result") else " only (no solve)")
         lines += [f"<a id=\"{info['id'].lower()}\"></a>", f"## {info['id']} · {info['title']}", "",
-                  f"**{info['level']} · {info['category']}.** {info['learning_goal']}", "",
+                  f"**Question:** {info['learning_goal']}", "",
+                  f"**{current.level} · {current.category} · {current.role}.** {current.workload}.", "",
                   f"[![{info['title']}: prepared geometry{field_alt}]({asset(name + '.png')})]({asset(name + '.svg')})", "",
-                  f"**In the GUI:** choose **{analysis}**, then in Results select layer `{info['layer']}` "
-                  f"and **{field_label} ({field_unit})**. {action}", "",
-                  f"**Look for:** {observation}", "", f"**Try next:** {question}", ""]
+                  f"**Open and inspect:** choose **File → Ready-to-run examples → {current.category} → {current.id}** "
+                  "for the original project. Review layers, contacts and operating conditions before editing.", "",
+                  _recommendation(current, card), "",
+                  f"**Run and read:** validate (F6), generate the mesh (F7), then run (F5). "
+                  f"In Results select `{info['layer']}` and **{field_label} ({field_unit})**, then **Fit layer**. "
+                  + action, "",
+                  f"**Look for:** {observation}", "", f"**Change one thing:** {question}", "",
+                  f"**Evidence:** {_evidence_links(current, markdown.parent)}. "
+                  f"The retained image records **{analysis}**; its original inputs and hashes remain in the "
+                  "expandable preview record. It does not certify the currently selected scenario.", "",
+                  f"**Limits:** {current.physical_scope}", "", _next_step(current, markdown.parent), ""]
         if info["id"] == "E39":
             lines += ["**Review F6 validation in the GUI:** the configured reference has zero blockers and one "
                       "electrically connected network, with two expected notices. The Source warning reports four "
@@ -683,40 +790,37 @@ def write_markdown(records, output, markdown, examples):
                 summaries.extend([_number(metrics["transient_peak_temperature"], "K") + " peak over all time steps",
                                   _number(metrics["transient_input_energy"], "J") + " integrated input heat"])
             lines += [f"**Recorded computed preview:** {'; '.join(summaries)}. "
-                      f"{result['mesh_nodes']:,} nodes / {result['mesh_triangles']:,} triangles; converged. "
+                      f"{result['mesh_nodes']:,} nodes / {result['mesh_triangles']:,} triangles; "
+                       f"{'converged' if result['converged'] else 'not converged'}. "
                       f"[Full metrics and hashes]({asset('manifest.json')}).", ""]
             warnings = [d["message"] for d in result["diagnostics"] if d["severity"] in {"warning", "error"}]
             if warnings:
-                lines += ["**Recorded diagnostics:** " + " ".join(dict.fromkeys(warnings)), "",
-                          "Review current Issues after validation; a recorded warning is not permission to ignore a current blocker.", ""]
+                lines += ["**Historical preview diagnostics (superseded as current setup guidance):** " + " ".join(dict.fromkeys(warnings)), "",
+                          "These belong to the stored preview and may describe corrected clipping/overlap behavior. Use maintained evidence and new validation for the current project; do not reproduce old warnings or ignore a current blocker.", ""]
         else:
             lines += ["**Preview:** geometry only; no numerical result was generated.", ""]
         lines += ["Optional command-line run of the current project:", "", "```powershell",
                   rf".\.venv\Scripts\python.exe -m etlayout solve examples/{name}.etl --mode {record['mode']} --output results/{info['id']}",
                   "```", "", "</details>", ""]
-    reproduction = r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --use-cache"
-    if not full_catalog:
-        identifiers = " ".join(record["catalog"]["id"] for record in records)
-        reproduction = (r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --examples " + identifiers
-                        + " --output " + _relative(output, ROOT) + " --markdown " + _relative(markdown, ROOT)
-                        + " --use-cache --no-overview")
-    lines += ["## Maintaining the gallery", "", "<details>", "<summary>Advanced: deterministic generation and reproduction</summary>", "",
-              "The desktop walkthroughs above work with the existing projects. Maintainers can regenerate the "
-              "scientific previews separately:", "", "```powershell",
-              reproduction,
-              r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --examples E11 E16 --output .artifacts/gallery-preview --markdown .artifacts/gallery-preview.md",
-              "```", "", "The generator reads existing projects from `examples/` and creates missing ones. "
-              "Its cache is reused only when the physics hash, solver version and source-code fingerprint match. "
-              "Use `--no-solve` for explicitly labeled geometry-only previews. "
-              "The manifest records plotted range, units, mesh, convergence, diagnostics, operating point and configuration hashes.",
-              "", "</details>", ""]
-    markdown.parent.mkdir(parents=True, exist_ok=True)
-    markdown.write_text("\n".join(lines), encoding="utf-8")
+    lines += ["## Maintaining this guide", "",
+              "The marked generated region is maintained by `scripts/build_example_gallery.py`; contributor "
+              "guidance outside its markers is preserved. Rebuild Markdown from the existing manifest without "
+              "solving or altering images:", "", "```powershell",
+              r".\.venv\Scripts\python.exe scripts/build_example_gallery.py --markdown-only --output "
+              + _relative(output, ROOT) + " --markdown " + _relative(markdown, ROOT), "```", "",
+              "A deliberate numerical/image refresh is a separate operation. The result cache requires matching "
+              "physics, solver version and source fingerprint; `--no-solve` produces explicitly labeled geometry-only "
+              "previews. Keep original manifests with their images, and update evidence only from actual calculations.", ""]
+    _write_managed(markdown, "\n".join(lines))
 
 
 def build_gallery(names, output, markdown, examples, cache_dir, *, use_cache=False, no_solve=False,
                   overview=True):
     output, markdown, examples, cache_dir = map(Path, (output, markdown, examples, cache_dir))
+    if (markdown.resolve() == (ROOT / "docs/examples.md").resolve()
+            and {example_info(name).name for name in names} != set(ROUTINE_EXAMPLES)):
+        raise ValueError("The canonical chooser requires the complete foundational manifest; "
+                         "use separate --output and --markdown paths for a partial gallery")
     output.mkdir(parents=True, exist_ok=True)
     cache_dir.mkdir(parents=True, exist_ok=True)
     fingerprint, records, overview_items = source_fingerprint(), [], []
@@ -791,7 +895,8 @@ def build_gallery(names, output, markdown, examples, cache_dir, *, use_cache=Fal
     manifest = {"schema_version": GALLERY_SCHEMA, "generated_utc": datetime.now(UTC).isoformat(),
                 "source_fingerprint": fingerprint, "solver_version": __version__, "visual_spec": VISUAL_SPEC,
                 "examples": records}
-    (output / "manifest.json").write_text(json.dumps(_jsonable(manifest), indent=2, ensure_ascii=False,
+    manifest = _jsonable(manifest)
+    (output / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False,
                                                     allow_nan=False) + "\n", encoding="utf-8")
     write_markdown(records, output, markdown, examples)
     return manifest
@@ -801,15 +906,27 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "docs/example-gallery")
     parser.add_argument("--markdown", type=Path, default=ROOT / "docs/examples.md")
-    parser.add_argument("--examples", nargs="+", default=list(ROUTINE_EXAMPLES),
+    parser.add_argument("--examples", nargs="+", default=None,
                         help="Explicit IDs; engineering power benchmarks are opt-in, never implicitly solved")
     parser.add_argument("--example-dir", type=Path, default=ROOT / "examples")
     parser.add_argument("--cache", type=Path, default=ROOT / ".artifacts/example-gallery-cache")
     parser.add_argument("--use-cache", action="store_true")
     parser.add_argument("--no-solve", action="store_true")
     parser.add_argument("--no-overview", action="store_true")
+    parser.add_argument("--markdown-only", action="store_true",
+                        help="Read the existing output manifest; do not generate, solve or change image assets")
     args = parser.parse_args(argv)
-    names = list(dict.fromkeys(example_info(name).name for name in args.examples))
+    if args.markdown_only:
+        manifest = json.loads((args.output / "manifest.json").read_text(encoding="utf-8"))
+        records = manifest["examples"]
+        if args.examples:
+            wanted = {example_info(name).name for name in args.examples}
+            records = [record for record in records if record["name"] in wanted]
+            if {record["name"] for record in records} != wanted:
+                raise ValueError("Requested example is absent from the existing gallery manifest")
+        write_markdown(records, args.output, args.markdown, args.example_dir)
+        return 0
+    names = list(dict.fromkeys(example_info(name).name for name in (args.examples or ROUTINE_EXAMPLES)))
     build_gallery(names, args.output, args.markdown, args.example_dir, args.cache,
                   use_cache=args.use_cache, no_solve=args.no_solve, overview=not args.no_overview)
     return 0

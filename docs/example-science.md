@@ -8,9 +8,17 @@ limits remain separate observations.
 
 | Applicability | What the evidence supports | What it does not establish |
 | --- | --- | --- |
-| Analytical reference (E1, E17) | Comparison with a uniform-strip or lumped thermal-RC limit under stated assumptions | Process calibration, nonuniform device performance |
-| Synthetic functional demonstration | Real geometry, finite contacts and the stated numerical model can reproduce the workflow | Measured device accuracy or a rated operating point |
-| Engineering / stress experiment (E20–E24, E39) | Investigation of routing, loading and heat paths with declared synthetic parameters | Qualification, lifetime, breakdown or safe continuous operation |
+| `analytical reference` (E1, E17) | Comparison with a uniform-strip or lumped thermal-RC limit under stated assumptions | Process calibration, nonuniform device performance |
+| `synthetic functional demonstration` | Real geometry, finite contacts and the stated numerical model can reproduce the workflow | Measured device accuracy or a rated operating point |
+| `synthetic engineering study` (E20–E24, E39, E40) | Investigation of routing, loading and heat paths with declared synthetic parameters | Qualification, lifetime, breakdown or safe continuous operation |
+
+Applicability, learning level and workload are separate from numerical evidence.
+**Original-reference status** is another independent field: E39's original 10 A
+configuration is a **stress** experiment, while the browser recommends **Lower-current
+SiC reference (2 A)**. Both belong to the same synthetic on-state model. The
+original remains available; neither current defines a continuous device rating.
+Large/stress family presets likewise require explicit review rather than inheriting
+the original reference's acceptance.
 
 No example is classified as a physically calibrated reference. The material
 library states its sources and reference-temperature ranges; rounded bulk seeds

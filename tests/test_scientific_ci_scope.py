@@ -53,7 +53,7 @@ def test_stable_required_job_is_present_and_no_doc_path_filter_can_leave_it_pend
     quality = workflow.split("  scientific-regression:", 1)[0]
     assert ("python -m pytest tests/test_transient_ui.py::"
             "test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run "
-            "--basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml") in quality
+            "tests/test_example_library_browser.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml") in quality
     assert "paths-ignore:" not in workflow and "  paths:" not in workflow
     assert "python -m pytest -m numerical" in workflow
     assert "needs: [source-quality, scientific-regression]" in workflow
