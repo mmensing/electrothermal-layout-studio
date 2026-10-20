@@ -249,7 +249,7 @@ def test_binary_helper_selects_large_modes_only_after_unchanged_compliance_gate(
     policy = json.loads((SCRIPT.parents[1] / 'packaging/binary-publication-policy.json').read_text())
     assert policy['publication_allowed'] is True
     assert (policy['version'], policy['platform'], policy['license_route']) == (
-        '0.4.0', 'windows-x64', 'GPL-3.0-only-with-MPL-3.3')
+        release.stable_version(SCRIPT.parents[1]), 'windows-x64', 'GPL-3.0-only-with-MPL-3.3')
     assert policy['source_catalog_sha256'] == release.sha256(SCRIPT.parents[1] / 'packaging/third-party-sources.json')
     assert len(policy['native_outputs']) == 6
     assert all(re.fullmatch('[0-9a-f]{64}', value) for value in policy['native_outputs'].values())
