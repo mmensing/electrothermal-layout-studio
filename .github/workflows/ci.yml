@@ -63,7 +63,7 @@ jobs:
       - name: Run fast contracts and package policy
         run: python -m pytest -m "fast or packaging" --basetemp=.pytest_fast --junitxml=artifacts/pytest-fast.xml
       - name: Guard compact maps, results and example browser workflows
-        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_example_library_browser.py tests/test_workflow_next_steps.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
+        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_example_library_browser.py tests/test_workflow_next_steps.py tests/test_capability_catalog.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
       - name: Exercise public CLI
         run: |
           python -m etlayout --version
