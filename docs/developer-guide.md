@@ -30,6 +30,10 @@ Windows native-DLL handle failure observed once during a sandboxed Gmsh load. Na
 CLI runs and the repeat tests succeeded. Use a fresh `--basetemp` beneath `.cache` if a restricted
 host gives its system temporary directories incompatible ownership. Create the parent directory
 first, or use a root-level `--basetemp=.pytest_run` as CI does. Pytest does not create missing parents.
+On Windows, keep the basetemp near the checkout root: deeply nested diagnostic
+folders can exceed native path limits in snapshot copies, subprocesses and exports.
+Retain such failures as environment evidence and rerun the unchanged checks from
+a short owned output root; do not remove the affected cases.
 
 Public CI uses only isolated GitHub-hosted Windows runners. The stable
 `source-quality` check runs lint, publication/workflow contracts and fast/package
