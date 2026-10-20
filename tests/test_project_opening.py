@@ -14,7 +14,7 @@ from gui_test_helpers import guided_window as guided_window
 from gui_test_helpers import solved_e1 as solved_e1
 from PySide6.QtCore import QCoreApplication, QEvent, Qt, QTimer
 from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication, QMessageBox, QPushButton
 from shiboken6 import isValid
 
 from etlayout.gui import history_opening
@@ -30,6 +30,33 @@ def finished(window, qtbot):
     qtbot.waitUntil(lambda: not window.history_opener.jobs and not window.history_workflow.loader.jobs,
                     timeout=30000)
     _idle(window, qtbot)
+
+
+def approve_resources(window, reviews=None):
+    """Authorize through the real modal and button, without replacing Qt methods."""
+    timer = QTimer(window)
+    timer.setInterval(5)
+
+    def choose():
+        dialog = QApplication.activeModalWidget()
+        if not isinstance(dialog, ResourceReviewDialog):
+            return
+        timer.stop()
+        try:
+            if reviews is not None:
+                reviews.append(threading.get_ident())
+            for row in range(dialog.table.rowCount()):
+                dialog.table.item(row, 0).setCheckState(Qt.CheckState.Checked)
+            button = next(item for item in dialog.findChildren(QPushButton)
+                          if item.text() == "Open approved resources")
+            QTest.mouseClick(button, Qt.MouseButton.LeftButton)
+        except BaseException:
+            dialog.reject()
+            raise
+
+    timer.timeout.connect(choose)
+    timer.start()
+    return timer
 
 
 def documented_history(result):
@@ -193,15 +220,13 @@ def test_external_approval_occurs_on_gui_and_resolution_remains_in_worker(
         reads.append(threading.get_ident())
         return original(*args, **options)
     monkeypatch.setattr(history_opening, "resolve_project", observed)
-    def approve(dialog):
-        reviews.append(threading.get_ident())
-        for row in range(dialog.table.rowCount()):
-            dialog.table.item(row, 0).setCheckState(Qt.CheckState.Checked)
-        dialog.finish("authorize")
-        return dialog.DialogCode.Accepted
-    monkeypatch.setattr(ResourceReviewDialog, "exec", approve)
-    window.open_project(source)
-    finished(window, qtbot)
+    approval = approve_resources(window, reviews)
+    try:
+        window.open_project(source)
+        finished(window, qtbot)
+    finally:
+        approval.stop()
+        approval.deleteLater()
     assert reviews and all(item == main_thread for item in reviews)
     assert window.path == source and window.result.converged
     assert window.result.configuration_hash == result.configuration_hash
@@ -229,12 +254,7 @@ def test_resource_review_retains_edits_made_during_eager_read(guided_window, qtb
             raise RuntimeError("Test reader was not released")
         return decoded
     monkeypatch.setattr(history_opening, "resolve_project", held)
-    def approve(dialog):
-        for row in range(dialog.table.rowCount()):
-            dialog.table.item(row, 0).setCheckState(Qt.CheckState.Checked)
-        dialog.finish("authorize")
-        return dialog.DialogCode.Accepted
-    monkeypatch.setattr(ResourceReviewDialog, "exec", approve)
+    approval = approve_resources(window)
     try:
         window.review_project_resources()
         qtbot.waitUntil(entered.is_set, timeout=30000)
@@ -251,6 +271,8 @@ def test_resource_review_retains_edits_made_during_eager_read(guided_window, qtb
     finally:
         release.set()
         finished(window, qtbot)
+        approval.stop()
+        approval.deleteLater()
 
 
 @pytest.mark.parametrize("transition", ["inspect", "return"])
