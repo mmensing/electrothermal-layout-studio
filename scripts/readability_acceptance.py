@@ -10,7 +10,6 @@ import argparse
 import json
 import multiprocessing
 import os
-import time
 from pathlib import Path
 
 
@@ -25,9 +24,16 @@ def main(argv=None):
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
-    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from desktop_acceptance_support import (
+        assert_desktop_project,
+        close_desktop_window,
+        isolate_acceptance_settings,
+        prepare_desktop_fonts,
+        wait_desktop_events,
+        wait_desktop_workers,
+    )
     from PySide6.QtTest import QTest
-    from PySide6.QtWidgets import QApplication, QMessageBox
+    from PySide6.QtWidgets import QApplication
 
     from etlayout.gui.main_window import MainWindow
     from etlayout.io.project import load_project
@@ -43,19 +49,10 @@ def main(argv=None):
                "scope": "Source application on native host; no physical DPI or clean-machine certification"}
     window = None
 
-    def wait_idle():
-        started = time.monotonic()
-        while window.job or window.prepare_job or window.hierarchy_jobs:
-            if time.monotonic() - started > 180:
-                raise TimeoutError("Native application preparation/solve did not finish")
-            modal = QApplication.activeModalWidget()
-            if isinstance(modal, QMessageBox):
-                message = modal.text()
-                modal.reject()
-                raise RuntimeError(message)
-            QTest.qWait(35)
+    def wait_idle(timeout=180.):
+        wait_desktop_workers(window, timeout=timeout)
         assert window.geometry is not None, window.console.toPlainText()
-        QTest.qWait(200)
+        wait_desktop_events(200)
 
     def capture(name):
         QTest.qWait(250)
@@ -63,6 +60,8 @@ def main(argv=None):
         assert image.save(str(output / (name + ".png")))
         receipt["captures"].append({"name": name, "logical_size": [window.width(), window.height()],
             "pixel_size": [image.width(), image.height()], "device_pixel_ratio": window.devicePixelRatioF(),
+            "project": window.project.name, "path": str(window.path),
+            "configuration_hash": window.result.configuration_hash if window.result else None,
             "legend": window.view.legend, "range": window.view.field_limits,
             "callouts": sum(item.label_visible for item in window.view.callout_items.values()),
             "terminals": sum(items[1].label_visible for items in window.view.terminal_items.values() if len(items) > 1)})
@@ -79,8 +78,11 @@ def main(argv=None):
         capture("01-E21-compact-overview")
         window.view.scale(2., 2.)
         capture("02-E21-zoomed-fingers")
-        window.open_project(root / "examples/E15_thermal_crosstalk.etl")
+        thermal_path = root / "examples/E15_thermal_crosstalk.etl"
+        thermal_project, _ = load_project(thermal_path)
+        window.open_project(thermal_path)
         wait_idle()
+        assert_desktop_project(window, thermal_path, thermal_project)
         window.start_job("solve")
         wait_idle()
         assert window.result is not None and window.result.converged
@@ -92,8 +94,11 @@ def main(argv=None):
         window.update_overlay()
         capture("04-E15-temperature-rise")
         window.dirty = False
-        window.open_project(root / "examples/E1_straight.etl")
+        straight_path = root / "examples/E1_straight.etl"
+        straight_project, _ = load_project(straight_path)
+        window.open_project(straight_path)
         wait_idle()
+        assert_desktop_project(window, straight_path, straight_project)
         window.start_job("convergence", {"sizes": [window.project.mesh.max_size, window.project.mesh.max_size / 2]})
         wait_idle()
         assert len(window.study_panel.rows) == 2 and all(row.result and row.result.converged for row in window.study_panel.rows)
@@ -105,11 +110,20 @@ def main(argv=None):
         assert sorted(window.study_panel.plot.listDataItems()[0].getData()[1].tolist()) == sorted(receipt["study_currents_A"])
         assert "numerical data are unchanged" in window.study_panel.summary.text()
         receipt["status"] = "passed"
+    except Exception as error:
+        receipt["status"] = "failed"
+        receipt["error"] = f"{type(error).__name__}: {error}"
+        raise
     finally:
-        if window is not None:
-            window.dirty = False
-            window.close()
-        (output / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
+        try:
+            if window is not None:
+                close_desktop_window(window)
+        except Exception as error:
+            receipt["status"] = "failed"
+            receipt["cleanup_error"] = f"{type(error).__name__}: {error}"
+            raise
+        finally:
+            (output / "receipt.json").write_text(json.dumps(receipt, indent=2), encoding="utf-8")
     print(json.dumps(receipt, indent=2))
     return 0
 

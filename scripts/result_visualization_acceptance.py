@@ -11,7 +11,6 @@ import argparse
 import json
 import multiprocessing
 import os
-import time
 from pathlib import Path
 
 
@@ -25,10 +24,17 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.offscreen:
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
-    from PySide6.QtCore import Qt
+    from desktop_acceptance_support import (
+        assert_desktop_project,
+        close_desktop_window,
+        isolate_acceptance_settings,
+        prepare_desktop_fonts,
+        wait_desktop_events,
+        wait_desktop_workers,
+    )
+    from PySide6.QtCore import QPoint, Qt
     from PySide6.QtTest import QTest
-    from PySide6.QtWidgets import QApplication, QDockWidget, QMessageBox, QTabWidget
+    from PySide6.QtWidgets import QApplication, QDockWidget, QTabWidget
 
     from etlayout.examples import make_example
     from etlayout.gui.main_window import MainWindow
@@ -61,18 +67,9 @@ def main(argv=None):
         return path, project, result
 
     def wait_idle(timeout=120.):
-        start = time.monotonic()
-        while window.job or window.prepare_job or window.hierarchy_jobs:
-            if time.monotonic() - start > timeout:
-                raise TimeoutError("Desktop geometry workers did not finish")
-            modal = QApplication.activeModalWidget()
-            if isinstance(modal, QMessageBox):
-                message = modal.text()
-                modal.reject()
-                raise RuntimeError(message)
-            QTest.qWait(35)
+        wait_desktop_workers(window, timeout=timeout)
         assert window.geometry is not None, window.console.toPlainText()
-        QTest.qWait(160)
+        wait_desktop_events(160)
 
     def select(combo, value):
         index = combo.findData(value)
@@ -138,15 +135,21 @@ def main(argv=None):
                              pos=window.fit_layer_button.rect().center())
             record("E12 fit selected middle riser", "03b-e12-fit-m2.png")
             QTest.mouseClick(window.isolate_layer, Qt.MouseButton.LeftButton,
-                             pos=window.isolate_layer.rect().center())
+                             pos=QPoint(8, window.isolate_layer.height() // 2))
             window.view.fit_all()
             record("E12 other layers visible as context", "03c-e12-context.png")
+            window.guided.execute("view.browser")
+            browser_index = window.guided.canvas_tabs.currentIndex()
+            assert window.guided.canvas_tabs.tabText(browser_index) == "Model browser"
+            wait_desktop_events(80)
             parent = window.layer_tree.parentWidget()
             for tabs in window.findChildren(QTabWidget):
                 index = tabs.indexOf(parent)
                 if index >= 0:
-                    QTest.mouseClick(tabs.tabBar(), Qt.MouseButton.LeftButton,
-                                     pos=tabs.tabBar().tabRect(index).center())
+                    tabs.setCurrentIndex(index)
+                    wait_desktop_events(80)
+                    assert window.layer_tree.isVisible()
+                    assert window.mask_toggle.isVisible()
                     break
             item = next(window.layer_tree.topLevelItem(index)
                         for index in range(window.layer_tree.topLevelItemCount())
@@ -156,25 +159,42 @@ def main(argv=None):
             QTest.mouseClick(window.layer_tree.viewport(), Qt.MouseButton.LeftButton,
                              pos=window.layer_tree.visualItemRect(item).center())
             assert window.field_layer.currentData() == "m1"
+            window.guided.canvas_tabs.setCurrentIndex(0)
             record("E12 physical layer tree click selects m1 result", "03d-e12-tree-m1.png")
             window.isolate_layer.setChecked(True)
+            window.guided.canvas_tabs.setCurrentIndex(browser_index)
+            wait_desktop_events(80)
+            assert window.mask_toggle.isVisible()
             QTest.mouseClick(window.mask_toggle, Qt.MouseButton.LeftButton,
-                             pos=window.mask_toggle.rect().center())
+                             pos=QPoint(8, window.mask_toggle.height() // 2))
+            wait_desktop_events(80)
             assert window._show_masks and not window.isolate_layer.isEnabled()
             assert any(item.isVisible() for items in window.view.layer_items.values() for item in items)
             assert window.field_combo.currentData() == "current_density"
+            window.guided.canvas_tabs.setCurrentIndex(0)
             record("E12 source masks retain geometry context", "03d2-e12-source-masks.png")
+            window.guided.canvas_tabs.setCurrentIndex(browser_index)
+            wait_desktop_events(80)
+            assert window.mask_toggle.isVisible()
             QTest.mouseClick(window.mask_toggle, Qt.MouseButton.LeftButton,
-                             pos=window.mask_toggle.rect().center())
+                             pos=QPoint(8, window.mask_toggle.height() // 2))
+            wait_desktop_events(80)
+            assert not window._show_masks
+            window.guided.canvas_tabs.setCurrentIndex(0)
             select(window.field_layer, "substrate")
             assert window.field_combo.currentData() == "current_density"
             assert window.view.overlay_item is None
             record("E12 incompatible substrate preserves density selection", "03e-e12-unavailable.png")
             if not window.isolate_layer.isChecked():
                 window.isolate_layer.setChecked(True)
-        thermal_path, _, _ = archive("E10_thermal_stack")
+        thermal_path, thermal_project, thermal_result = archive("E10_thermal_stack")
         window.open_project(str(thermal_path))
         wait_idle()
+        assert_desktop_project(window, thermal_path, thermal_project)
+        assert window.result and window.result.configuration_hash == thermal_result.configuration_hash
+        window.guided.canvas_tabs.setCurrentIndex(0)
+        wait_desktop_events(80)
+        assert window.view.isVisible()
         window.view.fit_all()
         select(window.field_layer, "substrate")
         select(window.field_combo, "temperature")
@@ -196,16 +216,15 @@ def main(argv=None):
         (output / "error.json").unlink(missing_ok=True)
         return 0
     except Exception as error:
-        errors.append(str(error))
+        errors.append(f"{type(error).__name__}: {error}")
+        if window:
+            window.grab().save(str(output / "failure.png"))
         (output / "error.json").write_text(json.dumps({"errors": errors}, indent=2), encoding="utf-8")
         raise
     finally:
-        if window:
-            window.cancel_job()
-            window.cancel_geometry()
-            window.dirty = False
-            window.close()
-            QTest.qWait(100)
+        if window is not None:
+            close_desktop_window(window)
+
 
 
 if __name__ == "__main__":

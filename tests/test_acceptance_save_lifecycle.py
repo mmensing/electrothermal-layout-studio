@@ -2,10 +2,8 @@
 """Acceptance journeys must wait for durable queued saves before reopening/closing."""
 from __future__ import annotations
 
-import importlib.util
 import threading
 from copy import deepcopy
-from pathlib import Path
 
 import numpy as np
 from gui_test_helpers import solved_e1 as solved_e1
@@ -15,12 +13,8 @@ from PySide6.QtWidgets import QApplication
 from etlayout.gui.main_window import MainWindow
 from etlayout.io.identity import document_id
 from etlayout.io.project import load_project, load_run_history
+from scripts import guided_workflow_acceptance as acceptance
 from scripts.desktop_acceptance_support import wait_desktop_events
-
-_SCRIPT = Path(__file__).resolve().parents[1] / "scripts/guided_workflow_acceptance.py"
-_SPEC = importlib.util.spec_from_file_location("guided_acceptance_lifecycle", _SCRIPT)
-acceptance = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(acceptance)
 
 
 def test_acceptance_waits_for_active_and_queued_real_archive_saves(qtbot, tmp_path, monkeypatch, solved_e1):

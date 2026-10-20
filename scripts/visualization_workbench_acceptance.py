@@ -11,7 +11,6 @@ import argparse
 import json
 import multiprocessing
 import os
-import time
 from copy import deepcopy
 from pathlib import Path
 
@@ -33,11 +32,18 @@ def main(argv=None):
         os.environ.pop("QT_QPA_PLATFORM", None)
 
     import numpy as np
-    from desktop_acceptance_support import isolate_acceptance_settings, prepare_desktop_fonts
+    from desktop_acceptance_support import (
+        assert_desktop_project,
+        close_desktop_window,
+        isolate_acceptance_settings,
+        prepare_desktop_fonts,
+        wait_desktop_events,
+        wait_desktop_workers,
+    )
     from PySide6.QtCore import QPoint, QPointF, Qt
     from PySide6.QtGui import QWheelEvent
     from PySide6.QtTest import QTest
-    from PySide6.QtWidgets import QApplication, QDockWidget, QLabel, QMessageBox
+    from PySide6.QtWidgets import QApplication, QDockWidget, QLabel
 
     from etlayout.examples import make_example
     from etlayout.gui.comparison import MapComparisonDialog
@@ -94,21 +100,10 @@ def main(argv=None):
         QTest.mouseClick(widget, Qt.MouseButton.LeftButton, pos=widget.rect().center())
         QTest.qWait(80)
 
-    def wait_idle(timeout=150):
-        started = time.monotonic()
-        while window.job or window.prepare_job or window.hierarchy_jobs:
-            if time.monotonic() - started > timeout:
-                raise TimeoutError("Application workers did not finish")
-            modal = QApplication.activeModalWidget()
-            if isinstance(modal, QMessageBox):
-                message = modal.text()
-                modal.reject()
-                raise RuntimeError(message)
-            QTest.qWait(35)
-        assert window.geometry is not None, (
-            f"{window.workflow_hint.text()}\n{window.console.toPlainText()}"
-        )
-        QTest.qWait(250)
+    def wait_idle(timeout=150.):
+        wait_desktop_workers(window, timeout=timeout)
+        assert window.geometry is not None, window.console.toPlainText()
+        wait_desktop_events(250)
 
     def record(name, widget=None, **details):
         widget = widget or window
@@ -278,9 +273,14 @@ def main(argv=None):
                             window.legend.text(), provenance=window.displayed_provenance())
         export_view(window.view, output / "difference-map.png", window.legend.text(), provenance=window.displayed_provenance())
 
-        thermal_path, _, _ = archive("E10_thermal_stack")
+        thermal_path, thermal_project, thermal_result = archive("E10_thermal_stack")
         window.open_project(str(thermal_path))
         wait_idle()
+        assert_desktop_project(window, thermal_path, thermal_project)
+        assert window.result and window.result.configuration_hash == thermal_result.configuration_hash
+        window.guided.canvas_tabs.setCurrentIndex(0)
+        wait_desktop_events(80)
+        assert window.view.isVisible()
         select(window.field_layer, "substrate")
         select(window.field_combo, "temperature_rise")
         select(window.colormap_combo, "teal")
@@ -314,12 +314,9 @@ def main(argv=None):
     finally:
         if comparison:
             comparison.close()
-        if window:
-            window.cancel_job()
-            window.cancel_geometry()
-            window.dirty = False
-            window.close()
-            QTest.qWait(100)
+        if window is not None:
+            close_desktop_window(window)
+
 
 
 if __name__ == "__main__":

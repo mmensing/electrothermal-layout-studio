@@ -29,9 +29,12 @@ def main(argv=None):
     else:
         os.environ.pop("QT_QPA_PLATFORM", None)
     from desktop_acceptance_support import (
+        assert_desktop_project,
+        close_desktop_window,
         isolate_acceptance_settings,
         prepare_desktop_fonts,
         wait_desktop_events,
+        wait_desktop_workers,
     )
     from PySide6.QtCore import QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
@@ -58,6 +61,7 @@ def main(argv=None):
     wait_desktop_events(180)
     checkpoints = []
     failures = []
+    expected_modal = None
 
     def record(step, **details):
         checkpoints.append({"step": step, **details})
@@ -67,13 +71,17 @@ def main(argv=None):
         print(step, flush=True)
 
     def arm_dialog(expected, configure, timeout=30.):
+        nonlocal expected_modal
+        expected_modal = expected
         deadline = time.monotonic() + timeout
         def handle():
+            nonlocal expected_modal
             dialog = QApplication.activeModalWidget()
             if dialog is None and time.monotonic() < deadline:
                 QTimer.singleShot(40, handle)
                 return
             if not isinstance(dialog, expected):
+                expected_modal = None
                 failures.append(f"Expected {expected.__name__}, got {type(dialog).__name__}")
                 if dialog:
                     dialog.reject()
@@ -95,6 +103,8 @@ def main(argv=None):
             except Exception as error:
                 failures.append(f"Dialog {expected.__name__}: {error}")
                 dialog.reject()
+            finally:
+                expected_modal = None
         QTimer.singleShot(50, handle)
 
     def fill(dialog, values):
@@ -117,12 +127,8 @@ def main(argv=None):
 
     def wait_idle(timeout=180., require_geometry=False):
         started = time.monotonic()
-        while window.save_job or window._save_queue or window.job is not None or window.prepare_job is not None or window.hierarchy_jobs:
-            if time.monotonic() - started > timeout:
-                window.cancel_job()
-                window.cancel_geometry()
-                raise TimeoutError(f"Desktop workers exceeded {timeout} seconds")
-            wait_desktop_events(40)
+        wait_desktop_workers(window, timeout=timeout,
+            allow_modal=lambda modal: expected_modal and isinstance(modal, expected_modal))
         assert not failures, failures
         if require_geometry:
             assert window.geometry is not None, window.console.toPlainText()
@@ -331,8 +337,10 @@ def main(argv=None):
         assert window.save()
         wait_idle()
         saved_current = window.result.metrics["total_current"]
+        saved_project = deepcopy(window.project)
         window.open_project(window.path)
         wait_idle(require_geometry=True)
+        assert_desktop_project(window, window.path, saved_project)
         assert window.result and window.result.metrics["total_current"] == saved_current
         record("Export numerical data / vector map / report; save, close and reopen project", project=str(window.path))
         window.load_example("E7_hemt")
@@ -361,21 +369,7 @@ def main(argv=None):
         record("Acceptance failed", completed=False)
         raise
     finally:
-        if window.job:
-            window.cancel_job()
-        window.cancel_geometry()
-        window.autosave_timer.stop()
-        window.cancel_saving()
-        # Cancelling is asynchronous: let the writer close its temporary archive
-        # before window destruction or Python's temporary-directory cleanup.
-        cleanup_started = time.monotonic()
-        while window.save_job or window._save_queue:
-            if time.monotonic() - cleanup_started > 30.:
-                raise TimeoutError("Cancelled desktop save did not finish within 30 seconds")
-            wait_desktop_events(40)
-        window.dirty = False
-        window.close()
-        application.processEvents()
+        close_desktop_window(window)
 
 
 if __name__ == "__main__":

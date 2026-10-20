@@ -108,3 +108,128 @@ def wait_desktop_events(milliseconds=40):
     timer.timeout.connect(loop.quit)
     timer.start(milliseconds)
     loop.exec()
+
+
+def desktop_worker_activity(window):
+    """Report every operation owned by this acceptance window, including readers.
+
+    An existing geometry or result can belong to the previous project while the
+    asynchronous project reader is still running. Retired ComputeJobs also own
+    process/receiver cleanup after their public window slot has been cleared.
+    """
+    from etlayout.gui.jobs import ComputeJob
+
+    active = []
+    for label, busy in (("calculation", window.job), ("preparation", window.prepare_job),
+                        ("hierarchy", window.hierarchy_jobs), ("save", window.save_job),
+                        ("queued saves", window._save_queue),
+                        ("project reader", window.history_opener.jobs),
+                        ("history reader", window.history_workflow.loader.jobs),
+                        ("pending project", window.project_opening.pending)):
+        if busy:
+            active.append(label)
+    for name in ("power", "layout_editor"):
+        controller = getattr(window.guided, name, None)
+        if controller and controller.job:
+            active.append(name)
+    if any(not job._cleanup_complete for job in window.findChildren(ComputeJob)):
+        active.append("process cleanup")
+    return active
+
+
+def wait_desktop_workers(window, *, timeout=180., process_events=wait_desktop_events, check=None, allow_modal=None):
+    """Wait for accepted work and queued application callbacks, with a deadline.
+
+    A timer rejects unexpected nested modal dialogs so event delivery cannot
+    strand a noninteractive journey inside QDialog.exec(). Expected dialogs are
+    allowed explicitly by a journey while its bounded dialog driver is active.
+    """
+    import time
+
+    from PySide6.QtCore import QTimer
+    from PySide6.QtWidgets import QApplication
+
+    deadline = time.monotonic() + timeout
+    errors = []
+
+    def monitor_modal():
+        modal = QApplication.activeModalWidget()
+        if modal is not None:
+            if allow_modal and allow_modal(modal) and time.monotonic() < deadline:
+                return
+            text = modal.text() if hasattr(modal, "text") else modal.windowTitle()
+            errors.append("Unexpected desktop dialog: " + text)
+            modal.reject()
+
+    timer = QTimer(window)
+    timer.setInterval(25)
+    timer.timeout.connect(monitor_modal)
+    timer.start()
+    try:
+        # Even an apparently idle window can have a queued reader-completion or
+        # pending-project application callback waiting in the GUI event queue.
+        while True:
+            if check:
+                check()
+            monitor_modal()
+            if errors:
+                raise RuntimeError(errors[0])
+            if time.monotonic() >= deadline:
+                raise TimeoutError("Desktop workers did not finish: " + ", ".join(desktop_worker_activity(window)))
+            process_events(40)
+            if errors:
+                raise RuntimeError(errors[0])
+            if not desktop_worker_activity(window) and QApplication.activeModalWidget() is None:
+                if check:
+                    check()
+                return
+    finally:
+        timer.stop()
+        timer.deleteLater()
+
+
+def assert_desktop_project(window, path, expected_project):
+    """Reject false readiness on the old project, even if it has valid geometry."""
+    from etlayout.io.identity import document_id
+    from etlayout.io.project import physics_hash
+
+    expected_path = Path(path).resolve()
+    assert window.path and Path(window.path).resolve() == expected_path, (window.path, expected_path)
+    assert window.project.name == expected_project.name, (window.project.name, expected_project.name)
+    assert document_id(window.project) == document_id(expected_project), "Opened project identity differs from the requested archive"
+    assert physics_hash(window.project, resolve_layout=False) == physics_hash(expected_project, resolve_layout=False), "Opened physical inputs differ from the requested archive"
+    assert window.geometry is not None, window.console.toPlainText()
+
+
+def close_desktop_window(window, *, timeout=30.):
+    """Cancel and join this journey's workers before closing without draft dialogs.
+
+    This is acceptance cleanup, not a production Close policy. It discards only
+    the temporary journey's unsaved editor state and never marks a failed step
+    successful. A cancelled reader must actually stop before QObject teardown.
+    """
+    from PySide6.QtCore import QCoreApplication, QEvent
+    from PySide6.QtWidgets import QApplication
+
+    from etlayout.gui.jobs import ComputeJob
+
+    window.autosave_timer.stop()
+    window.cancel_catalog()
+    window.history_workflow.cancel()
+    window.cancel_saving()
+    window.cancel_job()
+    window.cancel_geometry()
+    for job in window.findChildren(ComputeJob):
+        if not job._cleanup_complete:
+            job.cancel()
+    wait_desktop_workers(window, timeout=timeout)
+    if window.inspection_context:
+        window.inspection_context["dirty"] = False
+    window.guided.cancel_selection()
+    window.guided.clear_editor()
+    window.guided.layout_editor.discard()
+    window.dirty = False
+    assert window.close(), "Acceptance window refused to close after its workers stopped"
+    window.deleteLater()
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    QApplication.processEvents()
