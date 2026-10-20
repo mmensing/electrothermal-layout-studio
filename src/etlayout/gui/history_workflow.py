@@ -263,12 +263,16 @@ class HistoryWorkflow:
                 self.window.time_navigation.set_record(self.record, index=index)
         self.refresh()
 
-    def issue(self, message):
+    def issue(self, message, *, project_opening=False):
         window = self.window
-        window.log("Recorded result unavailable: " + message)
-        window.guided.last_error = "Recorded result could not be loaded"
-        window.guided.last_error_detail = message + " The previous view was retained. Reopen an intact archive or remove this unavailable run explicitly."
-        window.guided.last_error_stage = "results"
+        prefix = "Project opening failed" if project_opening else "Recorded result unavailable"
+        window.log(prefix + ": " + message)
+        window.guided.last_error = "Project could not be opened" if project_opening else "Recorded result could not be loaded"
+        guidance = (" The working project and selected result were retained. Choose an intact project file."
+                    if project_opening else
+                    " The previous view was retained. Reopen an intact archive or remove this unavailable run explicitly.")
+        window.guided.last_error_detail = message + guidance
+        window.guided.last_error_stage = "layout" if project_opening else "results"
         window.guided.refresh_issues()
         window.guided.open_drawer(0)
 

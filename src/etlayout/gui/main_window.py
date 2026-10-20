@@ -3294,7 +3294,8 @@ class MainWindow(QMainWindow):
             project = create_library_example(name, destination, scenario=scenario, **options)
             self.set_project(project)
             if self.project is project:
-                self.log(f"Loaded {project.name}. All physical parameters remain editable. Press F5 to solve.")
+                self.guided.example_opened()
+                self.log(f"Loaded {project.name}. Review Mesh & Checks; Press F5 to solve after reviewing the inputs.")
         except Exception as error:
             self.error("Example could not be loaded", error)
 

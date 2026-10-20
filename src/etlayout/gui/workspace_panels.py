@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 
-from PySide6.QtCore import QEvent, QObject, Qt
+from PySide6.QtCore import QCoreApplication, QEvent, QObject, Qt
 from PySide6.QtWidgets import QApplication
 
 SETTINGS_KEY = "workspace/panels_v1"
@@ -124,9 +124,19 @@ class WorkspacePanels(QObject):
         self.set_visible(name, not self.visible(name))
 
     def open_drawer(self, index: int):
+        view = self.window.view
+        center = view.mapToScene(view.viewport().rect().center())
         self._before_maximize = None
         self.set_visible("drawer", True)
         self.workspace.drawer.setCurrentIndex(index)
+        # Flush geometry work only; worker replies/user input must not reenter
+        # this transition. QRect's integer center differs from centerOn's
+        # geometric center, so preserve the actual pixel with scrollbar deltas.
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.LayoutRequest)
+        delta = view.mapFromScene(center) - view.viewport().rect().center()
+        horizontal, vertical = view.horizontalScrollBar(), view.verticalScrollBar()
+        horizontal.setValue(horizontal.value() + delta.x())
+        vertical.setValue(vertical.value() + delta.y())
 
     def restore_state(self, value: object) -> bool:
         state = validated_panel_state(value)

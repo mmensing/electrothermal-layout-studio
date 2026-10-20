@@ -6,8 +6,9 @@ import json
 from copy import deepcopy
 
 import pytest
-from gui_test_helpers import _click, _fill
+from gui_test_helpers import _click, _fill, _idle
 from gui_test_helpers import guided_window as guided_window
+from gui_test_helpers import solved_e1 as solved_e1
 from PySide6.QtCore import QPointF, Qt
 from PySide6.QtGui import QAction
 from PySide6.QtTest import QTest
@@ -214,3 +215,36 @@ def test_corrupt_legacy_named_workspace_does_not_crash(guided_window):
     assert all(window.guided.panels.visible(name) for name in window.guided.panels.widgets)
     assert window.project.to_dict() == original
     assert "corrupt workspace preference" in window.statusBar().currentMessage()
+
+
+@pytest.mark.parametrize("tab", [0, 1, 3])
+def test_opening_collapsed_drawer_preserves_actual_result_and_exact_camera(guided_window, qtbot, solved_e1, tab):
+    window = guided_window
+    project, result = solved_e1
+    window.set_project(deepcopy(project), result)
+    _idle(window, qtbot)
+    window.guided.navigate("results", force=True)
+    window.field_combo.setCurrentIndex(window.field_combo.findData("current_density"))
+    window.colormap_combo.setCurrentIndex(window.colormap_combo.findData("viridis"))
+    window.legend_scale.minimum.setText("0 mA/µm²")
+    window.legend_scale.maximum.setText("20 mA/µm²")
+    window.legend_scale.lock.setChecked(True)
+    assert window.legend_scale.validated_limits() == pytest.approx((0, 2e10))
+    window.guided.panels.set_visible("drawer", False)
+    QApplication.processEvents()
+    window.view.scale(1.7, 1.7)
+    window.view.centerOn(QPointF(70, -3))
+    QApplication.processEvents()
+    before = window.capture_view_state()
+    working, mesh = window.project, window.mesh
+    physical, revision = physics_hash(working), window.guided.document.revision
+    history = list(window.run_history)
+
+    window.guided.open_drawer(tab)
+    QApplication.processEvents()
+
+    assert window.guided.panels.visible("drawer") and window.guided.drawer.currentIndex() == tab
+    assert window.capture_view_state() == before
+    assert window.project is working and window.result is result and window.mesh is mesh
+    assert physics_hash(working) == physical and window.guided.document.revision == revision
+    assert window.run_history == history
