@@ -280,9 +280,11 @@ def test_resource_review_retains_edits_made_during_eager_read(guided_window, qtb
         assert window.result is None  # A field for the pre-edit physics cannot become current.
     finally:
         release.set()
-        finished(window, qtbot)
-        approval.stop()
-        approval.deleteLater()
+        try:
+            finished(window, qtbot)
+        finally:
+            approval.stop()
+            approval.deleteLater()
 
 
 @pytest.mark.parametrize("transition", ["inspect", "return"])
