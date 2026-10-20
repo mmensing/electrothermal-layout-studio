@@ -14,7 +14,7 @@ def distributable(relative):
     """Reject development-only content; retain normal scientific JSON/assets."""
     path = Path(relative)
     names = [part.lower() for part in path.parts]
-    if any(part in EXCLUDED_DIRECTORIES for part in names):
+    if any(part in EXCLUDED_DIRECTORIES or part.endswith('.egg-info') for part in names):
         return False
     name = path.name.lower()
     if path.suffix.lower() in EXCLUDED_SUFFIXES or name.startswith('.coverage') or name in {'coverage.json', 'coverage.xml', 'pytest-results.xml'}:

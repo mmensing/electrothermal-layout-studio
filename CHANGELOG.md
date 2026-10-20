@@ -19,6 +19,10 @@
   E21 one/four-CPU operation. Actual assembly concurrency does not promise a total
   speedup; sparse direct factorization remains serial.
 
+- Export source ZIPs from indexed maintained files, retaining `.gitattributes`
+  and excluding untracked files and stale generated `*.egg-info` package metadata.
+  Preserve standalone source builds with the same generated-metadata exclusion.
+
 This release also carries the previously reviewed engineering changes below:
 
 - Unify all forty example IDs under six subjects and shared GUI-led learning paths;

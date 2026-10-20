@@ -80,6 +80,20 @@ def public_check_summary(check):
 
 
 def source_files():
+    """Prefer indexed source; standalone exports retain the filtered fallback."""
+    if (ROOT / ".git").exists():
+        indexed = subprocess.check_output(
+            ["git", "ls-files", "--cached", "--full-name", "-z"], cwd=ROOT).decode("utf-8")
+        for name in sorted(set(indexed.split("\0")) - {""}):
+            relative = Path(name)
+            if not distributable(relative):
+                continue
+            path = ROOT / relative
+            if (path.is_symlink() or not path.is_file()
+                    or not path.resolve().is_relative_to(ROOT.resolve())):
+                raise ValueError("Tracked source member is missing, linked or outside the checkout")
+            yield path
+        return
     roots = ["src", "tests", "docs", "scripts", "packaging", "examples", "benchmarks", "LICENSES", ".github"]
     for directory in roots:
         folder = ROOT / directory
@@ -89,7 +103,7 @@ def source_files():
             if path.is_file() and distributable(path.relative_to(ROOT)):
                 yield path
     for name in ("pyproject.toml", "requirements-windows-py312.lock", "README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE",
-                 "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json", "REUSE.toml", "SECURITY.md", "MANIFEST.in", ".gitignore"):
+                 "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json", "REUSE.toml", "SECURITY.md", "MANIFEST.in", ".gitignore", ".gitattributes"):
         path = ROOT / name
         if path.exists():
             yield path
@@ -547,7 +561,7 @@ def main(argv=None):
         "built_utc": datetime.now(timezone.utc).isoformat(), "platform": platform.platform(),
         "python": platform.python_version(), "pyinstaller": metadata.version("pyinstaller"),
         "git_head": revision.stdout.strip() if revision.returncode == 0 else None,
-        "source_tree": "Working tree snapshot; per-file hashes identify exact source, including uncommitted edits",
+        "source_tree": "Indexed working tree snapshot, or filtered standalone source; per-file hashes include tracked modifications",
         "source_sha256": source_before,
         "code_sha256": code_before,
         "installed_packages": sorted(f"{d.metadata['Name']}=={d.version}" for d in metadata.distributions()),
