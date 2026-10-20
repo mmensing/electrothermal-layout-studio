@@ -70,17 +70,9 @@ def _atomic_json(path, value):
 
 
 def _implementation_identity(package, *, frozen=False):
-    package = Path(package)
-    if frozen:
-        stamp = package / "data" / "implementation.json"
-        if not stamp.is_file():
-            raise SimulationError("Frozen package lacks implementation identity; rebuild before running experiments")
-        digest = json.loads(stamp.read_text(encoding="utf-8")).get("source_sha256", "")
-        if len(digest) != 64 or any(c not in "0123456789abcdef" for c in digest):
-            raise SimulationError("Frozen implementation identity is invalid; rebuild the application")
-        return digest
-    source = {p.relative_to(package).as_posix(): file_hash(p) for p in sorted(package.rglob("*.py"))}
-    return _digest(source)
+    # Compatibility entry point; one identity implementation owns both paths.
+    from etlayout.provenance import implementation_identity
+    return implementation_identity(package, frozen=frozen)
 
 
 def _identity(project, experiment):
