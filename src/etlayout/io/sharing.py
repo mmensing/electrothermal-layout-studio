@@ -275,7 +275,8 @@ def _plan(result, request, project=None, history=None):
                 resolution_scale=data.get("resolution_scale", 0.))
         items.append(record)
     files.append(stem + ".manifest.json")
-    manifest = {"schema_version": 1, "mode": request.mode, "scope": MODES[request.mode], "contains_complete_experiment": False, "may_reveal_selected_design": True,
+    from etlayout.provenance import shared_result_identity
+    manifest = {"schema_version": 1, "implementation": shared_result_identity(selected), "mode": request.mode, "scope": MODES[request.mode], "contains_complete_experiment": False, "may_reveal_selected_design": True,
                 "configuration_hash": _hash(selected.configuration_hash, required=True), "physics_hash": _hash(selected.physics_hash),
                 "converged": bool(selected.converged), "timing": _timing(selected, result),
                 "requested_time_s": request.time_s, "region": _public_label(request.region, "Selected region"), "roi_m": request.roi,

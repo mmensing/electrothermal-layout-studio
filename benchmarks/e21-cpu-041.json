@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "scope": "same-mesh fresh-process CPU budget comparison; not mesh verification",
+  "date": "2026-10-20",
+  "version": "0.4.1",
+  "implementation_sha256": "c7ef8c12dabb847fee0ea18fef8dbb98ceb04124066b3ffd15b885713efb4b47",
+  "physics_hash": "94fd5cde31a05740886f0e441cdbad9423565d3e6426a29d1e9f54dfb3fc1e7d",
+  "mesh_sha256": "352538ad39f3f3154252466c26b52b63efa3b87239ede8b74f7e5ea8baa1fcc9",
+  "hardware": {
+    "system": "Windows",
+    "release": "11",
+    "processor": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+    "physical_cpus": 8,
+    "logical_cpus": 16,
+    "physical_memory_bytes": 33476079616
+  },
+  "python": "3.12.14",
+  "dependencies": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "shapely": "2.2.0",
+    "gmsh": "4.15.2",
+    "klayout": "0.30.12"
+  },
+  "configuration": {
+    "family": "gan",
+    "preset": "reference",
+    "variant": "single",
+    "thermal": "attached",
+    "fingers": 32,
+    "gate_width_um": 500.0,
+    "total_gate_width_m": 0.016,
+    "die_um": [
+      1140.0,
+      1100.0
+    ],
+    "requested_current_A": 5.0
+  },
+  "shared_preparation_timings_seconds": {
+    "preparation": 0.1364241000264883,
+    "meshing": 4.624178700032644
+  },
+  "mesh": {
+    "nodes": 71776,
+    "elements": 143324,
+    "estimated_dofs": 301091,
+    "minimum_quality": 0.021459511321893842,
+    "warnings": [
+      "Very slender triangles detected; inspect narrow geometry and mesh-size controls"
+    ]
+  },
+  "same_physics_and_mesh": true,
+  "source_unchanged": true,
+  "all_72_supported_fields_equivalent": true,
+  "maximum_field_absolute_difference": 0,
+  "comparison_tolerances": {
+    "relative": 1e-10,
+    "absolute": 1e-12
+  },
+  "observables_and_conservation_accepted": true,
+  "runs": [
+    {
+      "cpu_threads": 1,
+      "status": "converged",
+      "calculation_wall_seconds": 64.93595340009779,
+      "process_wall_seconds": 67.88383529998828,
+      "peak_process_RSS_bytes": 1678192640,
+      "phase_seconds": {
+        "preparation": 0.1341459999093786,
+        "meshing": 0.06137260003015399,
+        "electrical_assembly": 9.430247199605219,
+        "sparse_linear_solves": 15.89632869954221,
+        "thermal_assembly": 2.5791544001549482,
+        "reporting": 16.277763099991716,
+        "numerical": 48.29036899993662,
+        "total": 64.93595340009779
+      },
+      "assembly_batches": 0,
+      "actual_assembly_workers": 0,
+      "assembly_tasks": 0,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "cpu_threads": 4,
+      "status": "converged",
+      "calculation_wall_seconds": 72.42217689997051,
+      "process_wall_seconds": 75.39926430000924,
+      "peak_process_RSS_bytes": 1675169792,
+      "phase_seconds": {
+        "preparation": 0.1430380999809131,
+        "meshing": 0.06894749996718019,
+        "electrical_assembly": 8.704192000557669,
+        "sparse_linear_solves": 18.995255999732763,
+        "thermal_assembly": 2.4549528000643477,
+        "reporting": 17.8131687999703,
+        "numerical": 54.20694109995384,
+        "total": 72.42217689997051
+      },
+      "assembly_batches": 130,
+      "actual_assembly_workers": 4,
+      "assembly_tasks": 1099,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114499600478663e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    }
+  ],
+  "mesh_verified": false,
+  "limitations": "One repetition per budget with uncontrolled background system load; process RSS excludes the preparation parent; SuperLU factorization is serial. No universal speedup or mesh-convergence claim."
+}
