@@ -29,7 +29,7 @@ REQUIRED_NATIVE_CHECKS = {
     'frozen-optimization', 'frozen-optimization-resume', 'frozen-generate-E21',
     'frozen-solve-E21', 'frozen-reference-E21', 'frozen-generate-E23',
     'frozen-solve-E23', 'frozen-reference-E23', 'frozen-E21-parallel',
-    'frozen-editor', 'frozen-editor-solve',
+    'frozen-editor', 'frozen-editor-solve', 'build-info', 'frozen-workflow',
 }
 WINDOWS_MAX_BYTES = 512 * 1024**2
 WINDOWS_MAX_ENTRIES = 20_000
@@ -353,7 +353,7 @@ def inspect_windows_profile(path, policy, version, commit):
                 and all(type(check) is dict and type(check.get('exit_code')) is int
                         and check['exit_code'] == 0 and isinstance(check.get('name'), str) for check in checks)
                 and {check['name'] for check in checks} == REQUIRED_NATIVE_CHECKS,
-                'Windows archive must pass all 25 distinct required native checks; skip-tests is ineligible')
+                'Windows archive must pass all 27 distinct required native checks; skip-tests is ineligible')
 
 
 

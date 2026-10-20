@@ -20,6 +20,15 @@ def _close_smoke_window(window, application):
     window.autosave_timer.stop()
     window.cancel_job()
     window.cancel_geometry()
+    if getattr(window, "project_opening", None) is not None:
+        window.cancel_catalog()
+        window.history_workflow.cancel()
+        deadline = time.monotonic() + 30.
+        while window.history_opener.jobs or window.history_workflow.loader.jobs:
+            application.processEvents()
+            if time.monotonic() > deadline:
+                raise RuntimeError("Smoke archive worker did not stop; retaining QA files")
+            time.sleep(.01)
     save_job = getattr(window, "save_job", None)
     if save_job is not None:
         window.cancel_saving()
@@ -59,20 +68,26 @@ def main(argv=None):
     parser.add_argument("--smoke-test", action="store_true", help="Start Qt, render a frame, and exit")
     parser.add_argument("--screenshot", help="Save the rendered window to PNG before smoke-test exit")
     parser.add_argument("--editor-smoke-output", help=argparse.SUPPRESS)
+    parser.add_argument("--workflow-smoke-output", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     if args.editor_smoke_output and not (args.smoke_test and args.project):
         parser.error("--editor-smoke-output requires --smoke-test and an E1 project fixture")
+    if args.workflow_smoke_output and not (args.smoke_test and args.project):
+        parser.error("--workflow-smoke-output requires --smoke-test and a solved E1 project fixture")
+    if args.workflow_smoke_output and args.editor_smoke_output:
+        parser.error("Select one release smoke workflow per process")
     from PySide6.QtCore import QTimer
     from PySide6.QtWidgets import QApplication
 
     from etlayout.gui.main_window import MainWindow
     from etlayout.io.project import load_project, load_run_history
     editor_output = Path(args.editor_smoke_output).resolve() if args.editor_smoke_output else None
+    workflow_output = Path(args.workflow_smoke_output).resolve() if args.workflow_smoke_output else None
     # delete=False prevents finalization from removing files under a worker after
     # abnormal cleanup. Successful owned shutdown explicitly removes this folder.
     previous_tempdir = tempfile.tempdir
-    temporary = tempfile.TemporaryDirectory(prefix="etlayout-smoke-", delete=False) if args.smoke_test and not editor_output else None
-    qa_root = editor_output or (Path(temporary.name) if temporary else None)
+    temporary = tempfile.TemporaryDirectory(prefix="etlayout-smoke-", delete=False) if args.smoke_test and not (editor_output or workflow_output) else None
+    qa_root = editor_output or workflow_output or (Path(temporary.name) if temporary else None)
     aliases = None
     window = application = None
     construction_started = False
@@ -103,7 +118,7 @@ def main(argv=None):
         logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
         policy = policy_from_args(args)
         project, result = (load_project(args.project, external_policy=policy)
-                           if args.project and args.smoke_test else (None, None))
+                           if args.project and args.smoke_test and not workflow_output else (None, None))
         construction_started = True
         window = MainWindow(project, result, database_path=qa_root / "materials.sqlite3" if qa_root else None,
                             recover=not args.no_recovery and not args.smoke_test)
@@ -120,7 +135,7 @@ def main(argv=None):
                 window.restoreState(state)
         if args.project and not args.smoke_test:
             window.open_project(args.project, external_policy=policy)
-        if args.project and args.smoke_test:
+        if args.project and args.smoke_test and not workflow_output:
             window.path = Path(args.project)
             window.run_history = load_run_history(args.project, external_policy=policy)
             if result:
@@ -146,6 +161,11 @@ def main(argv=None):
                     return
                 if failed:
                     print("Desktop smoke test failed: geometry was not ready within 60 seconds.", file=sys.stderr)
+                elif workflow_output:
+                    from etlayout.gui.release_smoke import run_workflow_smoke
+                    failed = not run_workflow_smoke(window, args.project, workflow_output)
+                    if failed:
+                        print(f"Desktop workflow smoke test failed; see {workflow_output / 'receipt.json'}", file=sys.stderr)
                 elif editor_output:
                     from etlayout.gui.editor_smoke import run_editor_smoke
                     failed = not run_editor_smoke(window, editor_output)

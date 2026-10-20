@@ -59,6 +59,31 @@ Clean-machine, physical monitor-DPI and screen-reader checks were not performed.
 The original intermittent Qt/Shiboken GC failure remains unisolated. No candidate
 was published; these checks do not waive release, license or source obligations.
 
+## 0.4.1 baseline and release verification
+
+The pinned baseline before these maintenance changes passed **2,662 tests** on
+hosted Windows CPython 3.12.10 with the locked dependencies: zero failures/errors/
+skips, **87.70% statement** and **77.61% branch** coverage, 2,341.767 s JUnit time.
+Coverage includes the complete collection and spawned workers; no exclusions were
+added. The baseline main commit was `c0bcd5e1eced48070e2346c22dac03ce6a786713`.
+Final release evidence must come from the exact final protected public-main run
+using the same command/environment, rather than an earlier successful PR head.
+
+Focused changes add real eager schema-2/schema-3/JSON opening, stale/cancelled read
+disposal, resource consent, draft/save/history transitions, preserved result build
+identity and guarded study/browser workflows. Native 100%/150% captures verify
+readable scientific glyphs. An eight-cycle native lifecycle diagnostic completed
+16 DC solves, a pulsed solve, archive/history/cancellation/close and explicit GC
+without reproducing the original intermittent Qt/Shiboken access violation.
+That bounded negative result is not a causal fix or a stability guarantee.
+
+The [current E21 CPU measurement](performance.md) supersedes historical geometry
+for current performance interpretation. [Windows packaging](windows.md) describes
+27 required native checks and seven extracted-folder checks for an actual 0.4.1
+candidate. Fresh artifact/source/SBOM/privacy review and owner preflight remain
+mandatory. See the exact release assets and checksums for performed release
+validation; source tests alone do not establish packaged or clean-machine behavior.
+
 ## Local current and heat verification
 
 See [current crowding](current-crowding.md) for ten independent reference geometries,

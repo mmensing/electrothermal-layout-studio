@@ -88,6 +88,13 @@ Small batches, SuperLU factorization and some meshing/geometry steps remain seri
 activity varies by phase and more CPUs do not guarantee a faster individual solve. Parallel
 studies also consume more memory. The distribution uses CPU execution and requires no GPU runtime.
 
+The 0.4.1 native protocol requires **27 distinct checks**, including a frozen
+`build-info` comparison with the exact source stamp and an actual default eager
+File Open journey. The latter checks recorded fields, read-only history/return,
+mesh-study dialog cancellation and compact example-browser opening without an
+automatic solve. Readable native scientific glyphs and screenshots are required.
+These checks supplement source tests; they do not certify a clean machine.
+
 ## Deployment choice
 
 Qt's `pyside6-deploy` wraps Nuitka and documents `dumpbin` from MSVC as a Windows
@@ -162,8 +169,8 @@ with four actual assembly workers. See [validation](validation.md) for the
 difference between historical and current source/native/build evidence. Any
 future public candidate needs a fresh build from its exact audited public commit.
 After archiving, it CRC-checks the ZIP and extracts it into a fresh temporary
-directory outside the checkout. Six extracted-payload checks exercise the version,
-GDSII/OASIS imports, E1 numerical solve, the windowed GUI and its spawned worker.
+directory outside the checkout. Seven extracted-payload checks exercise the version,
+implementation receipt, GDSII/OASIS imports, E1 numerical solve, the windowed GUI and its spawned worker.
 The recipient-like execution uses only Windows system directories in PATH,
 removes development Python/Qt/coverage variables, and uses the native Windows Qt
 plugin. E1 must converge with positive resistance, and the worker must produce a
