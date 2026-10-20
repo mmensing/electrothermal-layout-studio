@@ -226,6 +226,7 @@ jobs:
           name: windows-desktop-validation
           path: |
             artifacts/desktop-*/*.json
+            artifacts/desktop-*/**/receipt.json
             artifacts/desktop-*/**/font-verification.json
             artifacts/desktop-*/**/*.png
             artifacts/desktop-scientific_lifecycle_acceptance/native-faults.log
