@@ -16,14 +16,17 @@ resource_files = resource_policy["resource_files"]
 datas = collect_data_files("etlayout") + copy_metadata("etlayout")
 # Experiment identities include exact numerical dependencies, including when
 # importlib.metadata executes inside the frozen optimizer.
-for dependency in ("numpy", "scipy", "shapely", "gmsh", "klayout"):
+for dependency in ("numpy", "scipy", "shapely", "gmsh", "klayout", "PySide6", "shiboken6",
+                   "pyqtgraph", "matplotlib", "meshio", "platformdirs", "threadpoolctl", "psutil"):
     datas += copy_metadata(dependency)
 package = root / "src" / "etlayout"
 source_hashes = {p.relative_to(package).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
                  for p in sorted(package.rglob("*.py"))}
 implementation = root / "build" / "frozen-identity" / "implementation.json"
 implementation.parent.mkdir(parents=True, exist_ok=True)
-implementation.write_text(json.dumps({"source_sha256": hashlib.sha256(json.dumps(
+implementation.write_text(json.dumps({"schema_version": 1,
+    "version": runpy.run_path(str(package / "__init__.py"))["__version__"],
+    "source_sha256": hashlib.sha256(json.dumps(
     source_hashes, sort_keys=True, separators=(",", ":")).encode()).hexdigest()}), encoding="utf-8")
 datas.append((str(implementation), "etlayout/data"))
 binaries = collect_dynamic_libs("klayout")

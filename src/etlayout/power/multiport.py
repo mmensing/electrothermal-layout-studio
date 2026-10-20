@@ -20,6 +20,7 @@ from etlayout import __version__
 from etlayout.io.project import configuration_hash, physics_hash
 from etlayout.io.reporting import csv_writer
 from etlayout.models import SimulationError, checkpoint
+from etlayout.provenance import build_info
 from etlayout.solvers.electrical import solve_state
 
 
@@ -129,6 +130,7 @@ def extract_multiport(project, mesh, port_ids=None, reference=None, temperatures
             'reduced_conductance_matrix': reduced.tolist(), 'resistance_matrix': resistance.tolist(),
             'resistance_units': 'ohm', 'current_sign': 'positive entering domain',
             'temperature': temperature_info, 'solver_version': __version__,
+            'build': build_info(),
             'configuration_hash': configuration_hash(project), 'physics_hash': physics_hash(project),
             'configuration': project.to_dict(), 'materials': {key: asdict(value) for key, value in project.materials.items()},
             'mesh': mesh_info, 'validation': {'kcl_absolute_error_S': row_error,

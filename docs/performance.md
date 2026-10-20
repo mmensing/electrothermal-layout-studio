@@ -103,3 +103,48 @@ payload bytes, private disk-copy bytes and process-tree RSS are distinct measure
 The linked format/history documents define the measurement and validation method;
 no universal size or speed improvement is implied. Use new artifact directories
 and keep generated archives/logs outside source control.
+
+
+## Current E21 CPU budgets (0.4.1 source)
+
+Use the explicit same-mesh harness; it never runs while generating examples:
+
+```powershell
+python scripts/benchmark_cpu.py --example E21 --output artifacts/e21-cpu-new
+```
+
+It generates the exact nominal 32-finger, 500 µm conducting-width-per-finger
+E21 (16 mm total gate width, 1.14 × 1.10 mm domain, 5 A, attached backside).
+One conforming mesh is prepared and guarded before fresh 1-CPU and 4-CPU worker
+processes solve identical inputs. Preparation and meshing are measured separately;
+the worker meshing times describe verified mesh reuse, not a fresh mesh build.
+Every supported field, delivered service, integral quantities and configured
+conservation criteria are checked. Default field-comparison arrays are removed
+after checking; detailed receipts belong outside the tracked source tree.
+
+On the native Windows 11 / Python 3.12.14 / 8-core, 16-thread, 32 GiB host,
+143,324 triangles and 301,091 estimated DOFs gave this single measured pair:
+
+| Measured wall phase | 1 CPU budget | 4 CPU budget |
+| --- | ---: | ---: |
+| Electrical assembly | 9.430 s | 8.704 s |
+| Thermal assembly | 2.579 s | 2.455 s |
+| Sparse solves (within numerical time) | 15.896 s | 18.995 s |
+| Reporting | 16.278 s | 17.813 s |
+| Complete calculation | 64.936 s | 72.422 s |
+| Sampled worker peak RSS | 1,600.4 MiB | 1,597.6 MiB |
+
+Shared initial geometry preparation took 0.136 s and meshing 4.624 s.
+The four-CPU calculation used **four actual assembly workers**, 130 batches and
+1,099 independent tasks. All 72 stored field arrays were identical; both runs
+delivered 5 A at 0.744704 V, with maximum temperature 313.552 K. Relative current,
+electrical-power and thermal-balance errors were respectively 3.08e-10, 1.31e-9
+and 1.33e-6, within the unchanged configured criteria.
+
+The four-CPU assembly was modestly faster, but the whole calculation was slower
+in this pair. Background system load was uncontrolled; one repetition does not
+establish a stable throughput ranking. Serial SuperLU factorization and reporting
+remain material costs. No mesh-convergence claim follows from same-mesh equality;
+this mesh also reports slender-triangle warnings. The concise maintained
+[receipt](../benchmarks/e21-cpu-041.json) binds exact source, physics and mesh
+identities. It describes this measured implementation, not a future-build promise.
