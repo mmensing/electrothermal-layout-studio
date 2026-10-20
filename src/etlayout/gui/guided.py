@@ -1906,7 +1906,7 @@ class GuidedWorkspace(QObject):
                 for index, diagnostic in enumerate(result.diagnostics)
                 if diagnostic.message.startswith("Maximum temperature limit:"))
         if self.last_error:
-            issues.insert(0, WorkflowIssue("job.failed", "error", "Last computation failed: " + self.last_error,
+            issues.insert(0, WorkflowIssue("job.failed", "error", "Operation failed: " + self.last_error,
                                         detail=self.last_error_detail or "Open the setup, correct inputs and retry. Logs contain the worker traceback.",
                                         stage=self.last_error_stage))
         self.visible_issue_count = len(issues)

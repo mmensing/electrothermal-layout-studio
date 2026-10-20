@@ -141,6 +141,10 @@ def test_history_read_failure_is_visible_and_does_not_replace_canvas(
     assert (window.project, window.result, window.mesh) == before[:3]
     assert window.capture_view_state()["transform"] == before[3]["transform"]
     assert "device read failure" in window.guided.last_error_detail
+    assert window.guided.last_error == "Recorded result could not be loaded"
+    assert window.guided.last_error_stage == "results"
+    assert "remove this unavailable run explicitly" in window.guided.last_error_detail
+    assert window.capture_view_state() == before[3]
     assert window.guided.drawer.currentIndex() == 0
 
 

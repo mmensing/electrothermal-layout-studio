@@ -132,6 +132,11 @@ def main(argv=None):
         assert window.project is working and window.result is result
         assert window.guided.panels.visible("drawer") and window.guided.drawer.currentIndex() == 0
         assert "Opening the selected project failed" in window.guided.last_error_detail
+        assert window.guided.last_error == "Project could not be opened"
+        assert window.guided.last_error_stage == "layout"
+        assert "Project could not be opened" in window.guided.issue_table.item(0, 1).text()
+        assert "computation failed" not in window.guided.issue_table.item(0, 1).text().lower()
+        assert "remove this unavailable run" not in window.guided.last_error_detail
         assert window.capture_view_state() == before
         capture(window, "e1-failed-open-with-retained-camera")
         assert window.capture_view_state() == before
