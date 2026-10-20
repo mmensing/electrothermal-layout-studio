@@ -172,10 +172,10 @@ Do not reuse or advertise pre-public binaries as MPL releases.
    Attestations record a completed review; they do not themselves prove compliance.
 5. Run the default **read-only** preflight. It checks protected remote main, no
    existing tag/release, current collaborators/deploy keys and the latest trusted
-   exact-commit public-main CI run. The required `source-quality` check must be bound to the actual
+   exact-commit public-main CI run. The required `source-quality` and `scientific-regression` checks must be bound to the actual
    GitHub Actions integration, quality rules must have no bypass, and immutable
    releases must read back enabled. If immutability is unavailable, stop and review
-   documented equivalent controls through a helper change. `source-quality`, `windows-tests` and
+   documented equivalent controls through a helper change. `source-quality`, `scientific-regression`, `windows-tests` and
    `windows-desktop` must all pass in an owner `push`/`workflow_dispatch` run from
    this repository, not a fork/PR run. Source-only assets receive bounded nested
    archive inspection, native-payload rejection and matching source/version/license

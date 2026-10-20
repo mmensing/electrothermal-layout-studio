@@ -70,7 +70,8 @@ def passed_jobs(_identifier):
 def branch_rules():
     return [{'type': name} for name in ('pull_request', 'non_fast_forward', 'deletion')] + [
         {'type': 'required_status_checks', 'ruleset_id': 12,
-         'parameters': {'required_status_checks': [{'context': 'source-quality', 'integration_id': 15368}]}}]
+         'parameters': {'required_status_checks': [{'context': name, 'integration_id': 15368}
+                                                    for name in ('source-quality', 'scientific-regression')]}}]
 
 
 class FakeReadOnlyReader:
@@ -158,6 +159,19 @@ def test_latest_failed_run_cannot_fall_back_to_old_success():
         release.trusted_ci([old, new], passed_jobs, COMMIT)
     with pytest.raises(release.ReleaseError, match='windows-desktop'):
         release.trusted_ci([old], lambda _identifier: passed_jobs(7)[:-1], COMMIT)
+
+
+@pytest.mark.parametrize('context', ['source-quality', 'scientific-regression'])
+@pytest.mark.parametrize('change', ['missing', 'wrong-integration'])
+def test_both_required_quality_checks_must_come_from_actions(context, change):
+    rules = branch_rules()
+    checks = rules[-1]['parameters']['required_status_checks']
+    if change == 'missing':
+        checks[:] = [item for item in checks if item['context'] != context]
+    else:
+        next(item for item in checks if item['context'] == context)['integration_id'] = 99999
+    with pytest.raises(release.ReleaseError, match='actual GitHub Actions integration'):
+        release.protected_rules(rules, lambda _identifier: {'enforcement': 'active', 'bypass_actors': []}, 15368)
 
 
 def test_owner_bypass_cannot_bypass_quality():
