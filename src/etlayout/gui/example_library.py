@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from html import escape
 
-from PySide6.QtCore import QSignalBlocker, Qt
+from PySide6.QtCore import QEvent, QSignalBlocker, Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -46,6 +46,7 @@ class ExampleLibraryDialog(QDialog):
         self._choices = None
         self._entries = []
         self._selections = {}
+        self._follow_selection = True
         for info in EXAMPLE_CATALOG.values():
             self._entries.append({**info.to_dict(), "identifier": info.name, "collection": "reference"})
         for name in COMPANION_CATALOG:
@@ -98,6 +99,11 @@ class ExampleLibraryDialog(QDialog):
         self.examples.setObjectName("example_list")
         self.examples.setAccessibleName("Matching examples")
         self.examples.setWordWrap(True)
+        self._selection_visibility_timer = QTimer(self)
+        self._selection_visibility_timer.setSingleShot(True)
+        self._selection_visibility_timer.timeout.connect(self._scroll_to_current)
+        self.examples.viewport().installEventFilter(self)
+        self.examples.verticalScrollBar().installEventFilter(self)
         left_layout.addWidget(self.examples, 1)
         self.count = QLabel()
         self.count.setWordWrap(True)
@@ -167,6 +173,33 @@ class ExampleLibraryDialog(QDialog):
         if identifier:
             self.select_example(identifier)
         self.search.setFocus()
+
+    def _scroll_to_current(self):
+        """Finish the pending programmatic selection after the layout settles."""
+        item = self.examples.currentItem()
+        if item is not None and self._follow_selection:
+            self.examples.doItemsLayout()
+            self.examples.scrollToItem(item)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._selection_visibility_timer.start(0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        timer = getattr(self, "_selection_visibility_timer", None)
+        if timer is not None and self._follow_selection:
+            timer.start(0)
+
+    def eventFilter(self, watched, event):
+        # Follow explicit selection across wrapping/layout changes, but retire
+        # that intent when the user scrolls the list to read another entry.
+        if event.type() in {QEvent.Type.Wheel, QEvent.Type.MouseButtonPress, QEvent.Type.KeyPress}:
+            scrollbar = self.examples.verticalScrollBar()
+            if watched is scrollbar or watched is self.examples.viewport() and event.type() == QEvent.Type.Wheel:
+                self._follow_selection = False
+                self._selection_visibility_timer.stop()
+        return super().eventFilter(watched, event)
 
     @staticmethod
     def _combo(name, label):
@@ -245,11 +278,13 @@ class ExampleLibraryDialog(QDialog):
             self.search.clear()
         self._identifier = identifier
         self._collection_changed()
+        self._selection_visibility_timer.start(0)
 
     def _show_entry(self, item, *_):
         if item is None:
             return
         self._identifier = item.data(Qt.ItemDataRole.UserRole)
+        self._follow_selection = True
         self._choices = example_choices(self._identifier)
         choices = self._choices
         self.configuration.setEnabled(True)

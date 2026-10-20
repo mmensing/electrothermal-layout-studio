@@ -282,3 +282,29 @@ def test_compact_browser_prioritizes_requested_inputs_without_nested_scroll(brow
     browser.detail_tabs.setCurrentWidget(browser.details)
     assert "Model limits" in browser.details.toPlainText()
     assert browser.configuration.isVisible() and browser.open_button.isVisible()
+
+
+@pytest.mark.parametrize("settle_before_resize", [False, True])
+def test_programmatic_selection_stays_visible_after_compact_resize(browser, qtbot, settle_before_resize):
+    browser.select_example("E21")
+    if settle_before_resize:
+        qtbot.waitUntil(lambda: not browser._selection_visibility_timer.isActive())
+        QApplication.processEvents()
+    browser.resize(680, 480)
+    qtbot.waitUntil(lambda: not browser._selection_visibility_timer.isActive())
+    QApplication.processEvents()
+    item = browser.examples.currentItem()
+    assert item.data(Qt.ItemDataRole.UserRole) == example_info("E21").name
+    assert browser.examples.viewport().rect().contains(browser.examples.visualItemRect(item))
+    assert "Requested configuration inputs" in browser.inputs.toPlainText()
+
+    # A user can read the start of the list without losing the selected inputs.
+    scrollbar = browser.examples.verticalScrollBar()
+    qtbot.keyClick(scrollbar, Qt.Key.Key_Home)
+    QApplication.processEvents()
+    assert not browser.examples.viewport().rect().intersects(browser.examples.visualItemRect(item))
+    browser.resize(700, 500)
+    QApplication.processEvents()
+    qtbot.waitUntil(lambda: not browser._selection_visibility_timer.isActive())
+    assert browser.examples.verticalScrollBar().value() == 0
+    assert browser.selection()["name"] == example_info("E21").name

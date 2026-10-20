@@ -70,6 +70,8 @@ def main(argv=None):
         wait_desktop_events()
         assert "64 × 1000" in dialog.inputs.toPlainText()
         assert dialog.detail_tabs.currentWidget() is dialog.inputs
+        selected = dialog.examples.currentItem()
+        assert selected is not None and dialog.examples.viewport().rect().contains(dialog.examples.visualItemRect(selected))
         assert "Large/stress cases are opt-in" in dialog.resource_note.text()
         for control in (dialog.open_button, dialog.buttons.button(QDialogButtonBox.StandardButton.Cancel)):
             assert control.isVisible() and dialog.rect().contains(control.mapTo(dialog, control.rect().bottomRight()))
@@ -86,7 +88,7 @@ def main(argv=None):
         assert dialog.examples.count() == 1
         QTest.keyClick(dialog.search, Qt.Key.Key_Escape)
         assert not dialog.isVisible()
-        receipt["checks"].append("Requested presets/scenarios, compact fixed actions, model tab, exact-ID keyboard search and Escape")
+        receipt["checks"].append("Requested presets/scenarios, visible selected row after compact resize, fixed actions, model tab, exact-ID keyboard search and Escape")
 
         project = make_example("E1", output / "inputs")
         result = run_project(project)
