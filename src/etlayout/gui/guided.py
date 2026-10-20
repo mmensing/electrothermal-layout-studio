@@ -613,7 +613,7 @@ class GuidedWorkspace(QObject):
         self.register("view.selection", "Fit selection / ROI", self.fit_selection_or_roi, self.menus["View"], "Shift+Home")
         self.register("view.crop", "Draw view crop", lambda: self.begin_selection("view_crop"), self.menus["View"])
         self.register("view.clear_crop", "Clear view crop", w.clear_display_roi, self.menus["View"])
-        self.register("view.browser", "Hierarchy / layers / nets", lambda: self.show_page(w.design_dock.widget(), "Model browser"), self.menus["View"])
+        self.register("view.browser", "Hierarchy / layers / nets", lambda: self.show_page(w.design_browser, "Model browser"), self.menus["View"])
         self.menus["View"].addSeparator()
         panel_actions = {}
         for name, label, shortcut in (("left", "Workflow navigation", "Ctrl+Shift+L"),
@@ -936,7 +936,7 @@ class GuidedWorkspace(QObject):
                                  f" · instance: {source.instance_path or '(top)'}\nDBU: {source.dbu_um:g} µm", "hint")
         source_label.setToolTip(source.path)
         self.page_layout.addWidget(source_label)
-        self.page_layout.addWidget(button("Browse hierarchy / instances", lambda: self.show_page(w.design_dock.widget(), "Model browser")))
+        self.page_layout.addWidget(button("Browse hierarchy / instances", lambda: self.show_page(w.design_browser, "Model browser")))
         self.page_layout.addWidget(button("Use selected item as simulation scope", self.apply_scope))
         self.region_kind = QComboBox()
         for label, key in (("Simulation domain", "domain"), ("View crop · display only", "view_crop"),

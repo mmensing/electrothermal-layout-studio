@@ -384,3 +384,19 @@ incomplete/thermally stopped point or a mesh mismatch cannot certify time-step
 convergence. This prevents native mesher variations between workers from being
 misreported as temporal sensitivity. Field outputs still use the requested
 cadence, and equal effective step counts remain explicitly diagnosed.
+
+
+A later broader local order reproduced the native Qt/Shiboken access violation
+with default automatic garbage collection. Removing queued exception traceback
+ownership and collecting closed test windows between tests did not establish a
+cure; the latter workaround is not shipped. Native dumps locate an invalid
+retained Python reference in Shiboken traversal, without identifying its owner.
+This is an unresolved native stability limitation, including potentially supported
+multiwindow recovery; a passing CI run cannot establish its absence.
+
+A separate native single-window diagnostic completed 12 cycles (24 actual eager
+E1/E15 opens, 24 historical inspection/return pairs and 168 workflow navigations)
+in 117.828 s with default automatic GC and no explicit collection. An earlier
+30-cycle attempt reached 18 cycles before its 190 s diagnostic budget expired;
+that attempt is incomplete, not a passing stress test. Source diagnostics remain
+separate from final frozen-package and clean-machine validation.

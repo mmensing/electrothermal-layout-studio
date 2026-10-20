@@ -685,6 +685,7 @@ class MainWindow(QMainWindow):
         self.net_tree.setHeaderLabels(["Net / component", "Terminals"])
         self.net_tree.itemDoubleClicked.connect(self.locate_net)
         design_tabs.addTab(self.net_tree, "Nets")
+        self.design_browser = design_tabs
         self.design_dock = self.add_dock("Design browser", design_tabs, Qt.DockWidgetArea.LeftDockWidgetArea)
 
         self.config_tabs = ConfigurationNavigation()
