@@ -20,7 +20,9 @@ pytestmark = pytest.mark.desktop
 
 @pytest.fixture
 def browser(qtbot):
+    from etlayout.gui.theme import apply_widget_theme
     dialog = ExampleLibraryDialog()
+    apply_widget_theme(dialog, False)
     qtbot.addWidget(dialog)
     dialog.show()
     return dialog
@@ -122,11 +124,11 @@ def test_recommended_scenarios_show_selected_inputs_and_preserve_original_choice
     browser.select_example(identifier)
     assert browser.scenario.currentData() == scenario
     assert browser.selection() == {"name": example_info(identifier).name, "scenario": scenario}
-    assert "Selected scenario inputs" in browser.details.toPlainText()
-    assert drive in browser.details.toPlainText()
+    assert "Selected scenario inputs" in browser.inputs.toPlainText()
+    assert drive in browser.inputs.toPlainText()
     _choose(browser.scenario, "reference")
     assert browser.selection()["scenario"] == "reference"
-    assert original in browser.details.toPlainText()
+    assert original in browser.inputs.toPlainText()
     if identifier == "E39":
         assert "stress" in browser.details.toPlainText().lower()
 
@@ -137,9 +139,9 @@ def test_entry_switching_preserves_family_choices_and_named_scenarios(browser):
     _choose(browser.variant, "dual")
     _choose(browser.thermal, "resistive_attach")
     expected = browser.selection()
-    assert "Original reference inputs" in browser.details.toPlainText()
-    assert "Original reference thermal path" in browser.details.toPlainText()
-    assert "0.075 A" in browser.resource_note.text() and "resistive_attach" in browser.resource_note.text()
+    assert "Requested configuration inputs" in browser.inputs.toPlainText()
+    assert "Original reference thermal path" not in browser.inputs.toPlainText()
+    assert "0.075 A" in browser.inputs.toPlainText() and "resistive_attach" in browser.inputs.toPlainText()
     browser.select_example("E39")
     _choose(browser.scenario, "semiconductor_heat")
     browser.select_example("E21")
@@ -263,3 +265,20 @@ def test_compact_browser_retains_keyboard_open_and_cancel_controls(browser, qtbo
     cancel.setFocus()
     with qtbot.waitSignal(browser.rejected):
         qtbot.keyClick(cancel, Qt.Key.Key_Space)
+
+
+def test_compact_browser_prioritizes_requested_inputs_without_nested_scroll(browser):
+    from PySide6.QtWidgets import QScrollArea
+    browser.resize(680, 480)
+    browser.select_example("E21")
+    _choose(browser.preset, "large")
+    QApplication.processEvents()
+    assert browser.detail_tabs.currentWidget() is browser.inputs
+    assert "64 × 1000" in browser.inputs.toPlainText()
+    assert "Requested configuration inputs" in browser.inputs.toPlainText()
+    assert "Large/stress cases are opt-in" in browser.resource_note.text()
+    assert not browser.findChildren(QScrollArea)
+    assert browser.configuration.isVisible()
+    browser.detail_tabs.setCurrentWidget(browser.details)
+    assert "Model limits" in browser.details.toPlainText()
+    assert browser.configuration.isVisible() and browser.open_button.isVisible()
