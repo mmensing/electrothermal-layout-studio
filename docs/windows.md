@@ -67,6 +67,7 @@ paths beyond the traditional Windows path-length limit can fail in this profile.
 
 ```powershell
 dist/ElectrothermalLayoutStudio/etlayout.exe --version
+dist/ElectrothermalLayoutStudio/etlayout.exe build-info
 dist/ElectrothermalLayoutStudio/etlayout.exe capabilities
 dist/ElectrothermalLayoutStudio/etlayout.exe solve examples/E1_straight.etl --no-plots --output results
 dist/ElectrothermalLayoutStudio/ElectrothermalLayoutStudio.exe gui examples/E7_hemt.etl
