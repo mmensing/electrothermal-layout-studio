@@ -36,12 +36,11 @@ def archive(tmp_path, name, *, external=False, version=3):
 
 def _make_opener(qtbot):
     control = HistoryOpener()
-    received, reviews, failures, legacy = [], [], [], []
+    received, reviews, failures = [], [], []
     control.loaded.connect(lambda *values: received.append(values))
     control.review_required.connect(lambda *values: reviews.append(values))
     control.failed.connect(lambda *values: failures.append(values))
-    control.legacy.connect(legacy.append)
-    return control, received, reviews, failures, legacy
+    return control, received, reviews, failures
 
 
 @pytest.fixture
@@ -52,11 +51,12 @@ def opening(qtbot):
         owned.append(item)
         return item
     yield create
-    for control, received, _, _, _ in owned:
+    for control, received, _, _ in owned:
         assert control.shutdown()
         qtbot.waitUntil(lambda control=control: not control.jobs, timeout=30000)
         for _, _, store in received:
-            store.close()
+            if store is not None:
+                store.close()
 
 
 def test_worker_opens_catalog_without_array_reads_and_releases_cancelled_generation(qtbot, tmp_path, monkeypatch, opening):
@@ -69,10 +69,10 @@ def test_worker_opens_catalog_without_array_reads_and_releases_cancelled_generat
             reads.append(text)
         return original(self, name, *args, **kwargs)
     monkeypatch.setattr(zipfile.ZipFile, "open", observed)
-    control, received, reviews, failures, legacy = opening()
+    control, received, reviews, failures = opening()
     request = control.submit(target, "document-a")
     qtbot.waitUntil(lambda: bool(received or failures), timeout=30000)
-    assert not failures and not reviews and not legacy and not reads
+    assert not failures and not reviews and not reads
     assert received[0][0] == request and received[0][1].name == "metadata-first"
     store = received[0][2]
     assert store.stats.resident_bytes == 0 and store.records[0].available
@@ -90,7 +90,7 @@ def test_resource_approval_retries_exact_reviewed_generation_before_external_rea
             external_hashes.append(path)
         return original(path)
     monkeypatch.setattr(project_io, "file_hash", observed)
-    control, received, reviews, failures, legacy = opening()
+    control, received, reviews, failures = opening()
     control.submit(target, "document-a")
     qtbot.waitUntil(lambda: bool(reviews or failures), timeout=30000)
     assert not failures and not received and not external_hashes
@@ -112,7 +112,7 @@ def test_resource_approval_retries_exact_reviewed_generation_before_external_rea
     control.submit(target, "document-a", policy=policy, inspection=inspection)
     qtbot.waitUntil(lambda: bool(failures), timeout=30000)
     assert "generation differs" in str(failures[0][1]) and not external_hashes
-    assert not received and not reviews and not legacy
+    assert not received and not reviews
     assert control.shutdown()
     qtbot.waitUntil(lambda: not control.jobs)
 
@@ -130,7 +130,7 @@ def test_rapid_open_and_cancel_keep_gui_heartbeat_and_close_stale_private_copy(q
             release.wait(10)
         return store
     monkeypatch.setattr(history_opening, "open_history_catalog", delayed)
-    control, received, reviews, failures, legacy = opening()
+    control, received, reviews, failures = opening()
     ticks = []
     timer = QTimer()
     timer.setInterval(5)
@@ -149,7 +149,7 @@ def test_rapid_open_and_cancel_keep_gui_heartbeat_and_close_stale_private_copy(q
         assert len(received) == 1 and copied[0].stats.closed
         assert not copied[0]._snapshot_path.exists()
         received[0][2].close()
-        assert not reviews and not legacy
+        assert not reviews
     finally:
         timer.stop()
         release.set()
@@ -157,11 +157,48 @@ def test_rapid_open_and_cancel_keep_gui_heartbeat_and_close_stale_private_copy(q
         qtbot.waitUntil(lambda: not control.jobs, timeout=30000)
 
 
-def test_legacy_projects_use_explicit_eager_fallback(qtbot, tmp_path, opening):
-    target = archive(tmp_path, "legacy", version=2)
-    control, received, reviews, failures, legacy = opening()
-    request = control.submit(target, "document-a")
-    qtbot.waitUntil(lambda: bool(legacy or failures), timeout=30000)
-    assert legacy == [request] and not failures and not reviews and not received
+@pytest.mark.parametrize("version,lazy", [(2, False), (3, False), (2, True)])
+def test_eager_and_legacy_decode_actual_fields_in_worker(qtbot, tmp_path, monkeypatch, opening, version, lazy):
+    target = archive(tmp_path, f"schema-{version}-{lazy}", version=version)
+    main_thread = threading.get_ident()
+    decoded_on = []
+    original = history_opening.resolve_project
+    def observed(*args, **options):
+        decoded_on.append(threading.get_ident())
+        return original(*args, **options)
+    monkeypatch.setattr(history_opening, "resolve_project", observed)
+    control, received, reviews, failures = opening()
+    request = control.submit(target, "document-a", lazy=lazy)
+    qtbot.waitUntil(lambda: bool(received or failures), timeout=30000)
+    assert not failures and not reviews
+    assert decoded_on and all(item != main_thread for item in decoded_on)
+    assert received[0][0] == request and received[0][2] is None
+    result = received[0][1]._opening_result
+    np.testing.assert_array_equal(result.fields["a"]["temperature"], [300., 301., 302.])
+    assert control.shutdown()
+    qtbot.waitUntil(lambda: not control.jobs)
+
+
+def test_metadata_only_review_can_resume_eager_without_granting_another_generation(
+        qtbot, tmp_path, opening):
+    from etlayout.io.history_store import open_history_catalog
+
+    target = archive(tmp_path, "reviewed-eager", external=True)
+    policy = ExternalResourcePolicy(allow_outside_root=True)
+    store = open_history_catalog(target, external_policy=policy)
+    try:
+        inspection = history_opening.catalog_inspection(store)
+    finally:
+        store.close()
+    control, received, reviews, failures = opening()
+    control.submit(target, "document-a", policy=policy, inspection=inspection, lazy=False)
+    qtbot.waitUntil(lambda: bool(received or failures), timeout=30000)
+    assert not reviews and not failures and received[0][2] is None
+    np.testing.assert_array_equal(received[0][1]._opening_result.fields["a"]["temperature"], [300., 301., 302.])
+    received.clear()
+    target.write_bytes(archive(tmp_path, "replacement-generation").read_bytes())
+    control.submit(target, "document-a", policy=policy, inspection=inspection, lazy=False)
+    qtbot.waitUntil(lambda: bool(failures), timeout=30000)
+    assert "generation differs" in str(failures[0][1]) and not received
     assert control.shutdown()
     qtbot.waitUntil(lambda: not control.jobs)
