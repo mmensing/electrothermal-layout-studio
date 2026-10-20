@@ -211,3 +211,11 @@ A future owner-reviewed binary must be rebuilt from tested public source under a
 unambiguous version, with complete vetted notices/source materials and matching
 hashes. Follow [the maintainer procedure](maintainer-guide.md). Do not reuse old
 pre-public binaries or private artifact URLs.
+
+
+Source ZIPs from Git checkouts contain indexed maintained files, including
+`.gitattributes`, and exclude generated `*.egg-info` metadata. Untracked local
+notes, ignored build files and stale package versions are not source inputs.
+Tracked modifications remain identified by exact per-file hashes; owner release
+still requires a clean tested main. Unpacked source archives without `.git` use
+the maintained source roots with the same generated-metadata exclusion.
