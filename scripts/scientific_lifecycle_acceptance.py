@@ -49,7 +49,7 @@ def main(argv=None):
     from etlayout.examples import make_example
     from etlayout.gui.jobs import ComputeJob
     from etlayout.gui.main_window import MainWindow
-    from etlayout.io.project import load_project
+    from etlayout.io.project import load_project, save_json
     from etlayout.simulation.runner import run_project
 
     isolate_acceptance_settings(output)
@@ -120,6 +120,19 @@ def main(argv=None):
         for cycle in range(args.cycles):
             phase = f"cycle {cycle + 1}: open"
             window = MainWindow(deepcopy(project), database_path=output / "materials.sqlite3", recover=False)
+            # Observe and dismiss actual error modals so a failed asynchronous
+            # operation yields a bounded receipt instead of nesting forever.
+            original_error = window.error
+            def observed_error(title, error, original=original_error):
+                receipt.setdefault("reported_errors", []).append({"title": title, "detail": str(error)})
+                def dismiss():
+                    modal = app.activeModalWidget()
+                    if isinstance(modal, QMessageBox):
+                        modal.grab().save(str(output / "reported-error.png"))
+                        modal.accept()
+                QTimer.singleShot(0, dismiss)
+                original(title, error)
+            window.error = observed_error
             window.autosave_timer.stop()
             window.resize(1280, 850)
             window.show()
@@ -141,6 +154,9 @@ def main(argv=None):
             idle()
             assert window.recovery_path.is_file()
             record(f"cycle {cycle + 1}: durable recovery snapshot")
+            legacy = output / f"cycle-{cycle + 1}-legacy.etlayout"
+            assert window._queue_save(legacy, archive_format=2)
+            idle()
             target = output / f"cycle-{cycle + 1}.etlayout"
             window.path = target
             window.dirty = True
@@ -148,6 +164,27 @@ def main(argv=None):
             idle()
             _, saved = load_project(target)
             assert saved and saved.converged
+            window.history_lazy_enabled = False
+            window.open_project(target)
+            idle()
+            assert window.result and window.result.converged
+            assert window.history_workflow.store is None and len(window.run_history) >= 2
+            record(f"cycle {cycle + 1}: default eager schema-3 open", current_hash=window.result.configuration_hash)
+            window.open_project(legacy)
+            idle()
+            assert window.result and window.result.converged and window.history_workflow.store is None
+            assert len(window.run_history) >= 2
+            record(f"cycle {cycle + 1}: legacy eager schema-2 open")
+            metadata = output / f"cycle-{cycle + 1}.json"
+            metadata_project = deepcopy(window.project)
+            metadata_layout = output / f"cycle-{cycle + 1}.gds"
+            metadata_layout.write_bytes(Path(metadata_project.layout.path).read_bytes())
+            metadata_project.layout.path = str(metadata_layout)
+            save_json(metadata_project, metadata)
+            window.open_project(metadata)
+            idle()
+            assert window.path == metadata and window.result is None
+            record(f"cycle {cycle + 1}: metadata JSON open")
             window.history_lazy_enabled = True
             window.open_project(target)
             idle()

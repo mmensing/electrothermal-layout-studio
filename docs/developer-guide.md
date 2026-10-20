@@ -264,6 +264,20 @@ its explicitly selected output directory. Ordinary GUI startup retains normal
 persistent preferences. These are validation helpers, not a new application API.
 
 
+### Desktop project-opening ownership
+
+`gui.project_opening.ProjectOpeningController` owns pending archive results,
+resource consent retries and the final guarded document transition.
+`HistoryOpener` handles eager schema-1/2/3 and JSON reads as well as opt-in lazy
+schema-3 opening. Inspection, layout resolution and numerical deserialization run
+in its worker; only consent dialogs and widget updates run on the Qt thread.
+Call `window.open_project(path)` for the normal asynchronous user workflow. Keep
+`load_project_data` / `open_reviewed_project` as explicit synchronous compatibility
+helpers for existing auxiliary callers, rather than using them for File Open.
+Cancel through `window.cancel_catalog()` and include `history_opener.jobs` plus
+`history_workflow.loader.jobs` when awaiting desktop idleness. Closing retains the
+event loop until owned reads have stopped; never delete a running QThread.
+
 ### Explicit content-addressed archives
 
 `save_project(project, path, result, history=history, archive_format=3)` opts in to
