@@ -57,11 +57,11 @@ from etlayout.geometry.prepare import resolve_region
 from etlayout.gui.engineering import EngineeringPanel
 from etlayout.gui.field_scale import FieldScaleControl
 from etlayout.gui.forms import ModelDialog, region_summary
-from etlayout.gui.history_opening import HistoryOpener
 from etlayout.gui.history_workflow import HistoryWorkflow, is_record
 from etlayout.gui.inputs import parse_number
 from etlayout.gui.jobs import ComputeJob
 from etlayout.gui.plots import CrossSectionPanel, ProfilePanel, StudyPanel
+from etlayout.gui.project_opening import ProjectOpeningController
 from etlayout.gui.saving import SaveJob, SaveRequest
 from etlayout.gui.transient import TimeHistoryPanel, TimeNavigation, TransientDialog
 from etlayout.gui.viewer import VECTOR_FIELDS, LayoutView, geometry_region
@@ -357,15 +357,8 @@ class MainWindow(QMainWindow):
         self.geometry_generation = 0
         self.run_history = [result] if result else []
         self.history_workflow = HistoryWorkflow(self)
-        self.history_opener = HistoryOpener(self)
-        self.history_opener.loaded.connect(self._catalog_opened)
-        self.history_opener.review_required.connect(self._catalog_review)
-        self.history_opener.legacy.connect(self._catalog_legacy)
-        self.history_opener.failed.connect(self._catalog_failed)
-        self.history_opener.busy_changed.connect(self._catalog_busy)
-        self._pending_catalog = None
-        self._catalog_review_restore = None
-        self._catalog_revision = 0
+        self.project_opening = ProjectOpeningController(self)
+        self.history_opener = self.project_opening.opener
         self.inspection_context = None
         self._before_physics = None
         self._autosave_error = ""
@@ -2134,6 +2127,7 @@ class MainWindow(QMainWindow):
             return
         if hasattr(self, "guided") and not self.guided.resolve_draft():
             return False
+        self.cancel_catalog()
         self.guided.cancel_selection()
         try:
             project = project_from_dict(result.configuration)
@@ -2165,6 +2159,7 @@ class MainWindow(QMainWindow):
             return False
         if self.result:
             self._run_view_states[id(self.result)] = self.capture_view_state()
+        self.cancel_catalog()
         self.history_workflow.loader.cancel()
         context, self.inspection_context = self.inspection_context, None
         self.clear_analysis()
@@ -3344,7 +3339,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("History read is still stopping; retry this transition after the worker stops.")
             return False
         self.history_opener.cancel()
-        self._drop_pending_catalog()
+        self.project_opening.drop_pending()
         self.cancel_geometry()
         self.inspection_context = None
         self.inspection_bar.hide()
@@ -3398,220 +3393,13 @@ class MainWindow(QMainWindow):
         return opened
 
     def review_project_resources(self):
-        if self.model_locked():
-            self.log("Return to the working setup and finish the active job before reviewing its resources.")
-            return
-        inspection = getattr(self.project, "_resource_inspection", None)
-        if inspection is None:
-            self.relink_layout()
-            return
-        if hasattr(self, "guided") and not self.guided.resolve_draft():
-            return
-        from etlayout.gui.resources import resolve_reviewed_project
-        if (inspection.archive_data is None and inspection.metadata.get("schema_version") == 3
-                and getattr(inspection, "_archive_sha256", None)):
-            self._catalog_revision = self.document_revision
-            self._catalog_review_restore = self.project
-            self.history_opener.submit(inspection.source, self.document_epoch,
-                                       cache_bytes=self.history_cache_mib * 1024**2, inspection=inspection)
-            return
-        try:
-            opened = resolve_reviewed_project(inspection.for_project(self.project), self)
-            if opened is None:
-                return
-            project, result = opened
-            was_dirty = self.dirty
-            self.project, self.result = project, result
-            self.mesh = result.mesh if result else None
-            for run in getattr(project, "_resource_history", []):
-                self.remember_result(run)
-            if result:
-                self.remember_result(result)
-            self.refresh_project(preserve_view=True)
-            if result:
-                self.render_result(result)
-            self.dirty = was_dirty
-            self.set_running(False)
-            self.update_title()
-            self.log("Project resources remain unresolved" if getattr(project, "_resource_unresolved", False)
-                     else "Resolved resources for the current edited project")
-        except Exception as error:
-            self.error("Cannot review project resources", error)
+        self.project_opening.review_resources()
 
     def open_project(self, path=None, *, external_policy=None):
-        if not self.confirm_discard(lambda: self.open_project(path, external_policy=external_policy)):
-            return
-        if not isinstance(path, (str, Path)):
-            path, _ = QFileDialog.getOpenFileName(self, "Open project", "", "Electrothermal projects (*.etl *.etlayout *.etproj *.zip);;All files (*)")
-        if path:
-            if self.history_lazy_enabled:
-                self._catalog_revision = self.document_revision
-                self._drop_pending_catalog()
-                self.history_opener.submit(path, self.document_epoch, policy=external_policy,
-                                           cache_bytes=self.history_cache_mib * 1024**2)
-                self.statusBar().showMessage("Opening archive metadata in a worker; the current project remains available…")
-                return
-            try:
-                project, result = self.load_project_data(path, external_policy=external_policy, lazy=False)
-                self.set_project(project, result, path, getattr(project, "_resource_history", []))
-                self.log("Opened project metadata" if getattr(project, "_resource_unresolved", False) else "Opened project")
-            except Exception as error:
-                self.error("Cannot open project", error)
+        self.project_opening.open(path, external_policy=external_policy)
 
     def cancel_catalog(self):
-        self.history_opener.cancel()
-        self._drop_pending_catalog()
-        if self._save_continuation == self._apply_pending_catalog:
-            self._save_continuation = None
-
-    def _catalog_busy(self, busy):
-        self.history_panel.set_loading(busy or bool(self.history_workflow.loader.jobs))
-
-    def _drop_pending_catalog(self):
-        self._catalog_review_restore = None
-        pending, self._pending_catalog = self._pending_catalog, None
-        if pending and pending[3] is not None:
-            pending[3].close()
-
-    def _catalog_opened(self, request, project, store):
-        self._accept_catalog(request, project, None, store)
-
-    def _accept_catalog(self, request, project, result, store=None):
-        current = self.history_opener.request
-        if request.epoch != self.document_epoch or current is None or request.generation != current.generation:
-            if store:
-                store.close()
-            return
-        power = getattr(self.guided, "power", None)
-        if self.job or (power and power.job) or not self.guided.resolve_draft():
-            if store:
-                store.close()
-            return
-        self._pending_catalog = (request, project, result, store)
-        self._apply_pending_catalog()
-
-    def _apply_pending_catalog(self):
-        if self._pending_catalog and (self.save_job or self._save_queue
-                or any(job.isRunning() for job in self.history_workflow.loader.jobs)):
-            self.history_workflow.loader.cancel()
-            QTimer.singleShot(25, self._apply_pending_catalog)
-            return
-        if self._pending_catalog is None:
-            return
-        # A read cancelled above can finish after another draft or edit was made.
-        # Recheck the transition at its commit point, not just when metadata arrived.
-        power = getattr(self.guided, "power", None)
-        if self.job or (power and power.job) or not self.guided.resolve_draft():
-            self._drop_pending_catalog()
-            return
-        continuation = self._apply_pending_catalog
-        if self._catalog_review_restore is not self.project and self.document_revision != self._catalog_revision:
-            if not self.confirm_discard(continuation):
-                if self._save_continuation != continuation:
-                    self._drop_pending_catalog()
-                return
-            self._catalog_revision = self.document_revision
-        pending, self._pending_catalog = self._pending_catalog, None
-        request, project, result, store = pending
-        current = self.history_opener.request
-        if request.epoch != self.document_epoch or current is None or request.generation != current.generation:
-            if store:
-                store.close()
-            return
-        if self._catalog_review_restore is self.project:
-            self._catalog_review_restore = None
-            if store is None and getattr(project, "_resource_unresolved", False):
-                return
-            working = self.project
-            inspection = getattr(working, "_resource_inspection", None)
-            declared = inspection.project.layout if inspection else None
-            if declared and (working.layout.path != declared.path or working.layout.sha256 != declared.sha256):
-                if store:
-                    store.close()
-                self.history_workflow.issue(
-                    "The layout source declaration changed during resource review. "
-                    "Use File → Relink layout to review the new source; the working setup was retained.")
-                return
-            if not self.history_workflow.close():
-                if store:
-                    store.close()
-                return
-            # Resource approval updates the existing document rather than replacing
-            # it: cell/instance choices, undo, studies and view context stay owned.
-            view, workspace = self.capture_view_state(), self.guided.capture_context()
-            working.layout.path, working.layout.sha256 = project.layout.path, project.layout.sha256
-            working._resource_unresolved = False
-            working.__dict__.pop("_resource_inspection", None)
-            if store:
-                working._archive_format = store.archive_format
-                self.run_history = list(store.records)
-                self.history_workflow.attach(store)
-            self.refresh_project(preserve_view=True)
-            self.guided.restore_context(workspace)
-            self.restore_view_state(view)
-            self.set_running(False)
-            if store:
-                self.history_workflow.open_current()
-            self.update_title()
-            self.log("Resolved resources for the current edited project")
-            return
-        if self.set_project(project, result, request.path, getattr(project, "_resource_history", [])) is False:
-            if store:
-                store.close()
-            return
-        self.log("Opened metadata-first archive; recorded fields load on demand" if store else "Opened project")
-
-    def _catalog_legacy(self, request):
-        if request.epoch != self.document_epoch:
-            return
-        try:
-            project, result = self.load_project_data(request.path, external_policy=request.policy)
-            self._accept_catalog(request, project, result)
-        except Exception as error:
-            self._catalog_failed(request, error)
-
-    def _catalog_review(self, request, inspection, error):
-        if request.epoch != self.document_epoch:
-            return
-        from etlayout.gui.resources import ResourceReviewDialog, resolve_reviewed_project
-        from etlayout.io.resources import ExternalResourcePolicy
-        if inspection is None:
-            if getattr(error, "reason", "") != "network":
-                self._catalog_failed(request, error)
-                return
-            if QMessageBox.question(self, "Network project location",
-                    "Allow network access for this selected project container? Referenced outside-root resources still need their own approval.",
-                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                    QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
-                return
-            policy = ExternalResourcePolicy(allow_outside_root=request.policy.allow_outside_root,
-                allow_network=True, approved_resources=request.policy.approved_resources)
-            self.history_opener.submit(request.path, request.epoch, policy=policy, cache_bytes=request.cache_bytes)
-            return
-        dialog = ResourceReviewDialog(inspection, error, self)
-        try:
-            if dialog.exec() != QDialog.DialogCode.Accepted:
-                return
-            if dialog.action == "unresolved":
-                self._accept_catalog(request, inspection.unresolved_project(), None)
-            elif dialog.action == "relink":
-                policy = ExternalResourcePolicy(allow_network=dialog.network.isChecked(),
-                                                approved_resources=frozenset({"layout"}))
-                opened = resolve_reviewed_project(dialog.inspection, self, policy=policy)
-                if opened:
-                    self._accept_catalog(request, *opened)
-            else:
-                self.history_opener.submit(request.path, request.epoch, policy=dialog.policy(),
-                                           cache_bytes=request.cache_bytes, inspection=inspection)
-        except Exception as failure:
-            self._catalog_failed(request, failure)
-        finally:
-            dialog.deleteLater()
-
-    def _catalog_failed(self, request, error):
-        if request.epoch == self.document_epoch:
-            self._catalog_review_restore = None
-            self.history_workflow.issue("Opening the selected project failed: " + str(error))
+        self.project_opening.cancel()
 
     def import_layout(self, path=None):
         if self.model_locked():
@@ -3806,7 +3594,7 @@ class MainWindow(QMainWindow):
         self._save_success = False
         self._save_continuation = None
         if not recovery and (request is None or request.recovery_store is None):
-            self._drop_pending_catalog()
+            self.project_opening.drop_pending()
         if recovery or (request is not None and request.recovery_store is not None):
             self.recovery_status.setText("Recovery failed — save your project")
             self.recovery_status.setToolTip(message)
@@ -3817,7 +3605,7 @@ class MainWindow(QMainWindow):
             self.error("Cannot save project", message)
 
     def _save_cancelled(self, request, message):
-        self._drop_pending_catalog()
+        self.project_opening.drop_pending()
         self._save_success = False
         self._save_continuation = None
         self.log(message)
@@ -3833,7 +3621,7 @@ class MainWindow(QMainWindow):
             self._start_next_save()
 
     def cancel_saving(self):
-        self._drop_pending_catalog()
+        self.project_opening.drop_pending()
         for request in self._save_queue:
             request.snapshot.release_sources()
         self._save_queue.clear()
@@ -4233,7 +4021,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Archive opening is still stopping. Close again after it finishes.")
             event.ignore()
             return
-        self._drop_pending_catalog()
+        self.project_opening.drop_pending()
         if not self.history_workflow.close():
             self.statusBar().showMessage("History read is still stopping. Close again after it finishes.")
             event.ignore()

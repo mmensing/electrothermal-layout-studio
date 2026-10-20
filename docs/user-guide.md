@@ -362,6 +362,14 @@ and history settings…**, enable **Open schema-3 history on demand**, and reope
 that copy. The choice applies to the next opening. Schema-1/2 archives and legacy
 JSON retain their eager opening behavior; opening never converts the source.
 
+File Open inspects and deserializes every supported format in a background
+worker, including the default eager mode. The working setup remains available
+until the read and any resource review finish. Cancel the active read from the
+History drawer to keep the current project. A cancelled or superseded opening
+cannot replace a newer project or historical view. Unapplied drafts and unsaved
+changes still require their normal Apply/Discard/Stay and Save decisions.
+
+
 Schema-3 opening copies the selected compressed archive to an immutable private
 **disk** snapshot, checks its metadata, and lists runs before their numerical
 fields are read. The current result or a selected historical run loads in a

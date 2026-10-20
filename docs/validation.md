@@ -330,6 +330,26 @@ event loop. Tests retain readable process diagnostics after completion and verif
 no native children accumulate across repeated actual workers. This resource fix
 is narrower than a claim about the cause of the intermittent crash.
 
+The 2026-10-20 native Windows source diagnostic completed eight cycles in
+209.47 s on Python 3.12.14 / Qt and Shiboken 6.12.0 (`windows` platform plugin).
+It exercised 16 actual steady electrical solves, a solved pulsed example,
+eager schema-3, legacy schema-2 and JSON opening, on-demand history, asynchronous
+save/recovery, cancellation, 24 historical inspections/returns and eight native
+window-deletion/Python-GC boundaries. Sampled parent/descendant resident memory
+peaked at 446 MiB; this is sampled RSS, not an exact high-water mark. The retained
+fault stack did not recur. This source test does not establish a cause or fix for
+the original intermittent fault, packaged behavior or clean-machine compatibility.
+
+Default File Open now performs eager archive inspection/deserialization in an
+owned worker too. Eager mode retains complete in-memory results/history; optional
+lazy mode retains its bounded catalog and array cache. Resource consent stays on
+the GUI thread and approved retries use held bytes or a verified generation.
+Cancelling a pending open or inspecting/returning from History retains the
+selected context and rejects a late completion. Cancellation is checked between
+eager reader phases; it does not interrupt a native array decode already in
+progress. The reader finishes off-thread before its cancelled result is discarded.
+
+
 Execution provenance now includes independently measured `electrical_assembly`
 and `thermal_assembly` assemble-call wall times alongside `sparse_linear_solves`.
 They are subsets of numerical time, include material checks and operator-cache
