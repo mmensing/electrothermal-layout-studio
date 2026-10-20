@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from html import escape
 
-from PySide6.QtCore import QSignalBlocker, Qt
+from PySide6.QtCore import QEvent, QSignalBlocker, Qt, QTimer
 from PySide6.QtWidgets import (
     QComboBox,
     QDialog,
@@ -17,8 +17,8 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QListWidget,
     QListWidgetItem,
-    QScrollArea,
     QSplitter,
+    QTabWidget,
     QTextBrowser,
     QVBoxLayout,
     QWidget,
@@ -46,6 +46,7 @@ class ExampleLibraryDialog(QDialog):
         self._choices = None
         self._entries = []
         self._selections = {}
+        self._follow_selection = True
         for info in EXAMPLE_CATALOG.values():
             self._entries.append({**info.to_dict(), "identifier": info.name, "collection": "reference"})
         for name in COMPANION_CATALOG:
@@ -53,7 +54,7 @@ class ExampleLibraryDialog(QDialog):
             self._entries.append(card)
 
         outer = QVBoxLayout(self)
-        introduction = QLabel("Choose a question, inspect the inputs, then open an editable project. Opening never starts a simulation.")
+        introduction = QLabel("Choose inputs, then open an editable project. No simulation starts automatically.")
         introduction.setWordWrap(True)
         outer.addWidget(introduction)
         split = QSplitter(Qt.Orientation.Horizontal)
@@ -98,26 +99,24 @@ class ExampleLibraryDialog(QDialog):
         self.examples.setObjectName("example_list")
         self.examples.setAccessibleName("Matching examples")
         self.examples.setWordWrap(True)
+        self._selection_visibility_timer = QTimer(self)
+        self._selection_visibility_timer.setSingleShot(True)
+        self._selection_visibility_timer.timeout.connect(self._scroll_to_current)
+        self.examples.viewport().installEventFilter(self)
+        self.examples.verticalScrollBar().installEventFilter(self)
         left_layout.addWidget(self.examples, 1)
         self.count = QLabel()
         self.count.setWordWrap(True)
         left_layout.addWidget(self.count)
         split.addWidget(left)
 
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setMinimumWidth(330)
         right = QWidget()
+        right.setMinimumWidth(330)
         right_layout = QVBoxLayout(right)
         right_layout.setContentsMargins(8, 0, 0, 0)
-        self.details = QTextBrowser()
-        self.details.setObjectName("example_details")
-        self.details.setAccessibleName("Example question, model, inputs and limitations")
-        self.details.setOpenLinks(False)
-        self.details.setMinimumHeight(210)
-        right_layout.addWidget(self.details, 1)
         self.configuration = QGroupBox("Configuration to open")
         self.form = QFormLayout(self.configuration)
+        self.form.setRowWrapPolicy(QFormLayout.RowWrapPolicy.WrapLongRows)
         self.scenario = self._combo("example_scenario", "Operating scenario")
         self.preset = self._combo("example_preset", "Size preset")
         self.variant = self._combo("example_variant", "Routing variant")
@@ -130,12 +129,24 @@ class ExampleLibraryDialog(QDialog):
         self.selection_note.setObjectName("example_selection_note")
         self.selection_note.setWordWrap(True)
         right_layout.addWidget(self.selection_note)
+        self.detail_tabs = QTabWidget()
+        self.detail_tabs.setObjectName("example_detail_tabs")
+        self.inputs = QTextBrowser()
+        self.inputs.setObjectName("example_requested_inputs")
+        self.inputs.setAccessibleName("Selected inputs to open")
+        self.inputs.setOpenLinks(False)
+        self.details = QTextBrowser()
+        self.details.setObjectName("example_details")
+        self.details.setAccessibleName("Example question, model and limitations")
+        self.details.setOpenLinks(False)
+        self.detail_tabs.addTab(self.inputs, "Inputs to open")
+        self.detail_tabs.addTab(self.details, "Model && use")
+        right_layout.addWidget(self.detail_tabs, 1)
         self.resource_note = QLabel()
         self.resource_note.setObjectName("example_resource_note")
         self.resource_note.setWordWrap(True)
         outer.addWidget(self.resource_note)
-        scroll.setWidget(right)
-        split.addWidget(scroll)
+        split.addWidget(right)
         split.setSizes([340, 620])
         self.buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Open | QDialogButtonBox.StandardButton.Cancel)
         self.open_button = self.buttons.button(QDialogButtonBox.StandardButton.Open)
@@ -162,6 +173,33 @@ class ExampleLibraryDialog(QDialog):
         if identifier:
             self.select_example(identifier)
         self.search.setFocus()
+
+    def _scroll_to_current(self):
+        """Finish the pending programmatic selection after the layout settles."""
+        item = self.examples.currentItem()
+        if item is not None and self._follow_selection:
+            self.examples.doItemsLayout()
+            self.examples.scrollToItem(item)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self._selection_visibility_timer.start(0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        timer = getattr(self, "_selection_visibility_timer", None)
+        if timer is not None and self._follow_selection:
+            timer.start(0)
+
+    def eventFilter(self, watched, event):
+        # Follow explicit selection across wrapping/layout changes, but retire
+        # that intent when the user scrolls the list to read another entry.
+        if event.type() in {QEvent.Type.Wheel, QEvent.Type.MouseButtonPress, QEvent.Type.KeyPress}:
+            scrollbar = self.examples.verticalScrollBar()
+            if watched is scrollbar or watched is self.examples.viewport() and event.type() == QEvent.Type.Wheel:
+                self._follow_selection = False
+                self._selection_visibility_timer.stop()
+        return super().eventFilter(watched, event)
 
     @staticmethod
     def _combo(name, label):
@@ -220,6 +258,7 @@ class ExampleLibraryDialog(QDialog):
         else:
             self._identifier = None
             self._choices = None
+            self.inputs.clear()
             self.details.setPlainText("No matches. Clear the search or change the collection, subject or level.")
             self.configuration.setEnabled(False)
             self.selection_note.clear()
@@ -239,11 +278,13 @@ class ExampleLibraryDialog(QDialog):
             self.search.clear()
         self._identifier = identifier
         self._collection_changed()
+        self._selection_visibility_timer.start(0)
 
     def _show_entry(self, item, *_):
         if item is None:
             return
         self._identifier = item.data(Qt.ItemDataRole.UserRole)
+        self._follow_selection = True
         self._choices = example_choices(self._identifier)
         choices = self._choices
         self.configuration.setEnabled(True)
@@ -264,6 +305,7 @@ class ExampleLibraryDialog(QDialog):
         for combo in (self.preset, self.variant, self.thermal):
             self.form.setRowVisible(combo, bool(combo.count()))
         self.open_button.setEnabled(True)
+        self.detail_tabs.setCurrentIndex(0)
         self._update_selection()
 
     def _update_selection(self, *_):
@@ -278,35 +320,32 @@ class ExampleLibraryDialog(QDialog):
         self.selection_note.setText(
             "This named scenario defines its own inputs. Size, routing and thermal choices are available with Original reference."
             if named and self._choices.presets else
-            "Original reference preserves its inputs when the default options are selected. Family alternatives create a new editable configuration."
+            "Original reference uses the requested family inputs below. Default choices preserve the original configuration."
             if self._choices.presets else
             "The original reference remains available. The selected scenario creates an independent editable project.")
         try:
             card = example_card(self._identifier, scenario=scenario)
             selected = next((s for s in self._choices.scenarios if s.id == scenario), None)
             summary = card.get("project_summary") or {}
-            original_overview = bool(self._choices.presets and not named)
-            inputs_label = "Original reference inputs" if original_overview else "Selected scenario inputs"
-            thermal_label = "Original reference thermal path" if original_overview else "Thermal path"
             reservoirs = "; ".join(
                 f"{row['id']}: {row['value']:g} {row['unit']} ({row['kind']}), reservoir {row['ambient_K']:g} K"
                 for row in summary.get("thermal_reservoirs", ()))
             field = {"potential": "Potential", "temperature": "Temperature", "sheet_current": "Sheet current",
                      "current_density": "Volumetric current density"}.get(card.get("field"), card.get("field", ""))
-            html = (f"<h2>{_text(card.get('id', self._identifier))} · {_text(card['title'])}</h2>"
-                    f"<p><b>Question:</b> {_text(card['learning_goal'])}</p>"
-                    f"<p>{_text(card['category'])} · {_text(card['level'])} · {_text(card.get('role', ''))}</p>"
-                    f"<p><b>Reference context:</b> {_text(card.get('status_note', ''))}</p>"
-                    f"<p><b>Operating scenario:</b> {_text(selected.title if selected else 'Original reference')}<br>"
-                    f"{_text(selected.purpose if selected else '')}</p>"
-                    f"<p><b>{inputs_label}:</b><br>{_text(summary.get('summary', card.get('availability_note', 'Review inputs after opening.')))}</p>"
-                    f"<p><b>Workload:</b> {_text(card.get('workload', 'Review mesh and job settings.'))}</p>"
-                    f"<p><b>{thermal_label}:</b> {_text(reservoirs or 'No configured thermal reservoir; use the stated electrical scope.')}</p>"
-                    f"<p><b>First result:</b> layer {_text(card.get('layer', ''))}, {_text(field)}. Terminal currents, voltages and total loss are available alongside supported configured measurements.</p>"
-                    f"<p><b>Model limits:</b> {_text(card['physical_scope'])}</p>"
-                    "<p><b>After opening:</b> inspect layers and connections; validate (F6), mesh (F7), run (F5), then read the selected layer and field. "
-                    "A generated project or converged solve does not establish mesh verification or calibration.</p>")
-            self.details.setHtml(html)
+            self.details.setHtml(
+                f"<h2>{_text(card.get('id', self._identifier))} · {_text(card['title'])}</h2>"
+                f"<p><b>Question:</b> {_text(card['learning_goal'])}</p>"
+                f"<p>{_text(card['category'])} · {_text(card['level'])} · {_text(card.get('role', ''))}</p>"
+                f"<p><b>Reference context:</b> {_text(card.get('status_note', ''))}</p>"
+                f"<p><b>First result:</b> layer {_text(card.get('layer', ''))}, {_text(field)}.</p>"
+                f"<p><b>Model limits:</b> {_text(card['physical_scope'])}</p>"
+                "<p><b>After opening:</b> review Mesh &amp; Checks, inspect inputs, validate (F6), mesh (F7), run (F5), "
+                "then read the selected layer and field. A generated project or converged solve does not establish mesh verification or calibration.</p>")
+            title = selected.title if selected else "Original reference"
+            inputs_html = (f"<h3>Selected scenario inputs · {_text(title)}</h3>"
+                           f"<p>{_text(selected.purpose if selected else '')}</p>"
+                           f"<p>{_text(summary.get('summary', card.get('availability_note', 'Review inputs after opening.')))}</p>"
+                           f"<p><b>Thermal path:</b> {_text(reservoirs or 'No configured thermal reservoir; use the stated electrical scope.')}</p>")
             note = ""
             if self._choices.presets and not named:
                 from etlayout.power_examples import settings
@@ -316,16 +355,24 @@ class ExampleLibraryDialog(QDialog):
                               if config.family.startswith("gan") else f"{config.side_um:g} µm die size setting")
                 if config.family == "gan_banks":
                     dimensions += f"; {config.bank_columns} × {config.bank_rows} banks"
-                note = (f"Requested family configuration: {config.preset}, {config.variant}, thermal {config.thermal}; {config.current:g} A; {dimensions}. "
-                        f"Element budget {config.max_elements:,}; DOF budget {config.max_dofs:,}; "
-                        f"memory screen {config.memory_budget_bytes / 1024**3:g} GiB. "
-                        "These are budgets, not measured performance.")
+                inputs_html = (f"<h3>Requested configuration inputs</h3>"
+                               f"<p><b>Operating point:</b> {config.current:g} A</p>"
+                               f"<p><b>Geometry setting:</b> {_text(dimensions)}</p>"
+                               f"<p><b>Size preset:</b> {_text(config.preset)}<br>"
+                               f"<b>Routing variant:</b> {_text(config.variant)}<br>"
+                               f"<b>Thermal boundary:</b> {_text(config.thermal)}</p>"
+                               "<p>The generated project's actual physical dimensions and thermal parameters are reviewed after opening. "
+                               "The requested settings above replace the original reference overview.</p>")
+                note = (f"Resource budget: {config.max_elements:,} elements · {config.max_dofs:,} DOFs · "
+                        f"{config.memory_budget_bytes / 1024**3:g} GiB memory screen. Not measured performance.")
                 if config.preset in {"large", "stress"}:
-                    note += " Large/stress cases are opt-in and may be resource-limited or outside valid operating assumptions."
+                    note += " Large/stress cases are opt-in; resource and model limits apply."
+            self.inputs.setHtml(inputs_html + f"<p><b>Workload:</b> {_text(card.get('workload', 'Review mesh and job settings.'))}</p>")
             self.resource_note.setText(note)
             self.open_button.setEnabled(True)
         except (ValueError, OSError, KeyError, SimulationError) as error:
-            self.details.setPlainText(f"Example details could not be read: {error}")
+            self.inputs.setPlainText(f"Example details could not be read: {error}")
+            self.details.clear()
             self.open_button.setEnabled(False)
             self.resource_note.clear()
 

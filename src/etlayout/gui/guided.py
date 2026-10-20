@@ -661,6 +661,60 @@ class GuidedWorkspace(QObject):
         self.probes.clear()
         self._condition_group = ""
 
+    def example_opened(self):
+        """Guide a successfully replaced unsolved document to its review stage."""
+        if self.window.result is None and not self.window.inspection_context:
+            self.navigate("mesh", force=True)
+            self.next_reason.setText("Review the example inputs and checks before generating a mesh or running. Opening has not performed a solve.")
+
+    def verification_unavailable(self, kind):
+        """A study always belongs to the applied setup, never a historical view."""
+        w = self.window
+        if w.result is None:
+            return "Select a recorded result first."
+        if w.inspection_context:
+            return "Return to the working setup to start verification; historical runs are read-only."
+        if w.model_locked() or w.prepare_job:
+            return "Finish or cancel the active preparation or computation first."
+        if physics_hash(w.result.configuration) != physics_hash(w.project):
+            return "Run the applied setup first; this selected result belongs to different physical inputs."
+        if kind == "time" and not w.project.transient.enabled:
+            return "Time-step verification applies to transient analysis."
+        return ""
+
+    def verify_result(self, kind):
+        """Open the existing study dialog without changing fields or evidence."""
+        if kind not in {"mesh", "time"}:
+            raise ValueError("Choose mesh or time verification")
+        if not self.resolve_draft():
+            return False
+        reason = self.verification_unavailable(kind)
+        if reason:
+            self.next_reason.setText(reason)
+            return False
+        # The retained map layer, region and time remain view-only. Existing
+        # mesh studies compare global integrals, configured regularized metrics
+        # and selected drawn profiles, not an invented proof for a map pixel.
+        callback = self.window.run_convergence_dialog if kind == "mesh" else self.window.run_time_convergence_dialog
+        callback()
+        self.refresh()
+        return True
+
+    def refresh_verification(self):
+        if not hasattr(self, "verify_mesh"):
+            return
+        w = self.window
+        for kind, control in (("mesh", self.verify_mesh), ("time", self.verify_time)):
+            reason = self.verification_unavailable(kind)
+            control.setEnabled(not reason)
+            control.setToolTip(reason or ("Compare integral quantities, configured regularized metrics and selected drawn profiles."
+                                         if kind == "mesh" else "Compare peak timing, temperature and energy for the applied transient setup."))
+        self.verify_time.setVisible(bool(w.result and w.result.transient is not None))
+        self.verification_context.setText(
+            "Historical inspection is read-only. Return to the working setup before starting verification."
+            if w.inspection_context else
+            "Studies use this run's applied physical setup. Mesh studies compare whole-setup integrals, configured regularized metrics and selected drawn profiles; a selected map region or raw pixel is not automatically verified.")
+
     def edit_selected(self):
         if self.editor_id:
             self.edit_model(self.editor_key, self.editor_id)
@@ -1158,6 +1212,15 @@ class GuidedWorkspace(QObject):
         self.description.setText("One selected run drives fields, probes, metrics and export.")
         self.result_evidence = text_label("", "hint")
         self.page_layout.addWidget(self.result_evidence)
+        self.verify_mesh = button("Check mesh sensitivity…", lambda: self.verify_result("mesh"))
+        self.verify_mesh.setObjectName("verify_result_mesh")
+        self.verify_time = button("Check time-step sensitivity…", lambda: self.verify_result("time"))
+        self.verify_time.setObjectName("verify_result_time")
+        self.verification_context = text_label("", "hint")
+        self.verification_context.setObjectName("verification_context")
+        self.page_layout.addWidget(self.verify_mesh)
+        self.page_layout.addWidget(self.verify_time)
+        self.page_layout.addWidget(self.verification_context)
         # Compact the existing bound controls into a single column for the inspector.
         if not getattr(self, "_result_form_compact", False):
             old = w.result_controls.layout()
@@ -1817,6 +1880,7 @@ class GuidedWorkspace(QObject):
                 else:
                     self.result_evidence.setText("No selected result. Run the current setup or inspect History.")
                 self.primary.setEnabled(bool(result))
+                self.refresh_verification()
             busy = bool(w.job or (self.power and self.power.job))
             self.drawer_toggle.setText(f"{len(self.assessment.blockers)} blockers · {self.visible_issue_count} issues · "
                                        f"{'Job running · Cancel: Shift+F5' if busy else self.execution_state} · History {len(w.run_history)}")
@@ -1842,7 +1906,7 @@ class GuidedWorkspace(QObject):
                 for index, diagnostic in enumerate(result.diagnostics)
                 if diagnostic.message.startswith("Maximum temperature limit:"))
         if self.last_error:
-            issues.insert(0, WorkflowIssue("job.failed", "error", "Last computation failed: " + self.last_error,
+            issues.insert(0, WorkflowIssue("job.failed", "error", "Operation failed: " + self.last_error,
                                         detail=self.last_error_detail or "Open the setup, correct inputs and retry. Logs contain the worker traceback.",
                                         stage=self.last_error_stage))
         self.visible_issue_count = len(issues)

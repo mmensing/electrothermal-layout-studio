@@ -197,8 +197,9 @@ def main(argv=None):
             print(_json_dump(output['report']))
             return 0
         if args.command == "capabilities":
+            from etlayout.capabilities import capability_manifest
             from etlayout.simulation.execution import detect_capabilities
-            print(_json_dump(detect_capabilities()))
+            print(_json_dump({**detect_capabilities(), "feature_catalog": capability_manifest()}))
             return 0
         if args.command == "examples":
             from etlayout.examples import generate_all, make_example

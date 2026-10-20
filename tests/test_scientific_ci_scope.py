@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: MPL-2.0
 """Numerical merge gates derive from actual paths and fail closed."""
 import runpy
+import shlex
 from pathlib import Path
 
 import pytest
@@ -51,9 +52,24 @@ def test_stable_required_job_is_present_and_no_doc_path_filter_can_leave_it_pend
     workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
     assert "name: scientific-regression" in workflow
     quality = workflow.split("  scientific-regression:", 1)[0]
-    assert ("python -m pytest tests/test_transient_ui.py::"
-            "test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run "
-            "tests/test_example_library_browser.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml") in quality
+    commands = [shlex.split(line.strip().removeprefix("run: "))
+                for line in quality.splitlines()
+                if line.strip().startswith("run: python -m pytest ")]
+    compact = [command for command in commands if "--basetemp=.pytest_compact" in command]
+    assert len(compact) == 1
+    arguments = compact[0][3:]
+    assert {
+        "tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run",
+        "tests/test_example_library_browser.py",
+        "tests/test_workflow_next_steps.py",
+        "tests/test_capability_catalog.py",
+        "--basetemp=.pytest_compact",
+        "--junitxml=artifacts/pytest-compact.xml",
+    } <= set(arguments)
+    # Additional tests are welcome, but filtering out any required behavior is
+    # not a valid way to keep the compact quality check green.
+    assert not any(argument in {"-k", "-m", "--collect-only"}
+                   or argument.startswith(("--ignore", "--deselect")) for argument in arguments)
     assert "paths-ignore:" not in workflow and "  paths:" not in workflow
     assert "python -m pytest -m numerical" in workflow
     assert "needs: [source-quality, scientific-regression]" in workflow
