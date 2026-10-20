@@ -75,7 +75,11 @@ identity and guarded study/browser workflows. Native 100%/150% captures verify
 readable scientific glyphs. An eight-cycle native lifecycle diagnostic completed
 16 DC solves, a pulsed solve, archive/history/cancellation/close and explicit GC
 without reproducing the original intermittent Qt/Shiboken access violation.
-That bounded negative result is not a causal fix or a stability guarantee.
+That bounded negative result is not a causal fix or a stability guarantee. A
+broader local project-opening/history test order subsequently reproduced a native
+access violation while Python collected objects in an archive reader. Its stack
+locates the collector, not the object being collected or the fault's cause.
+Retain failed-run diagnostics separately; successful reruns do not erase them.
 
 The [current E21 CPU measurement](performance.md) supersedes historical geometry
 for current performance interpretation. [Windows packaging](windows.md) describes
