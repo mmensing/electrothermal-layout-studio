@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from etlayout.gui.worker_errors import detached_error
+
 
 @dataclass(frozen=True)
 class HistoryRequest:
@@ -53,7 +55,7 @@ class HistoryReadJob(QThread):
             self.loaded.emit(self.request, tuple(leases))
             leases = []  # Ownership passes to the queued receiver, including stale replies.
         except Exception as error:
-            self.failed.emit(self.request, error)
+            self.failed.emit(self.request, detached_error(error))
         finally:
             for lease in leases:
                 lease.close()

@@ -105,6 +105,14 @@ preserves edits/view/undo and does not make fields current after a physical edit
 Cancellation is checked between eager reader phases; an active bounded native
 array decode finishes off-thread before its cancelled reply is discarded.
 No QObject or QThread is destroyed while its owned read is still running.
+Reader failures and resource-review requests keep the exception type, message,
+arguments and explicit diagnostic attributes, but detach traceback, cause and
+context before queued delivery. Those execution frames can otherwise retain a
+finished QThread wrapper after native deletion. This ownership rule is separate
+from diagnosing an intermittent native garbage-collection fault; it does not
+establish that fault's cause or a fix. Test-window teardown cancels and waits for
+owned readers before accepting close and scheduling native deletion.
+
 
 The desktop coordinator is non-daemon to permit nested study workers. Its queue receiver performs
 deserialization outside the GUI thread, then signals the main thread to update widgets. `psutil`
