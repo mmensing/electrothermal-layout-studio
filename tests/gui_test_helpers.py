@@ -61,10 +61,14 @@ def guided_window(qtbot, tmp_path):
         window.guided.power.cancel_job()
     if window.inspection_context:
         window.inspection_context["dirty"] = False
+    window.cancel_catalog()
+    window.history_workflow.cancel()
+    qtbot.waitUntil(lambda: not window.history_opener.jobs and not window.history_workflow.loader.jobs,
+                    timeout=30000)
     _idle(window, qtbot)
     window.guided.discard_draft()
     window.dirty = False
-    window.close()
+    assert window.close()
     window.deleteLater()
     QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
     QApplication.processEvents()

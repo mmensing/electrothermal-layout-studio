@@ -63,6 +63,7 @@ def test_stable_required_job_is_present_and_no_doc_path_filter_can_leave_it_pend
         "tests/test_example_library_browser.py",
         "tests/test_workflow_next_steps.py",
         "tests/test_capability_catalog.py",
+        "tests/test_reader_error_ownership.py",
         "--basetemp=.pytest_compact",
         "--junitxml=artifacts/pytest-compact.xml",
     } <= set(arguments)
