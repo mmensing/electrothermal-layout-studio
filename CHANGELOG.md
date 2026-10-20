@@ -7,6 +7,8 @@
   grants; discard cancelled or obsolete generations without replacing the setup.
 - Preserve the exact camera and field range when opening the issue/history drawer;
   distinguish project-open failures from computation failures.
+- Display selected transient-frame time in readable engineering units in both
+  the field-support caption and its tooltip.
 - Record ordinary run build provenance; expose it in About, CLI, archives and
   reports. Scope result-cache reuse to that identity; retain unavailable identity
   for older saved results.

@@ -22,7 +22,9 @@ def _idle(window, qtbot):
 
     def stopped():
         if (window.prepare_job or window.job or window.hierarchy_jobs or window.hierarchy_queue
-                or getattr(window, "save_job", None) or getattr(window, "_save_queue", ())):
+                or getattr(window, "save_job", None) or getattr(window, "_save_queue", ())
+                or window.history_opener.jobs or window.history_workflow.loader.jobs
+                or window.project_opening.pending):
             return False
         for job in window.findChildren(ComputeJob):
             receiver = getattr(job, "_receiver", None)
@@ -195,6 +197,18 @@ def test_review_authorizes_current_edits_against_held_archive(
         return QDialog.DialogCode.Accepted
 
     monkeypatch.setattr(ResourceReviewDialog, "exec", authorize)
+    submit = window.history_opener.submit
+
+    def queued_completion(*args, **kwargs):
+        request = submit(*args, **kwargs)
+        reader = window.history_opener.jobs[-1]
+        # Finish actual archive decoding before GUI delivery, exposing the
+        # interval where isRunning() is false but commit/prepare is still queued.
+        assert reader.wait(30000), "The real held-archive reader did not finish"
+        assert not reader.isRunning() and reader in window.history_opener.jobs
+        return request
+
+    monkeypatch.setattr(window.history_opener, "submit", queued_completion)
     window.review_project_resources()
     _idle(window, qtbot)
     assert errors == []
