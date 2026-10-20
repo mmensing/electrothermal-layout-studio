@@ -26,6 +26,7 @@ def parser():
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="command")
     sub.add_parser("capabilities", help="Report available CPUs and native thread control")
+    sub.add_parser("build-info", help="Print machine-readable implementation and runtime provenance")
     gui = sub.add_parser("gui", help="Launch native Windows desktop")
     gui.add_argument("project", nargs="?")
     resource_arguments(gui)
@@ -172,6 +173,10 @@ def main(argv=None):
         from etlayout.cli.power import COMMANDS, run_command
         from etlayout.io.project import _json_dump, load_project, save_project
         resource_policy = policy_from_args(args)
+        if args.command == "build-info":
+            from etlayout.provenance import build_info
+            print(_json_dump(build_info()))
+            return 0
         if args.command == "project-info":
             from etlayout.io.resources import inspect_project
             print(_json_dump(inspect_project(args.project, allow_network_container=resource_policy.allow_network).summary()))

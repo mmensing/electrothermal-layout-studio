@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "etlayout"
-version = "0.4.0"
+version = "0.4.1"
 description = "2.5D finite-element electrothermal analysis of semiconductor layouts"
 requires-python = ">=3.12"
 license = "MPL-2.0"
