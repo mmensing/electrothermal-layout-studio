@@ -140,7 +140,7 @@ class ProjectOpeningController(QObject):
                     store.close()
                 window.history_workflow.issue(
                     "The layout source declaration changed during resource review. "
-                    "Use File → Relink layout to review the new source; the working setup was retained.")
+                    "Use File → Relink layout to review the new source; the working setup was retained.", project_opening=True)
                 return
             if not window.history_workflow.close():
                 if store:
@@ -227,5 +227,5 @@ class ProjectOpeningController(QObject):
         window = self.window
         if request.epoch == window.document_epoch and request == window.history_opener.request:
             self.review_restore = None
-            window.history_workflow.issue("Opening the selected project failed: " + str(error))
+            window.history_workflow.issue("Opening the selected project failed: " + str(error), project_opening=True)
 

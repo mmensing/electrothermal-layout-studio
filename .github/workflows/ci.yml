@@ -56,12 +56,14 @@ jobs:
           path: artifacts/publication-audit.json
           if-no-files-found: error
           retention-days: 7
+      - name: Check generated source and offline capability catalogs
+        run: python scripts/generate_capability_docs.py --check
       - name: Lint maintained source and scripts
         run: python -m ruff check .
       - name: Run fast contracts and package policy
         run: python -m pytest -m "fast or packaging" --basetemp=.pytest_fast --junitxml=artifacts/pytest-fast.xml
       - name: Guard compact maps, results and example browser workflows
-        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_example_library_browser.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
+        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_example_library_browser.py tests/test_workflow_next_steps.py tests/test_capability_catalog.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
       - name: Exercise public CLI
         run: |
           python -m etlayout --version
@@ -209,7 +211,7 @@ jobs:
       - name: Exercise real workflow journeys with synthetic projects
         run: |
           $journeys = @('gui_acceptance', 'visualization_workbench_acceptance', 'workflow_ui_acceptance', 'reporting_performance_acceptance', 'transient_acceptance', 'transient_workflow_acceptance', 'power_workflow_acceptance', 'guided_workflow_acceptance', 'local_refinement_acceptance', 'power_examples_desktop_acceptance', 'layout_editor_acceptance', 'readability_acceptance')
-          $journeys += 'workspace_panels_acceptance'
+          $journeys += 'workspace_panels_acceptance', 'workflow_guidance_acceptance'
           $failedJourneys = @()
           $journeys += 'export_acceptance', 'archive_history_acceptance', 'scientific_lifecycle_acceptance'
           foreach ($journey in $journeys) {

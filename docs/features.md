@@ -6,6 +6,45 @@ Use the desktop to move from a layout question to a result you can inspect,
 compare and reopen. This catalog covers the current source edition; it describes
 available tools, not a claim that every physical model is calibrated for your process.
 
+<!-- BEGIN GENERATED CAPABILITIES -->
+## Versioned capability index
+
+The source registry records when each capability became available. Compare **Since**
+with the installed version in About or `etlayout --version`; an entry does not
+claim that a matching binary has been published. Analysis names describe supported
+modes, subject to the stated limits and prerequisites. Test links identify behavior
+coverage locations, not a claim that a particular CI run passed.
+
+| Stable ID / feature | GUI or CLI route | Analyses | Since | Boundary / behavior tests |
+| --- | --- | --- | --- | --- |
+| `layout.import` · **GDSII/OASIS hierarchy** | File → Import layout…; Layout & Region | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Layout hierarchy does not reduce finite-element cost. [geometry](../tests/test_geometry.py) |
+| `layout.regions` · **Distinct domain, crop and reporting support** | Layout & Region; Model; View | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | View-only changes preserve physical identity. [workflow_maintenance](../tests/test_workflow_maintenance.py) |
+| `layout.vertices` · **Project-owned polygon editing** | Edit → Edit layout polygon vertices | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Imported source is preserved; polygon editing is not general CAD construction. [layout_editor](../tests/test_layout_editor.py) |
+| `stack.materials` · **Materials and technology templates** | Layers & Materials | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Thickness-averaged 2.5D sheets require explicit interfaces. [technology_templates](../tests/test_technology_templates.py) |
+| `stack.thermal-films` · **Thermal films and explicit heat placement** | Layers & Materials; Contacts & Connections | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Avoid counting effective thermal paths twice. [thermal_stacks](../tests/test_thermal_stacks.py) |
+| `analysis.dc` · **Fixed-temperature DC electrical** | Header → Analysis type → DC electrical | electrical | 0.4.0 | Conduction model; no charge storage or switching parasitics. [electrical](../tests/test_electrical.py) |
+| `analysis.thermal` · **Steady thermal and coupled electrothermal** | Header → Analysis type | thermal, electrothermal | 0.4.0 | Configured material laws and reservoirs determine physical validity. [thermal](../tests/test_thermal.py) |
+| `analysis.transient` · **Thermal/electrothermal transients** | Header → Analysis type; Simulation → Time and load settings… | thermal-transient, electrothermal-transient | 0.4.0 | Quasi-static electrical loss and thermal storage; no switching physics. [transient](../tests/test_transient.py) |
+| `analysis.temperature-limits` · **Maximum-temperature engineering acceptance** | Operating conditions → Maximum operating temperature… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Acceptance is distinct from numerical convergence. [temperature_limits](../tests/test_temperature_limits.py) |
+| `power.ports` · **Finite ports, vias and distributed loads** | Contacts & Connections; Studies → Routing & optimization | electrical, electrothermal, electrothermal-transient | 0.4.0 | Projected overlap is not connectivity; device parameters need calibration. [power_solver_multiport](../tests/test_power_solver_multiport.py) |
+| `power.routing` · **Constrained routing and equal-service optimization** | Studies → Routing & optimization | electrical, thermal, electrothermal | 0.4.0 | Steady operation only; compare delivered service and verified finalists. [power_routing](../tests/test_power_routing.py) |
+| `power.multiport` · **Passive multiport export** | Studies → Routing & optimization → Analysis | electrical | 0.4.0 | Supported passive linear networks only; per-port fidelity is required. [power_solver_multiport](../tests/test_power_solver_multiport.py) |
+| `results.maps` · **Layer, region, quantity and time maps** | Results → Layer / Quantity / Region | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Display scales preserve saved fields; raw extrema need physical qualification. [result_layer_selection](../tests/test_result_layer_selection.py) |
+| `results.engineering` · **Independent evidence and same-support quantities** | Results → Metrics & loss budget → Engineering | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Convergence, conservation, mesh confidence, model range and calibration are separate. [engineering_workflow](../tests/test_engineering_workflow.py) |
+| `results.transient-peaks` · **Peak and final transient frames** | Results → Time navigation | thermal-transient, electrothermal-transient | 0.4.1 | A cool selected frame does not erase whole-run acceptance failure. [engineering_workflow](../tests/test_engineering_workflow.py) |
+| `studies.convergence` · **Mesh and time-step sensitivity studies** | Studies → Mesh convergence… / Time-step convergence… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Compare integrals and regularized hotspots; sensitivity is not a rigorous error bound. [study_execution](../tests/test_study_execution.py) |
+| `studies.local-mesh` · **Physical local refinement and per-metric evidence** | Mesh & Checks → Suggest local refinement… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | A suggestion or generated mesh is not proof; retain support and resource limits. [local_refinement_gui](../tests/test_local_refinement_gui.py) |
+| `studies.devices` · **Configured GaN, SiC and finite-contact studies** | Studies → Run configured study… / Finite-contact TLM study (E27)… | electrical, electrothermal, electrothermal-transient | 0.4.1 | Synthetic effective models do not establish breakdown or switching performance. [device_scenarios](../tests/test_device_scenarios.py) |
+| `projects.history` · **Embedded projects and read-only run history** | File → Save project as…; History | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Apply/Discard/Stay resolves drafts; historical physical settings remain read-only. [lazy_history_workflows](../tests/test_lazy_history_workflows.py) |
+| `projects.sharing` · **Scientific sharing and complete archives** | Results → Export task | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Complete archives contain confidential source/configuration; review output scope. [explicit_exports](../tests/test_explicit_exports.py) |
+| `execution.cpu` · **Cancellable background work and shared CPU budget** | Edit → Execution settings… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Assembly/studies can parallelize; sparse factorization is serial. No GPU backend. [execution](../tests/test_execution.py) |
+| `examples.references` · **Forty reference examples** | File → Ready-to-run examples | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.0 | Each example has its own supported modes, validity and resource limits. [example_science](../tests/test_example_science.py) |
+| `examples.browser` · **Searchable examples, family presets and scenarios** | File → Browse example library… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Opening does not solve; named scenarios define inputs; large presets are opt-in. [example_library_browser](../tests/test_example_library_browser.py) |
+| `workflow.verification` · **Direct result-to-verification guidance** | Results → Check mesh / time-step sensitivity… | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Current applied physics required; historical inspection cannot edit or run. [workflow_next_steps](../tests/test_workflow_next_steps.py) |
+| `identity.build` · **Machine-readable build provenance** | CLI: etlayout build-info | electrical, thermal, electrothermal, thermal-transient, electrothermal-transient | 0.4.1 | Source/build identity does not establish publication or calibration. [build_provenance](../tests/test_build_provenance.py) |
+
+<!-- END GENERATED CAPABILITIES -->
+
 ## Build the experiment
 
 | Tool | Where to find it | What you can do |
@@ -56,7 +95,7 @@ switching-parasitic model. See [transient operation](handbook/transient.md).
 | Revisit a run | **History**, **Results → Inspect saved runs** | Historical context is read-only. **Return to working setup** restores editing; retained runs keep their original configuration identity. |
 | Check a change | **Studies → Mesh convergence…**, **Time-step convergence…**, **Compare project designs…** | Compare integral quantities and regularized hotspots as well as solver convergence. |
 
-Maps and human-readable tables use engineering units. Volumetric current density
+**Results → Check mesh sensitivity…** and **Check time-step sensitivity…** open the\nexisting verification studies directly. The selected run must match the applied\nphysical setup; historical inspection keeps these actions disabled until you\nreturn to the working setup. A global study does not automatically verify an\narbitrary selected map region or pixel.\n\nMaps and human-readable tables use engineering units. Volumetric current density
 is **mA/µm²**, sheet current is **mA/µm**, and electric field is **V/µm**. Absolute
 temperature and rise are reported in K; scalar voltage/current/power/time use
 appropriate prefixes. Manual ranges use their printed unit. Raw numerical
@@ -91,8 +130,8 @@ The [power-device examples](power-examples.md) keep active geometry, device law,
 thermal environment and service fixed when those are not the studied variables.
 They include RDL feeds, long-finger/multi-bank GaN and stripe/cellular SiC
 on-state collection, with reference projects, compact generation presets and opt-in larger
-benchmarks. The reference projects open in the GUI; generating other preset/variant
-combinations uses the optional CLI.
+benchmarks. Use **File → Browse example library…** to choose supported size presets, routing
+variants and thermal boundaries. The optional CLI offers the same family generators.
 
 ## Run a device operating study
 
@@ -132,7 +171,9 @@ inputs. PNG/PDF/SVG share the same scientific plot renderer, with engineering
 units, physical scales, explicit ranges and source warnings. A selected-run
 archive belongs to that run's setup; it differs from saving an edited project.
 
-The CLI/Python interface shares the backend for batch use and reproduction. It is
+The CLI/Python interface shares the backend for batch use and reproduction.
+`etlayout capabilities` includes the stable feature catalog alongside CPU/thread
+control availability. It is
 optional for these [GUI walkthroughs](examples.md). See [automation](handbook/automation-and-troubleshooting.md)
 for scripts and command-line details.
 
@@ -149,3 +190,23 @@ available logical CPUs). Background jobs remain cancellable with **Shift+F5**;
 assembly and independent studies can use that budget, while some phases remain
 serial. There is no GPU backend. Windows 11 x64/Python 3.12 is the validated
 desktop platform; see [Windows setup](windows.md) and [verification scope](validation.md).
+
+
+## Maintaining the capability catalog
+
+Stable feature IDs, introduced source versions, GUI/CLI routes, supported
+analyses, limitations and behavior-test references live in
+[the Qt-free registry](../src/etlayout/capabilities.py). Add or revise that record
+when a capability changes. `etlayout capabilities` exposes the same manifest
+for tools without loading Qt. Then run:
+
+```powershell
+python scripts/generate_capability_docs.py
+python scripts/generate_capability_docs.py --check
+python -m pytest tests/test_capability_catalog.py
+```
+
+The generator updates only marked tables here and in offline help; surrounding
+engineering explanations remain maintained prose. The check runs in the fast
+suite. An introduced version establishes source availability; publication and
+packaged-build validation remain separate release gates.
