@@ -18,6 +18,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Any, Mapping
 
 from etlayout.models import SimulationError
+from etlayout.provenance import build_info
 
 
 def _cpu_count() -> int:
@@ -54,6 +55,7 @@ class ExecutionSettings:
 @dataclass
 class _ExecutionState:
     settings: ExecutionSettings
+    build: dict[str, Any] = field(default_factory=build_info)
     linear_solves: dict[str, int] = field(default_factory=lambda: {"cpu": 0})
     linear_factorizations: int = 0
     reused_factorizations: int = 0
@@ -232,6 +234,13 @@ def record_linear_solve(backend: str, *, factorized: bool | None = None, seconds
         record_phase("sparse_linear_solves", seconds)
 
 
+def execution_build_info() -> dict[str, Any]:
+    """Identity captured at run start, also used to reject stale cached solves."""
+    from copy import deepcopy
+    state = _ACTIVE.get()
+    return deepcopy(state.build) if state is not None else build_info()
+
+
 def execution_provenance() -> dict[str, Any]:
     state = _ACTIVE.get()
     settings = current_execution()
@@ -244,7 +253,7 @@ def execution_provenance() -> dict[str, Any]:
                  for pool in threadpool_info()]
     except ImportError:
         pools = []
-    return {**settings.to_dict(), "requested_backend": "cpu",
+    return {**settings.to_dict(), "build": execution_build_info(), "requested_backend": "cpu",
             "actual_backend": used[0] if len(used) == 1 else ("mixed" if used else "not_run"),
             "linear_solves": counts, "native_threadpools": pools,
             "linear_factorizations": state.linear_factorizations if state else 0,

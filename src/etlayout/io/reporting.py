@@ -221,6 +221,8 @@ def render_report(context: ReportContext, *, images=(), selection=None, metadata
                f"<p>Configuration SHA-256: <code>{html_text(result.configuration_hash)}</code><br>"
                f"Physics SHA-256: <code>{html_text(result.physics_hash)}</code></p>",
                f"<p>Export scope: {html_text(scope)}</p>"]
+    from etlayout.provenance import result_build_info
+    content.append("<h2>Recorded implementation</h2><pre>" + html_text(_json_dump(result_build_info(result))) + "</pre>")
     if selection:
         content.append("<h2>Displayed selection</h2><pre>" + html_text(_json_dump(selection)) + "</pre>")
     if context.provenance:

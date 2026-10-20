@@ -240,6 +240,11 @@ def run_project(project: Project, progress=None, cancel=None, use_cache: bool = 
         return result
 
 
+def _execution_build_key():
+    from etlayout.simulation.execution import execution_build_info
+    return json.dumps(execution_build_info(), sort_keys=True, separators=(",", ":"))
+
+
 def _run_project(project: Project, progress=None, cancel=None, use_cache: bool = False, *,
                  initial_result: SimulationResult | None = None, resume: bool = False,
                  _mesh_reference=None) -> SimulationResult:
@@ -251,7 +256,7 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
         resume = configure_initial_state(project, initial_result, resume)
     _verify_layout(project)
     from etlayout.simulation.execution import current_execution, phase_seconds, phase_timer, record_phase
-    key = (configuration_hash(project), current_execution())
+    key = (configuration_hash(project), current_execution(), _execution_build_key())
     if use_cache and _mesh_reference is None and initial_result is None and not resume and key in _RESULT_CACHE:
         checkpoint(cancel, progress, 1., "Loaded identical cached simulation")
         with phase_timer("cached_result_load"):
@@ -291,7 +296,7 @@ def _run_project(project: Project, progress=None, cancel=None, use_cache: bool =
                                              for f in group.values() for a in f.values())
         if bytes_used < _CACHE_BUDGET // 2:
             _RESULT_CACHE.clear()  # one bounded full result; mesh cache is separate
-            _RESULT_CACHE[(key, current_execution())] = deepcopy(result)
+            _RESULT_CACHE[(key, current_execution(), _execution_build_key())] = deepcopy(result)
     checkpoint(cancel, progress, 1., "Simulation complete" if result.converged else "Simulation did not converge")
     result.elapsed_seconds = time.perf_counter() - start
     if result.transient is not None:

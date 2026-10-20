@@ -304,7 +304,9 @@ def export_results(result: SimulationResult, directory: str | Path, plots: bool 
     filenames = _filenames(specifications)
     root = Path(directory)
     root.mkdir(parents=True, exist_ok=True)
+    from etlayout.provenance import result_build_info
     metadata = {"configuration_hash": result.configuration_hash, "converged": result.converged,
+                "build": result_build_info(result),
                 "execution": result.execution,
                 "solver_version": result.solver_version, "elapsed_seconds": result.elapsed_seconds,
                 "metrics": metrics, "terminals": terminals, "mesh": result.mesh.statistics,
