@@ -295,3 +295,33 @@ def test_history_navigation_cancels_pending_eager_open_without_late_context_repl
     finally:
         release.set()
         finished(window, qtbot)
+
+
+def test_close_during_eager_read_retains_window_until_owned_thread_stops(
+        guided_window, qtbot, eager_archive, monkeypatch):
+    window = guided_window
+    old = window.project
+    entered, release = threading.Event(), threading.Event()
+    decode = history_opening.resolve_project
+    def held_decode(*args, **options):
+        decoded = decode(*args, **options)
+        entered.set()
+        if not release.wait(10):
+            raise RuntimeError("Test reader was not released")
+        return decoded
+    monkeypatch.setattr(history_opening, "resolve_project", held_decode)
+    try:
+        window.open_project(eager_archive[0])
+        qtbot.waitUntil(entered.is_set, timeout=30000)
+        jobs = list(window.history_opener.jobs)
+        assert not window.close()
+        assert window.isVisible() and all(isValid(job) and job.isRunning() for job in jobs)
+        assert "still stopping" in window.statusBar().currentMessage()
+        release.set()
+        finished(window, qtbot)
+        assert window.project is old and window.result is None and window.isVisible()
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        assert all(not isValid(job) for job in jobs)
+    finally:
+        release.set()
+        finished(window, qtbot)
