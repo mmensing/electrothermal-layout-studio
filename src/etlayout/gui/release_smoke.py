@@ -109,6 +109,8 @@ def run_workflow_smoke(window, project_path, output, *, timeout=120.):
         QTest.mouseClick(window.guided.verify_mesh, Qt.MouseButton.LeftButton)
         if study_errors:
             raise study_errors[0]
+        check("Mesh action completed an actual study dialog",
+              "Mesh study retains three editable source mesh levels" in receipt["checks"])
         check("Cancelled study preserves result, fields and working physics without solving",
               window.result is result and window.job is None
               and window.capture_view_state() == original_view and physics_hash(window.project) == fingerprint)
