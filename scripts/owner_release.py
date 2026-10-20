@@ -21,7 +21,7 @@ from pathlib import Path, PurePosixPath
 REPOSITORY = 'mmensing/electrothermal-layout-studio'
 OWNER = 'mmensing'
 ROOT = Path(__file__).resolve().parents[1]
-REQUIRED_JOBS = {'source-quality', 'windows-tests', 'windows-desktop'}
+REQUIRED_JOBS = {'source-quality', 'scientific-regression', 'windows-tests', 'windows-desktop'}
 REQUIRED_NATIVE_CHECKS = {
     'version', 'inspect-gds', 'inspect-oas', 'solve-E1', 'gui-smoke',
     'windowed-smoke', 'worker-smoke', 'solve-E19', 'resume-E19', 'replay-E19',
@@ -29,7 +29,7 @@ REQUIRED_NATIVE_CHECKS = {
     'frozen-optimization', 'frozen-optimization-resume', 'frozen-generate-E21',
     'frozen-solve-E21', 'frozen-reference-E21', 'frozen-generate-E23',
     'frozen-solve-E23', 'frozen-reference-E23', 'frozen-E21-parallel',
-    'frozen-editor', 'frozen-editor-solve',
+    'frozen-editor', 'frozen-editor-solve', 'build-info', 'frozen-workflow',
 }
 WINDOWS_MAX_BYTES = 512 * 1024**2
 WINDOWS_MAX_ENTRIES = 20_000
@@ -143,17 +143,22 @@ def trusted_ci(runs, jobs_by_run, commit):
             'The latest trusted validation run has not passed; older successes cannot replace it')
     jobs = jobs_by_run(run['id'])
     passed = {job['name'] for job in jobs if job.get('status') == 'completed' and job.get('conclusion') == 'success'}
-    require(REQUIRED_JOBS <= passed, 'Trusted validation must pass source-quality, windows-tests and windows-desktop')
+    require(REQUIRED_JOBS <= passed, 'Trusted validation must pass source-quality, scientific-regression, windows-tests and windows-desktop')
     return run['id']
 
 
 def protected_rules(rules, ruleset_by_id, integration_id):
     require({'pull_request', 'non_fast_forward', 'deletion'} <= {rule['type'] for rule in rules},
             'Main must require PRs and prevent force pushes and deletion')
+    required = {'source-quality', 'scientific-regression'}
     quality = [rule for rule in rules if rule['type'] == 'required_status_checks'
-               and any(item['context'] == 'source-quality' and item.get('integration_id') == integration_id
+               and any(item['context'] in required
                        for item in rule['parameters']['required_status_checks'])]
-    require(quality, 'Main must require source-quality from the actual GitHub Actions integration')
+    contexts = {item['context'] for rule in quality
+                for item in rule['parameters']['required_status_checks']
+                if item.get('integration_id') == integration_id}
+    require(required <= contexts,
+            'Main must require source-quality and scientific-regression from the actual GitHub Actions integration')
     for rule in quality:
         policy = ruleset_by_id(rule['ruleset_id'])
         require(policy.get('enforcement') == 'active' and not policy.get('bypass_actors'),
@@ -353,7 +358,7 @@ def inspect_windows_profile(path, policy, version, commit):
                 and all(type(check) is dict and type(check.get('exit_code')) is int
                         and check['exit_code'] == 0 and isinstance(check.get('name'), str) for check in checks)
                 and {check['name'] for check in checks} == REQUIRED_NATIVE_CHECKS,
-                'Windows archive must pass all 25 distinct required native checks; skip-tests is ineligible')
+                'Windows archive must pass all 27 distinct required native checks; skip-tests is ineligible')
 
 
 

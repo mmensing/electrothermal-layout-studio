@@ -282,6 +282,7 @@ def verify_extracted_archive(application_zip, verification, environment):
         examples = bundle / "examples"
         commands = {
             "version": [cli, "--version"],
+            "build-info": [cli, "build-info"],
             "inspect-gds": [cli, "inspect", examples / "E1_straight.gds"],
             "inspect-oas": [cli, "inspect", examples / "E1_straight.oas"],
             "solve": [cli, "solve", examples / "E1_straight.etl", "--no-plots", "--output", destination / "solved"],
@@ -403,6 +404,13 @@ def main(argv=None):
         examples = bundle / "examples"
         checks.append(execute([cli, "--version"], cwd=bundle, timeout=60,
                               logfile=verification / "version.log", environment=env))
+        from etlayout.provenance import implementation_identity
+        checks.append(execute([cli, "build-info"], cwd=bundle, timeout=60,
+                              logfile=verification / "build-info.log", environment=env))
+        frozen_info = json.loads(checks[-1]["output"])
+        if (frozen_info.get("edition") != "frozen" or frozen_info.get("version") != project_metadata["version"]
+                or frozen_info.get("implementation_sha256") != implementation_identity()):
+            raise RuntimeError("Frozen implementation receipt differs from the reviewed source")
         for extension in ("gds", "oas"):
             checks.append(execute([cli, "inspect", examples / f"E1_straight.{extension}"], cwd=bundle,
                                   timeout=60, logfile=verification / f"inspect-{extension}.log", environment=env))
@@ -416,6 +424,14 @@ def main(argv=None):
                               cwd=bundle, timeout=90, logfile=verification / "windowed-smoke.log", environment=env))
         checks.append(execute([gui, "--worker-smoke", examples / "E1_straight.etl", "--output", verification / "frozen-worker.json"],
                               cwd=bundle, timeout=150, logfile=verification / "worker-smoke.log", environment=env))
+        workflow_output = verification / ("workflow-" + datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f"))
+        checks.append(execute([gui, "gui", solved_project, "--smoke-test", "--no-recovery",
+                               "--workflow-smoke-output", workflow_output], cwd=bundle, timeout=240,
+                              logfile=verification / "frozen-workflow.log", environment=env))
+        workflow_receipt = json.loads((workflow_output / "receipt.json").read_text(encoding="utf-8"))
+        if (workflow_receipt.get("status") != "passed" or not workflow_receipt.get("frozen")
+                or workflow_receipt.get("build", {}).get("implementation_sha256") != frozen_info["implementation_sha256"]):
+            raise RuntimeError("Frozen eager opening, history, verification actions and example browser did not pass")
         pulsed_project = examples / "E19_pulsed_multilayer.etl"
         checks.append(execute([cli, "solve", pulsed_project, "--no-plots", "--output", verification / "E19"],
                               cwd=bundle, timeout=180, logfile=verification / "solve-E19.log", environment=env))

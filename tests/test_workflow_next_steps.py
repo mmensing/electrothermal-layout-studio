@@ -7,7 +7,7 @@ from gui_test_helpers import _click, _idle
 from gui_test_helpers import guided_window as guided_window
 from gui_test_helpers import solved_e1 as solved_e1
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLineEdit
+from PySide6.QtWidgets import QApplication, QDialog, QDialogButtonBox, QLineEdit, QPushButton
 
 from etlayout.examples import make_example
 from etlayout.io.project import configuration_hash
@@ -107,3 +107,23 @@ def test_transient_time_action_uses_real_transient_configuration(guided_window, 
     assert len(observed[0].split(",")) == 3
     assert window.result is result and window.job is None
     assert window.capture_view_state() == before
+
+
+def test_reopening_model_browser_reuses_the_visible_widget(guided_window, qtbot):
+    window = guided_window
+    guided = window.guided
+    before = configuration_hash(window.project)
+    browser = window.design_browser
+    for _ in range(2):
+        guided.actions["view.browser"].trigger()
+        _idle(window, qtbot)
+        assert guided.canvas_tabs.currentWidget() is browser
+        assert browser.isVisible()
+        guided.canvas_tabs.setCurrentIndex(0)
+    guided.navigate("layout")
+    control = next(item for item in guided.page.findChildren(QPushButton)
+                   if item.text() == "Browse hierarchy / instances")
+    _click(window, control)
+    assert guided.canvas_tabs.currentWidget() is browser
+    assert sum(guided.canvas_tabs.widget(i) is browser for i in range(guided.canvas_tabs.count())) == 1
+    assert configuration_hash(window.project) == before

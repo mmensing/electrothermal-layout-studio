@@ -13,6 +13,9 @@ freezing; the current application version must agree with a versioned stamp.
 Missing or malformed frozen stamps fail explicitly. The stamp identifies Python
 implementation inputs, not native DLL equivalence or successful validation.
 The Windows build/SBOM manifests separately identify actual shipped native files.
+Restart the application after editing or upgrading its code/dependencies. Source
+receipts identify the on-disk inputs at run start; they do not provide hot reload
+or prove that an already running process reimported edited modules.
 
 Ordinary calculations record this receipt at execution start in `execution.build`.
 Steady and transient results, schema-2/schema-3 archives, numerical exports and HTML

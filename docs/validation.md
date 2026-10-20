@@ -59,6 +59,35 @@ Clean-machine, physical monitor-DPI and screen-reader checks were not performed.
 The original intermittent Qt/Shiboken GC failure remains unisolated. No candidate
 was published; these checks do not waive release, license or source obligations.
 
+## 0.4.1 baseline and release verification
+
+The pinned baseline before these maintenance changes passed **2,662 tests** on
+hosted Windows CPython 3.12.10 with the locked dependencies: zero failures/errors/
+skips, **87.70% statement** and **77.61% branch** coverage, 2,341.767 s JUnit time.
+Coverage includes the complete collection and spawned workers; no exclusions were
+added. The baseline main commit was `c0bcd5e1eced48070e2346c22dac03ce6a786713`.
+Final release evidence must come from the exact final protected public-main run
+using the same command/environment, rather than an earlier successful PR head.
+
+Focused changes add real eager schema-2/schema-3/JSON opening, stale/cancelled read
+disposal, resource consent, draft/save/history transitions, preserved result build
+identity and guarded study/browser workflows. Native 100%/150% captures verify
+readable scientific glyphs. An eight-cycle native lifecycle diagnostic completed
+16 DC solves, a pulsed solve, archive/history/cancellation/close and explicit GC
+without reproducing the original intermittent Qt/Shiboken access violation.
+That bounded negative result is not a causal fix or a stability guarantee. A
+broader local project-opening/history test order subsequently reproduced a native
+access violation while Python collected objects in an archive reader. Its stack
+locates the collector, not the object being collected or the fault's cause.
+Retain failed-run diagnostics separately; successful reruns do not erase them.
+
+The [current E21 CPU measurement](performance.md) supersedes historical geometry
+for current performance interpretation. [Windows packaging](windows.md) describes
+27 required native checks and seven extracted-folder checks for an actual 0.4.1
+candidate. Fresh artifact/source/SBOM/privacy review and owner preflight remain
+mandatory. See the exact release assets and checksums for performed release
+validation; source tests alone do not establish packaged or clean-machine behavior.
+
 ## Local current and heat verification
 
 See [current crowding](current-crowding.md) for ten independent reference geometries,
@@ -367,3 +396,29 @@ incomplete/thermally stopped point or a mesh mismatch cannot certify time-step
 convergence. This prevents native mesher variations between workers from being
 misreported as temporal sensitivity. Field outputs still use the requested
 cadence, and equal effective step counts remain explicitly diagnosed.
+
+
+A later broader local order reproduced the native Qt/Shiboken access violation
+with default automatic garbage collection. Removing queued exception traceback
+ownership and collecting closed test windows between tests did not establish a
+cure; the latter workaround is not shipped. Native dumps locate an invalid
+retained Python reference in Shiboken traversal, without identifying its owner.
+This is an unresolved native stability limitation, including potentially supported
+multiwindow recovery; a passing CI run cannot establish its absence.
+
+A separate native single-window diagnostic completed 12 cycles (24 actual eager
+E1/E15 opens, 24 historical inspection/return pairs and 168 workflow navigations)
+in 117.828 s with default automatic GC and no explicit collection. An earlier
+30-cycle attempt reached 18 cycles before its 190 s diagnostic budget expired;
+that attempt is incomplete, not a passing stress test. Source diagnostics remain
+separate from final frozen-package and clean-machine validation.
+
+
+The strengthened release journey also passed on the native Windows source build
+in 17.031 s: two real inactive recovery sessions, the actual recovery chooser,
+two MainWindows with independent asynchronous opens, each window's historical
+inspection/return, guarded discard and secondary-window native deletion. Automatic
+GC remained enabled with unchanged settings during this recovery segment, which
+adds no explicit collection. Normal smoke shutdown subsequently closes the primary
+window and collects its unreachable resources. This bounded production-lifecycle observation does not fix the retained-reference
+fault and must still be repeated in the final frozen candidate.

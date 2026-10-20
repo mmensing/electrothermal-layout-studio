@@ -94,7 +94,10 @@ to the original references.
 The [first-calculation guide](docs/handbook/first-calculation.md) explains the
 independent analytical check. All **40 reference projects** remain available;
 opening or generating an example never starts a calculation. Large cases are
-identified before execution.
+identified before execution. Opening an unsolved example leads to **Mesh & Checks**
+to review the configured inputs, validate and prepare the mesh; it never solves
+automatically. At Results, use **Check mesh/time-step sensitivity…** when the
+corresponding evidence is missing. Historical inspection remains read-only.
 
 ## Find your next experiment
 
@@ -150,18 +153,20 @@ The [thermal scenario guide](docs/thermal-example-scenarios.md) shows deliberate
 Joule-only, heating, cooldown and limit-failure experiments without replacing
 the forty original references. The [scientific example audit](docs/example-science.md)
 records the configured service, losses, temperatures and model limitations.
-[Unreleased engineering notes](docs/releases/0.4.x.md) summarize compatibility
+[0.4.1 release notes](docs/releases/0.4.1.md) summarize workflow changes;
+[engineering notes](docs/releases/0.4.x.md) summarize compatibility
 and measured verification.
 
 ## Install on Windows
 
-**Development / unreleased 0.4.x:** The searchable example library, physical mesh
-confidence, thermal-stack and heat-deposition controls, new operating scenarios,
-finite-contact TLM studies, hard temperature limits and engineering results
-require the matching source checkout. Published 0.4.0 Windows binaries do not
-include these additions.
+**Source version 0.4.1 · research prototype · MPL-2.0 original source.**
+Use a matching application version for the searchable example library, physical
+mesh confidence, thermal-stack controls, finite-contact studies, temperature
+limits and engineering results. The 0.4.0 Windows binary lacks these newer tools.
+**Help → About** or `etlayout build-info` identifies your installation; saved
+results retain the implementation that produced them. Check Releases for actual
+published downloads; a source version does not itself establish publication.
 
-**0.4.0 · research prototype · MPL-2.0 original source.**
 Windows 11 x64 is the validated desktop platform. Download a published Windows
 ZIP from [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases),
 extract the whole folder, and start `ElectrothermalLayoutStudio.exe`. Keep

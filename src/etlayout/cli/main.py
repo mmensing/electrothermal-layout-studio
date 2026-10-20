@@ -34,6 +34,7 @@ def parser():
     gui.add_argument("--smoke-test", action="store_true")
     gui.add_argument("--screenshot")
     gui.add_argument("--editor-smoke-output", help=argparse.SUPPRESS)
+    gui.add_argument("--workflow-smoke-output", help=argparse.SUPPRESS)
     ex = sub.add_parser("examples", help="Generate actual GDS/OASIS and ready-to-run projects")
     ex.add_argument("directory", nargs="?", default="examples")
     ex.add_argument("--name", help="Stable example ID or full name; omit to generate reference layouts only (no solves)")
@@ -165,6 +166,8 @@ def main(argv=None):
         for flag in ("allow_outside_root", "allow_network"):
             if getattr(args, flag, False):
                 gui_args.append("--" + flag.replace("_", "-"))
+        if getattr(args, "workflow_smoke_output", None):
+            gui_args.extend(["--workflow-smoke-output", args.workflow_smoke_output])
         return gui_main(gui_args)
     try:
         from etlayout.cli.power import COMMANDS, run_command

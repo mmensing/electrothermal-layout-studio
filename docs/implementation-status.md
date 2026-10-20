@@ -1,10 +1,12 @@
 # Implementation status
 
-The public [v0.4.0 Windows release](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.0)
-retains the established desktop, CLI and file compatibility. This source checkout
-also contains unreleased 0.4.x engineering additions; the existing 0.4.0 binaries
-do not acquire them automatically. See [engineering notes](releases/0.4.x.md)
-and [validation](validation.md) for capabilities, exact evidence and reproduction.
+This source checkout is **0.4.1**, retaining the established desktop, CLI and
+file compatibility. Check [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for actual Windows downloads; older binaries do not acquire new source tools.
+See the [versioned capability catalog](features.md), [0.4.1 notes](releases/0.4.1.md),
+[engineering notes](releases/0.4.x.md) and [validation](validation.md) for scope,
+evidence and reproduction. About and `etlayout build-info` identify this
+installation; recorded results retain their original implementation receipt.
 Historical receipts describe their original geometry and environment; they are
 not automatically measurements of the sanitized public edition.
 

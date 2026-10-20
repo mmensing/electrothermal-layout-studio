@@ -1,6 +1,25 @@
 # Changelog
 
-## Unreleased 0.4.x — engineering evidence and thermal acceptance
+## 0.4.1 — responsive projects and engineering workflow
+
+- Move default eager archive/JSON opening, legacy fallback and resource-review
+  retries into owned workers. Keep draft/save/history guards and exact resource
+  grants; discard cancelled or obsolete generations without replacing the setup.
+- Preserve the exact camera and field range when opening the issue/history drawer;
+  distinguish project-open failures from computation failures.
+- Record ordinary run build provenance; expose it in About, CLI, archives and
+  reports. Scope result-cache reuse to that identity; retain unavailable identity
+  for older saved results.
+- Guide newly opened examples to Mesh & Checks and provide guarded mesh/time
+  study actions beside missing result evidence. Keep compact example configuration
+  controls and actions visible above tabbed inputs and model guidance.
+- Generate online/offline feature tables and machine-readable capability records
+  from one versioned registry, with CI staleness and route/test checks.
+- Extract project-opening transition ownership from MainWindow and measure current
+  E21 one/four-CPU operation. Actual assembly concurrency does not promise a total
+  speedup; sparse direct factorization remains serial.
+
+This release also carries the previously reviewed engineering changes below:
 
 - Unify all forty example IDs under six subjects and shared GUI-led learning paths;
   expose size, routing, thermal and existing operating scenarios in a focused browser.
@@ -23,9 +42,9 @@
 - Require scientific PR checks, release completed worker resources, record
   assembly phases and use one verified mesh in temporal refinement studies.
 - Refresh GUI-led documentation, feature discovery, publication-status wording
-  and setup links. These additions are source changes, not a new binary release.
+  and setup links. Publication still requires exact native and compliance gates.
 
-See [engineering notes](docs/releases/0.4.x.md) for compatibility, measured
+See [0.4.1 notes](docs/releases/0.4.1.md) and [engineering notes](docs/releases/0.4.x.md) for compatibility, measured
 verification and remaining limitations. The original intermittent Qt/Shiboken
 GC access violation remains unisolated; the worker cleanup is not a causal fix.
 

@@ -2,9 +2,12 @@
 
 [Project introduction](../README.md) · [Example catalog](examples.md) · [Example downloads](../examples/README.md)
 
-The guides describe the matching source checkout. The published
-[0.4.0 Windows release](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.0)
-remains available; newer source features do not update that binary.
+The guides describe source version **0.4.1**. Check [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for actual Windows downloads and [release notes](releases/0.4.1.md) for this version.
+About and `etlayout build-info` identify the running implementation; old result
+archives keep their original identity. Published older binaries retain their own capabilities.
+
+[Build and result identity](build-identity.md) · [Measured CPU execution](performance.md)
 
 ## Learn with the application
 
