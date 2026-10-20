@@ -12,6 +12,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot
 
+from etlayout.gui.worker_errors import detached_error
 from etlayout.io.history_store import open_history_catalog
 from etlayout.io.project import load_run_history, resolve_project
 from etlayout.io.resources import (
@@ -176,10 +177,10 @@ class HistoryOpenJob(QThread):
             store = None  # The queued receiver owns it, including stale replies.
         except ResourceAccessError as error:
             if not self._cancel.is_set():
-                self.review_required.emit(request, inspection, error)
+                self.review_required.emit(request, inspection, detached_error(error))
         except Exception as error:
             if not self._cancel.is_set():
-                self.failed.emit(request, error)
+                self.failed.emit(request, detached_error(error))
         finally:
             if store is not None:
                 store.close()
