@@ -60,11 +60,15 @@ def test_qt_downloader_rejects_unapproved_locations_before_network(url):
         bootstrap["download_bytes"](url, 32)
 
 
-def test_qt_build_output_stays_inside_checkout(tmp_path):
+def test_qt_build_output_stays_inside_checkout(tmp_path, monkeypatch):
+    output_path = bootstrap["output_path"]
+    checkout = tmp_path / "checkout"
+    monkeypatch.setitem(output_path.__globals__, "ROOT", checkout)
     with pytest.raises(ValueError, match="children"):
-        bootstrap["output_path"](tmp_path)
+        output_path(tmp_path / "outside")
     with pytest.raises(ValueError, match="children"):
-        bootstrap["output_path"](ROOT)
+        output_path(checkout)
+    assert output_path(checkout / "build" / "runtime") == checkout / "build" / "runtime"
 
 
 
