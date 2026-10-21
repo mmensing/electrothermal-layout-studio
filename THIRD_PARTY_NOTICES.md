@@ -233,4 +233,9 @@ Original copyright and offered LGPL/GPL grants are retained; the combined Window
 profile selects GPL-3.0-only. See [the maintained patch and build recipe](packaging/source-recipes/shiboken6-6.12.0/README.md)
 and [runtime provenance](docs/qt-runtime.md). The exact source archive, patch,
 modified source, recipe, compiler/ABI evidence and notices accompany a distributed
-candidate. Microsoft runtime DLLs are excluded; use the documented system prerequisite.
+candidate. The corresponding-source Qt part supplies the original PySide tar and
+a modified-source supplement together. The supplement retains every patch,
+modified source, recipe, license and build-proof file from the complete CI source
+archive and records the separately supplied original tar's exact hash. Both are
+required for the complete source set; the original CI artifact remains unchanged.
+Microsoft runtime DLLs are excluded; use the documented system prerequisite.

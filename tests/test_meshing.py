@@ -107,3 +107,95 @@ def test_embedded_floating_probe_and_point_touch_support():
     assert np.all(mesh.centroids[support, 0] < 20e-6)
     edge_pairs = mesh.boundary_edges["terminal:edge"]
     assert np.sum(np.linalg.norm(np.diff(mesh.points[edge_pairs], axis=1)[:,0,:], axis=1)) == pytest.approx(10e-6)
+
+
+def test_meshing_preserves_native_environment_and_borrowed_model(tmp_path):
+    """A real E1 mesh must preserve long host paths and external Gmsh ownership."""
+    import json
+    import os
+    import subprocess
+    import sys
+    import textwrap
+
+    child = textwrap.dedent("""
+        import ctypes
+        import hashlib
+        import json
+        import os
+        import subprocess
+        import sys
+
+        import gmsh
+        import numpy as np
+
+        from etlayout.examples import make_example
+        from etlayout.geometry.prepare import prepare_geometry
+        from etlayout.meshing import generate_mesh
+        from etlayout.simulation.execution import ExecutionSettings, execution_context
+
+        if os.name == 'nt':
+            kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+            kernel.GetEnvironmentVariableW.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_ulong]
+            kernel.GetEnvironmentVariableW.restype = ctypes.c_ulong
+
+            def native_environment(name):
+                size = kernel.GetEnvironmentVariableW(name, None, 0)
+                buffer = ctypes.create_unicode_buffer(size)
+                assert 0 < kernel.GetEnvironmentVariableW(name, buffer, size) < size
+                return buffer.value
+        else:
+            libc = ctypes.CDLL(None)
+            libc.getenv.argtypes = [ctypes.c_char_p]
+            libc.getenv.restype = ctypes.c_char_p
+
+            def native_environment(name):
+                return os.fsdecode(libc.getenv(os.fsencode(name)))
+
+        expected = {name: os.environ[name] for name in ('PATH', 'PYTHONPATH')}
+        assert all(len(value) > 512 for value in expected.values())
+        assert all(native_environment(name) == value for name, value in expected.items())
+        assert subprocess.check_output(['git', '--version'], text=True).startswith('git version')
+        borrowed = sys.argv[1] == 'borrowed'
+        assert not gmsh.isInitialized()
+        if borrowed:
+            gmsh.initialize(['-noenv'], readConfigFiles=False, interruptible=False)
+            gmsh.model.add('external-owner')
+            point = gmsh.model.geo.addPoint(0, 0, 0)
+            gmsh.model.geo.synchronize()
+        project = make_example('E1', sys.argv[2])
+        geometry = prepare_geometry(project)
+        with execution_context(ExecutionSettings(1, 1)):
+            mesh = generate_mesh(project, geometry)
+        assert len(mesh.points) > 3 and len(mesh.triangles) > 1
+        assert np.isclose(mesh.areas.sum(), 100e-6 * 10e-6, rtol=1e-12, atol=0)
+        assert all(native_environment(name) == value == os.environ[name] for name, value in expected.items())
+        assert subprocess.check_output(['git', '--version'], text=True).startswith('git version')
+        assert bool(gmsh.isInitialized()) == borrowed
+        if borrowed:
+            assert gmsh.model.getCurrent() == 'external-owner'
+            assert gmsh.model.getEntities(0) == [(0, point)]
+            gmsh.finalize()
+        assert all(native_environment(name) == value for name, value in expected.items())
+        digest = hashlib.sha256()
+        arrays = {'points': mesh.points, 'triangles': mesh.triangles, 'areas': mesh.areas}
+        for field in ('regions', 'terminal_nodes', 'boundary_nodes', 'boundary_edges'):
+            arrays.update({field + ':' + name: array for name, array in getattr(mesh, field).items()})
+        for name, array in sorted(arrays.items()):
+            digest.update(name.encode())
+            digest.update(str((array.shape, array.dtype)).encode())
+            digest.update(np.ascontiguousarray(array).tobytes())
+        print(json.dumps({'mesh_sha256': digest.hexdigest(), 'nodes': len(mesh.points), 'triangles': len(mesh.triangles)}))
+    """)
+    environment = os.environ.copy()
+    # Nonexistent entries force the Windows API past MAX_PATH without creating
+    # directories or relying on a particular developer/runner installation path.
+    prefix = os.pathsep.join(str(tmp_path / ('uncreated-environment-entry-' + str(i))) for i in range(12))
+    for name in ('PATH', 'PYTHONPATH'):
+        environment[name] = prefix + os.pathsep + environment.get(name, '')
+    results = []
+    for ownership in ('owned', 'borrowed'):
+        completed = subprocess.run([sys.executable, '-c', child, ownership, str(tmp_path / ownership)],
+                                   env=environment, text=True, encoding='utf-8', capture_output=True, timeout=60)
+        assert completed.returncode == 0, completed.stderr
+        results.append(json.loads(completed.stdout.strip().splitlines()[-1]))
+    assert results[0] == results[1]

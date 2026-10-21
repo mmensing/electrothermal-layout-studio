@@ -9,6 +9,8 @@
   configurable outer assembly/study workers and restoring caller limits. Preserve
   SciPy factorization and scientific tolerances; E21 measurements do not establish
   a universal speedup.
+- Preserve the caller's Windows PATH/PYTHONPATH during owned Gmsh startup;
+  retain the same mesh and borrowed Gmsh model ownership.
 - Verify release drafts without assuming a draft has already created a Git tag;
   retain exact identity, state, notes and asset-hash gates.
 - Bind modified Qt native bytes and complete preferred source in the release

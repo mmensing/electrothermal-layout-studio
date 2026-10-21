@@ -76,8 +76,9 @@ factorization remains serial.
 
 The 0.4.2 metadata/source preparation retains all 42 example projects, embedded
 layouts and historical writer metadata. Existing 77 source archive payloads are
-retained exactly; a 78th archive supplies the modified Qt runtime's complete
-preferred source. Final complete-source coverage, native/frozen checks, readable
+retained exactly; a 78th archive supplies the modified Qt source supplement.
+It pairs with the unchanged original PySide archive in the same Qt part to
+provide complete preferred source without a duplicate nested archive. Final complete-source coverage, native/frozen checks, readable
 captures, source/SBOM/privacy/license review and protected-main CI must be bound
 to the actual final release. Earlier runtime or source tests cannot substitute
 for that evidence. See [release notes](releases/0.4.2.md) and [Windows gates](windows.md).

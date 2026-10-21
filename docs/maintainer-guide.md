@@ -142,6 +142,15 @@ exact third-party source/build information, notices, module/native/font evidence
 and the selected MPL/GPL route. A reviewed source edition remains independent.
 Do not reuse or advertise pre-public binaries as MPL releases.
 
+The modified Shiboken [release source pairing](qt-runtime.md#rebuild-ci-and-distribution)
+keeps the complete CI preferred-source artifact unchanged. A release Qt source
+part may remove only its duplicate original PySide tar from the separate modified
+source supplement when that exact tar remains a sibling payload in the same part.
+Retain the supplement's derivation/hash proof, all other member bytes and portable
+pairing README. Never distribute the supplement as complete standalone source.
+Reissue all source-part indexes/catalog hashes and run the unchanged bounded
+archive/privacy checks on the final envelopes.
+
 1. Review and merge a real version change through the public PR workflow. Use an
    unambiguous stable version for a future release, synchronized in pyproject and
    `etlayout.__version__`; retain old result solver identities. The helper rejects

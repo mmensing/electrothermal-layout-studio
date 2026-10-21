@@ -160,7 +160,10 @@ def generate_mesh(project: Project, geometry: PreparedGeometry, progress=None, c
         owned = not gmsh.isInitialized()
         old_model = None
         if owned:
-            gmsh.initialize([], readConfigFiles=False, interruptible=False)
+            # Gmsh scans startup switches in every argv slot, but 4.15.2's
+            # later parser rejects -noenv after argv[0]. The lone switch avoids
+            # rewriting the host PATH/PYTHONPATH through its MAX_PATH buffer.
+            gmsh.initialize(["-noenv"], readConfigFiles=False, interruptible=False)
         else:
             old_model = gmsh.model.getCurrent()
         model_name = f"etlayout-{time.time_ns()}"

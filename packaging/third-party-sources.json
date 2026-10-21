@@ -9964,13 +9964,13 @@
     {
       "id": "shiboken6-6.12.0-etlayout.1-preferred",
       "version": "6.12.0+etlayout.1",
-      "filename": "shiboken6-6.12.0-etlayout.1-preferred-source.zip",
-      "bytes": 21152593,
-      "sha256": "ebeea77ca4ac6eee73a8c25b5a8260c31df6fabb831fa732df0a2b266d0d409f",
+      "filename": "shiboken6-6.12.0-etlayout.1-source-supplement.zip",
+      "bytes": 49580,
+      "sha256": "bfa0c3f54954ae3b81b55323d1405ab4e06645e9fec0a5c4f65eecb9fbcea6c5",
       "url": null,
       "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
-      "build_role": "Complete modified Shiboken runtime preferred source, original source, dated patch, build recipe and verification provenance",
-      "bundle_path": "archives/shiboken6-6.12.0-etlayout.1-preferred-source.zip",
+      "build_role": "Modified Shiboken source supplement: dated patch, modified source, build recipes, licenses and provenance; complete corresponding source also requires the original pyside6-6.12.0 archive shipped in the same Qt source part",
+      "bundle_path": "archives/shiboken6-6.12.0-etlayout.1-source-supplement.zip",
       "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip"
     }
   ],
