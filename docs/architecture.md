@@ -75,14 +75,16 @@ result caching retains one bounded result and uses the complete configuration ha
 ## CPU execution and worker lifecycle
 
 `ExecutionSettings.cpu_threads` is a total logical CPU budget, defaulting to
-`min(4, available_cpus)`; `study_workers` is bounded by it. `threadpoolctl` limits supported native
-BLAS/OpenMP pools and Gmsh receives the native thread limit. Sweep/design/mesh/time studies divide
+`min(4, available_cpus)`; `study_workers` is bounded by it. `threadpoolctl` keeps supported native
+kernel pools at one thread throughout a run; Gmsh receives the selected meshing thread budget.
+Sweep/design/mesh/time studies divide
 the budget among `min(study_workers, point_count)` spawned processes, preserving input order and
 individual failures.
 Because native limits apply to an entire process, execution contexts in separate Python threads
 are serialized. Larger FEM batches use a run-owned executor with independent output buffers
-and deterministic ordered reduction. Their inner native pools use one thread to prevent
-oversubscription; executor tasks join before the batch or context releases its limits.
+and deterministic ordered reduction. The stable one-thread native cap avoids nested teams,
+short-vector BLAS overhead and repeated library scans between batches. Executor tasks join
+before the context restores its caller's native limits, including failure and cancellation.
 Small batches, geometry work and SuperLU factorization remain serial. Actual assembly activity
 is recorded separately from the configured budget. The implemented backend is CPU only.
 
