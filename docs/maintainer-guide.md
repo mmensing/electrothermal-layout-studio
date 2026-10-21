@@ -193,9 +193,12 @@ Do not reuse or advertise pre-public binaries as MPL releases.
 
    The helper rechecks gates, creates a draft targeting the exact tested public
    commit and uploads only the reviewed local files without replacement. It checks
-   the resulting draft target and server-reported asset digests. No automatic retry
-   or cleanup occurs after an uncertain network result: inspect the existing draft
-   rather than creating duplicates or replacing assets.
+   the unique draft through the authenticated, paginated release listing and reads
+   it back by release ID: an unpublished draft need not have a Git tag yet. Its tag,
+   exact commit, unpublished state, title, notes, asset names, sizes and server digests
+   must match the reviewed inputs. Preflight also detects existing drafts without
+   tags. No automatic retry or cleanup occurs after an uncertain network result:
+   inspect the existing draft rather than creating duplicates or replacing assets.
 7. Inspect the unpublished draft, complete vetted source/notices/assets, checksums,
    version, exact target and immutable-release setting. With immutable releases,
    attach all final assets **before** publication: published assets/tags cannot be
