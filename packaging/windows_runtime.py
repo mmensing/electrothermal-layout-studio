@@ -84,6 +84,13 @@ REVIEWED_RUNTIME_FILES = {
     "_internal/VCRUNTIME140.dll": "d5e4d9a3e835fa679450145d6a7d94e36573a509317111904d9b3712c30d9066",
     "_internal/VCRUNTIME140_1.dll": "1f2d41c4aa5db0bc33ebf7b66d72943a817d7ce6cbe880502a9403823633093f",
 }
+# The source-built Shiboken wheel contains no Microsoft runtime copies. Its
+# identity comes from the same committed catalog as the native-build guard.
+SOURCE_CATALOG = Path(__file__).with_name("third-party-sources.json")
+SHIBOKEN_RUNTIME_COPIES = frozenset(
+    "_internal/shiboken6/" + name
+    for name in ("MSVCP140.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
+)
 WHEEL_PROVENANCE = (
     {
         "filename": "numpy-2.5.4-cp312-cp312-win_amd64.whl",
@@ -140,6 +147,58 @@ def file_inventory(bundle):
                 else:
                     raise ValueError("Runtime preparation rejects special filesystem objects")
     return files
+
+
+def source_built_shiboken_row():
+    """Read the existing audited profile; never duplicate its native hashes."""
+    if (not SOURCE_CATALOG.is_file() or SOURCE_CATALOG.is_symlink()
+            or SOURCE_CATALOG.stat().st_size > 1024**2):
+        raise ValueError("Source-built runtime profile lacks its bounded source catalog")
+    catalog = json.loads(SOURCE_CATALOG.read_text(encoding="utf8"))
+    if not isinstance(catalog, dict) or not isinstance(catalog.get("compiled_native"), list):
+        raise ValueError("Source-built runtime catalog is malformed")
+    rows = [row for row in catalog["compiled_native"]
+            if isinstance(row, dict) and row.get("id") == "shiboken6-runtime"]
+    if (len(rows) != 1 or rows[0].get("version") != "6.12.0+etlayout.1"
+            or rows[0].get("filename") != "shiboken6.abi3.dll"
+            or rows[0].get("abi") != "cp310-abi3-win_amd64"):
+        raise ValueError("Source-built runtime profile differs from the audited Shiboken identity")
+    return rows[0]
+
+
+def source_built_runtime_files(files, row):
+    """Allow only the audited CRT-free Shiboken build, without loading its DLL."""
+    if not SHIBOKEN_RUNTIME_COPIES <= REVIEWED_RUNTIME_FILES.keys():
+        raise ValueError("Source-built runtime profile lacks the reviewed legacy copy identities")
+    for name, key in (("shiboken6.abi3.dll", "sha256"),
+                      ("Shiboken.pyd", "unchanged_module_sha256"),
+                      ("ETLAYOUT_RUNTIME_BUILD.json", "receipt_sha256")):
+        expected = row.get(key)
+        actual = files.get(("_internal/shiboken6/" + name).casefold())
+        if (not isinstance(expected, str) or not re.fullmatch(r"[0-9a-f]{64}", expected)
+                or actual is None or actual[2] != expected):
+            raise ValueError("Source-built runtime profile differs from the audited Shiboken payload")
+    return {name: digest for name, digest in REVIEWED_RUNTIME_FILES.items()
+            if name not in SHIBOKEN_RUNTIME_COPIES}
+
+
+def reviewed_runtime_files(files, actual, *, inventory=False):
+    """Match an entire input/recorded profile; never accept an arbitrary subset."""
+    def matches(reviewed):
+        if inventory:
+            return actual == {name.casefold(): digest for name, digest in reviewed.items()}
+        return actual == reviewed
+
+    dll = files.get("_internal/shiboken6/shiboken6.abi3.dll")
+    receipt_present = "_internal/shiboken6/etlayout_runtime_build.json" in files
+    row = source_built_shiboken_row() if dll or receipt_present else None
+    source_built = receipt_present or (dll is not None and dll[2] == row.get("sha256"))
+    if not source_built and matches(REVIEWED_RUNTIME_FILES):
+        return REVIEWED_RUNTIME_FILES
+    reviewed = source_built_runtime_files(files, row or source_built_shiboken_row())
+    if not matches(reviewed):
+        raise ValueError("Runtime copies differ from reviewed paths/hashes; no files were modified")
+    return reviewed
 
 
 def import_signature(pe, replacements=None):
@@ -369,16 +428,14 @@ def prepare_runtime_prerequisite(bundle):
             manifest.get("transformation") != TRANSFORM
             or manifest.get("schema_version") != SCHEMA_VERSION
             or manifest.get("reviewed_inputs") != list(REVIEWED_IMPORTS)
-            or manifest.get("omitted_runtime_files") != REVIEWED_RUNTIME_FILES
         ):
             raise ValueError("Prepared candidate modification record differs from reviewed policy")
+        reviewed_runtime_files(files, manifest.get("omitted_runtime_files"))
         validate_prepared_record(bundle, files, manifest)
         return manifest
-    expected_runtime = {k.casefold(): value for k, value in REVIEWED_RUNTIME_FILES.items()}
-    if set(runtime_files) != set(expected_runtime) or any(
-        runtime_files[k][2] != value for k, value in expected_runtime.items()
-    ):
-        raise ValueError("Runtime copies differ from reviewed paths/hashes; no files were modified")
+    omitted_runtime_files = reviewed_runtime_files(
+        files, {key: row[2] for key, row in runtime_files.items()}, inventory=True
+    )
     verify_runtime_imports(
         bundle, {k: v for k, v in files.items() if k not in runtime_files}, allow_reviewed_aliases=True
     )
@@ -407,7 +464,7 @@ def prepare_runtime_prerequisite(bundle):
         "reviewed_inputs": list(REVIEWED_IMPORTS),
         "wheel_provenance": list(WHEEL_PROVENANCE),
         "modifications": [details for _, _, details in patches],
-        "omitted_runtime_files": REVIEWED_RUNTIME_FILES,
+        "omitted_runtime_files": omitted_runtime_files,
         "required_system_runtime_dlls": required,
         "prerequisite": "Install the current supported Microsoft Visual C++ x64 v14 Redistributable directly from Microsoft.",
         "prerequisite_url": "https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist",
