@@ -211,7 +211,109 @@ def installed_bootloader_profile(catalog, proof, directory=None):
     return rows
 
 
-def native_build_profile(library, descriptor, *, python_library=None, bootloader_directory=None):
+
+SHIBOKEN_RUNTIME_ID = "shiboken6-runtime"
+SHIBOKEN_RUNTIME_VERSION = "6.12.0+etlayout.1"
+SHIBOKEN_RECIPE = "packaging/source-recipes/shiboken6-6.12.0"
+SHIBOKEN_RECEIPT = "ETLAYOUT_RUNTIME_BUILD.json"
+
+
+def _audited_file(path, maximum, *, inside=None):
+    path = Path(path)
+    if (any(part.is_symlink() or part.is_junction() for part in (path, *path.parents))
+            or not path.is_file() or not 0 < path.stat().st_size <= maximum
+            or (inside is not None and not path.resolve().is_relative_to(Path(inside).resolve()))):
+        raise ValueError("Modified Shiboken input is missing, linked, unsafe or exceeds its budget")
+    return path
+
+
+def installed_shiboken_profile(catalog, proof, directory=None):
+    """Bind the patched dependency, its installed receipt and exact source inputs."""
+    rows = [row for row in catalog.get("compiled_native", []) if row.get("id") == SHIBOKEN_RUNTIME_ID]
+    if len(rows) != 1 or proof.get(SHIBOKEN_RUNTIME_ID) != {key: value for key, value in rows[0].items() if key != "id"}:
+        raise ValueError("Exact modified Shiboken source-build evidence is required")
+    row = rows[0]
+    hashes = ("sha256", "source_archive_sha256", "recipe_sha256", "patch_sha256", "receipt_sha256",
+              "import_library_sha256", "unchanged_module_sha256", "source_before_sha256", "source_after_sha256")
+    if (any(not isinstance(row.get(key), str) or len(row[key]) != 64
+            or any(character not in "0123456789abcdef" for character in row[key]) for key in hashes)
+            or row["source_before_sha256"] == row["source_after_sha256"]
+            or type(row.get("bytes")) is not int or row["bytes"] <= 0):
+        raise ValueError("Modified Shiboken needs complete, distinct source/native hash evidence")
+    if (row.get("version") != SHIBOKEN_RUNTIME_VERSION
+            or metadata.version("shiboken6") != SHIBOKEN_RUNTIME_VERSION
+            or row.get("filename") != "shiboken6.abi3.dll" or row.get("abi") != "cp310-abi3-win_amd64"):
+        raise ValueError("Installed modified Shiboken version or ABI differs from the audited profile")
+    sources = catalog.get("sources", [])
+    if type(sources) is not list or any(type(entry) is not dict for entry in sources):
+        raise ValueError("Modified Shiboken preferred-source catalog is malformed")
+    identities = [entry.get("id") for entry in sources]
+    source_rows = {entry.get("id"): entry for entry in sources}
+    upstream = source_rows.get(row.get("upstream_source_id"), {})
+    if (len(identities) != len(set(identities)) or row.get("source_id") not in source_rows
+            or row.get("source_id") == row.get("upstream_source_id") or not upstream
+            or row.get("upstream_source_id") != "pyside6-6.12.0"
+            or row.get("source_archive_sha256") != upstream.get("sha256")):
+        raise ValueError("Modified Shiboken preferred source or upstream archive differs from the catalog")
+    directory = Path(directory or metadata.distribution("shiboken6").locate_file("shiboken6"))
+    receipt_path = _audited_file(directory / SHIBOKEN_RECEIPT, 1024**2)
+    if sha256(receipt_path) != row.get("receipt_sha256"):
+        raise ValueError("Modified Shiboken installed build receipt differs from the audited profile")
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    if (type(receipt) is not dict or type(receipt.get("compiler")) is not dict
+            or type(receipt.get("patch")) is not dict):
+        raise ValueError("Modified Shiboken installed build receipt is malformed")
+    if (receipt.get("schema_version") != 1 or receipt.get("distribution") != "shiboken6"
+            or receipt.get("version") != row["version"] or receipt.get("upstream_version") != "6.12.0"
+            or receipt.get("abi") != row["abi"]
+            or receipt.get("source") != {"name": upstream.get("filename"), "sha256": upstream.get("sha256"),
+                                         "bytes": upstream.get("bytes")}
+            or receipt.get("compiler", {}).get("id") != "MSVC"
+            or not receipt.get("compiler", {}).get("version")):
+        raise ValueError("Modified Shiboken receipt identity, compiler or source differs from the audited profile")
+    recipes = row.get("recipe_files")
+    if (type(recipes) is not dict or set(recipes) != {"CMakeLists.txt", "build_runtime.py", "README.md"}
+            or row.get("recipe") != SHIBOKEN_RECIPE + "/build_runtime.py"
+            or row.get("recipe_sha256") != recipes.get("build_runtime.py")
+            or receipt.get("recipe") != recipes):
+        raise ValueError("Modified Shiboken recipe evidence is missing or differs")
+    for name, expected in recipes.items():
+        if sha256(_audited_file(ROOT / SHIBOKEN_RECIPE / name, 1024**2, inside=ROOT)) != expected:
+            raise ValueError("Modified Shiboken source-build recipe changed after review")
+    patch = receipt.get("patch", {})
+    if (row.get("patch") != SHIBOKEN_RECIPE + "/referred_objects_lifetime.patch"
+            or patch.get("name") != "referred_objects_lifetime.patch"
+            or patch.get("target") != "sources/shiboken6/libshiboken/basewrapper.cpp"
+            or patch.get("sha256") != row.get("patch_sha256")
+            or patch.get("before_sha256") != row.get("source_before_sha256")
+            or patch.get("after_sha256") != row.get("source_after_sha256")
+            or sha256(_audited_file(ROOT / row["patch"], 1024**2, inside=ROOT)) != row.get("patch_sha256")):
+        raise ValueError("Modified Shiboken lifetime patch or source hashes differ from the audited profile")
+    for name, key in (("shiboken6.abi3.dll", "dll_sha256"), ("shiboken6.abi3.lib", "import_library_sha256"),
+                      ("Shiboken.pyd", "unchanged_module_sha256")):
+        path = _audited_file(directory / name, 32 * 1024**2)
+        expected = row.get("sha256") if key == "dll_sha256" else row.get(key)
+        if (not expected or receipt.get(key) != expected or sha256(path) != expected
+                or (key == "dll_sha256" and path.stat().st_size != row.get("bytes"))):
+            raise ValueError("Installed modified Shiboken native bytes differ from the audited profile")
+    return row
+
+
+def verify_frozen_shiboken(bundle, profile):
+    """Check the collected DLL, retained module and exact installed build receipt."""
+    rows = [row for row in profile.get("compiled_native", []) if row.get("id") == SHIBOKEN_RUNTIME_ID]
+    if len(rows) != 1:
+        raise ValueError("Frozen candidate lacks one audited modified Shiboken runtime")
+    row = rows[0]
+    directory = Path(bundle) / "_internal/shiboken6"
+    for name, key in (("shiboken6.abi3.dll", "sha256"), ("Shiboken.pyd", "unchanged_module_sha256"),
+                      (SHIBOKEN_RECEIPT, "receipt_sha256")):
+        if sha256(_audited_file(directory / name, 32 * 1024**2, inside=bundle)) != row.get(key):
+            raise ValueError("Frozen modified Shiboken payload differs from the audited installed runtime")
+
+
+def native_build_profile(library, descriptor, *, python_library=None, bootloader_directory=None,
+                         shiboken_directory=None):
     """Bind a release profile to reviewed source recipes and exact native bytes.
 
     A normal stock-wheel candidate remains useful locally. It is explicitly
@@ -228,7 +330,11 @@ def native_build_profile(library, descriptor, *, python_library=None, bootloader
         raise ValueError("Source-built native inputs must be ordinary bounded files")
     catalog = json.loads((ROOT / "packaging/third-party-sources.json").read_text(encoding="utf-8"))
     proof = json.loads(descriptor.read_text(encoding="utf-8"))
-    gmsh = [row for row in catalog["compiled_native"] if row["id"] == "gmsh"]
+    native = catalog.get("compiled_native")
+    if (type(native) is not list or len(native) != 2 or any(type(row) is not dict for row in native)
+            or {row.get("id") for row in native} != {"gmsh", SHIBOKEN_RUNTIME_ID}):
+        raise ValueError("Every audited native component needs an explicit source-build verifier")
+    gmsh = [row for row in native if row["id"] == "gmsh"]
     if len(gmsh) != 1:
         raise ValueError("Exactly one audited Gmsh source build is required")
     python_library = Path(python_library or (Path(sys.base_prefix) / "python312.dll"))
@@ -239,6 +345,7 @@ def native_build_profile(library, descriptor, *, python_library=None, bootloader
             or not python_library.is_file() or sha256(python_library) != runtime["python312_dll_sha256"]):
         raise ValueError("Native library, Python runtime or build provenance differs from the audited profile")
     bootloaders = installed_bootloader_profile(catalog, proof, bootloader_directory)
+    installed_shiboken_profile(catalog, proof, shiboken_directory)
     # Copy only public catalog data. Private paths/build logs never enter a bundle.
     return {"schema_version": 1, "audited_source_profile": True,
             "compiled_native": catalog["compiled_native"], "compiled_bootloaders": bootloaders, "runtime_python": runtime,
@@ -410,6 +517,14 @@ def main(argv=None):
             raise RuntimeError("Collected Gmsh differs from the reviewed source build")
         if sha256(bundle / "_internal" / "python312.dll") != profile["runtime_python"]["python312_dll_sha256"]:
             raise RuntimeError("Collected Python differs from the reviewed public runtime")
+        receipt = Path(metadata.distribution("shiboken6").locate_file("shiboken6")) / SHIBOKEN_RECEIPT
+        target = bundle / "_internal/shiboken6" / SHIBOKEN_RECEIPT
+        if target.exists():
+            if sha256(_audited_file(target, 1024**2, inside=bundle)) != sha256(receipt):
+                raise ValueError("Collected modified Shiboken receipt differs from the installed runtime")
+        else:
+            shutil.copyfile(receipt, target)
+        verify_frozen_shiboken(bundle, profile)
     write_json(bundle / "SOURCE_BUILD_PROVENANCE.json", profile)
     checks = []
     if not args.skip_tests:
@@ -545,6 +660,7 @@ def main(argv=None):
     if profile["audited_source_profile"]:
         if native_build_profile(args.gmsh_library, args.native_build_manifest) != profile:
             raise RuntimeError("Audited native build inputs changed during freezing")
+        verify_frozen_shiboken(bundle, profile)
         for filename, bootloader in (("etlayout.exe", "run.exe"), ("ElectrothermalLayoutStudio.exe", "runw.exe")):
             executable = bundle / filename
             if executable.stat().st_size > BOOTLOADER_MAX_BYTES:
