@@ -40,3 +40,26 @@ def test_unsafe_workflow_mutations_are_rejected(before, after, diagnostic):
     assert before in source
     issues = policy['workflow_issues'](source.replace(before, after))
     assert any(diagnostic in item for item in issues)
+
+
+@pytest.mark.parametrize("before,after", [
+    ("github.actor == 'mmensing'", "github.actor != 'mmensing'"),
+    ("github.ref == 'refs/heads/main'", "github.ref != 'refs/heads/main'"),
+    ("artifacts/shiboken-runtime/preferred-source.zip", "artifacts/unreviewed.zip"),
+    ("artifacts/shiboken-runtime/preferred-source.zip", "artifacts/source-omitted.json"),
+])
+def test_qt_candidate_requires_exact_owner_main_source_pair(before, after):
+    source = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert before in source
+    issues = policy["workflow_issues"](source.replace(before, after))
+    assert any("blocked binaries" in issue for issue in issues)
+
+
+def test_qt_native_checks_use_actual_source_built_runtime():
+    source = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+    assert source.count("run: python scripts/prepare_qt_runtime.py") == 4
+    assert "tests/test_qt_reference_lifetime.py --basetemp=" in source
+    assert "artifacts/shiboken-runtime/regression.xml" in source
+    assert "artifacts/shiboken-runtime/pytest-installed.xml" in source
+    assert policy["QT_RUNTIME_ARTIFACT_STEP"].strip() in source
+

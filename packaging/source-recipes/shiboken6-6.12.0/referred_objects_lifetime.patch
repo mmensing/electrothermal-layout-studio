@@ -1,0 +1,91 @@
+# SPDX-License-Identifier: LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+# Copyright (c) 2026 mmensing
+# Detach retained Python references before decref can re-enter GC or Qt.
+--- a/sources/shiboken6/libshiboken/basewrapper.cpp
++++ b/sources/shiboken6/libshiboken/basewrapper.cpp
+@@ -1,5 +1,7 @@
+ // Copyright (C) 2019 The Qt Company Ltd.
+ // SPDX-License-Identifier: LicenseRef-Qt-Commercial OR LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only
+ // Qt-Security score:critical reason:low-level-memory-management
++// Modified by mmensing on 2026-10-21: detach retained Python references before
++// decref can re-enter garbage collection or Qt finalization. Original grants retained.
+ 
+ #include "autodecref.h"
+@@ -1976,19 +1978,27 @@
+ static inline bool isNone(const PyObject *o)
+ {
+     return o == nullptr || o == Py_None;
+ }
+ 
++static RefCountMap takeRefCountKey(SbkObject *self, const std::string &key)
++{
++    RefCountMap references;
++    if (auto *refCountMap = self->d->referredObjects) {
++        const auto iterPair = refCountMap->equal_range(key);
++        // Transfer the owned references out of the traversable map before any
++        // decref can run a finalizer, collect cycles or re-enter the binding.
++        references.insert(iterPair.first, iterPair.second);
++        refCountMap->erase(iterPair.first, iterPair.second);
++    }
++    return references;
++}
++
+ static void removeRefCountKey(SbkObject *self, const std::string &key)
+ {
+-    if (self->d->referredObjects) {
+-        const auto iterPair = self->d->referredObjects->equal_range(key);
+-        if (iterPair.first != iterPair.second) {
+-            decRefPyObjectList(iterPair.first, iterPair.second);
+-            self->d->referredObjects->erase(iterPair.first, iterPair.second);
+-        }
+-    }
++    const auto references = takeRefCountKey(self, key);
++    decRefPyObjectList(references.begin(), references.end());
+ }
+ 
+ void keepReference(SbkObject *self, const char *keyC, PyObject *referredObject, bool append)
+ {
+     std::string key(keyC);
+@@ -2010,17 +2020,19 @@
+     if (std::any_of(iterPair.first, iterPair.second,
+                     [referredObject](const RefCountMap::value_type &v) { return v.second == referredObject; })) {
+         return;
+     }
+ 
+-    if (!append && iterPair.first != iterPair.second) {
+-        decRefPyObjectList(iterPair.first, iterPair.second);
+-        refCountMap.erase(iterPair.first, iterPair.second);
+-    }
+-
++    RefCountMap previousReferences;
++    if (!append && iterPair.first != iterPair.second)
++        previousReferences = takeRefCountKey(self, key);
++
++    // Complete the replacement before releasing the previous value. A finalizer
++    // may itself replace this key; its change must survive our return.
+     refCountMap.insert(RefCountMap::value_type{key, referredObject});
+     Py_INCREF(referredObject);
++    decRefPyObjectList(previousReferences.begin(), previousReferences.end());
+ }
+ 
+ void removeReference(SbkObject *self, const char *key, PyObject *referredObject)
+ {
+     if (!isNone(referredObject))
+@@ -2030,14 +2042,13 @@
+ void clearReferences(SbkObject *self)
+ {
+     if (!self->d->referredObjects)
+         return;
+ 
+-    RefCountMap &refCountMap = *(self->d->referredObjects);
+-    for (auto it = refCountMap.begin(), end = refCountMap.end(); it != end; ++it)
+-        Py_DECREF(it->second);
+-    self->d->referredObjects->clear();
++    RefCountMap references;
++    references.swap(*self->d->referredObjects);
++    decRefPyObjectList(references.begin(), references.end());
+ }
+ 
+ SbkConverter *getConverter(PyTypeObject *type)
+ {
+     return PepType_SOTP(type)->converter;

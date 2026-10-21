@@ -61,6 +61,8 @@ jobs:
           python -m pip install --no-build-isolation --no-deps -e .
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python -m pip check
+      - name: Build and test source-patched Qt reference ownership
+        run: python scripts/prepare_qt_runtime.py
       - name: Attempt bounded calculations; inspect individual scientific status
         run: |
           $selectedExamples = $env:BENCHMARK_EXAMPLES -split '\s+'

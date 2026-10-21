@@ -566,7 +566,8 @@
         "Changelog, https://code.qt.io/cgit/pyside/pyside-setup.git/tree/doc/changelogs",
         "Tracker, https://qt-project.atlassian.net/browse/PYSIDE"
       ],
-      "modifications": "No project patches to dependency source; wheel build provenance requires artifact review",
+      "modifications": "The bootstrap wheel is upstream 6.12.0. Supported desktop builds then install source-built 6.12.0+etlayout.1: dated retained-reference lifetime patch, unchanged Shiboken module/public ABI, truthful wheel RECORD and complete preferred source.",
+      "post_bootstrap_runtime": "6.12.0+etlayout.1",
       "bundled_status": "Determined only by per-artifact SBOM, not by this installed lock catalog",
       "frozen_subset_license_expression": "GPL-3.0-only"
     },
