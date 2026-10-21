@@ -71,20 +71,23 @@ supported. `study_workers` defaults to the same count and cannot exceed that bud
 persists these preferences in **Edit → Execution settings…**; CLI commands accept
 `--cpu-threads` and `--study-workers`, and `python -m etlayout capabilities` reports availability.
 
-`threadpoolctl` caps supported native BLAS/OpenMP pools, and meshing applies the selected Gmsh
-thread limit. Independent sweep, design, mesh and time-study points use bounded `spawn` processes.
-The worker count is `min(study_workers, point_count)`; each receives
-`floor(total_budget / worker_count)` native threads. Results retain input
+`threadpoolctl` keeps supported native kernel pools at one thread throughout the owned run;
+meshing applies the selected Gmsh thread budget. Independent sweep, design, mesh and time-study
+points use bounded `spawn` processes. The worker count is `min(study_workers, point_count)`;
+each receives up to `floor(total_budget / worker_count)` assembly workers. Results retain input
 order and row-level failures. Native pool limits are process-wide, so execution contexts in
 different Python threads are serialized. Use processes for concurrent independent runs.
 Larger FEM batches dispatch independent array/sparse work through a run-owned thread executor.
 Workers share read-only input and own output buffers; results combine in input order. Native
-BLAS pools use one thread during a batch, and the selected cap is restored afterwards. Running
-tasks join before limits or execution context are released, including failures. Mesh topology
+BLAS pools stay at one thread between batches as well, avoiding nested teams, short-vector
+thread overhead and repeated native-library scans. The caller's original native limits are
+restored only on context exit. Running tasks join before that exit, including failures and cancellation. Mesh topology
 and interface addressing are reused only within their owning immutable space. Small batches,
 geometry work and SuperLU factorization remain serial. More study workers also need more memory.
-Execution provenance records dispatched batches, worker thread IDs and measured CPU/wall time;
-the configured CPU cap alone does not demonstrate parallel calculation or a speedup.
+Execution provenance records dispatched batches, worker thread IDs, measured CPU/wall time,
+actual native pools and `native_threads_per_worker=1`. `cpu_threads` and the compatibility field
+`effective_cpu_threads` describe the outer budget; they do not count active cores. A configured
+CPU cap alone does not demonstrate parallel calculation or a speedup.
 The [performance guide](performance.md) describes measured run stages, exact-reporting
 optimizations and comparisons using an unchanged archived field set.
 The supported backend is CPU; no GPU runtime or CUDA dependency is required.

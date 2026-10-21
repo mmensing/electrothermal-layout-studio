@@ -11,7 +11,7 @@ from solver_helpers import all_region, rectangle
 from etlayout.examples import make_example
 from etlayout.geometry.prepare import prepare_geometry
 from etlayout.meshing.generate import generate_mesh
-from etlayout.models import HeatSource, Interface, Terminal, ThermalBoundary
+from etlayout.models import Cancelled, HeatSource, Interface, Terminal, ThermalBoundary
 from etlayout.power_examples import metadata
 from etlayout.simulation import execution
 from etlayout.simulation.execution import (
@@ -157,7 +157,8 @@ def test_thermal_cache_tracks_stack_area_resistance_and_matches_fresh_analytical
         assert result.metrics["thermal_balance_error"] < 1e-10
 
 
-def test_worker_exception_finishes_other_tasks_before_return_and_keeps_native_cap(monkeypatch):
+@pytest.mark.parametrize("error_type", [ValueError, Cancelled])
+def test_worker_failure_or_cancel_joins_other_tasks_and_keeps_native_cap(monkeypatch, error_type):
     monkeypatch.setattr(execution, "PARALLEL_MIN_WORK", 0)
     budget = min(2, execution.detect_capabilities()["cpu_count"])
     started = threading.Event()
@@ -168,7 +169,7 @@ def test_worker_exception_finishes_other_tasks_before_return_and_keeps_native_ca
         if index == 0:
             assert started.wait(5.), "The independent native task never started"
             failed.set()
-            raise ValueError("Invalid layer input")
+            raise error_type("Interrupted layer input")
         started.set()
         if budget > 1:
             assert failed.wait(5.), "The failure task never reached its exception"
@@ -181,7 +182,7 @@ def test_worker_exception_finishes_other_tasks_before_return_and_keeps_native_ca
         return data
 
     with execution_context(ExecutionSettings(budget, 1)):
-        with pytest.raises(ValueError, match="Invalid layer input"):
+        with pytest.raises(error_type, match="Interrupted layer input"):
             map_independent(task, [0, 1] if budget > 1 else [1, 0], work_units=8192)
         assert completed.is_set()
         assert execution_provenance()["parallel_assembly"]["batches"] == 0
@@ -198,3 +199,34 @@ def test_nested_batch_never_multiplies_worker_budget(monkeypatch):
         assert outputs == [[4, 5], [5, 6]]
         assert execution_provenance()["parallel_assembly"]["batches"] == int(budget > 1)
     assert execution_provenance()["parallel_assembly"] == before["parallel_assembly"]
+
+
+def test_outer_workers_share_serial_native_pools_and_restore_the_callers_limits(monkeypatch):
+    from threadpoolctl import threadpool_info, threadpool_limits
+
+    monkeypatch.setattr(execution, "PARALLEL_MIN_WORK", 0)
+    budget = min(2, execution.detect_capabilities()["cpu_count"])
+    barrier = threading.Barrier(budget)
+
+    def task(value):
+        barrier.wait(timeout=5.)
+        pools = threadpool_info()
+        assert pools and all(pool["num_threads"] == 1 for pool in pools)
+        return threading.get_native_id(), float(np.dot(np.arange(1024.), np.ones(1024))) + value
+
+    # Exercise restoration from a real caller-owned native team, independent of
+    # the selected outer-worker budget and including an exceptional context exit.
+    with threadpool_limits(limits=2):
+        before = [(pool["prefix"], pool["num_threads"]) for pool in threadpool_info()]
+        with pytest.raises(Cancelled, match="after assembly"):
+            with execution_context(ExecutionSettings(budget, 1)):
+                results = map_independent(task, range(budget), work_units=100_000)
+                assert [value for _, value in results] == [523776. + i for i in range(budget)]
+                assert len({identifier for identifier, _ in results}) == budget
+                recorded = execution_provenance()
+                assert recorded["cpu_threads"] == budget
+                assert recorded["native_threads_per_worker"] == 1
+                if budget > 1:
+                    assert recorded["parallel_assembly"]["worker_thread_ids"] == sorted(identifier for identifier, _ in results)
+                raise Cancelled("after assembly")
+        assert [(pool["prefix"], pool["num_threads"]) for pool in threadpool_info()] == before

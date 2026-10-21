@@ -23,9 +23,10 @@ def test_cpu_budget_bounds_workers_and_returns_only_accepted_settings(qtbot, mon
     assert not dialog.findChildren(QTabWidget)
     dialog.cpu_threads.setValue(2)
     assert dialog.study_workers.value() == 2
-    assert "1 assembly/native thread per worker" in dialog.cpu_note.text()
+    assert "1 assembly thread per worker" in dialog.cpu_note.text()
     dialog.study_workers.setValue(1)
-    assert "2 assembly/native threads per worker" in dialog.cpu_note.text()
+    assert "2 assembly threads per worker" in dialog.cpu_note.text()
+    assert "Native kernels use one thread each" in dialog.cpu_note.text()
     assert original.cpu_threads == original.study_workers == 4
     dialog.accept()
     assert dialog.result() == QDialog.DialogCode.Accepted

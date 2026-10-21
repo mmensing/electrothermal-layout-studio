@@ -119,12 +119,13 @@ smaller. **Edit → Execution settings…** and the CLI can lower or raise it
 within that count. The default study-worker limit equals the CPU budget; reduce
 it when each study point needs substantial memory.
 This is a cap, not a guarantee that every solver stage uses every CPU. A single
-run uses worker threads for larger FEM assemblies and bounds native numerical
-and meshing threads. Small batches and SuperLU factorization remain serial.
+run uses worker threads for larger FEM assemblies. Native numerical kernels stay
+at one thread per worker throughout the run, while Gmsh receives the selected
+meshing budget. Small batches and SuperLU factorization remain serial.
 Results record actual assembly worker activity separately from the budget. Parameter sweeps, design
 comparisons, mesh studies and time-step studies distribute independent points
 among spawned processes. The total budget is divided among the actual workers;
-each gets at least one thread, and workers cannot exceed the budget.
+each gets at least one assembly worker, and study workers cannot exceed the budget.
 
 CLI execution flags follow the calculation or study subcommand:
 

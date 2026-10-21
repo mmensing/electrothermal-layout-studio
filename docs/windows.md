@@ -35,11 +35,15 @@ In PowerShell, from the repository root:
 py -3.12 -m venv .venv
 .venv/Scripts/python.exe -m pip install --require-hashes --only-binary=:all: -r requirements-windows-py312.lock
 .venv/Scripts/python.exe -m pip install --no-build-isolation --no-deps -e .
+.venv/Scripts/python.exe scripts/prepare_qt_runtime.py
 .venv/Scripts/python.exe -m pytest --basetemp=.pytest_build
 .venv/Scripts/python.exe scripts/build_windows.py
 ```
 
-The lock file records the complete set installed on the native validation host.
+Build the [source-patched Qt runtime](qt-runtime.md) with CMake 3.26+ and the x64 MSVC C++ build tools / Windows SDK before desktop tests.
+The lock describes the original bootstrap wheels; the source-built Shiboken local patch is then recorded separately.
+
+The lock file records the complete bootstrap dependency set.
 It includes build and test tools; the frozen application contains runtime
 dependencies discovered from the actual imports. The build records installed
 versions and source hashes in `BUILD_MANIFEST.json`.
@@ -83,8 +87,9 @@ data locations. Source development can use `python -m etlayout` and
 **Edit → Execution settings…** controls the total CPU budget and maximum parallel study
 workers. The default budget is four logical CPUs, reduced when fewer are available; the worker
 limit cannot exceed it. These settings apply to future runs and persist on this computer.
-The console offers `--cpu-threads` and `--study-workers`. Supported native numerical thread
-pools and larger FEM assembly batches share this budget across the spawned study workers.
+The console offers `--cpu-threads` and `--study-workers`. Supported native numerical
+kernels use one thread per worker throughout the run; larger FEM assembly batches share the
+CPU budget across spawned study workers. Gmsh receives the selected meshing budget.
 Small batches, SuperLU factorization and some meshing/geometry steps remain serial, so CPU
 activity varies by phase and more CPUs do not guarantee a faster individual solve. Parallel
 studies also consume more memory. The distribution uses CPU execution and requires no GPU runtime.

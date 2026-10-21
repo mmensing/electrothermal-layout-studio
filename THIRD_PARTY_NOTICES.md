@@ -20,7 +20,7 @@ gated per exact artifact by `packaging/binary-publication-policy.json`.
 |---|---|---|---|
 | Gmsh | 4.15.2 | GPL-2.0-or-later; original limited named-library exception retained. The Windows combination selects GPL-3.0-only. Bundled components have their own notices | [License](https://gmsh.info/doc/texinfo/#License) |
 | KLayout | 0.30.12 | Wheel declares GPL-3.0-or-later; upstream also documents GPL-2.0-or-later and a Python-import exception. Preserve that exception; it does not relicense the C++ library | [License and exception](https://www.klayout.de/license.html) |
-| PySide6 / Shiboken6 / bundled Qt modules | 6.12.0 | Qualifying Qt/PySide source offers GPL-3.0-only, among its alternatives; the Windows combination selects that route. Embedded third-party code retains separate terms | [Qt for Python](https://doc.qt.io/qtforpython-6/licenses.html), [Qt GPL](https://doc.qt.io/qt-6.12/gpl.html) |
+| PySide6 / bundled Qt modules; Shiboken6 runtime | Qt/PySide 6.12.0; Shiboken 6.12.0+etlayout.1 | Qualifying Qt/PySide source offers GPL-3.0-only, among its alternatives; the Windows combination selects that route. Embedded third-party code retains separate terms | [Qt for Python](https://doc.qt.io/qtforpython-6/licenses.html), [Qt GPL](https://doc.qt.io/qt-6.12/gpl.html) |
 | NumPy | 2.5.4 | BSD-3-Clause, with 0BSD, MIT, Zlib, CC0 and native component notices | [License](https://numpy.org/doc/stable/license) |
 | SciPy | 1.18.1 | BSD-3-Clause and its bundled-code licenses | [Source](https://github.com/scipy/scipy) |
 | OpenBLAS / LAPACK | NumPy: 0.3.34.106.0 ILP64; SciPy: 0.3.31.dev LP64 | BSD-3-Clause / BSD-3-Clause-Open-MPI; build revisions and static runtimes belong in the exact native/source manifest | [OpenBLAS](https://github.com/OpenMathLib/OpenBLAS) |
@@ -224,3 +224,13 @@ Matplotlib and every embedded component retain their genuine contributor
 notices in the supplied license texts and matching source. Do not erase those
 notices to satisfy a personal-data scanner or substitute the application owner's
 name for upstream authorship.
+
+## Modified Shiboken runtime
+
+The original bootstrap wheel is Shiboken 6.12.0. The supported desktop runtime
+is source-built 6.12.0+etlayout.1 with a dated retained-reference lifetime patch.
+Original copyright and offered LGPL/GPL grants are retained; the combined Windows
+profile selects GPL-3.0-only. See [the maintained patch and build recipe](packaging/source-recipes/shiboken6-6.12.0/README.md)
+and [runtime provenance](docs/qt-runtime.md). The exact source archive, patch,
+modified source, recipe, compiler/ABI evidence and notices accompany a distributed
+candidate. Microsoft runtime DLLs are excluded; use the documented system prerequisite.
