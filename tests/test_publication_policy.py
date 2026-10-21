@@ -62,4 +62,3 @@ def test_qt_native_checks_use_actual_source_built_runtime():
     assert "artifacts/shiboken-runtime/regression.xml" in source
     assert "artifacts/shiboken-runtime/pytest-installed.xml" in source
     assert policy["QT_RUNTIME_ARTIFACT_STEP"].strip() in source
-
