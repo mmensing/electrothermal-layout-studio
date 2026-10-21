@@ -35,11 +35,15 @@ In PowerShell, from the repository root:
 py -3.12 -m venv .venv
 .venv/Scripts/python.exe -m pip install --require-hashes --only-binary=:all: -r requirements-windows-py312.lock
 .venv/Scripts/python.exe -m pip install --no-build-isolation --no-deps -e .
+.venv/Scripts/python.exe scripts/prepare_qt_runtime.py
 .venv/Scripts/python.exe -m pytest --basetemp=.pytest_build
 .venv/Scripts/python.exe scripts/build_windows.py
 ```
 
-The lock file records the complete set installed on the native validation host.
+Build the [source-patched Qt runtime](qt-runtime.md) with CMake 3.26+ and the x64 MSVC C++ build tools / Windows SDK before desktop tests.
+The lock describes the original bootstrap wheels; the source-built Shiboken local patch is then recorded separately.
+
+The lock file records the complete bootstrap dependency set.
 It includes build and test tools; the frozen application contains runtime
 dependencies discovered from the actual imports. The build records installed
 versions and source hashes in `BUILD_MANIFEST.json`.

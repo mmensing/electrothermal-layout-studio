@@ -188,8 +188,11 @@ cd electrothermal-layout-studio
 py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m pip install --require-hashes --only-binary=:all: -r requirements-windows-py312.lock
 .\.venv\Scripts\python.exe -m pip install --no-build-isolation --no-deps -e .
+.\.venv\Scripts\python.exe scripts/prepare_qt_runtime.py
 .\.venv\Scripts\python.exe -m etlayout gui
 ```
+
+Source builds also need CMake and x64 MSVC C++ build tools for the [Qt lifetime fix](docs/qt-runtime.md); published application folders include it.
 
 Dependency installation needs Internet access; normal calculations run offline.
 The lock includes runtime, development and build tools. See [Windows setup](docs/windows.md)

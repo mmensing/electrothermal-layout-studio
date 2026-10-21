@@ -17,6 +17,10 @@ CI_PYTHON_VERSION = '3.12.10'  # Official actions/python-versions Windows x64 ar
 FORBIDDEN_TRIGGERS = ('pull_request_target', 'workflow_run', 'issue_comment', 'repository_dispatch')
 
 
+# Only owner-main candidate evidence may contain this source-built runtime.
+# It carries matching preferred source and never publishes or grants credentials.
+QT_RUNTIME_ARTIFACT_STEP = "      - name: Retain owner-built Qt runtime and preferred source\n        if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.actor == 'mmensing' && github.ref == 'refs/heads/main'\n        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9\n        with:\n          name: qt-runtime-source-candidate\n          path: |\n            artifacts/shiboken-runtime/shiboken6-6.12.0+etlayout.1-cp310-abi3-win_amd64.whl\n            artifacts/shiboken-runtime/preferred-source.zip\n            artifacts/shiboken-runtime/BUILD_PROVENANCE.json\n            artifacts/shiboken-runtime/regression.xml\n            artifacts/shiboken-runtime/pytest-installed.xml\n          if-no-files-found: error\n          retention-days: 7\n"
+
 def workflow_issues(text: str) -> list[str]:
     """Check this repository's deliberately limited workflow vocabulary.
 
@@ -51,7 +55,12 @@ def workflow_issues(text: str) -> list[str]:
         issues.append('CI may validate candidates but may not publish or push')
     if '--require-hashes --only-binary=:all:' not in code or '--no-build-isolation --no-deps -e .' not in code:
         issues.append('Install hash-verified wheels and local source without dependency resolution')
-    if re.search(r'(?:path:|^\s+)[^\n]*\.(?:zip|exe|dll)(?:\s|$)', code, re.MULTILINE):
+    candidate_code = '\n'.join(line.rstrip() for line in code.splitlines())
+    permitted_step = '\n'.join(line.rstrip() for line in QT_RUNTIME_ARTIFACT_STEP.splitlines())
+    if candidate_code.count(permitted_step) > 1:
+        issues.append('Only one explicit owner-main Qt runtime candidate artifact is permitted')
+    candidate_code = candidate_code.replace(permitted_step, '')
+    if re.search(r'(?:path:|^\s+)[^\n]*\.(?:zip|exe|dll|whl)(?:\s|$)', candidate_code, re.MULTILINE):
         issues.append('Public CI artifacts must not redistribute blocked binaries')
     run_indent = None
     for line in code.splitlines():

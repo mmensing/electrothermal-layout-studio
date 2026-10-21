@@ -14,6 +14,8 @@ root = Path(SPECPATH).parent
 resource_policy = runpy.run_path(str(root / "packaging" / "resources.py"))
 resource_files = resource_policy["resource_files"]
 datas = collect_data_files("etlayout") + copy_metadata("etlayout")
+# Preserve the independently hash-bound modified Qt runtime receipt.
+datas += collect_data_files("shiboken6", includes=["ETLAYOUT_RUNTIME_BUILD.json"])
 # Experiment identities include exact numerical dependencies, including when
 # importlib.metadata executes inside the frozen optimizer.
 for dependency in ("numpy", "scipy", "shapely", "gmsh", "klayout", "PySide6", "shiboken6",
