@@ -102,7 +102,7 @@ def reader_for(root, *, credential_source='gh'):
         scanner = (len(args) > 1 and Path(args[0]).resolve() == Path(sys.executable).resolve()
                    and Path(args[1]).resolve() == (root / 'scripts/audit_publication.py').resolve())
         try:
-            result = subprocess.run(args, cwd=root, capture_output=True, text=True,
+            result = subprocess.run(args, cwd=root, capture_output=True, text=True, encoding='utf-8',
                                     timeout=1800 if upload else 900 if scanner else 180, check=False, env=child_environment)
         except (OSError, subprocess.TimeoutExpired) as exc:
             raise ReleaseError('A required local Git/GitHub command could not complete') from exc
@@ -606,7 +606,8 @@ def preflight(root, assets_dir, manifest_path, *, read=None, environ=None, crede
     require(not any(not item.get('read_only', False) for item in keys), 'Writable deploy keys are not permitted')
     tag = 'v' + version
     require(api(read, f'repos/{REPOSITORY}/git/ref/tags/{tag}', optional=True) is None, 'Tag already exists; never replace it')
-    require(api(read, f'repos/{REPOSITORY}/releases/tags/{tag}', optional=True) is None, 'Release/draft already exists; never replace it')
+    require(api(read, f'repos/{REPOSITORY}/releases/tags/{tag}', optional=True) is None
+            and not releases_for_tag(read, tag), 'Release/draft already exists; never replace it')
     runs = flatten(api(read, f'repos/{REPOSITORY}/actions/runs?head_sha={commit}&per_page=100', paginate=True), 'workflow_runs')
     run = trusted_ci(runs, lambda identifier: flatten(api(read, f'repos/{REPOSITORY}/actions/runs/{identifier}/jobs?per_page=100', paginate=True), 'jobs'), commit)
     require(assets_dir.is_dir() and not assets_dir.is_symlink(), 'Use an ordinary local asset directory')
@@ -636,6 +637,40 @@ def preflight(root, assets_dir, manifest_path, *, read=None, environ=None, crede
                 assets=assets, notes=notes, review=review)
 
 
+def releases_for_tag(read, tag):
+    """Authenticated listing includes unpublished drafts without a Git tag."""
+    releases = flatten(api(read, f'repos/{REPOSITORY}/releases?per_page=100', paginate=True))
+    require(all(isinstance(item, dict) for item in releases), 'Cannot inspect authenticated release listing')
+    return [item for item in releases if item.get('tag_name') == tag]
+
+
+def verify_prepared_draft(read, plan):
+    """Read back the unique draft by ID; never retry creation or upload."""
+    matches = releases_for_tag(read, plan['tag'])
+    require(len(matches) == 1, 'Expected one matching draft; stop and inspect existing releases without retrying')
+    identifier = matches[0].get('id')
+    require(type(identifier) is int and identifier > 0, 'Matching draft has no valid release ID')
+    draft = api(read, f'repos/{REPOSITORY}/releases/{identifier}')
+    require(isinstance(draft, dict) and draft.get('id') == identifier and draft.get('tag_name') == plan['tag']
+            and draft.get('target_commitish') == plan['commit'] and draft.get('draft') is True
+            and draft.get('published_at') is None and draft.get('prerelease') is False
+            and draft.get('name') == f"Electrothermal Layout Studio {plan['version']}"
+            and draft.get('body') == plan['notes'].read_bytes().decode('utf-8'),
+            'Draft identity, target, state or notes differ; keep it unpublished and inspect locally')
+    assets = draft.get('assets')
+    require(isinstance(assets, list) and all(isinstance(item, dict) and isinstance(item.get('name'), str)
+                                            for item in assets),
+            'Draft asset list could not be verified; keep it unpublished and inspect locally')
+    expected = {item['name']: (path.stat().st_size, 'sha256:' + item['sha256'])
+                for item, path in zip(plan['review']['assets'], plan['assets'], strict=True)}
+    require(len(assets) == len(expected) and len({item.get('name') for item in assets}) == len(assets)
+            and all(item.get('state') == 'uploaded' and item.get('name') in expected
+                    and (item.get('size'), item.get('digest')) == expected[item['name']]
+                    for item in assets),
+            'Uploaded asset names, sizes, states or checksums differ; keep the draft unpublished and inspect locally')
+    return draft
+
+
 def draft_commands(plan):
     return [
         ['gh', 'release', 'create', plan['tag'], '--repo', REPOSITORY, '--target', plan['commit'], '--draft',
@@ -663,12 +698,7 @@ def main(argv=None):
         # No automatic retry, deletion or replacement after uncertain network outcomes.
         for command in draft_commands(plan):
             read(command)
-        draft = api(read, f"repos/{REPOSITORY}/releases/tags/{plan['tag']}")
-        require(draft.get('draft') is True and draft.get('target_commitish') == plan['commit'],
-                'Draft target/state could not be verified; stop and inspect it manually')
-        remote = {item['name']: item.get('digest') for item in draft.get('assets', [])}
-        require(remote == {item['name']: 'sha256:' + item['sha256'] for item in plan['review']['assets']},
-                'Uploaded asset checksums could not be verified; keep the draft unpublished and inspect locally')
+        draft = verify_prepared_draft(read, plan)
         print(f"Draft prepared: {draft['html_url']}. Inspect it manually; this helper never publishes.")
         return 0
     except (ReleaseError, OSError, KeyError, ValueError, zipfile.BadZipFile, tarfile.TarError) as exc:

@@ -92,6 +92,7 @@ class FakeReadOnlyReader:
             prefix + '/keys?per_page=100': [[]],
             prefix + '/git/ref/tags/v' + VERSION: None,
             prefix + '/releases/tags/v' + VERSION: None,
+            prefix + '/releases?per_page=100': [[]],
             prefix + '/actions/runs?head_sha=' + COMMIT + '&per_page=100': [{'workflow_runs': [successful_run()]}],
             prefix + '/actions/runs/7/jobs?per_page=100': [{'jobs': passed_jobs(7)}],
         }
@@ -123,6 +124,133 @@ def test_default_preflight_is_read_only_and_source_independent_of_binary_gate(lo
     assert commands[0][commands[0].index('--target') + 1] == COMMIT
     assert all('--clobber' not in command and '--publish' not in command for command in commands)
     assert commands[1][:3] == ['gh', 'release', 'upload']
+
+
+@pytest.mark.parametrize('page', [0, 1])
+def test_existing_draft_without_git_tag_stops_preflight(local_review, page):
+    read = FakeReadOnlyReader()
+    pages = [[], []]
+    pages[page] = [{'id': 41, 'tag_name': 'v' + VERSION, 'draft': True}]
+    read.responses['repos/' + release.REPOSITORY + '/releases?per_page=100'] = pages
+    with pytest.raises(release.ReleaseError, match='Release/draft already exists'):
+        release.preflight(*local_review[:3], read=read, environ={})
+    assert not any(call[:2] == ['gh', 'release'] for call in read.calls)
+    listing = next(call for call in read.calls if call[0] == 'gh'
+                   and call[4] == 'repos/' + release.REPOSITORY + '/releases?per_page=100')
+    assert listing[-2:] == ['--paginate', '--slurp']
+
+
+@pytest.fixture
+def prepared_draft(local_review):
+    root, assets, manifest, _review = local_review
+    read = FakeReadOnlyReader()
+    plan = release.preflight(root, assets, manifest, read=read, environ={})
+    draft = {'id': 41, 'tag_name': plan['tag'], 'target_commitish': COMMIT,
+             'draft': True, 'published_at': None, 'prerelease': False,
+             'name': 'Electrothermal Layout Studio ' + VERSION,
+             'body': plan['notes'].read_bytes().decode('utf-8'),
+             'html_url': 'https://github.com/' + release.REPOSITORY + '/releases/tag/untagged-draft',
+             'assets': [{'name': path.name, 'size': path.stat().st_size,
+                         'state': 'uploaded', 'digest': 'sha256:' + item['sha256']}
+                        for item, path in zip(plan['review']['assets'], plan['assets'], strict=True)]}
+    read.responses['repos/' + release.REPOSITORY + '/releases?per_page=100'] = [
+        [{'id': 40, 'tag_name': 'v0.3.0', 'draft': False}], [draft]]
+    read.responses['repos/' + release.REPOSITORY + '/releases/41'] = draft
+    read.calls.clear()
+    return plan, read, draft
+
+
+def test_prepared_draft_is_read_back_by_id_without_a_git_tag(prepared_draft):
+    plan, read, draft = prepared_draft
+    # A draft may have no actual Git tag or tag-based API response yet.
+    assert release.verify_prepared_draft(read, plan) == draft
+    assert [call[4] for call in read.calls] == [
+        'repos/' + release.REPOSITORY + '/releases?per_page=100',
+        'repos/' + release.REPOSITORY + '/releases/41']
+    assert read.calls[0][-2:] == ['--paginate', '--slurp']
+
+
+def test_draft_notes_preserve_unicode_and_exact_line_endings(prepared_draft):
+    plan, read, draft = prepared_draft
+    notes = 'Voltage — 2.5 µV; temperature 25 °C.\r\n'
+    plan['notes'].write_bytes(notes.encode('utf-8'))
+    draft['body'] = notes
+    assert release.verify_prepared_draft(read, plan)['body'] == notes
+    draft['body'] = notes.replace('\r\n', '\n')
+    with pytest.raises(release.ReleaseError, match='notes differ'):
+        release.verify_prepared_draft(read, plan)
+
+
+@pytest.mark.parametrize('change', ['missing', 'duplicate', 'invalid-id'])
+def test_draft_discovery_requires_one_valid_release_id(prepared_draft, change):
+    plan, read, draft = prepared_draft
+    if change == 'missing':
+        matches = []
+    elif change == 'duplicate':
+        matches = [draft, {**draft, 'id': 42}]
+    else:
+        matches = [{**draft, 'id': '41'}]
+    read.responses['repos/' + release.REPOSITORY + '/releases?per_page=100'] = [matches]
+    with pytest.raises(release.ReleaseError):
+        release.verify_prepared_draft(read, plan)
+    assert len(read.calls) == 1
+
+
+@pytest.mark.parametrize('field,value', [
+    ('id', 42), ('tag_name', 'v0.5.0'), ('target_commitish', 'b' * 40),
+    ('draft', False), ('published_at', '2026-10-21T00:00:00Z'), ('prerelease', True),
+    ('name', 'Unreviewed title'), ('body', 'Unreviewed notes'),
+])
+def test_draft_readback_requires_exact_identity_and_reviewed_notes(prepared_draft, field, value):
+    plan, read, draft = prepared_draft
+    read.responses['repos/' + release.REPOSITORY + '/releases/41'] = {**draft, field: value}
+    with pytest.raises(release.ReleaseError, match='identity, target, state or notes'):
+        release.verify_prepared_draft(read, plan)
+
+
+@pytest.mark.parametrize('change', ['missing', 'extra', 'duplicate', 'size', 'digest', 'state'])
+def test_draft_readback_requires_complete_uploaded_asset_bytes(prepared_draft, change):
+    plan, read, draft = prepared_draft
+    assets = [dict(item) for item in draft['assets']]
+    if change == 'missing':
+        assets.pop()
+    elif change == 'extra':
+        assets.append({**assets[0], 'name': 'unexpected.zip'})
+    elif change == 'duplicate':
+        assets[1] = dict(assets[0])
+    elif change == 'size':
+        assets[0]['size'] += 1
+    elif change == 'digest':
+        assets[0]['digest'] = 'sha256:' + '0' * 64
+    else:
+        assets[0]['state'] = 'starter'
+    read.responses['repos/' + release.REPOSITORY + '/releases/41'] = {**draft, 'assets': assets}
+    with pytest.raises(release.ReleaseError, match='names, sizes, states or checksums'):
+        release.verify_prepared_draft(read, plan)
+
+
+@pytest.mark.parametrize('upload_fails', [False, True])
+def test_prepare_draft_never_retries_or_publishes(prepared_draft, monkeypatch, upload_fails):
+    plan, read, _draft = prepared_draft
+    mutations = []
+
+    def owner_read(args, **kwargs):
+        if args[:2] == ['gh', 'release']:
+            mutations.append(args)
+            if args[2] == 'upload' and upload_fails:
+                raise release.ReleaseError('Uncertain upload; inspect the existing draft')
+            return ''
+        return read(args, **kwargs)
+
+    monkeypatch.setattr(release, 'preflight', lambda *_args, **_kwargs: plan)
+    monkeypatch.setattr(release, 'reader_for', lambda *_args, **_kwargs: owner_read)
+    result = release.main(['--assets-dir', str(plan['notes'].parent),
+                           '--review-manifest', 'unused-private-review.json', '--prepare-draft'])
+    assert result == (1 if upload_fails else 0)
+    assert mutations == release.draft_commands(plan)
+    assert all('--clobber' not in call and '--draft=false' not in call for call in mutations)
+    if upload_fails:
+        assert [call[4] for call in read.calls] == ['user']
 
 
 @pytest.mark.parametrize('environment', [{'GITHUB_ACTIONS': 'true'}, {'CI': 'true'}, {'GH_TOKEN': 'sentinel'}])
@@ -319,6 +447,7 @@ def test_os_credential_bridge_never_stores_or_prints_credentials(tmp_path, monke
         monkeypatch.delenv(key, raising=False)
     reader = release.reader_for(tmp_path, credential_source='git')
     assert reader(['gh', 'api', 'user']) == 'owner-response'
+    assert calls[-1][1]['encoding'] == 'utf-8'
     assert reader(['gh', 'release', 'upload', 'v0.4.0', 'bounded-source.zip']) == 'owner-response'
     assert calls[-1][1]['timeout'] == 1800
     assert reader(['git', 'status', '--porcelain']) == 'owner-response'
