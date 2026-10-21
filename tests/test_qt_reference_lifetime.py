@@ -94,8 +94,18 @@ _CHILD = textwrap.dedent("""
         assert len(inner) == 1 and inner[0]() is not None, (finalized, inner)
         assert view.itemDelegate() is inner[0](), "Reentrant setter lost its retained reference"
         assert view.itemDelegate().name == "inner"
+        # setItemDelegate does not transfer C++ ownership. Only after checking
+        # the unparented replacement's retention and reentrant identity, give it
+        # an explicit native owner for teardown instead of relying on getters'
+        # wrapper-parent heuristics to destroy an unparented C++ delegate.
+        inner[0]().setParent(view)
+        assert inner[0]().parent() is view
+        owner = weakref.ref(view)
         view.deleteLater()
         QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+        del view
+        gc.collect()
+        assert owner() is None and inner[0]() is None
         assert finalized.count("old") == 1 and finalized.count("inner") == 1, finalized
         if case == "replace":
             assert finalized.count("outer") == 1, finalized
