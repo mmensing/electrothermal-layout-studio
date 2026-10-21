@@ -59,6 +59,30 @@ Clean-machine, physical monitor-DPI and screen-reader checks were not performed.
 The original intermittent Qt/Shiboken GC failure remains unisolated. No candidate
 was published; these checks do not waive release, license or source obligations.
 
+## 0.4.2 maintenance verification scope
+
+Four native Qt regressions reproduce retained-reference clearing with GUI/worker
+collection and reentrant removal/replacement. All four fail on the unmodified
+locked runtime. The rebuilt runtime passes these cases on hosted Windows and the
+native Windows build host; the latter installed-runtime run took 1.25 s. This is
+causal coverage of the identified ownership defect, not proof that every Qt
+lifetime or application sequence is fault-free.
+
+The [repeated E21 comparison](performance.md#stable-native-kernel-cap-repeated-source-comparison)
+validates unchanged delivered service, fields and configured conservation while
+measuring the stable native-kernel cap. Its ranges overlap; it does not establish
+a general one/four-CPU speed ranking or mesh convergence. SciPy's sparse direct
+factorization remains serial.
+
+The 0.4.2 metadata/source preparation retains all 42 example projects, embedded
+layouts and historical writer metadata. Existing 77 source archive payloads are
+retained exactly; a 78th archive supplies the modified Qt source supplement.
+It pairs with the unchanged original PySide archive in the same Qt part to
+provide complete preferred source without a duplicate nested archive. Final complete-source coverage, native/frozen checks, readable
+captures, source/SBOM/privacy/license review and protected-main CI must be bound
+to the actual final release. Earlier runtime or source tests cannot substitute
+for that evidence. See [release notes](releases/0.4.2.md) and [Windows gates](windows.md).
+
 ## 0.4.1 baseline and release verification
 
 The pinned baseline before these maintenance changes passed **2,662 tests** on
@@ -321,7 +345,11 @@ all seven stages. Omit `--offscreen` for native Windows and add `--scale 1.25` f
 application scaling. Inspect readable captures and font receipts. This does not
 certify clean-machine deployment or physical mixed-monitor DPI.
 
-## Native lifecycle diagnostics and measured operator phases
+## Native lifecycle diagnostics and historical 0.4.1 measurements
+
+The 0.4.1 outcomes in this section predate the targeted [0.4.2 Qt lifetime
+patch](qt-runtime.md). They remain historical evidence; rerun the application
+journey on the final candidate in addition to the focused reference regressions.
 
 Use the repeatable source diagnostic without disabling Python garbage collection:
 
@@ -398,13 +426,17 @@ misreported as temporal sensitivity. Field outputs still use the requested
 cadence, and equal effective step counts remain explicitly diagnosed.
 
 
+## Historical 0.4.1 native fault and recovery evidence
+
 A later broader local order reproduced the native Qt/Shiboken access violation
 with default automatic garbage collection. Removing queued exception traceback
 ownership and collecting closed test windows between tests did not establish a
 cure; the latter workaround is not shipped. Native dumps locate an invalid
 retained Python reference in Shiboken traversal, without identifying its owner.
-This is an unresolved native stability limitation, including potentially supported
-multiwindow recovery; a passing CI run cannot establish its absence.
+At the 0.4.1 release this remained an unresolved native stability limitation,
+including potentially supported multiwindow recovery. The targeted retained-reference
+fix and its 0.4.2 regression scope are documented [separately](qt-runtime.md); a
+passing CI run alone cannot establish the absence of further native faults.
 
 A separate native single-window diagnostic completed 12 cycles (24 actual eager
 E1/E15 opens, 24 historical inspection/return pairs and 168 workflow navigations)
@@ -420,5 +452,6 @@ two MainWindows with independent asynchronous opens, each window's historical
 inspection/return, guarded discard and secondary-window native deletion. Automatic
 GC remained enabled with unchanged settings during this recovery segment, which
 adds no explicit collection. Normal smoke shutdown subsequently closes the primary
-window and collects its unreachable resources. This bounded production-lifecycle observation does not fix the retained-reference
-fault and must still be repeated in the final frozen candidate.
+window and collects its unreachable resources. This bounded 0.4.1 production-lifecycle observation did not fix the retained-reference
+fault. The 0.4.2 patch has separate causal regression coverage; this complete
+application journey must also be repeated in the final frozen candidate.

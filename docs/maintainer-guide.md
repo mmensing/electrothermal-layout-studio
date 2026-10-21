@@ -4,7 +4,7 @@ The maintainer is **@mmensing**. This guide specifies required policy and future
 release steps; committed files do not enable GitHub protections. Verify actual
 settings and keep sensitive audit/readback records outside the source tree.
 The initial source snapshot was untagged `0.4.0.dev0`. The current source
-version is `0.4.1`; check GitHub Releases for actual publication status. A version
+version is `0.4.2`; check GitHub Releases for actual publication status. A version
 bump or successful local candidate does not clear binary redistribution gates.
 
 ## Repository authority and bootstrap
@@ -141,6 +141,15 @@ candidate build is not clearance. The [licensing guide](licensing.md) requires
 exact third-party source/build information, notices, module/native/font evidence
 and the selected MPL/GPL route. A reviewed source edition remains independent.
 Do not reuse or advertise pre-public binaries as MPL releases.
+
+The modified Shiboken [release source pairing](qt-runtime.md#rebuild-ci-and-distribution)
+keeps the complete CI preferred-source artifact unchanged. A release Qt source
+part may remove only its duplicate original PySide tar from the separate modified
+source supplement when that exact tar remains a sibling payload in the same part.
+Retain the supplement's derivation/hash proof, all other member bytes and portable
+pairing README. Never distribute the supplement as complete standalone source.
+Reissue all source-part indexes/catalog hashes and run the unchanged bounded
+archive/privacy checks on the final envelopes.
 
 1. Review and merge a real version change through the public PR workflow. Use an
    unambiguous stable version for a future release, synchronized in pyproject and

@@ -63,6 +63,35 @@ authorize release publication. Normal owner review, protected-main validation,
 native/extracted application checks and exact artifact privacy/licensing gates
 still apply. CI has read-only contents permissions and cannot publish.
 
+For the release source set, the Qt part contains the original
+`archives/pyside6-6.12.0-etlayout-source.tar.gz` and
+`archives/shiboken6-6.12.0-etlayout.1-source-supplement.zip` as separate siblings.
+The supplement preserves every modified source, patch, recipe, license and build
+proof byte from the complete CI archive. It omits only the duplicate original tar;
+**both archives are required together** for complete corresponding source. Its
+README records the original tar's exact hash/size and the complete CI archive hash.
+The stable catalog source ID is retained; its filename and role identify the
+release supplement. The native runtime and the complete CI source artifact do not
+change during this packaging step.
+
+The release-only [source supplement builder](../packaging/source-recipes/shiboken6-6.12.0/source_supplement.py)
+requires explicit reviewed hashes, rejects missing/extra members and writes a new
+ZIP without overwriting either input or existing output. It checks that all eight
+retained files remain byte-identical. For the reviewed 0.4.2 CI source artifact:
+
+~~~powershell
+python packaging/source-recipes/shiboken6-6.12.0/source_supplement.py `
+  --preferred-source preferred-source.zip `
+  --preferred-sha256 ebeea77ca4ac6eee73a8c25b5a8260c31df6fabb831fa732df0a2b266d0d409f `
+  --upstream-sha256 e659fbccafdc0ca7a0235188355837b67274e4e18e893b0b98a5a76c859d13ef `
+  --upstream-bytes 21104154 `
+  --output shiboken6-6.12.0-etlayout.1-source-supplement.zip
+~~~
+
+This pairing avoids redundant recursive archives while retaining the full source
+and the unchanged finite publication-inspection budgets. Distribute the entire
+corresponding-source Qt part rather than the supplement alone.
+
 The C++ patch preserves its upstream LGPL/GPL alternatives and original notices;
 the modified source has a dated change notice. The selected Windows distribution
 route is GPL-3.0-only, retaining the offered library grants. Original application

@@ -3,20 +3,23 @@
   "publication_allowed": true,
   "edition": "reviewed-windows-profile",
   "candidate_builds_allowed": true,
-  "version": "0.4.1",
+  "version": "0.4.2",
   "platform": "windows-x64",
   "license_route": "GPL-3.0-only-with-MPL-3.3",
-  "source_catalog_sha256": "78a0d40123342d06039056db7ac5cea3aaeb43188b89c9de605ca53f4d68f841",
+  "source_catalog_sha256": "98448700fe7724762a53bce242fb2a546d719d5d9d237b9df902d6e69595fd95",
   "native_outputs": {
     "_internal/gmsh-4.15.dll": "d0925dca151a1c34b7c291241ab20026312c24510eedeae2c466aa643bf24192",
     "_internal/python312.dll": "53d38ecd2d9f4e19ac9328a715d1155e3e183473845e15d0044342909fc718a0",
     "_internal/numpy/_core/_multiarray_umath.cp312-win_amd64.pyd": "df490c3b84e96e6916d29fb704e380607c4f8fa25ffacb59cd0f22e459f6e984",
     "_internal/numpy/fft/_pocketfft_umath.cp312-win_amd64.pyd": "ca5f483e96f628f14589202f8ff9ed7a8d8fd1e0014d489eecf85219d96328d3",
     "_internal/Shapely.libs/geos-bf067cd6ff74ee0ad5f3ff52c7ef08c9.dll": "ac236e44bae28eed03ebedf598bf7d6d5dd593a7e67d2326670582155d1a38ac",
-    "_internal/Shapely.libs/geos_c-6dd9fd915eef8a7928285416bef1e666.dll": "cbc0586d6fcb34f40c8a939236deba053b27f5f180b8d261b60eab6fafc63430"
+    "_internal/Shapely.libs/geos_c-6dd9fd915eef8a7928285416bef1e666.dll": "cbc0586d6fcb34f40c8a939236deba053b27f5f180b8d261b60eab6fafc63430",
+    "_internal/shiboken6/shiboken6.abi3.dll": "69ae93f8368ff37941c8ce3bd725f2e85ae15b4f7cdd5f39ab6abcfad942f1f6",
+    "_internal/shiboken6/Shiboken.pyd": "8ccf415b2cefb5b6462504581ab1993fb41afe04e415931d8a72049f1c79b267",
+    "_internal/shiboken6/ETLAYOUT_RUNTIME_BUILD.json": "def273f167d37bbd2979bae1ec99ca6fb315d69ddbf3e1b245bdbf7fe16eb339"
   },
   "conditions": [
-    "Only this exact source-built native/Python profile may undergo owner release review; stock-wheel candidates are ineligible.",
+    "Only this exact source-built Gmsh/Shiboken and Python profile may undergo owner release review; stock Shiboken bootstrap-wheel candidates are ineligible.",
     "Complete matching application and four corresponding-source parts, retained notices, build/install/relink inputs and source access must accompany the binary.",
     "Retain LGPL library grants and satisfy the documented complete-source/relink route; GPL status alone does not discharge those obligations.",
     "No Microsoft runtime DLLs or installer may be bundled; use the official supported x64 v14 system prerequisite.",

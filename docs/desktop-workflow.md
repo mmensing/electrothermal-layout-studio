@@ -1,6 +1,6 @@
 # Guided desktop workflow
 
-This guide describes the **0.4.1 source edition**, retaining the
+This guide describes the **0.4.2 source edition**, retaining the
 guided Windows desktop and 0.3.1 project compatibility.
 Install and launch from the [Windows source setup](../README.md#run-from-source),
 then use the desktop steps below; no Python scripting is needed for the workflow.

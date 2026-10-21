@@ -40,13 +40,59 @@ def profile(tmp_path, monkeypatch):
             'source_id': 'pyinstaller-6.22.3', 'source_sha256': 'a' * 64,
             'recipe': 'packaging/build-bootloader.ps1', 'recipe_sha256': build.sha256(recipe),
             **build.bootloader_properties(data)})
+    runtime = tmp_path / 'shiboken6'
+    runtime.mkdir()
+    for name in ('shiboken6.abi3.dll', 'shiboken6.abi3.lib', 'Shiboken.pyd'):
+        (runtime / name).write_bytes(('Synthetic native fixture: ' + name).encode())
+    runtime_recipe = tmp_path / build.SHIBOKEN_RECIPE
+    runtime_recipe.mkdir(parents=True)
+    recipe_files = {}
+    for name in ('CMakeLists.txt', 'build_runtime.py', 'README.md'):
+        (runtime_recipe / name).write_text('Synthetic regression recipe ' + name)
+        recipe_files[name] = build.sha256(runtime_recipe / name)
+    patch = runtime_recipe / 'referred_objects_lifetime.patch'
+    patch.write_text('# Synthetic source patch, not executable code.\n')
+    upstream = {'id': 'pyside6-6.12.0', 'filename': 'pyside-source.tar.gz', 'sha256': 'b' * 64, 'bytes': 123}
+    catalog['sources'] += [upstream, {'id': 'shiboken-patch-source', 'sha256': 'c' * 64}]
+    receipt = {'schema_version': 1, 'distribution': 'shiboken6', 'version': build.SHIBOKEN_RUNTIME_VERSION,
+               'upstream_version': '6.12.0', 'abi': 'cp310-abi3-win_amd64',
+               'compiler': {'id': 'MSVC', 'version': 'synthetic fixture'},
+               'source': {'name': upstream['filename'], 'sha256': upstream['sha256'], 'bytes': upstream['bytes']},
+               'recipe': recipe_files, 'patch': {'name': patch.name, 'sha256': build.sha256(patch),
+                   'target': 'sources/shiboken6/libshiboken/basewrapper.cpp',
+                   'before_sha256': 'd' * 64, 'after_sha256': 'e' * 64},
+               'dll_sha256': build.sha256(runtime / 'shiboken6.abi3.dll'),
+               'import_library_sha256': build.sha256(runtime / 'shiboken6.abi3.lib'),
+               'unchanged_module_sha256': build.sha256(runtime / 'Shiboken.pyd')}
+    (runtime / build.SHIBOKEN_RECEIPT).write_text(json.dumps(receipt))
+    runtime_row = {'id': build.SHIBOKEN_RUNTIME_ID, 'version': build.SHIBOKEN_RUNTIME_VERSION,
+                   'filename': 'shiboken6.abi3.dll', 'abi': receipt['abi'],
+                   'bytes': (runtime / 'shiboken6.abi3.dll').stat().st_size, 'sha256': receipt['dll_sha256'],
+                   'source_id': 'shiboken-patch-source', 'upstream_source_id': upstream['id'],
+                   'source_archive_sha256': upstream['sha256'],
+                   'recipe': build.SHIBOKEN_RECIPE + '/build_runtime.py',
+                   'recipe_sha256': recipe_files['build_runtime.py'], 'recipe_files': recipe_files,
+                   'patch': build.SHIBOKEN_RECIPE + '/' + patch.name, 'patch_sha256': build.sha256(patch),
+                   'source_before_sha256': receipt['patch']['before_sha256'],
+                   'source_after_sha256': receipt['patch']['after_sha256'],
+                   'receipt_sha256': build.sha256(runtime / build.SHIBOKEN_RECEIPT),
+                   'import_library_sha256': receipt['import_library_sha256'],
+                   'unchanged_module_sha256': receipt['unchanged_module_sha256']}
+    catalog['compiled_native'].append(runtime_row)
     (tmp_path / 'packaging/third-party-sources.json').write_text(json.dumps(catalog))
     descriptor = tmp_path / 'private-build.json'
     proof = {'schema_version': 1, 'runtime_python': catalog['runtime_python'],
              'gmsh': {key: value for key, value in catalog['compiled_native'][0].items() if key != 'id'},
              'private_details': 'C:/private/build-host-location',
-             'compiled_bootloaders': catalog['compiled_bootloaders']}
+             'compiled_bootloaders': catalog['compiled_bootloaders'],
+             build.SHIBOKEN_RUNTIME_ID: {key: value for key, value in runtime_row.items() if key != 'id'}}
     descriptor.write_text(json.dumps(proof))
+    original_version, original_distribution = build.metadata.version, build.metadata.distribution
+    monkeypatch.setattr(build.metadata, 'version', lambda name: build.SHIBOKEN_RUNTIME_VERSION
+                        if name == 'shiboken6' else original_version(name))
+    monkeypatch.setattr(build.metadata, 'distribution', lambda name:
+                        SimpleNamespace(locate_file=lambda member: runtime)
+                        if name == 'shiboken6' else original_distribution(name))
     monkeypatch.setattr(build, 'ROOT', tmp_path)
     return library, descriptor, python, proof, bootloaders
 
@@ -119,9 +165,11 @@ def test_build_snapshot_rejects_changed_resource_set(tmp_path, monkeypatch, chan
 
 def test_installed_bootloader_default_is_the_exact_pinned_tool_distribution(profile, monkeypatch):
     library, descriptor, python, proof, bootloaders = profile
+    original_distribution = build.metadata.distribution
     monkeypatch.setattr(build.metadata, 'distribution',
                         lambda name: SimpleNamespace(version=proof['compiled_bootloaders'][0]['version'],
-                                     locate_file=lambda member: bootloaders))
+                                     locate_file=lambda member: bootloaders) if name == 'pyinstaller'
+                        else original_distribution(name))
     result = build.native_build_profile(library, descriptor, python_library=python)
     assert result['compiled_bootloaders'] == proof['compiled_bootloaders']
 
@@ -184,3 +232,73 @@ def test_frozen_bootloader_budget_precedes_pe_parser(monkeypatch):
     monkeypatch.setattr(pefile, 'PE', lambda **kwargs: pytest.fail('Oversized PE reached parser'))
     with pytest.raises(ValueError, match='budget'):
         build.bootloader_properties(b'X' * 9)
+
+
+@pytest.mark.parametrize('change', ['missing', 'descriptor', 'version', 'abi', 'source', 'patch',
+                                    'recipe', 'receipt', 'dll', 'import-library', 'module', 'unknown-native',
+                                    'missing-source-hash', 'equal-source-hashes'])
+def test_modified_shiboken_requires_exact_installed_source_and_bytes(profile, monkeypatch, change):
+    library, descriptor, python, proof, bootloaders = profile
+    catalog_path = build.ROOT / 'packaging/third-party-sources.json'
+    catalog = json.loads(catalog_path.read_text())
+    runtime = build.ROOT / 'shiboken6'
+    if change == 'missing':
+        catalog['compiled_native'] = catalog['compiled_native'][:1]
+    elif change == 'descriptor':
+        proof[build.SHIBOKEN_RUNTIME_ID]['sha256'] = 'f' * 64
+    elif change == 'version':
+        original_version = build.metadata.version
+        monkeypatch.setattr(build.metadata, 'version', lambda name: '6.12.0' if name == 'shiboken6'
+                            else original_version(name))
+    elif change == 'abi':
+        catalog['compiled_native'][1]['abi'] = 'wrong-ABI'
+        proof[build.SHIBOKEN_RUNTIME_ID]['abi'] = 'wrong-ABI'
+    elif change == 'source':
+        catalog['sources'][1]['sha256'] = 'f' * 64
+    elif change == 'patch':
+        (build.ROOT / build.SHIBOKEN_RECIPE / 'referred_objects_lifetime.patch').write_text('Changed patch')
+    elif change == 'recipe':
+        (build.ROOT / build.SHIBOKEN_RECIPE / 'CMakeLists.txt').write_text('Changed recipe')
+    elif change == 'receipt':
+        (runtime / build.SHIBOKEN_RECEIPT).write_text('{}')
+    elif change in {'missing-source-hash', 'equal-source-hashes'}:
+        row = catalog['compiled_native'][1]
+        receipt_path = runtime / build.SHIBOKEN_RECEIPT
+        receipt = json.loads(receipt_path.read_text())
+        row['source_after_sha256'] = None if change == 'missing-source-hash' else row['source_before_sha256']
+        receipt['patch']['after_sha256'] = row['source_after_sha256']
+        receipt_path.write_text(json.dumps(receipt))
+        row['receipt_sha256'] = build.sha256(receipt_path)
+        proof[build.SHIBOKEN_RUNTIME_ID] = {key: value for key, value in row.items() if key != 'id'}
+    elif change in {'dll', 'import-library', 'module'}:
+        name = {'dll': 'shiboken6.abi3.dll', 'import-library': 'shiboken6.abi3.lib', 'module': 'Shiboken.pyd'}[change]
+        (runtime / name).write_bytes(b'Changed native input')
+    else:
+        catalog['compiled_native'].append({'id': 'unreviewed-other-library'})
+    catalog_path.write_text(json.dumps(catalog))
+    descriptor.write_text(json.dumps(proof))
+    with pytest.raises(ValueError, match='Shiboken|explicit source-build verifier'):
+        build.native_build_profile(library, descriptor, python_library=python, bootloader_directory=bootloaders)
+
+
+@pytest.mark.parametrize('change', ['none', 'dll', 'module', 'receipt', 'missing-receipt'])
+def test_frozen_modified_shiboken_is_the_reviewed_installed_payload(profile, tmp_path, change):
+    import shutil
+
+    library, descriptor, python, _proof, bootloaders = profile
+    native = build.native_build_profile(library, descriptor, python_library=python, bootloader_directory=bootloaders)
+    bundle = tmp_path / 'bundle'
+    destination = bundle / '_internal/shiboken6'
+    destination.mkdir(parents=True)
+    for name in ('shiboken6.abi3.dll', 'Shiboken.pyd', build.SHIBOKEN_RECEIPT):
+        shutil.copyfile(build.ROOT / 'shiboken6' / name, destination / name)
+    if change == 'missing-receipt':
+        (destination / build.SHIBOKEN_RECEIPT).unlink()
+    elif change != 'none':
+        name = {'dll': 'shiboken6.abi3.dll', 'module': 'Shiboken.pyd', 'receipt': build.SHIBOKEN_RECEIPT}[change]
+        (destination / name).write_bytes(b'Unreviewed frozen input')
+    if change == 'none':
+        assert build.verify_frozen_shiboken(bundle, native) is None
+    else:
+        with pytest.raises(ValueError, match='Shiboken'):
+            build.verify_frozen_shiboken(bundle, native)

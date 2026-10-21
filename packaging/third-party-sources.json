@@ -22,7 +22,7 @@
         "sha256": "816c96e8e8f193b40151dad7e8ff37b1221d019dbcb9c35cd3fadbfe6477dfec",
         "url": "https://codeload.github.com/google/brotli/tar.gz/refs/tags/v1.2.0"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "816c96e8e8f193b40151dad7e8ff37b1221d019dbcb9c35cd3fadbfe6477dfec",
@@ -58,7 +58,7 @@
         "sha256": "08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44",
         "url": "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44",
@@ -92,7 +92,7 @@
         "sha256": "20156f5a1ac4f8ce02656e39a61e82164a3d359796dc8026f75b062783d500e1",
         "url": "https://files.pythonhosted.org/packages/83/5a/a55177dd22553a277388e8a1b3220e92de91bacb28356cdc73caa240121d/contourpy-1.4.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "20156f5a1ac4f8ce02656e39a61e82164a3d359796dc8026f75b062783d500e1",
@@ -126,7 +126,7 @@
         "sha256": "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a",
         "url": "https://www.python.org/ftp/python/3.12.14/Python-3.12.14.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "5c8462af5790baf43a321a1559dbe0db06d1be4300fb85fb53c40060668e548a",
@@ -169,7 +169,7 @@
         "sha256": "88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c",
         "url": "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb79008e7522a75244477d2838f38cbb722248dabc2a8/cycler-0.12.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c",
@@ -204,7 +204,7 @@
         "sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
         "url": "https://code.videolan.org/videolan/dav1d/-/archive/1.5.3/dav1d-1.5.3.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "cbe212b02faf8c6eed5b6d55ef8a6e363aaab83f15112e960701a9c3df813686",
@@ -238,7 +238,7 @@
         "sha256": "64967c6ddb0d4c610dfd8cb1485981b2d27972ddfb7d4bbbd9e199d2a089c450",
         "url": "https://files.pythonhosted.org/packages/87/b6/126c659ab7e0e03e01a5f5d223abf7b2c0691ae92718085a212a3924a2a3/fonttools-4.66.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "64967c6ddb0d4c610dfd8cb1485981b2d27972ddfb7d4bbbd9e199d2a089c450",
@@ -1305,7 +1305,7 @@
         "sha256": "36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f",
         "url": "https://download.savannah.nongnu.org/releases/freetype/freetype-2.14.3.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f",
@@ -1345,7 +1345,7 @@
         "sha256": "3c20919cda9a505db07b5216baa980bacdaa0702da715b43f176fb07eff7e716",
         "url": "https://download.osgeo.org/geos/geos-3.14.1.tar.bz2"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "3c20919cda9a505db07b5216baa980bacdaa0702da715b43f176fb07eff7e716",
@@ -1394,7 +1394,7 @@
         "sha256": "babf26655cc7adb8477096707431ba2d657ad49cfbcbf59e6dded69a5aeebd7d",
         "url": null
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "babf26655cc7adb8477096707431ba2d657ad49cfbcbf59e6dded69a5aeebd7d",
@@ -1435,7 +1435,7 @@
         "sha256": "ee0eb3a1da2c5a28147f12dff55f6c7d60aeeeb29ac7ef334eabe84c8476c105",
         "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.1.0/harfbuzz-14.1.0.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ee0eb3a1da2c5a28147f12dff55f6c7d60aeeeb29ac7ef334eabe84c8476c105",
@@ -3288,7 +3288,7 @@
         "sha256": "a54a5d8e9380a41fbb762ce367bcbf7704792dfca0d93f1bbca86c5a57902e0e",
         "url": "https://github.com/harfbuzz/harfbuzz/releases/download/14.2.1/harfbuzz-14.2.1.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "a54a5d8e9380a41fbb762ce367bcbf7704792dfca0d93f1bbca86c5a57902e0e",
@@ -5141,7 +5141,7 @@
         "sha256": "f1303ef2eec81262a4b708c3e858afe58d7c75ad91c1c05266eda7673369859a",
         "url": "https://files.pythonhosted.org/packages/ba/07/bd78e6a8fae171ea041ef5bba3ed21a003522fa088834b069b1909981f30/kiwisolver-1.5.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f1303ef2eec81262a4b708c3e858afe58d7c75ad91c1c05266eda7673369859a",
@@ -5175,7 +5175,7 @@
         "sha256": "1f89f7019c3603f8763eefc2e75f57fc89360acbc6fdb70aa8c4410a14c67bbd",
         "url": "https://files.pythonhosted.org/packages/ba/bc/d8e2927b2a69a6ea81944b383fdcbea0ba0871b9cc75c774ae2b5683ff8e/klayout-0.30.12.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "1f89f7019c3603f8763eefc2e75f57fc89360acbc6fdb70aa8c4410a14c67bbd",
@@ -5209,7 +5209,7 @@
         "sha256": "0fa43a781c4e699bacf3da1973ccec48b62f2a5a8822b02728229570880d2a1e",
         "url": "https://codeload.github.com/curl/curl/tar.gz/refs/tags/curl-7_61_0"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "0fa43a781c4e699bacf3da1973ccec48b62f2a5a8822b02728229570880d2a1e",
@@ -5248,7 +5248,7 @@
         "sha256": "574499cba22a599393e28d99ecfa1e7fc85be7d6651d543045244d5b561cb7ff",
         "url": "https://codeload.github.com/libexpat/libexpat/tar.gz/refs/tags/R_2_2_6"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "574499cba22a599393e28d99ecfa1e7fc85be7d6651d543045244d5b561cb7ff",
@@ -5284,7 +5284,7 @@
         "sha256": "ca74a0dace179a8422187671aee97dd3892b53e168627145271cad5b5ac81307",
         "url": "https://codeload.github.com/pnggroup/libpng/tar.gz/refs/tags/v1.6.37"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ca74a0dace179a8422187671aee97dd3892b53e168627145271cad5b5ac81307",
@@ -5342,7 +5342,7 @@
         "sha256": "e6aca7aea8de33d9c8580bcb3a0ea3ec0a7ace4ba3f4e263ac7c7b66bc95fb4d",
         "url": "https://sourceware.org/pub/pthreads-win32/pthreads-w32-2-9-1-release.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "e6aca7aea8de33d9c8580bcb3a0ea3ec0a7ace4ba3f4e263ac7c7b66bc95fb4d",
@@ -5391,7 +5391,7 @@
         "sha256": "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
         "url": "https://codeload.github.com/madler/zlib/tar.gz/refs/tags/v1.2.11"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "629380c90a77b964d896ed37163f5c3a34f6e6d897311f1df2a7016355c45eff",
@@ -5426,7 +5426,7 @@
         "sha256": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709",
         "url": "https://codeload.github.com/mm2/Little-CMS/tar.gz/refs/tags/lcms2.19.1"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "267705e278e2f7c2fb886c259dadcbaeb2be52748bcbc71c79f08aacacb7a709",
@@ -5461,7 +5461,7 @@
         "sha256": "c7fd3f4bd4424e1d05640f976c48fa3ea5e6cf72e9cd145f99be9eaec071156f",
         "url": "https://aomedia.googlesource.com/aom/+archive/refs/tags/v3.14.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "c7fd3f4bd4424e1d05640f976c48fa3ea5e6cf72e9cd145f99be9eaec071156f",
@@ -5495,7 +5495,7 @@
         "sha256": "2b645287340ba5a631d268b551dc2d72bd73ac33335962dd36dcdb6d8366921d",
         "url": "https://codeload.github.com/AOMediaCodec/libavif/tar.gz/refs/tags/v1.4.2"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "2b645287340ba5a631d268b551dc2d72bd73ac33335962dd36dcdb6d8366921d",
@@ -5532,7 +5532,7 @@
         "sha256": "ecae8008e2cc9ade2f2c1bb9d5e6d4fb73e7c433866a056bd82980741571a022",
         "url": "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.1.4.1/libjpeg-turbo-3.1.4.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ecae8008e2cc9ade2f2c1bb9d5e6d4fb73e7c433866a056bd82980741571a022",
@@ -5572,7 +5572,7 @@
         "sha256": "a9d4df463d36a6e5f9c29bd6f4967312d17e996c1854f3511f833924eb1993cf",
         "url": "https://codeload.github.com/pnggroup/libpng/tar.gz/refs/tags/v1.6.58"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "a9d4df463d36a6e5f9c29bd6f4967312d17e996c1854f3511f833924eb1993cf",
@@ -5631,7 +5631,7 @@
         "sha256": "7f3dd21b4b3bd28a36f2c911d31d91a9d69341697713923ef1aac65d56ebcafd",
         "url": "https://codeload.github.com/HOST-Oman/libraqm/tar.gz/refs/tags/v0.10.5"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "7f3dd21b4b3bd28a36f2c911d31d91a9d69341697713923ef1aac65d56ebcafd",
@@ -5674,7 +5674,7 @@
         "sha256": "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564",
         "url": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-1.6.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564",
@@ -5709,7 +5709,7 @@
         "sha256": "9bf85a9eb7a6f0b6b945779d606d8d8f6148a4d9bc5305d7fbd3c7700f1241d0",
         "url": "https://chromium.googlesource.com/libyuv/libyuv/+archive/644251f252a84bf8ce91ff0aca86a9b16b069ab8.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "9bf85a9eb7a6f0b6b945779d606d8d8f6148a4d9bc5305d7fbd3c7700f1241d0",
@@ -5743,7 +5743,7 @@
         "sha256": "04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49",
         "url": "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49",
@@ -5785,7 +5785,7 @@
         "sha256": "e4d1c90bf92bf6207559c946ce1a777ef2fe5e35eabe95e83db828d0893b7a14",
         "url": null
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "e4d1c90bf92bf6207559c946ce1a777ef2fe5e35eabe95e83db828d0893b7a14",
@@ -5823,7 +5823,7 @@
         "sha256": "bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba",
         "url": "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba",
@@ -5857,7 +5857,7 @@
         "sha256": "f21f01abd9f29ba06ea119304b3d39e610421cfe93b9dd23362834919f87586d",
         "url": "https://files.pythonhosted.org/packages/20/1e/caa4f15c020de3e3486b4133ca689236bd3863a3d6dd0f58e97ce86a296a/meshio-5.3.5.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f21f01abd9f29ba06ea119304b3d39e610421cfe93b9dd23362834919f87586d",
@@ -5894,7 +5894,7 @@
         "container_member": "source/mingw-w64-v14.0.0.tar.bz2",
         "container_sha256": "25194ebc451be61915f62bf9170c8925151abf0571c4fbc230e3fe53907efc40"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "6eaf921d9eb987d3820b364ea9775bc19b965ec81490b6fdd716526c28e1995c",
@@ -5928,7 +5928,7 @@
         "sha256": "9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a",
         "url": "https://files.pythonhosted.org/packages/95/b0/c7453d0b6e2073c3264468b106ee1563750cecc910965e67357e3698c83e/numpy-2.5.4.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "9a94cf751c9ad8ebaa835bcd3d40dacf8534ad086b88c38029b65123c7999d2a",
@@ -5994,7 +5994,7 @@
         "sha256": "ddecf3872f66f556aed35dabe9e04e663f014b05052b989288f28fc9a883afe0",
         "url": "https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/446c436e10450c348169808f1a6b3fae0925c9f7"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ddecf3872f66f556aed35dabe9e04e663f014b05052b989288f28fc9a883afe0",
@@ -6037,7 +6037,7 @@
         "sha256": "51257fb2f0aa7b4c23d9cf0302500b817dc82c0022ee681b24f9ab82dfd10312",
         "url": "https://codeload.github.com/OpenMathLib/OpenBLAS/tar.gz/5ffbf38b41a1fe494d038efcb09cf22f4d527c22"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "51257fb2f0aa7b4c23d9cf0302500b817dc82c0022ee681b24f9ab82dfd10312",
@@ -6072,7 +6072,7 @@
         "sha256": "ce4197b8d3c006370d3ee0f4e2d9d4940480b649a62fa209a405d419666cfb6b",
         "url": "https://codeload.github.com/MacPython/openblas-libs/tar.gz/78fc0eaf6de71d92fd98f74f7e5bfa356a2f83e3"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ce4197b8d3c006370d3ee0f4e2d9d4940480b649a62fa209a405d419666cfb6b",
@@ -6107,7 +6107,7 @@
         "sha256": "47c6afa9d9b653de8b44985425f3531de02d1000bb26245cd73066a7d6ae2aa0",
         "url": "https://codeload.github.com/MacPython/openblas-libs/tar.gz/db637abddcd6abb7fcb63be7fbe418deeb4729db"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "47c6afa9d9b653de8b44985425f3531de02d1000bb26245cd73066a7d6ae2aa0",
@@ -6142,7 +6142,7 @@
         "sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
         "url": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/refs/tags/v2.5.4"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "a695fbe19c0165f295a8531b1e4e855cd94d0875d2f88ec4b61080677e27188a",
@@ -6176,7 +6176,7 @@
         "sha256": "94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79",
         "url": "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79",
@@ -6224,7 +6224,7 @@
         "sha256": "3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce",
         "url": "https://files.pythonhosted.org/packages/1c/3d/bb7fca845737cf9d7dbde16ed1843984665ff2e0a518f5db43e77ec540b9/pillow-12.3.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce",
@@ -7344,7 +7344,7 @@
         "sha256": "d7ce60fdf8b3d3b4370ea213834d7c852b1ca16396d4e75e5046be815b11b2fb",
         "url": "https://codeload.github.com/python-pillow/Pillow/tar.gz/refs/tags/12.3.0"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "d7ce60fdf8b3d3b4370ea213834d7c852b1ca16396d4e75e5046be815b11b2fb",
@@ -8476,7 +8476,7 @@
         "sha256": "63743c02414e755de4e31b8f68125c1407495b86c5a006e203c01ff8b9924250",
         "url": "https://files.pythonhosted.org/packages/90/a1/d5f9002a70298c64a789779077d8dd90c10aa1f47fe40c86802df874f2a6/platformdirs-4.12.4.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "63743c02414e755de4e31b8f68125c1407495b86c5a006e203c01ff8b9924250",
@@ -8510,7 +8510,7 @@
         "sha256": "0746f5f8d406af344fd547f1c8daa5f5c33dbc293bb8d6a16d80b4bb88f59372",
         "url": "https://files.pythonhosted.org/packages/aa/c6/d1ddf4abb55e93cebc4f2ed8b5d6dbad109ecb8d63748dd2b20ab5e57ebe/psutil-7.2.2.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "0746f5f8d406af344fd547f1c8daa5f5c33dbc293bb8d6a16d80b4bb88f59372",
@@ -8544,7 +8544,7 @@
         "sha256": "610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c",
         "url": "https://files.pythonhosted.org/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c",
@@ -8580,7 +8580,7 @@
         "sha256": "05eb2f5615503e72939a7224d68b4aff572c6b0438ee4a17d0a4b481f399362d",
         "url": "https://files.pythonhosted.org/packages/63/41/f90302845945abd4ed647933ff5ee7c6ac93983187be67f897b6cb613331/pyinstaller-6.22.3.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "05eb2f5615503e72939a7224d68b4aff572c6b0438ee4a17d0a4b481f399362d",
@@ -8640,7 +8640,7 @@
         "sha256": "4d825786ad7a9b7dbcc52d612748a34562fe273461bcfd88f4d549c594bbf8f9",
         "url": "https://files.pythonhosted.org/packages/c9/3b/fab1a12a21bf9223af012e5dd002b7d4265683d21d9fabbd0ccb347316e4/pyinstaller_hooks_contrib-2026.8.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "4d825786ad7a9b7dbcc52d612748a34562fe273461bcfd88f4d549c594bbf8f9",
@@ -8675,7 +8675,7 @@
         "sha256": "928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36",
         "url": "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36",
@@ -8709,7 +8709,7 @@
         "sha256": "53ec3f8af918cc388dffd567fb3e8c3a58fefcc5888212edec6042126e5123f8",
         "url": "https://codeload.github.com/pyqtgraph/pyqtgraph/tar.gz/a20028b98294b9cc8770f2015a92eb342224b788"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "53ec3f8af918cc388dffd567fb3e8c3a58fefcc5888212edec6042126e5123f8",
@@ -8751,7 +8751,7 @@
         "sha256": "099c1a597cf33c1b000e11cf68a0b82d216fb802bf81726efc720394f10c7751",
         "url": "https://download.qt.io/official_releases/QtForPython/pyside6/PySide6-6.12.0-src/pyside-setup-everywhere-src-6.12.0.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "099c1a597cf33c1b000e11cf68a0b82d216fb802bf81726efc720394f10c7751",
@@ -8790,7 +8790,7 @@
         "sha256": "9a646c77c9d38bc675b87c3c425cc741faa548a069486c365b8b31be1ba66bbb",
         "url": "https://codeload.github.com/astral-sh/python-build-standalone/tar.gz/c0aa3bbdc2fff56a77ad1ecec68b1e47794d8779"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "9a646c77c9d38bc675b87c3c425cc741faa548a069486c365b8b31be1ba66bbb",
@@ -8824,7 +8824,7 @@
         "sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
         "url": "https://astral-sh.github.io/mirror/files/bzip2-1.0.8.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ab5a03176ee106d3f0fa90e381da478ddae405918153cca248e682cd0c4a2269",
@@ -8858,7 +8858,7 @@
         "sha256": "37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3",
         "url": "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3",
@@ -8892,7 +8892,7 @@
         "sha256": "f6256df90c906773d344da084402b7d3e4f22ed41b1a59c989098a83d3ea0c85",
         "url": "https://github.com/libexpat/libexpat/releases/download/R_2_8_3/expat-2.8.3.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f6256df90c906773d344da084402b7d3e4f22ed41b1a59c989098a83d3ea0c85",
@@ -8926,7 +8926,7 @@
         "sha256": "bc9842a18898bfacb0ed1252c4febcc7e78fa139fd27fdc7a3e30d9d9356119b",
         "url": "https://github.com/libffi/libffi/releases/download/v3.4.8/libffi-3.4.8.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "bc9842a18898bfacb0ed1252c4febcc7e78fa139fd27fdc7a3e30d9d9356119b",
@@ -8960,7 +8960,7 @@
         "sha256": "a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2",
         "url": "https://github.com/openssl/openssl/releases/download/openssl-3.5.8/openssl-3.5.8.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "a8f84a39918ec6415ce765d9b429d313ba97b8143169c172e734b9514464f5b2",
@@ -8994,7 +8994,7 @@
         "sha256": "83e6b2020a034e9a7ad4a72feea59e1ad52f162e09cbd26735a3ffb98359fc4f",
         "url": "https://www.sqlite.org/2026/sqlite-autoconf-3530100.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "83e6b2020a034e9a7ad4a72feea59e1ad52f162e09cbd26735a3ffb98359fc4f",
@@ -9028,7 +9028,7 @@
         "sha256": "3d3a1b973af218114f4f889bbaa2f4c037deaae0c8e815eec381c3d546b974a0",
         "url": "https://github.com/tukaani-project/xz/releases/download/v5.8.3/xz-5.8.3.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "3d3a1b973af218114f4f889bbaa2f4c037deaae0c8e815eec381c3d546b974a0",
@@ -9125,7 +9125,7 @@
         "sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
         "url": "https://github.com/madler/zlib/releases/download/v1.3.2/zlib-1.3.2.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "bb329a0a2cd0274d05519d61c667c062e06990d72e125ee2dfa8de64f0119d16",
@@ -9159,7 +9159,7 @@
         "sha256": "00bbd88709bc416cb96160ab61d3e1c8f76e106799af7328d0fe434dc7dd5004",
         "url": "https://github.com/python/cpython-source-deps/archive/refs/tags/zlib-ng-2.2.4.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "00bbd88709bc416cb96160ab61d3e1c8f76e106799af7328d0fe434dc7dd5004",
@@ -9199,7 +9199,7 @@
         "sha256": "8774e9a12c70b0180b95d6b0b563c5aa4bea8d5960c15e18ae3b6d2521d64f8b",
         "url": "https://github.com/qhull/qhull/archive/v8.0.2/qhull-8.0.2.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "8774e9a12c70b0180b95d6b0b563c5aa4bea8d5960c15e18ae3b6d2521d64f8b",
@@ -9233,7 +9233,7 @@
         "sha256": "a951bd163c7b80fc6b8c88d7668fb56abf91c152373e13c10666763238131307",
         "url": "https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/qtbase-everywhere-src-6.12.0.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "a951bd163c7b80fc6b8c88d7668fb56abf91c152373e13c10666763238131307",
@@ -9364,7 +9364,7 @@
         "sha256": "0943132b5db8de6b6a7f1d162682173e8763c7ed94e80fd39113292845f67762",
         "url": "https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/qtimageformats-everywhere-src-6.12.0.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "0943132b5db8de6b6a7f1d162682173e8763c7ed94e80fd39113292845f67762",
@@ -9401,7 +9401,7 @@
         "sha256": "e4ab39534ec97987b1b9b60ef7f4d3253d5912a69f8c713a01753174a4029331",
         "url": "https://download.qt.io/official_releases/qt/6.12/6.12.0/submodules/qtsvg-everywhere-src-6.12.0.tar.xz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "e4ab39534ec97987b1b9b60ef7f4d3253d5912a69f8c713a01753174a4029331",
@@ -9445,7 +9445,7 @@
         "sha256": "edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36",
         "url": "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36",
@@ -9483,7 +9483,7 @@
         "sha256": "52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307",
         "url": "https://files.pythonhosted.org/packages/7e/74/66de6258867beb2ef08f35f9f2ac017a52cacd5081714d239ff1a442d458/scipy-1.18.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307",
@@ -9524,7 +9524,7 @@
         "sha256": "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73",
         "url": "https://files.pythonhosted.org/packages/6d/44/f5da03a8ef95d369145c5bb53050e7877c9f3d312e128605fd9504829143/setuptools-84.0.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73",
@@ -9568,7 +9568,7 @@
         "sha256": "e8865e553d874a1ec4a032057ea81fca9def37b188cd8fb550af3b3480b3f88c",
         "url": "https://files.pythonhosted.org/packages/f3/ab/924b6e202f796d270a3041a230151f7908db5ea48c74effe6f8023e9bd05/shapely-2.2.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "e8865e553d874a1ec4a032057ea81fca9def37b188cd8fb550af3b3480b3f88c",
@@ -9602,7 +9602,7 @@
         "sha256": "f218c93375b5aebe8440b24324e3d87b20b65df99ad07ae0ab003b3dd7cb006a",
         "url": "https://codeload.github.com/shapely/shapely/tar.gz/229c71f7128713b37201f3c77336d32b52467454"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f218c93375b5aebe8440b24324e3d87b20b65df99ad07ae0ab003b3dd7cb006a",
@@ -9637,7 +9637,7 @@
         "sha256": "86c56014034739ba39a24c23eb00323b0bf6f737354f665786015fca842af786",
         "url": "https://github.com/Tehreer/SheenBidi/archive/refs/tags/v3.0.0/sheenbidi-3.0.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "86c56014034739ba39a24c23eb00323b0bf6f737354f665786015fca842af786",
@@ -9671,7 +9671,7 @@
         "sha256": "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
         "url": "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81",
@@ -9705,7 +9705,7 @@
         "sha256": "61348cfb77d53b9242e0017029244b559b810c142ced65b4e21eeca1843959a7",
         "url": "https://files.pythonhosted.org/packages/00/dc/6c58154c1c65f758ea979e7139cb76993a9cfc662d14e9be3c4a667cfb77/threadpoolctl-3.7.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "61348cfb77d53b9242e0017029244b559b810c142ced65b4e21eeca1843959a7",
@@ -9740,7 +9740,7 @@
         "sha256": "f698d94f3103da8ca7438d84e0344e453fe0ba3b7486e04c5bf7a9a3fabe9b69",
         "url": "https://download.osgeo.org/libtiff/tiff-4.7.1.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f698d94f3103da8ca7438d84e0344e453fe0ba3b7486e04c5bf7a9a3fabe9b69",
@@ -9780,7 +9780,7 @@
         "sha256": "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5",
         "url": "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5",
@@ -9814,7 +9814,7 @@
         "sha256": "94800765601e9171bf5d58d066e640662842bcedcbab982b2c90787a2c987322",
         "url": "https://files.pythonhosted.org/packages/d0/20/50ed6bdf27dec98b568a8ae25dc599f35baa3d9709f9e83fd1edb56b9a90/wheel-0.48.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "94800765601e9171bf5d58d066e640662842bcedcbab982b2c90787a2c987322",
@@ -9851,7 +9851,7 @@
         "sha256": "f9c65aa9c852eb8255b636fd9f07ce1c406f061ec19a2e7d508b318ca0c907d1",
         "url": "https://codeload.github.com/zlib-ng/zlib-ng/tar.gz/refs/tags/2.3.3"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "f9c65aa9c852eb8255b636fd9f07ce1c406f061ec19a2e7d508b318ca0c907d1",
@@ -9890,7 +9890,7 @@
         "sha256": "af1a2fb0b83ef4a7fc0682a4c95ca2576e14d0280bca2a9e67b7dc9f2733e123",
         "url": "https://files.pythonhosted.org/packages/38/75/2144b65e4fba12a2d9868e9a3f99db7fa0760670d064603634bef9ff1709/wcwidth-0.3.0.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "af1a2fb0b83ef4a7fc0682a4c95ca2576e14d0280bca2a9e67b7dc9f2733e123",
@@ -9936,7 +9936,7 @@
         "sha256": "60652d3a2dcee5b8af8acb097c31776fb6d808027aeb7221830f72cdafefc174",
         "url": "https://files.pythonhosted.org/packages/40/8d/521be7f0091fe0f2ae690cc044faf43e3445e0ff33c574eae752dd7e39fa/emoji-0.5.4.tar.gz"
       },
-      "source_bundle": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "normalization": {
         "recipe": "packaging/source-recipes/normalize_source_archive.py",
         "input_sha256": "60652d3a2dcee5b8af8acb097c31776fb6d808027aeb7221830f72cdafefc174",
@@ -9960,6 +9960,18 @@
         "name_code_pairs": "Exactly equal after the supplied Rich generator transform; historical generator environment is not asserted",
         "upstream_generator": "packaging/source-recipes/rich-15.0.0/upstream-make-emoji.py.txt"
       }
+    },
+    {
+      "id": "shiboken6-6.12.0-etlayout.1-preferred",
+      "version": "6.12.0+etlayout.1",
+      "filename": "shiboken6-6.12.0-etlayout.1-source-supplement.zip",
+      "bytes": 49580,
+      "sha256": "bfa0c3f54954ae3b81b55323d1405ab4e06645e9fec0a5c4f65eecb9fbcea6c5",
+      "url": null,
+      "license_expression": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+      "build_role": "Modified Shiboken source supplement: dated patch, modified source, build recipes, licenses and provenance; complete corresponding source also requires the original pyside6-6.12.0 archive shipped in the same Qt source part",
+      "bundle_path": "archives/shiboken6-6.12.0-etlayout.1-source-supplement.zip",
+      "source_bundle": "ETLayout-0.4.2-corresponding-source-qt-gui.zip"
     }
   ],
   "compiled_native": [
@@ -9979,6 +9991,31 @@
         "HXT",
         "MPEG-encode"
       ]
+    },
+    {
+      "id": "shiboken6-runtime",
+      "version": "6.12.0+etlayout.1",
+      "filename": "shiboken6.abi3.dll",
+      "abi": "cp310-abi3-win_amd64",
+      "bytes": 381952,
+      "sha256": "69ae93f8368ff37941c8ce3bd725f2e85ae15b4f7cdd5f39ab6abcfad942f1f6",
+      "source_id": "shiboken6-6.12.0-etlayout.1-preferred",
+      "upstream_source_id": "pyside6-6.12.0",
+      "source_archive_sha256": "e659fbccafdc0ca7a0235188355837b67274e4e18e893b0b98a5a76c859d13ef",
+      "recipe": "packaging/source-recipes/shiboken6-6.12.0/build_runtime.py",
+      "recipe_sha256": "96cc985a278069eee546f3b4005b6c8f56e8f9bcc59c6122a46ef06e31b7f9e1",
+      "recipe_files": {
+        "CMakeLists.txt": "d37d115d34807e3ad5f007bd70103375fca21ff8a0ecc8de9979d00ace294f92",
+        "build_runtime.py": "96cc985a278069eee546f3b4005b6c8f56e8f9bcc59c6122a46ef06e31b7f9e1",
+        "README.md": "88e2890fbfa167dde25d2d425f34bc07b40f1adfca3438a95eb88ce38d40dfb1"
+      },
+      "patch": "packaging/source-recipes/shiboken6-6.12.0/referred_objects_lifetime.patch",
+      "patch_sha256": "353cbe6519da4e1ad6a93d52814ac8ec51ad8058897c4086e9d5627a3259489c",
+      "source_before_sha256": "199a86e6daf4447ff77b364e1dd3da9fcbc8bbf4299bcf6bf4ee95eaaa9c15af",
+      "source_after_sha256": "9e5e17a5f43a21a1654a5742a09dddb32ef03e1a4035c2b341cd8af7a1690eb7",
+      "receipt_sha256": "def273f167d37bbd2979bae1ec99ca6fb315d69ddbf3e1b245bdbf7fe16eb339",
+      "import_library_sha256": "4b1509cdceb18a28ecc34e8506cb158d3093f649efdb0fc32d1359b3cc9ca25f",
+      "unchanged_module_sha256": "8ccf415b2cefb5b6462504581ab1993fb41afe04e415931d8a72049f1c79b267"
     }
   ],
   "runtime_python": {
@@ -10015,7 +10052,7 @@
   ],
   "source_bundle_parts": [
     {
-      "filename": "ETLayout-0.4.1-corresponding-source-python-runtime.zip",
+      "filename": "ETLayout-0.4.2-corresponding-source-python-runtime.zip",
       "component_ids": [
         "cpython-3.12.14",
         "mingw-w64-14.0.0",
@@ -10032,17 +10069,18 @@
       ]
     },
     {
-      "filename": "ETLayout-0.4.1-corresponding-source-qt-gui.zip",
+      "filename": "ETLayout-0.4.2-corresponding-source-qt-gui.zip",
       "component_ids": [
         "pyqtgraph-0.14.0",
         "pyside6-6.12.0",
         "qtbase-6.12.0",
         "qtimageformats-6.12.0",
-        "qtsvg-6.12.0"
+        "qtsvg-6.12.0",
+        "shiboken6-6.12.0-etlayout.1-preferred"
       ]
     },
     {
-      "filename": "ETLayout-0.4.1-corresponding-source-scientific-geometry.zip",
+      "filename": "ETLayout-0.4.2-corresponding-source-scientific-geometry.zip",
       "component_ids": [
         "geos-3.14.1",
         "gmsh-4.15.2",
@@ -10066,7 +10104,7 @@
       ]
     },
     {
-      "filename": "ETLayout-0.4.1-corresponding-source-rendering-support.zip",
+      "filename": "ETLayout-0.4.2-corresponding-source-rendering-support.zip",
       "component_ids": [
         "brotli-1.2.0",
         "colorama-0.4.6",
@@ -10164,6 +10202,26 @@
     {
       "path": "packaging/source-recipes/source_archive_io.py",
       "sha256": "bc7f598674989d9e2e3c848ea21a9562bdbaffcac2a0ba1cfe93ca8154ebcf91"
+    },
+    {
+      "path": "packaging/source-recipes/shiboken6-6.12.0/CMakeLists.txt",
+      "sha256": "d37d115d34807e3ad5f007bd70103375fca21ff8a0ecc8de9979d00ace294f92"
+    },
+    {
+      "path": "packaging/source-recipes/shiboken6-6.12.0/README.md",
+      "sha256": "88e2890fbfa167dde25d2d425f34bc07b40f1adfca3438a95eb88ce38d40dfb1"
+    },
+    {
+      "path": "packaging/source-recipes/shiboken6-6.12.0/build_runtime.py",
+      "sha256": "96cc985a278069eee546f3b4005b6c8f56e8f9bcc59c6122a46ef06e31b7f9e1"
+    },
+    {
+      "path": "packaging/source-recipes/shiboken6-6.12.0/referred_objects_lifetime.patch",
+      "sha256": "353cbe6519da4e1ad6a93d52814ac8ec51ad8058897c4086e9d5627a3259489c"
+    },
+    {
+      "path": "scripts/prepare_qt_runtime.py",
+      "sha256": "033abcdfbb875392dc50c49cc5fd7b3baaa70a1eb35ee7db6f55821d71034ebc"
     }
   ],
   "unshipped_build_prerequisites": [
@@ -10366,7 +10424,8 @@
       "shapely-2.2.0"
     ],
     "shiboken6": [
-      "pyside6-6.12.0"
+      "pyside6-6.12.0",
+      "shiboken6-6.12.0-etlayout.1-preferred"
     ],
     "six": [
       "six-1.17.0"

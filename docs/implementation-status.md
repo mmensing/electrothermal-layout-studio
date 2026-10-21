@@ -1,9 +1,9 @@
 # Implementation status
 
-This source checkout is **0.4.1**, retaining the established desktop, CLI and
+This source checkout is **0.4.2**, retaining the established desktop, CLI and
 file compatibility. Check [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
 for actual Windows downloads; older binaries do not acquire new source tools.
-See the [versioned capability catalog](features.md), [0.4.1 notes](releases/0.4.1.md),
+See the [versioned capability catalog](features.md), [0.4.2 notes](releases/0.4.2.md),
 [engineering notes](releases/0.4.x.md) and [validation](validation.md) for scope,
 evidence and reproduction. About and `etlayout build-info` identify this
 installation; recorded results retain their original implementation receipt.
