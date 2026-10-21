@@ -184,3 +184,41 @@ def test_cpu_receipt_rejects_wrong_service_or_balance_despite_equal_fields(chang
     else:
         other["metrics"]["terminal_power"] = 1.
     assert not script["compare_observables"]([row, other], Project(), 5.)["accepted"]
+
+
+def test_cpu_benchmark_alternates_repeated_pairs_and_compares_every_repetition():
+    from copy import deepcopy
+
+    from etlayout.models import Project
+
+    script = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/benchmark_cpu.py"))
+    assert script["run_plan"](3) == [(1, 1), (1, 4), (2, 4), (2, 1), (3, 1), (3, 4)]
+    row = {"ports": {"drain": {"current": 5.}}, "metrics": {"terminal_power": 2.,
+           "current_balance_error": 1e-10, "power_balance_error": 1e-10, "thermal_balance_error": 1e-10}}
+    rows = [deepcopy(row) for _ in range(4)]
+    assert script["compare_observables"](rows, Project(), 5.)["accepted"]
+    rows[-1]["metrics"]["terminal_power"] = 2.1
+    assert not script["compare_observables"](rows, Project(), 5.)["accepted"]
+
+
+@pytest.mark.parametrize("mode", ["electrical", "thermal", "electrothermal"])
+def test_cpu_receipt_requires_the_conservation_equations_actually_solved(mode):
+    from etlayout.models import Project
+
+    script = runpy.run_path(str(Path(__file__).resolve().parents[1] / "scripts/benchmark_cpu.py"))
+    project = Project()
+    project.solver.mode = mode
+    row = {"metrics": {"temperature_max": 300., "terminal_power": 2.,
+           "current_balance_error": 1e-10, "power_balance_error": 1e-10}}
+    # A missing thermal balance is legitimate only for electrical-only runs.
+    assert script["compare_observables"]([row, row], project)["accepted"] == (mode == "electrical")
+    row["metrics"]["thermal_balance_error"] = 1e-10
+    assert script["compare_observables"]([row, row], project)["accepted"]
+    if mode == "thermal":
+        del row["metrics"]["current_balance_error"]
+        assert script["compare_observables"]([row, row], project)["accepted"]
+        project.solver.thermal_include_joule = True
+        assert not script["compare_observables"]([row, row], project)["accepted"]
+    else:
+        row["metrics"]["power_balance_error"] = .1
+        assert not script["compare_observables"]([row, row], project)["accepted"]

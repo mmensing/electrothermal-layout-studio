@@ -110,13 +110,14 @@ and keep generated archives/logs outside source control.
 Use the explicit same-mesh harness; it never runs while generating examples:
 
 ```powershell
-python scripts/benchmark_cpu.py --example E21 --output artifacts/e21-cpu-new
+python scripts/benchmark_cpu.py --example E21 --repetitions 2 --output artifacts/e21-cpu-new
 ```
 
 It generates the exact nominal 32-finger, 500 µm conducting-width-per-finger
 E21 (16 mm total gate width, 1.14 × 1.10 mm domain, 5 A, attached backside).
 One conforming mesh is prepared and guarded before fresh 1-CPU and 4-CPU worker
-processes solve identical inputs. Preparation and meshing are measured separately;
+processes solve identical inputs. The current harness defaults to two pairs in
+alternating order (1, 4, 4, 1), recording process CPU time as well as wall time. Preparation and meshing are measured separately;
 the worker meshing times describe verified mesh reuse, not a fresh mesh build.
 Every supported field, delivered service, integral quantities and configured
 conservation criteria are checked. Default field-comparison arrays are removed
@@ -148,3 +149,45 @@ remain material costs. No mesh-convergence claim follows from same-mesh equality
 this mesh also reports slender-triangle warnings. The concise maintained
 [receipt](../benchmarks/e21-cpu-041.json) binds exact source, physics and mesh
 identities. It describes this measured implementation, not a future-build promise.
+
+
+## Stable native kernel cap: repeated source comparison
+
+The earlier single pair did not isolate a stable four-CPU slowdown. A fresh
+2026-10-21 comparison used current 0.4.1 main as the baseline and the revised
+execution policy on the same guarded nominal E21 mesh. Eight unprofiled spawned
+processes ran two repetitions for each policy/budget in symmetric order. Both
+source version labels were still 0.4.1 before the 0.4.2 version bump; the
+[maintained receipt](../benchmarks/e21-cpu-042.json) pins both actual implementation
+digests, hardware, run order, phases and scientific checks.
+
+| Source policy and budget | Median calculation wall | Observed range | Median process CPU |
+| --- | ---: | ---: | ---: |
+| Original, 1 CPU | 77.704 s | 71.114–84.294 s | 75.531 s |
+| Original, 4 CPUs | 78.595 s | 68.882–88.308 s | 80.938 s |
+| Stable cap, 1 CPU | 78.735 s | 75.841–81.629 s | 76.531 s |
+| Stable cap, 4 CPUs | 76.801 s | 68.556–85.047 s | 79.578 s |
+
+Every four-CPU run used four actual assembly workers. All eight runs converged
+at 5 A with the same 143,324 triangles, 301,091 estimated DOFs and 72 equivalent
+supported fields. Terminal response and configured current, electrical-power and
+thermal-balance checks passed. Neither physics nor acceptance tolerances changed.
+
+Profiling found serial SuperLU factorization, exact-support reporting and
+memory-bound array work dominate. Threading the independent assembly buffers
+therefore cannot provide a fourfold complete-run speedup. The previous policy
+also rescanned native libraries and switched the native pool limit around each
+of 130 assembly batches. The revised policy keeps native kernels at one thread
+throughout the owned run, retains the configurable outer worker budget (four by
+default), and restores the caller's original native limits after all tasks join.
+This removes those redundant scans and avoids short-vector/nested-team overhead;
+it does not make SuperLU parallel. Results record the native cap separately from
+the requested budget and actual assembly activity.
+
+The observed ranges overlap strongly; these medians do **not** establish a stable
+whole-run speedup ranking or identify one cause for the complete earlier slowdown.
+Background load, CPU frequency and temperature were not controlled. Select a
+budget using repeated measurements on the actual workload; independent study
+points can benefit from processes when memory permits. These are source tests on
+the Windows build host, not clean-machine or packaged-build performance evidence.
+Same-mesh equality is not mesh convergence; slender-triangle warnings remain.
