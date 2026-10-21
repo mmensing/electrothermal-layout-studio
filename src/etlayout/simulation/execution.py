@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MPL-2.0
-"""Machine-local execution policy and bounded native CPU thread pools.
+"""Machine-local execution policy and bounded assembly/native CPU thread pools.
 
 Project physics never include these preferences. Native BLAS/OpenMP limits are
 process-wide, so contexts in separate Python threads are serialized; independent
@@ -35,7 +35,7 @@ def _cpu_count() -> int:
 
 @dataclass(frozen=True)
 class ExecutionSettings:
-    """Total CPU budget and maximum independent study processes, not per-worker CPUs."""
+    """Total outer-worker budget; native kernels use one thread per worker."""
     cpu_threads: int = field(default_factory=lambda: min(4, _cpu_count()))
     study_workers: int = field(default_factory=lambda: min(4, _cpu_count()))
 
@@ -119,7 +119,7 @@ def validate_execution(settings: ExecutionSettings | Mapping[str, Any] | None = 
 @contextmanager
 def execution_context(settings: ExecutionSettings | Mapping[str, Any] | None = None, *,
                       reset_counts: bool = False):
-    """Apply native thread limits; same-settings nesting shares counters by default.
+    """Cap native kernels at one thread; nesting shares counters by default.
 
     ``reset_counts=True`` creates isolated run counters even inside a study's
     context. Provenance must be read before exit. It describes the whole run,
@@ -143,12 +143,13 @@ def execution_context(settings: ExecutionSettings | Mapping[str, Any] | None = N
     except ImportError as exc:
         raise SimulationError("CPU thread control requires threadpoolctl; install the project dependencies") from exc
     # Import native numerical runtimes before the controller scans loaded
-    # libraries. SuperLU itself is not a threaded BLAS solver; this is a cap on
-    # native pools, not a promise that one linear solve uses every selected CPU.
+    # libraries. Outer FEM/study workers own the CPU budget. Keeping native
+    # kernels at one thread avoids nested teams and short-vector BLAS overhead
+    # between batches; SuperLU sparse factorization itself remains serial.
     importlib.import_module("numpy")
     importlib.import_module("scipy.linalg")
     importlib.import_module("scipy.sparse.linalg")
-    with _NATIVE_LOCK, threadpool_limits(limits=selected.cpu_threads):
+    with _NATIVE_LOCK, threadpool_limits(limits=1):
         token = _ACTIVE.set(_ExecutionState(selected))
         try:
             yield selected
@@ -161,9 +162,10 @@ def map_independent(function, items, *, work_units: int):
     """Compute independent FEM buffers in bounded threads, preserving input order.
 
     Inputs are read-only; each task owns its returned array/sparse matrix. NumPy
-    and SciPy kernels release the GIL. Inner BLAS pools use one thread during the
-    batch so outer assembly workers cannot multiply the configured CPU budget.
-    A run owns and joins its reusable executor; nested kernels remain serial.
+    and SciPy kernels release the GIL. The owning execution context keeps native
+    pools at one thread throughout the run, so a batch needs no library rescan or
+    pool reconfiguration. A run owns and joins its reusable executor; nested
+    kernels remain serial.
     """
     items = list(items)
     state = _ACTIVE.get()
@@ -183,19 +185,17 @@ def map_independent(function, items, *, work_units: int):
         finally:
             _ASSEMBLY_WORKER.reset(token)
 
-    from threadpoolctl import threadpool_limits
     started = time.perf_counter()
-    with _NATIVE_LOCK, threadpool_limits(limits=1):
-        futures = [state.executor.submit(copy_context().run, invoke, item) for item in items]
-        try:
-            outputs = [future.result() for future in futures]
-        except BaseException:
-            for future in futures:
-                future.cancel()
-            # Running tasks must finish under the batch's native cap before a
-            # caller can catch the error and mutate inputs or start another job.
-            wait(futures)
-            raise
+    futures = [state.executor.submit(copy_context().run, invoke, item) for item in items]
+    try:
+        outputs = [future.result() for future in futures]
+    except BaseException:
+        for future in futures:
+            future.cancel()
+        # Finish running tasks under the owning context's native cap before a
+        # caller can catch the error and mutate inputs or start another job.
+        wait(futures)
+        raise
     state.assembly_batches += 1
     state.assembly_tasks += len(outputs)
     state.assembly_wall_seconds += time.perf_counter() - started
@@ -261,9 +261,11 @@ def execution_provenance() -> dict[str, Any]:
             "timings_seconds": dict(state.timings) if state else {},
             "timing_definition": "Measured wall time; electrical_assembly, thermal_assembly and sparse_linear_solves are separately measured subsets of numerical time. Assembly times cover the assemble calls, including material validation/operator-cache lookup; they exclude initial space/contact/boundary preparation. Cached runs record retrieval only.",
             "effective_cpu_threads": settings.cpu_threads,
+            "native_threads_per_worker": 1,
+            "cpu_budget_definition": "Upper bound on outer assembly workers, divided among active study processes; native kernels use one thread per worker, not the total CPU budget.",
             "process_id": os.getpid(), "scope": "whole_run",
-            "acceleration_scope": ("parallel_fem_assembly_and_native_cpu_thread_pools"
-                                   if state and state.assembly_batches else "native_cpu_thread_pools"),
+            "acceleration_scope": ("parallel_fem_assembly"
+                                   if state and state.assembly_batches else "serial_native_kernels"),
             "parallel_assembly": {"batches": state.assembly_batches if state else 0,
                                   "tasks": state.assembly_tasks if state else 0,
                                   "worker_thread_ids": sorted(state.assembly_thread_ids) if state else [],

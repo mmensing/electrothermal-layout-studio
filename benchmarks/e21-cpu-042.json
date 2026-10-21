@@ -1,0 +1,461 @@
+{
+  "schema_version": 1,
+  "scope": "Same-mesh, fresh-process, unprofiled source CPU-policy comparison; not mesh verification or a frozen-Windows benchmark.",
+  "date": "2026-10-21",
+  "baseline_revision": "e609722282a3968336fbd0609c6701120576fcf1",
+  "source_builds": {
+    "baseline": {
+      "version": "0.4.1",
+      "implementation_sha256": "206aa0c99c0277c6338d348a8133f48ae93ea62e7102d9f938a896f38b609932",
+      "dependencies": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "shapely": "2.2.0",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shiboken6": "6.12.0",
+        "pyqtgraph": "0.14.0",
+        "matplotlib": "3.11.2",
+        "meshio": "5.3.5",
+        "platformdirs": "4.12.4",
+        "threadpoolctl": "3.7.0",
+        "psutil": "7.2.2"
+      },
+      "runtime": {
+        "python": "3.12.14",
+        "implementation": "CPython",
+        "system": "Windows",
+        "release": "11",
+        "machine": "AMD64"
+      }
+    },
+    "fixed": {
+      "version": "0.4.1",
+      "implementation_sha256": "d3e1f5816fecc7f6d49622bc7b6622863e438025a148b7fa223e493da0a6bd54",
+      "dependencies": {
+        "numpy": "2.5.4",
+        "scipy": "1.18.1",
+        "shapely": "2.2.0",
+        "gmsh": "4.15.2",
+        "klayout": "0.30.12",
+        "PySide6": "6.12.0",
+        "shiboken6": "6.12.0",
+        "pyqtgraph": "0.14.0",
+        "matplotlib": "3.11.2",
+        "meshio": "5.3.5",
+        "platformdirs": "4.12.4",
+        "threadpoolctl": "3.7.0",
+        "psutil": "7.2.2"
+      },
+      "runtime": {
+        "python": "3.12.14",
+        "implementation": "CPython",
+        "system": "Windows",
+        "release": "11",
+        "machine": "AMD64"
+      }
+    }
+  },
+  "source_version_note": "The fixed-policy source was measured before the 0.4.2 version bump; both source version labels were 0.4.1. Exact runtime implementation digests identify the measured code.",
+  "hardware": {
+    "system": "Windows",
+    "release": "11",
+    "processor": "AMD64 Family 26 Model 96 Stepping 0, AuthenticAMD",
+    "python": "3.12.14",
+    "physical_cpus": 8,
+    "logical_cpus": 16,
+    "physical_memory_bytes": 33476079616
+  },
+  "configuration": {
+    "example": "E21",
+    "fingers": 32,
+    "gate_width_per_finger_m": 0.0005,
+    "total_gate_width_m": 0.016,
+    "domain_m": [
+      0.00114,
+      0.0011
+    ],
+    "requested_current_A": 5.0,
+    "thermal": "attached backside"
+  },
+  "physics_hash": "94fd5cde31a05740886f0e441cdbad9423565d3e6426a29d1e9f54dfb3fc1e7d",
+  "mesh_sha256": "352538ad39f3f3154252466c26b52b63efa3b87239ede8b74f7e5ea8baa1fcc9",
+  "mesh": {
+    "nodes": 71776,
+    "elements": 143324,
+    "estimated_dofs": 301091,
+    "minimum_quality": 0.021459511321893842,
+    "warnings": [
+      "Very slender triangles detected; inspect narrow geometry and mesh-size controls"
+    ]
+  },
+  "identical_physics_and_mesh": true,
+  "source_unchanged": true,
+  "all_72_supported_fields_equivalent": true,
+  "maximum_field_absolute_difference": 0,
+  "comparison_tolerances": {
+    "relative": 1e-10,
+    "absolute": 1e-12
+  },
+  "observables_and_configured_conservation_accepted": true,
+  "run_order": [
+    "01-baseline-cpu-1",
+    "02-baseline-cpu-4",
+    "03-fixed-cpu-4",
+    "04-fixed-cpu-1",
+    "05-fixed-cpu-1",
+    "06-fixed-cpu-4",
+    "07-baseline-cpu-4",
+    "08-baseline-cpu-1"
+  ],
+  "runs": [
+    {
+      "case": "01-baseline-cpu-1",
+      "source_policy": "baseline",
+      "cpu_budget": 1,
+      "calculation_wall_seconds": 84.29401690000668,
+      "process_cpu_seconds": 82.5625,
+      "peak_process_RSS_bytes": 1675358208,
+      "phase_seconds": {
+        "preparation": 0.15852619998622686,
+        "meshing": 0.12468999996781349,
+        "electrical_assembly": 11.726510500884615,
+        "sparse_linear_solves": 20.59608669974841,
+        "thermal_assembly": 3.2676879002247006,
+        "reporting": 21.3375486000441,
+        "numerical": 61.966369699919596,
+        "total": 83.82031500001904
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 0,
+      "assembly_tasks": 0,
+      "actual_assembly_workers": 0,
+      "assembly_worker_cpu_seconds": 0.0,
+      "assembly_wall_seconds": 0.0,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "02-baseline-cpu-4",
+      "source_policy": "baseline",
+      "cpu_budget": 4,
+      "calculation_wall_seconds": 88.30837719992269,
+      "process_cpu_seconds": 90.8125,
+      "peak_process_RSS_bytes": 1670189056,
+      "phase_seconds": {
+        "preparation": 0.1537735000019893,
+        "meshing": 0.11520600004587322,
+        "electrical_assembly": 9.878393900347874,
+        "sparse_linear_solves": 23.055360699887387,
+        "thermal_assembly": 2.7851492997724563,
+        "reporting": 24.135882499977015,
+        "numerical": 63.22018220007885,
+        "total": 87.84104910003953
+      },
+      "native_pool_threads": [
+        4,
+        4
+      ],
+      "assembly_batches": 130,
+      "assembly_tasks": 1099,
+      "actual_assembly_workers": 4,
+      "assembly_worker_cpu_seconds": 10.234375,
+      "assembly_wall_seconds": 5.90424419939518,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114499600478663e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "03-fixed-cpu-4",
+      "source_policy": "fixed",
+      "cpu_budget": 4,
+      "calculation_wall_seconds": 85.04650940001011,
+      "process_cpu_seconds": 88.15625,
+      "peak_process_RSS_bytes": 1676832768,
+      "phase_seconds": {
+        "preparation": 0.1807439000112936,
+        "meshing": 0.1521917999489233,
+        "electrical_assembly": 9.462800600682385,
+        "sparse_linear_solves": 22.516981700086035,
+        "thermal_assembly": 2.4069516003364697,
+        "reporting": 22.69208950002212,
+        "numerical": 61.28018710005563,
+        "total": 84.5745136999758
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 130,
+      "assembly_tasks": 1099,
+      "actual_assembly_workers": 4,
+      "assembly_worker_cpu_seconds": 10.28125,
+      "assembly_wall_seconds": 5.4626718000508845,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "04-fixed-cpu-1",
+      "source_policy": "fixed",
+      "cpu_budget": 1,
+      "calculation_wall_seconds": 81.62915549997706,
+      "process_cpu_seconds": 80.109375,
+      "peak_process_RSS_bytes": 1667637248,
+      "phase_seconds": {
+        "preparation": 0.15364309994038194,
+        "meshing": 0.09563739993609488,
+        "electrical_assembly": 11.75116100080777,
+        "sparse_linear_solves": 21.287866199738346,
+        "thermal_assembly": 3.3282711998326704,
+        "reporting": 18.06036080000922,
+        "numerical": 62.55037630000152,
+        "total": 81.13427809998393
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 0,
+      "assembly_tasks": 0,
+      "actual_assembly_workers": 0,
+      "assembly_worker_cpu_seconds": 0.0,
+      "assembly_wall_seconds": 0.0,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "05-fixed-cpu-1",
+      "source_policy": "fixed",
+      "cpu_budget": 1,
+      "calculation_wall_seconds": 75.84075360000134,
+      "process_cpu_seconds": 72.953125,
+      "peak_process_RSS_bytes": 1678938112,
+      "phase_seconds": {
+        "preparation": 0.15616310003679246,
+        "meshing": 0.07914030004758388,
+        "electrical_assembly": 11.090490401023999,
+        "sparse_linear_solves": 18.536027900059707,
+        "thermal_assembly": 3.0607332001673058,
+        "reporting": 18.437689999933355,
+        "numerical": 56.524209000053816,
+        "total": 75.41860930004623
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 0,
+      "assembly_tasks": 0,
+      "actual_assembly_workers": 0,
+      "assembly_worker_cpu_seconds": 0.0,
+      "assembly_wall_seconds": 0.0,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "06-fixed-cpu-4",
+      "source_policy": "fixed",
+      "cpu_budget": 4,
+      "calculation_wall_seconds": 68.55565979995299,
+      "process_cpu_seconds": 71.0,
+      "peak_process_RSS_bytes": 1670844416,
+      "phase_seconds": {
+        "preparation": 0.14008599997032434,
+        "meshing": 0.08628649997990578,
+        "electrical_assembly": 8.346170099568553,
+        "sparse_linear_solves": 17.7854882000247,
+        "thermal_assembly": 2.085241799824871,
+        "reporting": 16.56411749997642,
+        "numerical": 51.10890789993573,
+        "total": 68.11666970001534
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 130,
+      "assembly_tasks": 1099,
+      "actual_assembly_workers": 4,
+      "assembly_worker_cpu_seconds": 9.34375,
+      "assembly_wall_seconds": 4.725878199213184,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "07-baseline-cpu-4",
+      "source_policy": "baseline",
+      "cpu_budget": 4,
+      "calculation_wall_seconds": 68.88165549992118,
+      "process_cpu_seconds": 71.0625,
+      "peak_process_RSS_bytes": 1680535552,
+      "phase_seconds": {
+        "preparation": 0.13108209997881204,
+        "meshing": 0.0719277000753209,
+        "electrical_assembly": 8.281600900460035,
+        "sparse_linear_solves": 17.678584900218993,
+        "thermal_assembly": 2.4377034998033196,
+        "reporting": 17.629439399926923,
+        "numerical": 50.454990300000645,
+        "total": 68.48717269999906
+      },
+      "native_pool_threads": [
+        4,
+        4
+      ],
+      "assembly_batches": 130,
+      "assembly_tasks": 1099,
+      "actual_assembly_workers": 4,
+      "assembly_worker_cpu_seconds": 8.875,
+      "assembly_wall_seconds": 5.180097499513067,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114499600478663e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    },
+    {
+      "case": "08-baseline-cpu-1",
+      "source_policy": "baseline",
+      "cpu_budget": 1,
+      "calculation_wall_seconds": 71.11442280001938,
+      "process_cpu_seconds": 68.5,
+      "peak_process_RSS_bytes": 1664106496,
+      "phase_seconds": {
+        "preparation": 0.13427679997403175,
+        "meshing": 0.06441990006715059,
+        "electrical_assembly": 10.678404299775138,
+        "sparse_linear_solves": 17.859232299379073,
+        "thermal_assembly": 2.8858895000303164,
+        "reporting": 15.826583099900745,
+        "numerical": 54.515929700108245,
+        "total": 70.72072219999973
+      },
+      "native_pool_threads": [
+        1,
+        1
+      ],
+      "assembly_batches": 0,
+      "assembly_tasks": 0,
+      "actual_assembly_workers": 0,
+      "assembly_worker_cpu_seconds": 0.0,
+      "assembly_wall_seconds": 0.0,
+      "delivered_current_A": 4.999999999999522,
+      "terminal_voltage_V": 0.7447040191154594,
+      "temperature_max_K": 313.55212501337627,
+      "current_balance_error": 3.0787923317158967e-10,
+      "power_balance_error": 1.3114497215159405e-09,
+      "thermal_balance_error": 1.3318810026852863e-06
+    }
+  ],
+  "summary": {
+    "baseline_cpu_1": {
+      "repetitions": 2,
+      "median_calculation_wall_seconds": 77.70421985001303,
+      "minimum_calculation_wall_seconds": 71.11442280001938,
+      "maximum_calculation_wall_seconds": 84.29401690000668,
+      "median_process_cpu_seconds": 75.53125,
+      "maximum_peak_process_RSS_bytes": 1675358208,
+      "median_phase_seconds": {
+        "preparation": 0.1464014999801293,
+        "meshing": 0.09455495001748204,
+        "electrical_assembly": 11.202457400329877,
+        "sparse_linear_solves": 19.227659499563742,
+        "thermal_assembly": 3.0767887001275085,
+        "reporting": 18.582065849972423,
+        "numerical": 58.24114970001392,
+        "total": 77.27051860000938
+      }
+    },
+    "baseline_cpu_4": {
+      "repetitions": 2,
+      "median_calculation_wall_seconds": 78.59501634992193,
+      "minimum_calculation_wall_seconds": 68.88165549992118,
+      "maximum_calculation_wall_seconds": 88.30837719992269,
+      "median_process_cpu_seconds": 80.9375,
+      "maximum_peak_process_RSS_bytes": 1680535552,
+      "median_phase_seconds": {
+        "preparation": 0.14242779999040067,
+        "meshing": 0.09356685006059706,
+        "electrical_assembly": 9.079997400403954,
+        "sparse_linear_solves": 20.36697280005319,
+        "thermal_assembly": 2.611426399787888,
+        "reporting": 20.88266094995197,
+        "numerical": 56.83758625003975,
+        "total": 78.1641109000193
+      }
+    },
+    "fixed_cpu_1": {
+      "repetitions": 2,
+      "median_calculation_wall_seconds": 78.7349545499892,
+      "minimum_calculation_wall_seconds": 75.84075360000134,
+      "maximum_calculation_wall_seconds": 81.62915549997706,
+      "median_process_cpu_seconds": 76.53125,
+      "maximum_peak_process_RSS_bytes": 1678938112,
+      "median_phase_seconds": {
+        "preparation": 0.1549030999885872,
+        "meshing": 0.08738884999183938,
+        "electrical_assembly": 11.420825700915884,
+        "sparse_linear_solves": 19.911947049899027,
+        "thermal_assembly": 3.194502199999988,
+        "reporting": 18.249025399971288,
+        "numerical": 59.537292650027666,
+        "total": 78.27644370001508
+      }
+    },
+    "fixed_cpu_4": {
+      "repetitions": 2,
+      "median_calculation_wall_seconds": 76.80108459998155,
+      "minimum_calculation_wall_seconds": 68.55565979995299,
+      "maximum_calculation_wall_seconds": 85.04650940001011,
+      "median_process_cpu_seconds": 79.578125,
+      "maximum_peak_process_RSS_bytes": 1676832768,
+      "median_phase_seconds": {
+        "preparation": 0.16041494999080896,
+        "meshing": 0.11923914996441454,
+        "electrical_assembly": 8.90448535012547,
+        "sparse_linear_solves": 20.15123495005537,
+        "thermal_assembly": 2.2460967000806704,
+        "reporting": 19.62810349999927,
+        "numerical": 56.19454749999568,
+        "total": 76.34559169999557
+      }
+    }
+  },
+  "implementation_change": "Keep supported native kernel pools at one thread throughout the owned run, restore caller limits after joining all tasks, and retain the configured outer assembly/study budget. Remove per-batch native-library scans and pool reconfiguration.",
+  "findings": [
+    "Four actual assembly workers were recorded for every four-CPU run; sparse factorization remained serial.",
+    "Electrical/thermal assembly is a limited fraction of total time; serial sparse solves, reporting and memory-bound array work dominate.",
+    "The two-repeat ranges overlap strongly. These observed medians do not establish a stable speedup ranking or attribute the complete historical slowdown to one cause."
+  ],
+  "mesh_verified": false,
+  "limitations": "Two fresh-process repetitions per revision/budget in alternating order. Other task agents were reserved from heavy calculations; background system load, temperature and CPU frequency were not controlled. Process RSS excludes the preparation parent. Same-mesh equality is not mesh convergence; no universal speedup guarantee.",
+  "detailed_evidence_sha256": "decb90f5bf5aa2aaf7561cb1b75a436e24aa5edf9d58be8bcc2bafbfaea8cebf"
+}

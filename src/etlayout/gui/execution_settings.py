@@ -35,7 +35,7 @@ class ExecutionSettingsDialog(QDialog):
         self.cpu_threads.setRange(1, max(1, self.capabilities.get("cpu_count") or 1))
         self.cpu_threads.setValue(self.settings.cpu_threads)
         self.cpu_threads.setAccessibleName("Total CPU thread budget")
-        self.cpu_threads.setToolTip("Maximum assembly workers and native numerical threads across the solve or study. Simultaneous study workers share this budget.")
+        self.cpu_threads.setToolTip("Maximum assembly workers across the solve or study. Simultaneous study workers share this budget; native numerical kernels use one thread per worker.")
         form.addRow("Total CPU thread budget", self.cpu_threads)
         self.study_workers = QSpinBox()
         self.study_workers.setRange(1, self.cpu_threads.value())
@@ -48,7 +48,7 @@ class ExecutionSettingsDialog(QDialog):
         self.cpu_note.setAccessibleName("CPU budget allocation")
         form.addRow(self.cpu_note)
         layout.addWidget(cpu_group)
-        note = QLabel("Larger electrical and thermal assemblies use worker threads within this budget. Small assemblies, geometry preparation and SuperLU sparse factorization remain serial. CPU activity varies by phase; more threads do not guarantee faster runs. Parallel studies also require more memory.")
+        note = QLabel("Larger electrical and thermal assemblies use worker threads within this budget. Native BLAS kernels use one thread per worker to avoid nested teams and short-vector overhead. Small assemblies, geometry preparation and SuperLU sparse factorization remain serial. More workers do not guarantee faster runs; parallel studies also require more memory.")
         note.setWordWrap(True)
         layout.addWidget(note)
         self.error = QLabel()
@@ -71,10 +71,10 @@ class ExecutionSettingsDialog(QDialog):
         per_worker = budget // workers
         available = self.capabilities.get("cpu_count") or 1
         self.cpu_note.setText(
-            f"Available logical CPUs: {available}. Single run: up to {budget} assembly workers or native threads. "
+            f"Available logical CPUs: {available}. Single run: up to {budget} assembly workers. "
             f"At {workers} simultaneous study {'point' if workers == 1 else 'points'}: "
-            f"up to {per_worker} assembly/native {'thread' if per_worker == 1 else 'threads'} per worker. "
-            "Fewer active workers receive a larger share of the budget."
+            f"up to {per_worker} assembly {'thread' if per_worker == 1 else 'threads'} per worker. "
+            "Native kernels use one thread each. Fewer active study workers receive a larger share of the assembly budget."
             + (" Native thread-pool control is unavailable; install the project dependencies before running."
                if not self.capabilities.get("threadpoolctl_available", False) else ""))
 

@@ -87,8 +87,9 @@ data locations. Source development can use `python -m etlayout` and
 **Edit → Execution settings…** controls the total CPU budget and maximum parallel study
 workers. The default budget is four logical CPUs, reduced when fewer are available; the worker
 limit cannot exceed it. These settings apply to future runs and persist on this computer.
-The console offers `--cpu-threads` and `--study-workers`. Supported native numerical thread
-pools and larger FEM assembly batches share this budget across the spawned study workers.
+The console offers `--cpu-threads` and `--study-workers`. Supported native numerical
+kernels use one thread per worker throughout the run; larger FEM assembly batches share the
+CPU budget across spawned study workers. Gmsh receives the selected meshing budget.
 Small batches, SuperLU factorization and some meshing/geometry steps remain serial, so CPU
 activity varies by phase and more CPUs do not guarantee a faster individual solve. Parallel
 studies also consume more memory. The distribution uses CPU execution and requires no GPU runtime.

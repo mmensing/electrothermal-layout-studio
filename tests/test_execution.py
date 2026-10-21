@@ -64,6 +64,7 @@ def test_native_limits_apply_restore_and_record_actual_solves():
         assert evidence["actual_backend"] == "cpu"
         assert evidence["linear_solves"] == {"cpu": 1}
         assert evidence["effective_cpu_threads"] == 1
+        assert evidence["native_threads_per_worker"] == 1
         assert evidence["native_threadpools"]
         assert all(pool["num_threads"] == 1 for pool in evidence["native_threadpools"])
         json.dumps(evidence)
@@ -88,17 +89,18 @@ def test_nested_context_shares_or_resets_counters_and_restores_after_exception()
     assert execution_provenance()["actual_backend"] == "not_run"
 
 
-def test_changed_nested_limits_restore_after_error():
+def test_changed_nested_budgets_keep_native_cap_and_restore_after_error():
     if detect_capabilities()["cpu_count"] < 2:
         pytest.skip("Two logical CPUs are required to exercise differing pool limits")
     with execution_context(ExecutionSettings(2, 1)):
         _solve()
+        assert all(pool["num_threads"] == 1 for pool in threadpool_info())
         with pytest.raises(RuntimeError):
             with execution_context(ExecutionSettings(1, 1)):
                 assert all(pool["num_threads"] == 1 for pool in threadpool_info())
                 raise RuntimeError("cancel")
         assert current_execution().cpu_threads == 2
-        assert all(pool["num_threads"] == 2 for pool in threadpool_info())
+        assert all(pool["num_threads"] == 1 for pool in threadpool_info())
         assert execution_provenance()["linear_solves"] == {"cpu": 1}
 
 

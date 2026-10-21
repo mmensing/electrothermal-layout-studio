@@ -175,17 +175,19 @@ energy accounting, examples and CLI equivalents.
 In the current workspace, open **Edit → Execution settings…** to set **Total CPU thread budget** and
 **Parallel study worker limit**. Both default to four, capped at the number of
 available logical CPUs. The worker limit cannot exceed the total budget. One
-run can use the native thread budget; independent sweep, design-comparison,
-mesh-study and time-step-study points share it across separate processes.
-For example, a budget of four and two active workers permits two native threads
-per worker. Parallel points each require their own solver memory.
+run can use the budget for larger FEM assembly batches; independent sweep,
+design-comparison, mesh-study and time-step-study points share it across separate
+processes. A budget of four and two active study points permits up to two assembly
+workers per point. Native numerical kernels use one thread per worker throughout
+the run to avoid nested teams and short-vector overhead. Parallel points each
+require their own solver memory.
 
 The desktop runs preparation and simulation in the background so its controls
 remain available. **Cancel** stops an active calculation and its study workers.
 CPU preferences are stored on
 this computer, apply to future jobs and do not change project physics or invalidate
-results. Supported native numerical libraries and Gmsh honor the thread limits;
-Eligible assembly can use worker threads; geometry work and sparse direct factorization
+results. Gmsh receives the selected meshing budget. Eligible assembly can use
+worker threads; geometry work and sparse direct factorization
 can remain serial. A larger budget does
 not guarantee a faster single solve. GPU acceleration is not included.
 

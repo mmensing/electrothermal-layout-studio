@@ -92,8 +92,9 @@ bounded. Independent study points use spawned processes with the budget divided
 among actual workers; requested row order and individual failures are preserved.
 Larger FEM topology, layer operators and sparse assembly run in bounded worker
 threads. Each task owns its output buffers; matrices combine in deterministic
-input order. Inner native pools are capped at one during an assembly batch to
-prevent multiplying the CPU budget. Small batches and SuperLU factorization
+input order. Native kernel pools remain capped at one throughout the run to avoid
+nested teams and short-vector BLAS overhead; the caller's limits are restored on
+exit, after all owned tasks join. Gmsh uses the selected meshing budget. Small batches and SuperLU factorization
 remain serial. This changes execution, not tolerances or physical acceptance.
 Execution provenance is stored outside configuration and physics hashes. Native
 thread counts can affect generated triangulations, so compare common spatial
