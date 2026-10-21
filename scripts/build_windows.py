@@ -312,6 +312,25 @@ def verify_frozen_shiboken(bundle, profile):
             raise ValueError("Frozen modified Shiboken payload differs from the audited installed runtime")
 
 
+def prepare_collected_runtime(bundle, profile):
+    """Verify source-built native identities before the runtime transformation."""
+    if profile["audited_source_profile"]:
+        gmsh = next(row for row in profile["compiled_native"] if row["id"] == "gmsh")
+        if sha256(bundle / "_internal" / gmsh["filename"]) != gmsh["sha256"]:
+            raise RuntimeError("Collected Gmsh differs from the reviewed source build")
+        if sha256(bundle / "_internal" / "python312.dll") != profile["runtime_python"]["python312_dll_sha256"]:
+            raise RuntimeError("Collected Python differs from the reviewed public runtime")
+        receipt = Path(metadata.distribution("shiboken6").locate_file("shiboken6")) / SHIBOKEN_RECEIPT
+        target = bundle / "_internal/shiboken6" / SHIBOKEN_RECEIPT
+        if target.exists():
+            if sha256(_audited_file(target, 1024**2, inside=bundle)) != sha256(receipt):
+                raise ValueError("Collected modified Shiboken receipt differs from the installed runtime")
+        else:
+            shutil.copyfile(receipt, target)
+        verify_frozen_shiboken(bundle, profile)
+    return runpy.run_path(str(ROOT / "packaging/windows_runtime.py"))["prepare_runtime_prerequisite"](bundle)
+
+
 def native_build_profile(library, descriptor, *, python_library=None, bootloader_directory=None,
                          shiboken_directory=None):
     """Bind a release profile to reviewed source recipes and exact native bytes.
@@ -510,21 +529,7 @@ def main(argv=None):
     for filename in ("README.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "DEPENDENCIES.json", "REUSE.toml", "requirements-windows-py312.lock"):
         if (ROOT / filename).is_file():
             shutil.copy2(ROOT / filename, bundle / filename)
-    runtime = runpy.run_path(str(ROOT / "packaging/windows_runtime.py"))["prepare_runtime_prerequisite"](bundle)
-    if profile["audited_source_profile"]:
-        gmsh = next(row for row in profile["compiled_native"] if row["id"] == "gmsh")
-        if sha256(bundle / "_internal" / gmsh["filename"]) != gmsh["sha256"]:
-            raise RuntimeError("Collected Gmsh differs from the reviewed source build")
-        if sha256(bundle / "_internal" / "python312.dll") != profile["runtime_python"]["python312_dll_sha256"]:
-            raise RuntimeError("Collected Python differs from the reviewed public runtime")
-        receipt = Path(metadata.distribution("shiboken6").locate_file("shiboken6")) / SHIBOKEN_RECEIPT
-        target = bundle / "_internal/shiboken6" / SHIBOKEN_RECEIPT
-        if target.exists():
-            if sha256(_audited_file(target, 1024**2, inside=bundle)) != sha256(receipt):
-                raise ValueError("Collected modified Shiboken receipt differs from the installed runtime")
-        else:
-            shutil.copyfile(receipt, target)
-        verify_frozen_shiboken(bundle, profile)
+    runtime = prepare_collected_runtime(bundle, profile)
     write_json(bundle / "SOURCE_BUILD_PROVENANCE.json", profile)
     checks = []
     if not args.skip_tests:

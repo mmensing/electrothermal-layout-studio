@@ -16,6 +16,7 @@ SPEC = importlib.util.spec_from_file_location(
 )
 runtime = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(runtime)
+ORIGINAL_RUNTIME_PATHS = tuple(runtime.REVIEWED_RUNTIME_FILES)
 
 
 def pe_fixture(dll_name=runtime.NUMPY_ALIAS, *, signed=False, bound=False, delayed=False, machine=0x8664):
@@ -174,5 +175,130 @@ def test_prepared_candidate_requires_untampered_reviewed_manifest(candidate, cha
     else:
         data[change] = "unreviewed"
         path.write_text(json.dumps(data))
+    with pytest.raises(ValueError):
+        runtime.prepare_runtime_prerequisite(folder)
+
+
+@pytest.fixture
+def full_profile_candidate(candidate, tmp_path, monkeypatch):
+    folder, native, omitted, original = candidate
+    omitted.unlink()
+    # Retain all twelve production paths, with independent small fixture bytes.
+    reviewed = {}
+    for name in ORIGINAL_RUNTIME_PATHS:
+        path = folder / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(("reviewed runtime fixture: " + name).encode())
+        reviewed[name] = runtime.file_sha256(path)
+    monkeypatch.setattr(runtime, "REVIEWED_RUNTIME_FILES", reviewed)
+    catalog = {"compiled_native": [{"id": "shiboken6-runtime", "version": "6.12.0+etlayout.1",
+                "filename": "shiboken6.abi3.dll", "abi": "cp310-abi3-win_amd64"}]}
+    row = catalog["compiled_native"][0]
+    for name, key in (("shiboken6.abi3.dll", "sha256"),
+                      ("Shiboken.pyd", "unchanged_module_sha256"),
+                      ("ETLAYOUT_RUNTIME_BUILD.json", "receipt_sha256")):
+        path = folder / "_internal/shiboken6" / name
+        path.write_bytes(pe_fixture("msvcp140.dll") if name.endswith((".dll", ".pyd"))
+                         else b'{"synthetic": "audited source-build receipt fixture"}')
+        row[key] = runtime.file_sha256(path)
+    source_catalog = tmp_path / "source-catalog.json"
+    source_catalog.write_text(json.dumps(catalog), encoding="utf8")
+    monkeypatch.setattr(runtime, "SOURCE_CATALOG", source_catalog)
+    return folder, native, original, reviewed
+
+
+@pytest.mark.parametrize("source_built,count", [(False, 12), (True, 9)])
+def test_complete_runtime_profiles_record_only_actual_omissions_and_reenter(full_profile_candidate,
+                                                                          source_built, count):
+    folder, native, original, reviewed = full_profile_candidate
+    expected = dict(reviewed)
+    if source_built:
+        for name in runtime.SHIBOKEN_RUNTIME_COPIES:
+            (folder / name).unlink()
+            expected.pop(name)
+    if not source_built:
+        (folder / "_internal/shiboken6/ETLAYOUT_RUNTIME_BUILD.json").unlink()
+        (folder / "_internal/shiboken6/shiboken6.abi3.dll").write_bytes(pe_fixture("msvcp140.dll") + b"stock")
+    receipt = runtime.prepare_runtime_prerequisite(folder)
+    assert native.read_bytes() != original
+    assert receipt["omitted_runtime_files"] == expected
+    assert len(receipt["omitted_runtime_files"]) == count
+    assert not any((folder / name).exists() for name in reviewed)
+    assert runtime.prepare_runtime_prerequisite(folder) == receipt
+
+
+@pytest.mark.parametrize("failure", ["missing_common", "changed_common", "extra_runtime", "partial_stock",
+                                      "dll", "module", "receipt", "missing_receipt", "stock_version"])
+def test_source_built_profile_requires_exact_copies_and_native_identity(full_profile_candidate, failure):
+    folder, _, _, reviewed = full_profile_candidate
+    for name in runtime.SHIBOKEN_RUNTIME_COPIES:
+        (folder / name).unlink()
+    common = folder / next(name for name in reviewed if name not in runtime.SHIBOKEN_RUNTIME_COPIES)
+    if failure == "missing_common":
+        common.unlink()
+    elif failure == "changed_common":
+        common.write_bytes(b"changed runtime")
+    elif failure == "extra_runtime":
+        (folder / "_internal/concrt140.dll").write_bytes(b"unreviewed runtime")
+    elif failure == "partial_stock":
+        (folder / next(iter(runtime.SHIBOKEN_RUNTIME_COPIES))).write_bytes(b"partial legacy wheel")
+    elif failure == "stock_version":
+        catalog = json.loads(runtime.SOURCE_CATALOG.read_text())
+        catalog["compiled_native"][0]["version"] = "6.12.0"
+        runtime.SOURCE_CATALOG.write_text(json.dumps(catalog))
+    else:
+        name = {"dll": "shiboken6.abi3.dll", "module": "Shiboken.pyd",
+                "receipt": "ETLAYOUT_RUNTIME_BUILD.json", "missing_receipt": "ETLAYOUT_RUNTIME_BUILD.json"}[failure]
+        path = folder / "_internal/shiboken6" / name
+        path.unlink() if failure == "missing_receipt" else path.write_bytes(b"unreviewed native payload")
+    before = {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+    with pytest.raises(ValueError):
+        runtime.prepare_runtime_prerequisite(folder)
+    assert {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("failure", ["native_identity", "omitted_map", "legacy_omitted_map"])
+def test_prepared_source_built_profile_revalidates_identity_and_exact_record(full_profile_candidate, failure):
+    folder, _, _, _ = full_profile_candidate
+    for name in runtime.SHIBOKEN_RUNTIME_COPIES:
+        (folder / name).unlink()
+    runtime.prepare_runtime_prerequisite(folder)
+    if failure == "native_identity":
+        (folder / "_internal/shiboken6/shiboken6.abi3.dll").write_bytes(b"changed")
+    else:
+        path = folder / runtime.MANIFEST_NAME
+        manifest = json.loads(path.read_text())
+        if failure == "legacy_omitted_map":
+            manifest["omitted_runtime_files"] = runtime.REVIEWED_RUNTIME_FILES
+        else:
+            manifest["omitted_runtime_files"].pop(next(iter(manifest["omitted_runtime_files"])))
+        path.write_text(json.dumps(manifest))
+    before = {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()}
+    with pytest.raises(ValueError):
+        runtime.prepare_runtime_prerequisite(folder)
+    assert {p.relative_to(folder): p.read_bytes() for p in folder.rglob("*") if p.is_file()} == before
+
+
+@pytest.mark.parametrize("source_built", [False, True])
+def test_runtime_inventory_paths_are_case_insensitive_but_record_is_canonical(full_profile_candidate,
+                                                                            source_built):
+    folder, _, _, reviewed = full_profile_candidate
+    expected = dict(reviewed)
+    for name in reviewed:
+        path = folder / name
+        if source_built and name in runtime.SHIBOKEN_RUNTIME_COPIES:
+            path.unlink()
+            expected.pop(name)
+        else:
+            path.rename(path.with_name(path.name.lower()))
+    if not source_built:
+        (folder / "_internal/shiboken6/ETLAYOUT_RUNTIME_BUILD.json").unlink()
+        (folder / "_internal/shiboken6/shiboken6.abi3.dll").write_bytes(pe_fixture("msvcp140.dll") + b"stock")
+    receipt = runtime.prepare_runtime_prerequisite(folder)
+    assert receipt["omitted_runtime_files"] == expected
+    assert runtime.prepare_runtime_prerequisite(folder) == receipt
+    manifest_path = folder / runtime.MANIFEST_NAME
+    receipt["omitted_runtime_files"] = {key.casefold(): value for key, value in expected.items()}
+    manifest_path.write_text(json.dumps(receipt))
     with pytest.raises(ValueError):
         runtime.prepare_runtime_prerequisite(folder)

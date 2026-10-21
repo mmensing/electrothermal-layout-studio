@@ -302,3 +302,37 @@ def test_frozen_modified_shiboken_is_the_reviewed_installed_payload(profile, tmp
     else:
         with pytest.raises(ValueError, match='Shiboken'):
             build.verify_frozen_shiboken(bundle, native)
+
+
+@pytest.mark.parametrize('changed', [False, True])
+def test_collected_qt_identity_precedes_runtime_transformation(profile, monkeypatch, changed):
+    library, descriptor, python, _, bootloaders = profile
+    audited = build.native_build_profile(library, descriptor, python_library=python,
+                                        bootloader_directory=bootloaders)
+    bundle = library.parent / 'candidate'
+    (bundle / '_internal/shiboken6').mkdir(parents=True)
+    (bundle / '_internal' / library.name).write_bytes(library.read_bytes())
+    (bundle / '_internal/python312.dll').write_bytes(python.read_bytes())
+    runtime = library.parent / 'shiboken6'
+    for name in ('shiboken6.abi3.dll', 'Shiboken.pyd'):
+        (bundle / '_internal/shiboken6' / name).write_bytes((runtime / name).read_bytes())
+    if changed:
+        (bundle / '_internal/shiboken6/shiboken6.abi3.dll').write_bytes(b'unreviewed')
+    calls = []
+
+    def prepare(candidate):
+        assert candidate == bundle
+        build.verify_frozen_shiboken(candidate, audited)
+        assert (candidate / '_internal/shiboken6' / build.SHIBOKEN_RECEIPT).read_bytes() == (
+            runtime / build.SHIBOKEN_RECEIPT).read_bytes()
+        calls.append('runtime transformation')
+        return {'synthetic': 'runtime receipt'}
+
+    monkeypatch.setattr(build.runpy, 'run_path', lambda path: {'prepare_runtime_prerequisite': prepare})
+    if changed:
+        with pytest.raises(ValueError, match='Frozen modified Shiboken'):
+            build.prepare_collected_runtime(bundle, audited)
+        assert calls == []
+    else:
+        assert build.prepare_collected_runtime(bundle, audited) == {'synthetic': 'runtime receipt'}
+        assert calls == ['runtime transformation']
