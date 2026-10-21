@@ -94,19 +94,22 @@ Small batches, SuperLU factorization and some meshing/geometry steps remain seri
 activity varies by phase and more CPUs do not guarantee a faster individual solve. Parallel
 studies also consume more memory. The distribution uses CPU execution and requires no GPU runtime.
 
-The 0.4.1 native protocol requires **27 distinct checks**, including a frozen
+The maintained native protocol requires **27 distinct checks**, including a frozen
 `build-info` comparison with the exact source stamp and an actual default eager
 File Open journey. The latter checks recorded fields, read-only history/return,
 mesh-study dialog cancellation and compact example-browser opening without an
 automatic solve. Readable native scientific glyphs and screenshots are required.
-These checks supplement source tests; they do not certify a clean machine.
+The release also verifies the source-built Shiboken DLL, unchanged binding module
+and exact runtime receipt before and after frozen application checks. Four native
+reference-lifetime regressions exercise the installed runtime. These checks
+supplement source tests; they do not certify a clean machine.
 
 ## Deployment choice
 
 Qt's `pyside6-deploy` wraps Nuitka and documents `dumpbin` from MSVC as a Windows
-dependency. That compiler tooling was absent on the validation host. It remains
-a future packaging option, but adding an untested compiler toolchain would not
-improve this prototype's reproducibility. See the official
+dependency. That application deployment path remains untested. The small source-built
+Shiboken runtime uses MSVC separately; it does not establish a Nuitka application
+build. PyInstaller remains the maintained application packager. See the official
 [Qt deployment documentation](https://doc.qt.io/qtforpython-6/deployment/deployment-pyside6-deploy.html).
 
 The build uses PyInstaller 6.22.3 in its supported folder distribution mode. A

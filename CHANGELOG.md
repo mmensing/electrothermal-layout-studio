@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.2 — Qt lifetime stability and stable CPU kernel limits
+
+- Fix Shiboken retained-reference clearing/removal/replacement before Python
+  finalization or garbage collection, using a source-built runtime with native
+  regression and ABI checks. Keep normal collection and original Qt bindings.
+- Apply the native one-thread kernel cap once per owned calculation, retaining
+  configurable outer assembly/study workers and restoring caller limits. Preserve
+  SciPy factorization and scientific tolerances; E21 measurements do not establish
+  a universal speedup.
+- Verify release drafts without assuming a draft has already created a Git tag;
+  retain exact identity, state, notes and asset-hash gates.
+- Bind modified Qt native bytes and complete preferred source in the release
+  profile. Retain all 77 prior source payloads and all 42 example project bytes.
+
+See [0.4.2 notes](docs/releases/0.4.2.md), [Qt runtime](docs/qt-runtime.md) and
+[CPU measurements](docs/performance.md). Source availability and candidate checks
+remain separate from owner-reviewed Windows publication.
+
 ## 0.4.1 — responsive projects and engineering workflow
 
 - Move default eager archive/JSON opening, legacy fallback and resource-review

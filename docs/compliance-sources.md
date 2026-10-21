@@ -62,7 +62,11 @@ separate requirement for publishing an official artifact.
   two loaders. This is a build-provenance change, not a change to application physics.
 - **Qt/PySide/Shiboken 6.12.0:** use the upstream GPLv3 offer for the shipped modules.
   Full QtBase, QtSvg, QtImageFormats and PySide source archives retain their bundled
-  sources and build inputs. The LGPLv3 section 4 combined-work route is not the
+  sources and build inputs. The source-built Shiboken 6.12.0+etlayout.1 runtime adds
+  a separate preferred-source archive containing the unchanged original source,
+  dated retained-reference patch, modified C++, exact MSVC recipe, notices and
+  build evidence. Its DLL, unchanged binding module and runtime receipt are bound
+  independently; see [the runtime guide](qt-runtime.md). The LGPLv3 section 4 combined-work route is not the
   selected offer for these modules; this does not remove GPL source or notice
   obligations. The optional unused Mesa `opengl32sw.dll` is excluded after native
   raster/cross-section/profile/comparison/export checks, including

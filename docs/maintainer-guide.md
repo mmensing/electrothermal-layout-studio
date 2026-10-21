@@ -4,7 +4,7 @@ The maintainer is **@mmensing**. This guide specifies required policy and future
 release steps; committed files do not enable GitHub protections. Verify actual
 settings and keep sensitive audit/readback records outside the source tree.
 The initial source snapshot was untagged `0.4.0.dev0`. The current source
-version is `0.4.1`; check GitHub Releases for actual publication status. A version
+version is `0.4.2`; check GitHub Releases for actual publication status. A version
 bump or successful local candidate does not clear binary redistribution gates.
 
 ## Repository authority and bootstrap

@@ -153,16 +153,18 @@ The [thermal scenario guide](docs/thermal-example-scenarios.md) shows deliberate
 Joule-only, heating, cooldown and limit-failure experiments without replacing
 the forty original references. The [scientific example audit](docs/example-science.md)
 records the configured service, losses, temperatures and model limitations.
-[0.4.1 release notes](docs/releases/0.4.1.md) summarize workflow changes;
+[0.4.2 release notes](docs/releases/0.4.2.md) explain the desktop lifetime fix and CPU execution changes;
 [engineering notes](docs/releases/0.4.x.md) summarize compatibility
 and measured verification.
 
 ## Install on Windows
 
-**Source version 0.4.1 · research prototype · MPL-2.0 original source.**
+**Source version 0.4.2 · research prototype · MPL-2.0 original source.**
 Use a matching application version for the searchable example library, physical
 mesh confidence, thermal-stack controls, finite-contact studies, temperature
 limits and engineering results. The 0.4.0 Windows binary lacks these newer tools.
+The desktop includes a source-patched Qt binding runtime; see the [runtime guide](docs/qt-runtime.md)
+for source installation and the [CPU measurements](docs/performance.md) for workload-dependent performance.
 **Help → About** or `etlayout build-info` identifies your installation; saved
 results retain the implementation that produced them. Check Releases for actual
 published downloads; a source version does not itself establish publication.

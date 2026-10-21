@@ -251,7 +251,21 @@ def test_binary_helper_selects_large_modes_only_after_unchanged_compliance_gate(
     assert (policy['version'], policy['platform'], policy['license_route']) == (
         release.stable_version(SCRIPT.parents[1]), 'windows-x64', 'GPL-3.0-only-with-MPL-3.3')
     assert policy['source_catalog_sha256'] == release.sha256(SCRIPT.parents[1] / 'packaging/third-party-sources.json')
-    assert len(policy['native_outputs']) == 6
+    expected_paths = {
+        '_internal/gmsh-4.15.dll', '_internal/python312.dll',
+        '_internal/numpy/_core/_multiarray_umath.cp312-win_amd64.pyd',
+        '_internal/numpy/fft/_pocketfft_umath.cp312-win_amd64.pyd',
+        '_internal/Shapely.libs/geos-bf067cd6ff74ee0ad5f3ff52c7ef08c9.dll',
+        '_internal/Shapely.libs/geos_c-6dd9fd915eef8a7928285416bef1e666.dll',
+        '_internal/shiboken6/shiboken6.abi3.dll', '_internal/shiboken6/Shiboken.pyd',
+        '_internal/shiboken6/ETLAYOUT_RUNTIME_BUILD.json',
+    }
+    assert set(policy['native_outputs']) == expected_paths
+    catalog = json.loads((SCRIPT.parents[1] / 'packaging/third-party-sources.json').read_bytes())
+    runtime = next(row for row in catalog['compiled_native'] if row['id'] == 'shiboken6-runtime')
+    for name, key in [('shiboken6.abi3.dll', 'sha256'), ('Shiboken.pyd', 'unchanged_module_sha256'),
+                      ('ETLAYOUT_RUNTIME_BUILD.json', 'receipt_sha256')]:
+        assert policy['native_outputs']['_internal/shiboken6/' + name] == runtime[key]
     assert all(re.fullmatch('[0-9a-f]{64}', value) for value in policy['native_outputs'].values())
 
 
