@@ -20,6 +20,15 @@ from dataclasses import replace
 from pathlib import Path
 
 
+def invalid_vertex_drag_target(handles):
+    """Cross E1's opposite edge without requiring an exact viewport-pixel hit."""
+    if len(handles) != 4 or any(handle.ring != 0 for handle in handles):
+        raise ValueError("The invalid-drag acceptance target requires E1's quadrilateral.")
+    edge_midpoint = (handles[1].pos() + handles[2].pos()) * .5
+    opposite_midpoint = (handles[0].pos() + handles[3].pos()) * .5
+    return edge_midpoint + (edge_midpoint - opposite_midpoint) * .25
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=Path(".artifacts/layout-editor"))
@@ -35,6 +44,7 @@ def main(argv=None):
     from PySide6.QtCore import QCoreApplication, QEvent, QPointF, Qt, QTimer
     from PySide6.QtTest import QTest
     from PySide6.QtWidgets import QApplication, QMessageBox, QProgressDialog, QPushButton
+    from shapely.geometry import Polygon
 
     from etlayout.examples import make_example
     from etlayout.geometry.polygon_edit import editable_polygons
@@ -124,17 +134,23 @@ def main(argv=None):
         idle()
 
     def drag(editor, *, invalid=False):
+        before = deepcopy(editor.rings)
         handle = editor.handles[0]
         start = window.view.mapFromScene(handle.pos())
-        # Extend the x=0 edge downward while retaining E1's line contact.
-        # Moving its corner inward would deliberately remove terminal support.
-        destination = editor.handles[1].pos() if invalid else handle.pos() + QPointF(0., .25)
+        # Valid edits retain E1's line contact. For invalid edits, cross its
+        # opposite edge by a finite distance: pixel rounding and a handle's
+        # press offset cannot reliably collapse two vertices onto one point.
+        destination = invalid_vertex_drag_target(editor.handles) if invalid else handle.pos() + QPointF(0., .25)
         end = window.view.mapFromScene(destination)
-        QTest.mousePress(window.view.viewport(), Qt.MouseButton.LeftButton, pos=start)
-        QTest.mouseMove(window.view.viewport(), end, delay=40)
-        QTest.mouseRelease(window.view.viewport(), Qt.MouseButton.LeftButton, pos=end)
+        viewport = window.view.viewport()
+        assert viewport.rect().contains(start) and viewport.rect().contains(end)
+        QTest.mousePress(viewport, Qt.MouseButton.LeftButton, pos=start)
+        QTest.mouseMove(viewport, end, delay=40)
+        QTest.mouseRelease(viewport, Qt.MouseButton.LeftButton, pos=end)
         QTest.qWait(50)
-        assert editor.dirty and editor.valid != invalid
+        assert editor.rings != before and editor.dirty and editor.valid != invalid
+        if invalid:
+            assert not Polygon(editor.rings[0], editor.rings[1:]).exterior.is_simple
 
     def answer(decision):
         answered = []

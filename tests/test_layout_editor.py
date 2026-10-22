@@ -1,11 +1,16 @@
 # SPDX-License-Identifier: MPL-2.0
 """Observable vertex/draft/history behavior using real preparation/export workers."""
+from copy import deepcopy
+from pathlib import Path
+from runpy import run_path
+
 import pytest
 from gui_test_helpers import _answer_dialog, _idle
 from gui_test_helpers import guided_window as guided_window
 from gui_test_helpers import solved_e1 as solved_e1
 from PySide6.QtCore import QPointF, Qt, QTimer
 from PySide6.QtTest import QTest
+from shapely.geometry import Polygon
 
 from etlayout.geometry.polygon_edit import editable_polygons
 from etlayout.gui.editor_smoke import run_editor_smoke
@@ -136,6 +141,40 @@ def test_invalid_drag_escape_and_keyboard_nudge(editor_window, qtbot):
     QTest.keyClick(window.view, Qt.Key.Key_Right, Qt.KeyboardModifier.ShiftModifier)
     assert editor.rings[0][0][0] == pytest.approx(original[0] + 10 * editor.dbu)
     assert editor.dirty
+
+
+@pytest.mark.parametrize("zoom, translation", [(.73, .31), (.91, .23), (1.01, .03), (1.13, -.37)])
+def test_acceptance_invalid_mouse_drag_crosses_edge_at_compact_camera(editor_window, qtbot, zoom, translation):
+    window = editor_window
+    editor = window.guided.layout_editor
+    assert editor.enter()
+    select_first(window)
+    before = deepcopy(editor.rings)
+    project = window.project.to_dict()
+    imported_hash = file_hash(window.project.layout.path)
+    result = window.result
+    window.view.fit_all()
+    window.view.scale(zoom, zoom)
+    center = window.view.mapToScene(window.view.viewport().rect().center())
+    window.view.centerOn(center + QPointF(translation, translation))
+    qtbot.wait(50)
+    target = run_path(str(Path(__file__).resolve().parents[1] / "scripts/layout_editor_acceptance.py"))["invalid_vertex_drag_target"]
+    start = window.view.mapFromScene(editor.handles[0].pos())
+    end = window.view.mapFromScene(target(editor.handles))
+    viewport = window.view.viewport()
+    assert viewport.rect().contains(start) and viewport.rect().contains(end)
+    QTest.mousePress(viewport, Qt.MouseButton.LeftButton, pos=start)
+    QTest.mouseMove(viewport, end, delay=40)
+    QTest.mouseRelease(viewport, Qt.MouseButton.LeftButton, pos=end)
+    assert editor.rings[0][0] != before[0][0] and editor.rings[0][1:] == before[0][1:]
+    assert not Polygon(editor.rings[0], editor.rings[1:]).exterior.is_simple
+    assert editor.dirty and not editor.valid and not editor.apply_button.isEnabled()
+    assert not editor.apply() and editor.job is None
+    assert window.project.to_dict() == project and window.result is result
+    assert file_hash(window.project.layout.path) == imported_hash
+    QTest.keyClick(window.view, Qt.Key.Key_Escape)
+    assert editor.active and editor.valid and not editor.dirty and editor.rings == before
+    assert window.project.to_dict() == project and window.result is result
 
 
 def test_document_transaction_resolves_vertices_before_copying_other_draft(editor_window, qtbot):
