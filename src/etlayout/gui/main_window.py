@@ -1012,6 +1012,9 @@ class MainWindow(QMainWindow):
         if not mesh_changed:
             self.mesh = old_mesh
         self.refresh_project(preserve_view=True, refresh_geometry=geometry and physical_change and geometry_changed)
+        power = getattr(getattr(self, "guided", None), "power", None)
+        if physical_change and power is not None:
+            power.refresh_document()
         if not physical_change:
             self.refresh_view(True)
             self.update_overlay()
@@ -1147,7 +1150,7 @@ class MainWindow(QMainWindow):
         self.key_metrics.clear()
         self._original_key_metrics = ""
         self.result_status.setText(message)
-        self.cross_section.plot.clear()
+        self.cross_section.clear()
         self.cross_section.intervals = {}
         self.last_cut = None
         self.view.show_field(None, "", "", False, False)
@@ -2680,6 +2683,7 @@ class MainWindow(QMainWindow):
         self.time_history.set_context(layer, self.field_region.currentData() or "")
         if hasattr(self, "guided"):
             self.guided.apply_canvas_context()
+            self.guided.refresh_result_headlines()
             self.guided.refresh_probes()
 
     def toggle_mesh(self, checked):
@@ -3374,7 +3378,7 @@ class MainWindow(QMainWindow):
         self.profiles.refresh()
         self.studies = []
         self.study_panel.set_rows([])
-        self.cross_section.plot.clear()
+        self.cross_section.clear()
         self.last_cut = None
         self.metrics_table.setRowCount(0)
         self.terminals_table.setRowCount(0)

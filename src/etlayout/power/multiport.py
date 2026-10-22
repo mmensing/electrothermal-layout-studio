@@ -200,6 +200,11 @@ def _spice_lines(report):
     return lines
 
 
+def spice_netlist(report):
+    """Return the exact resistor netlist after the same fidelity checks as export."""
+    return '\n'.join(_spice_lines(report))
+
+
 def export_multiport(report, path, format='json'):
     """Export a port matrix/metadata, labeled CSV, or passive resistor subcircuit."""
     if format not in {'json', 'csv', 'spice'}:
@@ -221,6 +226,5 @@ def export_multiport(report, path, format='json'):
         from etlayout.io.project import _json_dump
         path.with_suffix('.metadata.json').write_text(_json_dump(report), encoding='utf-8')
     else:
-        lines = _spice_lines(report)
-        path.write_text('\n'.join(lines), encoding='utf-8')
+        path.write_text(spice_netlist(report), encoding='utf-8')
     return path

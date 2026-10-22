@@ -66,3 +66,15 @@ def expanded_nominal_factory(tmp_path_factory):
         return deepcopy(solved[name])
 
     return nominal
+
+
+@pytest.fixture(scope="session")
+def e1_reference_solution(tmp_path_factory):
+    """One actual E1 calculation for GUI tests; consumers receive deep copies."""
+    from etlayout.examples import make_example
+    from etlayout.simulation.runner import run_project
+
+    project = make_example("E1", tmp_path_factory.mktemp("immutable-e1"))
+    result = run_project(project)
+    assert result.converged
+    return project, result

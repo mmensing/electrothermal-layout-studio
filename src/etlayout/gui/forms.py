@@ -94,7 +94,19 @@ UNITS = {
 }
 
 HELP = {
-    "grading_length": "Optional smooth sizing transition outside this exact numerical refinement support, in meters. Zero preserves legacy sizing; physical geometry is unchanged.",
+    "thickness": "Physical sheet thickness toward +z. Unqualified numbers use µm: 2, 2000 nm and 2e-6 m describe the same thickness. Used by sheet electrical and thermal models, not just drawing.",
+    "layer_a": "First physical endpoint. Positive reported interface current flows from layer A to layer B. Choose an explicit footprint common to the endpoints.",
+    "layer_b": "Second physical endpoint. Geometric overlap alone does not create electrical or thermal transfer; choose each transfer model separately.",
+    "model_kind": "Effective uses declared interface coefficients. Physical contact/via additionally interpret material, height, per-instance/array resistance and fabrication geometry. Review Advanced fields before applying.",
+    "electrical_value": "Value for the selected electrical law: specific/load Ω m² (R = value / area), lumped Ω, conductance S/m². Ideal and via laws derive their coupling separately. 1 mΩ cm² = 1e-7 Ω m².",
+    "thermal_value": "Value for the selected thermal law: conductance W/(m² K), resistance m² K/W. Stack derives the path from material half-thicknesses and any declared area-specific interface resistance.",
+    "height_mode": "Explicit uses the entered contact/via height. Stack derives physical separation from the layer elevations; it never changes those layers.",
+    "resistance_semantics": "Array means the declared lumped resistance covers all supported instances together. Instance applies it to each disconnected contact/via footprint.",
+    "thermal_fraction": "Dimensionless fraction between 0 and 1 of feed loss deposited inside the modeled layer; 0.5 means 50%. The remainder is external loss.",
+    "active_width": "Total conducting width in µm used for current-per-width reporting. Gate width runs along each conducting gate finger, not along the source-to-drain path.",
+    "initial_temperature": "Absolute temperature in kelvin for electrical property evaluation/initialization. 300 K is 26.85 °C. A temperature difference of 1 K equals 1 °C; this field does not accept Celsius offsets.",
+    "ambient": "Named reservoir temperature in kelvin, not a temperature rise. 300 K is 26.85 °C. Cooling acts only through the assigned boundary and physical thermal paths.",
+    "grading_length": "Optional smooth sizing transition outside this exact numerical refinement support, in the displayed length unit. Zero preserves legacy sizing; physical geometry is unchanged.",
     "axis_sizes": "Optional [x, y] spacings in meters on rectangular partition faces. Scalar refinements still apply. Empty uses ordinary meshing; geometry and solver equations are preserved.",
     "threshold": "Exceedance sample threshold in the quantity's SI units; independent of the permitted fraction.",
     "threshold_units": "Canonical sample units (V, K, A/m², etc.). Exceedance result units are fraction.",
@@ -533,7 +545,14 @@ class ModelDialog(QDialog):
             unit = self.unit_for(name)
             title = LABELS.get(name, name.replace("_", " ").capitalize())
             label.setText(title + (f" ({unit})" if unit else ""))
-            self.widgets[name].setAccessibleName(label.text())
+            widget = self.widgets[name]
+            widget.setAccessibleName(label.text())
+            explanation = HELP.get(name, f"{title}. SI units unless another unit is shown.")
+            if unit:
+                explanation += f" Input unit: {unit}; unqualified numbers use this unit. Compatible engineering prefixes are accepted."
+            widget.setToolTip(explanation)
+            widget.setAccessibleDescription(explanation)
+            label.setToolTip(explanation)
         if type(self.model).__name__ in {"Terminal", "PhysicalPort"}:
             self.widgets["value"].setEnabled(self.choice("kind") not in {"ground", "floating", "probe", "insulated"})
 

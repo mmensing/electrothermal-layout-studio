@@ -62,6 +62,36 @@ paths or lower a gate to make a numerical change appear better covered. The
 [power-routing audit](scientific-acceptance.md) records the isolated starting source,
 environment, current baseline counts and final-run status.
 
+## Timing and focused maintenance checks
+
+CI retains bounded `test-timings-*.json` summaries beside each JUnit report and
+shows the slowest modules in its job summary. The reports keep failures, errors,
+skips and missing XML explicit, include a SHA-256 for each input, and identify
+cases repeated across the fast and compact collections. Case times include
+fixture setup/teardown; their sum is not elapsed pipeline time. Desktop artifacts
+also include per-journey wall times and exit codes. Use these measurements before
+moving or removing checks; the full unfiltered collection and numerical gates
+remain unchanged.
+
+```powershell
+python scripts/summarize_test_timings.py --report complete=artifacts/pytest-full.xml --output artifacts/test-timings-full.json
+python -m pytest tests/test_history_opening.py tests/test_history_loading.py tests/test_project_opening.py tests/test_lazy_history_workflows.py
+```
+
+GUI regressions share one session-owned, actually calculated E1 reference.
+`solved_e1` returns independent project, mesh and field copies to each test;
+widgets never mutate the shared template. Independent analytical and solver
+benchmarks still run their own calculations. Async ownership checks use real
+archives and controlled queued replies to exercise cancellation, superseded
+success/errors, resource rejection, cache-budget consent and lease disposal.
+History shutdown applies one total wait budget and keeps unfinished workers
+owned until they stop.
+
+The source-built Qt lifetime patch remains maintained locally with its preferred
+source, ABI/provenance checks and native regressions. Track an upstream fix only
+once its behavior has passed those regressions; an unrelated Qt version update
+is not evidence that the patch can be dropped. See [Qt runtime](qt-runtime.md).
+
 ## Execution and desktop isolation
 
 `simulation.execution.ExecutionSettings` controls this computer's execution policy separately

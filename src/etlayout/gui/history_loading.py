@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import threading
+import time
 from dataclasses import dataclass
 
-from PySide6.QtCore import QObject, QThread, Signal
+from PySide6.QtCore import QObject, QThread, Signal, Slot
 from PySide6.QtWidgets import (
     QCheckBox,
     QDialog,
@@ -81,7 +82,7 @@ class HistoryLoader(QObject):
         self.jobs.append(job)
         job.loaded.connect(self._loaded)
         job.failed.connect(self._failed)
-        job.finished.connect(lambda: self._finished(job))
+        job.finished.connect(self._finished)
         self.busy_changed.emit(True)
         job.start()
         return request
@@ -103,7 +104,9 @@ class HistoryLoader(QObject):
         if request == self.request:
             self.failed.emit(request, error)
 
-    def _finished(self, job):
+    @Slot()
+    def _finished(self):
+        job = self.sender()
         if job in self.jobs:
             self.jobs.remove(job)
         job.deleteLater()
@@ -113,7 +116,11 @@ class HistoryLoader(QObject):
         self.cancel()
         if timeout_ms <= 0:
             return all(not job.isRunning() for job in self.jobs)
-        return all([job.wait(timeout_ms) for job in tuple(self.jobs)])
+        deadline = time.monotonic() + timeout_ms / 1000
+        for job in tuple(self.jobs):
+            if not job.wait(max(0, int((deadline - time.monotonic()) * 1000))):
+                return False
+        return True
 
 
 class HistorySettingsDialog(QDialog):

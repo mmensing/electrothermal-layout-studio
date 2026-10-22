@@ -1,10 +1,12 @@
 # Guided desktop workflow
 
-This guide describes the **0.4.2 source edition**, retaining the
+This guide describes the **current development source**, retaining the
 guided Windows desktop and 0.3.1 project compatibility.
 Install and launch from the [Windows source setup](../README.md#run-from-source),
 then use the desktop steps below; no Python scripting is needed for the workflow.
-This public source edition does not provide a downloadable executable.
+The stack, network and Results refinements below are unreleased. Published
+[Windows 0.4.2 downloads](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.2)
+retain their previous controls.
 For a visual introduction, see the [feature catalog](features.md) and
 [use-case gallery](examples.md). See [validation](validation.md) for current check
 commands and the [historical engineering notes](releases/0.3.1.md) for compatibility context.
@@ -333,3 +335,31 @@ depicted runs and are illustrations, not acceptance limits for another project.
 ![Mesh and checks](images/desktop/mesh.png)
 ![Results](images/desktop/results.png)
 ![Compact dark workspace](images/desktop/compact-dark.png)
+
+
+## Stack, network and result review (development source)
+
+The [layer-stack workflow](layer-stack-workflow.md) explains physical bottom/top
+coordinates, thin-film cross-sections and explicit current/heat links. Use
+Contacts & Connections to return directly to its layer-pair setup.
+The [passive-network walkthrough](passive-network-workflow.md) covers physical
+ports, reference choice and reviewing the exact validated SPICE output.
+
+Results put delivered current, resistance, electrical power and peak temperature
+before map appearance controls. Evidence and sensitivity checks remain in the
+expandable **Evidence and verification** group. Explicit engineering failures also
+remain visible beside the headlines. The working setup, selected run and last
+job have separate context labels; setup and result cameras are remembered
+independently. A compact drawer leaves more canvas visible and remains resizable.
+
+Headline temperatures display to 0.1 K. This is presentation precision only:
+fields, exports, explicit limit decisions and scientific acceptance retain their
+original precision and tolerances. Hover over controls and form labels for
+physical meaning, sign conventions and input-unit examples.
+
+
+![Native compact Results with selected-run headlines and a fitted temperature field](images/desktop/result-headlines.png)
+
+This is an actual coupled E12 calculation at 0.3 A with its existing electrodes
+registered as physical ports. It shows convergence; mesh sensitivity remains a
+separate study. The 303.0 K headline is rounded only for presentation.

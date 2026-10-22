@@ -213,6 +213,18 @@ def run_workflow_smoke(window, project_path, output, *, timeout=120.):
             "logical_size": [widget.width(), widget.height()],
             "pixels": [picture.width(), picture.height()], "dpr": widget.devicePixelRatioF()})
 
+    def reveal_verification(context):
+        QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+        toggle = window.guided.verification_toggle
+        window.guided.page_scroll.ensureWidgetVisible(toggle)
+        check(context + " verification disclosure is visible and usable",
+              toggle.isVisible() and toggle.isEnabled())
+        if not toggle.isChecked():
+            QTest.mouseClick(toggle, Qt.MouseButton.LeftButton)
+        QApplication.processEvents(QEventLoop.ProcessEventsFlag.AllEvents, 50)
+        check(context + " verification details open through the real disclosure",
+              toggle.isChecked() and window.guided.verify_mesh.isVisible())
+
     try:
         for bold in (False, True):
             font = QFont(QApplication.font())
@@ -233,6 +245,9 @@ def run_workflow_smoke(window, project_path, output, *, timeout=120.):
         project, result = window.project, window.result
         fingerprint = physics_hash(project)
         window.guided.navigate("results", force=True)
+        check("Verification details initially leave result headlines uncluttered",
+              not window.guided.verification_toggle.isChecked())
+        reveal_verification("Working setup")
         check("Missing mesh evidence offers a guarded action", window.guided.verify_mesh.isEnabled()
               and "Mesh: not established" in window.guided.result_evidence.text())
         window.guided.page_scroll.ensureWidgetVisible(window.guided.verify_mesh)
@@ -268,6 +283,7 @@ def run_workflow_smoke(window, project_path, output, *, timeout=120.):
         window.inspect_result(result)
         settle()
         window.guided.navigate("results", force=True)
+        reveal_verification("Historical")
         check("Historical inspection disables physical verification", bool(window.inspection_context)
               and not window.guided.verify_mesh.isEnabled())
         historical_view = window.capture_view_state()
