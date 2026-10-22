@@ -10,10 +10,10 @@ can be reviewed together in GitHub pull requests. They render directly on GitHub
 work in a local Markdown reader, and require no separate wiki service.
 The instructions cover the matching source application, retaining supported
 project and CLI compatibility. Install from the
-[repository README](../../README.md#run-from-source). The published
-[0.4.0 Windows release](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.0)
-remains available; newer source-only engineering features do not update that
-binary. Read the [unreleased notes](../releases/0.4.x.md) for those additions.
+[repository README](../../README.md#run-from-source). Check
+[Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for actual Windows downloads. The [0.4.3 notes](../releases/0.4.3.md) describe
+the current source controls; older binaries retain their own capabilities.
 Historical observations retain their original source identities; only matching
 checks validate the configuration being inspected.
 

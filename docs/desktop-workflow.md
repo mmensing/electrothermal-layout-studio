@@ -1,12 +1,12 @@
 # Guided desktop workflow
 
-This guide describes the **current development source**, retaining the
-guided Windows desktop and 0.3.1 project compatibility.
+This guide describes the **0.4.3 source application**, retaining the
+guided Windows desktop and supported project compatibility.
 Install and launch from the [Windows source setup](../README.md#run-from-source),
 then use the desktop steps below; no Python scripting is needed for the workflow.
-The stack, network and Results refinements below are unreleased. Published
-[Windows 0.4.2 downloads](https://github.com/mmensing/electrothermal-layout-studio/releases/tag/v0.4.2)
-retain their previous controls.
+The stack, network and Results refinements below require a matching installation.
+Check [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for actual Windows downloads; older binaries retain their previous controls.
 For a visual introduction, see the [feature catalog](features.md) and
 [use-case gallery](examples.md). See [validation](validation.md) for current check
 commands and the [historical engineering notes](releases/0.3.1.md) for compatibility context.
@@ -337,7 +337,7 @@ depicted runs and are illustrations, not acceptance limits for another project.
 ![Compact dark workspace](images/desktop/compact-dark.png)
 
 
-## Stack, network and result review (development source)
+## Stack, network and result review (0.4.3)
 
 The [layer-stack workflow](layer-stack-workflow.md) explains physical bottom/top
 coordinates, thin-film cross-sections and explicit current/heat links. Use

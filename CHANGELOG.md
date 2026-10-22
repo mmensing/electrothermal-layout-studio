@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.3 — guided physical setup and SciPy state reuse
 
 - Guide physical stack setup, thin-film cross-sections and explicit interlayer
   electrical/thermal connections through the existing shared draft workflow.
@@ -9,10 +9,16 @@
 - Put result headlines first, distinguish selected-run/setup/job context, preserve
   separate setup/result cameras and keep compact drawers resizable. Add useful
   field/label hover help and display headline temperatures to 0.1 K only.
-- Reuse the converged electrical state between coupled thermal iterations while
-  retaining SciPy, cancellation, input identity and scientific acceptance checks.
+- Reuse the converged electrical state between coupled thermal iterations when
+  temperature and input identity remain exact; retire it after thermal-boundary
+  projection. Retain SciPy, cancellation and scientific acceptance checks.
 - Bound history-reader shutdown by one deadline, consolidate immutable GUI
   fixture calculations and report measured CI test/journey durations.
+
+See [0.4.3 notes](docs/releases/0.4.3.md) and [measured performance](docs/performance.md).
+Source availability and a successful candidate build do not establish binary
+publication; check [Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for actual Windows downloads.
 
 ## 0.4.2 — Qt lifetime stability and stable CPU kernel limits
 
