@@ -1,7 +1,8 @@
 # Set up a physical stack and its connections
 
-Development source workflow: these guided controls are unreleased. Published
-0.4.2 binaries retain their previous controls; no new Windows binary is implied.
+This guide describes the **0.4.3 source controls**. Check
+[Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for matching Windows downloads; older binaries retain their previous controls.
 
 A source mask describes a footprint. A **physical layer** adds a material,
 role, bottom elevation and thickness to that footprint. A declared **interface**

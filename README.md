@@ -55,7 +55,7 @@ do not change your physical setup.
 | **Portable work and reporting** | Choose PNG/PDF/SVG figures or standalone reports, selected CSV/NPZ/VTU data, or a complete ETL experiment with embedded layout and retained runs. | [Save a result you can reopen](docs/handbook/first-calculation.md). |
 | **On-demand run history** | Opt in to schema-3 metadata-first opening, inspect exact saved frames in background workers, and manage a bounded array cache while complete saves retain unloaded runs. | [Choose archive and history settings](docs/user-guide.md#on-demand-history-for-schema-3-projects). |
 
-Development workflow guides: start with the [physical stack and cross-section guide](docs/layer-stack-workflow.md).
+Workflow guides: start with the [physical stack and cross-section guide](docs/layer-stack-workflow.md).
 For a circuit model, follow [physical ports to a reviewed passive SPICE network](docs/passive-network-workflow.md).
 
 [The full feature catalog](docs/features.md) explains where to find each tool,
@@ -156,13 +156,14 @@ The [thermal scenario guide](docs/thermal-example-scenarios.md) shows deliberate
 Joule-only, heating, cooldown and limit-failure experiments without replacing
 the forty original references. The [scientific example audit](docs/example-science.md)
 records the configured service, losses, temperatures and model limitations.
-[0.4.2 release notes](docs/releases/0.4.2.md) explain the desktop lifetime fix and CPU execution changes;
+[0.4.3 release notes](docs/releases/0.4.3.md) explain the guided stack, passive-network and Results workflows,
+and the measured reuse of converged electrical states within SciPy;
 [engineering notes](docs/releases/0.4.x.md) summarize compatibility
 and measured verification.
 
 ## Install on Windows
 
-**Source version 0.4.2 · research prototype · MPL-2.0 original source.**
+**Source version 0.4.3 · research prototype · MPL-2.0 original source.**
 Use a matching application version for the searchable example library, physical
 mesh confidence, thermal-stack controls, finite-contact studies, temperature
 limits and engineering results. The 0.4.0 Windows binary lacks these newer tools.

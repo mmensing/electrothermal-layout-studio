@@ -1,7 +1,8 @@
 # Extract a passive resistor network in the GUI
 
-Development source workflow: these guided controls are unreleased. Published
-0.4.2 binaries retain their previous controls; no new Windows binary is implied.
+This guide describes the **0.4.3 source controls**. Check
+[Releases](https://github.com/mmensing/electrothermal-layout-studio/releases)
+for matching Windows downloads; older binaries retain their previous controls.
 
 Use this workflow to replace a **linear interconnect** with a fixed-temperature
 DC multiport model. It does not extract switching parasitics or a transistor

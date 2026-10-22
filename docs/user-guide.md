@@ -1,7 +1,7 @@
 # Desktop quick start — 0.2.0
 
 This historical guide describes **version 0.2.0** and its four-part ribbon.
-For the current 0.4.2 desktop, use the [guided workflow](desktop-workflow.md) and
+For the current 0.4.3 desktop, use the [guided workflow](desktop-workflow.md) and
 [layout editor guide](layout-editor.md). This older ribbon is retained only as a compatibility reference. Install the current
 source edition using the [README](../README.md#run-from-source);
 no historical binary is advertised as a public MPL release.
@@ -19,7 +19,7 @@ drawer to recover map space. [Bundled offline Help](../src/etlayout/data/user-gu
 is the concise packaged control reference; the [handbook](handbook/README.md)
 explains physics and reproducible calculations.
 
-## First calculation with the current 0.4.2 controls
+## First calculation with the current 0.4.3 controls
 
 This walkthrough uses the current seven-stage workspace. The later ribbon
 references describe the historical interface; use the linked guided workflow
