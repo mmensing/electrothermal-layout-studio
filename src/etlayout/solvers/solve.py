@@ -155,11 +155,31 @@ def solve(project: Project, mesh: PlanarMesh, progress: Progress | None = None,
     history = []
     result = None
     converged = False
+    # This state belongs only to the current coupled run. If thermal evaluation
+    # preserves its temperature, the damped electrical solution is also the next
+    # thermal source; solving it again would repeat assembly and factorization.
+    electrical = None
+    from etlayout.simulation.runner import mesh_fingerprint
+    input_physics = physics_hash(project, resolve_layout=False)
+    input_mesh = mesh_fingerprint(mesh)
+
+    def check_inputs():
+        # Progress/cancellation callbacks must not replace physical inputs while
+        # a solved state is retained. Names, notes, display preferences and
+        # reporting thresholds are excluded by the existing physics identity.
+        # No layout files are reread here.
+        if (physics_hash(project, resolve_layout=False) != input_physics
+                or mesh_fingerprint(mesh) != input_mesh):
+            raise SimulationError("Physical inputs or mesh changed during the electrothermal calculation; "
+                                  "restart the calculation with the updated setup")
+
     for iteration in range(settings.max_iterations):
         checkpoint(cancel, progress, iteration / settings.max_iterations,
                    f"Electrothermal iteration {iteration + 1}")
-        electrical = electrical_state(project, mesh, temperatures, cancel=cancel,
-                                       space=electrical_space, initial=electrical_values)
+        check_inputs()
+        if electrical is None or not electrical.result.converged:
+            electrical = electrical_state(project, mesh, temperatures, cancel=cancel,
+                                           space=electrical_space, initial=electrical_values)
         electrical_space = electrical.space
         electrical_values = electrical.values
         if not electrical.result.converged:
@@ -204,6 +224,11 @@ def solve(project: Project, mesh: PlanarMesh, progress: Progress | None = None,
                "temperature_max": result.metrics["temperature_max"],
                "electrical_power": result.metrics["electrical_power"]}
         history.append(row)
+        # Fixed-temperature boundaries may replace damped values during thermal
+        # evaluation. Keep the nonlinear seed, but never carry heat evaluated at
+        # a different temperature into the next thermal step.
+        if not np.array_equal(updated, evaluated.values):
+            electrical = None
         if converged:
             break
     assert result is not None
@@ -212,4 +237,5 @@ def solve(project: Project, mesh: PlanarMesh, progress: Progress | None = None,
     if not converged:
         result.diagnostics.append(Diagnostic("error", f"Electrothermal solution did not converge within {len(history)} coupled iterations"))
     checkpoint(cancel, progress, 1., "Electrothermal solution complete" if converged else "Electrothermal solution did not converge")
+    check_inputs()
     return _finish(result, project, started, progress, cancel)

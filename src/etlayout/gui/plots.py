@@ -20,10 +20,12 @@ from PySide6.QtWidgets import (
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
+from etlayout.gui.stack_workflow import StackElevation, ordered_layers
 from etlayout.io.reporting import csv_writer
 from etlayout.materials.models import evaluate_property
 from etlayout.simulation.analysis import FIELD_UNITS
@@ -142,130 +144,291 @@ class ProfilePanel(QWidget):
                                          json.dumps(profile.get("provenance", {}), ensure_ascii=False)])
 
 
+class _LayerRectangle(QGraphicsRectItem):
+    def __init__(self, rectangle, layer_id, callback):
+        super().__init__(rectangle)
+        self.layer_id = layer_id
+        self.callback = callback
+        self.setAcceptedMouseButtons(Qt.MouseButton.LeftButton)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.callback(self.layer_id)
+            event.accept()
+        else:
+            super().mousePressEvent(event)
+
+
 class CrossSectionPanel(QWidget):
+    layer_selected = Signal(str)
+    interface_selected = Signal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._cut = None
+        self._selected_layer = ""
+        self._layer_rectangles = []
+        self.intervals = {}
         layout = QVBoxLayout(self)
-        row = QHBoxLayout()
         self.description = QLabel("Draw a cross-section line through the layout to inspect actual lateral occupancy.")
         self.description.setWordWrap(True)
-        row.addWidget(self.description, 1)
+        layout.addWidget(self.description)
+        row = QHBoxLayout()
+        row.addWidget(QLabel("Vertical view"))
+        self.vertical_mode = QComboBox()
+        self.vertical_mode.addItem("Expanded thin layers (schematic)", "expanded")
+        self.vertical_mode.addItem("Physical elevation", "physical")
+        self.vertical_mode.setAccessibleName("Cross-section vertical scale")
+        self.vertical_mode.setToolTip("Expanded spacing makes thin films readable. Physical dimensions stay in the axis, table and tooltips; simulation inputs are unchanged.")
+        self.vertical_mode.setAccessibleDescription(self.vertical_mode.toolTip())
+        self.vertical_mode.currentIndexChanged.connect(self.refresh_cut)
+        row.addWidget(self.vertical_mode, 1)
+        self.include_hidden = QCheckBox("Include hidden layers")
+        self.include_hidden.setChecked(True)
+        self.include_hidden.setToolTip("View preference only. Hiding a layer does not remove it from the physical model.")
+        self.include_hidden.setAccessibleDescription(self.include_hidden.toolTip())
+        self.include_hidden.toggled.connect(self.refresh_cut)
+        row.addWidget(self.include_hidden)
+        fit = QPushButton("Fit cut")
+        fit.setToolTip("Restore the complete current cut and selected vertical scale. Physical geometry and camera framing of the layout map are unchanged.")
+        fit.clicked.connect(self.fit_cut)
+        row.addWidget(fit)
         button = QPushButton("Export plot")
         button.clicked.connect(lambda: export_plot(self.plot, self))
         row.addWidget(button)
         layout.addLayout(row)
         self.plot = pg.PlotWidget()
         self.plot.setLabel("bottom", "Distance along cut", units="µm")
-        self.plot.setLabel("left", "Elevation z", units="µm")
         self.plot.getAxis("bottom").enableAutoSIPrefix(False)
         self.plot.getAxis("left").enableAutoSIPrefix(False)
         self.plot.showGrid(x=False, y=True, alpha=.12)
-        layout.addWidget(self.plot)
-        self.intervals = {}
-        self.stack_summary = QLabel("Conductors carry current and heat; insulators and thermal sheets carry heat only. Dashed links are effective transfer paths, not solid material.")
+        layout.addWidget(self.plot, 1)
+        self.stack_summary = QLabel("Conductors carry current and heat; insulators and thermal sheets carry heat only. Dashed links are declared transfer paths, not solid material.")
         self.stack_summary.setWordWrap(True)
         self.stack_summary.setAccessibleName("Thermal stack interpretation")
         layout.addWidget(self.stack_summary)
-        self.layer_table = QTableWidget(0, 6)
-        self.layer_table.setHorizontalHeaderLabels(["Layer", "Role", "Material", "Thickness (µm)", "Bottom z (µm)", "Nominal k x/y/z (W/m K)"])
+        self.details = QTabWidget()
+        self.details.setAccessibleName("Cross-section physical details")
+        self.layer_table = QTableWidget(0, 7)
+        self.layer_table.setHorizontalHeaderLabels(["Layer", "Role", "Material", "Thickness (µm)", "Bottom z (µm)", "Nominal k x/y/z (W/m K)", "Top z (µm)"])
+        for column, help_text in enumerate((
+            "Physical sheet intersecting the actual cut. Select a row to synchronize the active layer.",
+            "Conductors support electrical and thermal physics; insulator/thermal sheets support heat only. Hiding is a view choice.",
+            "Material snapshot. Tooltips retain property provenance and calibration limitations.",
+            "Actual physical thickness in micrometres (1 µm = 1e-6 m), independent of expanded schematic spacing.",
+            "Actual lower surface elevation z in micrometres. Bottom + thickness = top.",
+            "Nominal x/y/z thermal conductivity in W/(m K), evaluated at the material law's reference temperature; temperature-dependent values during a solve may differ.",
+            "Actual upper surface elevation in micrometres, equal to bottom + thickness.",
+        )):
+            self.layer_table.horizontalHeaderItem(column).setToolTip(help_text)
+        self.layer_table.setAccessibleDescription("Actual dimensions and properties of sheets crossing the cut. Arrow keys or a plot click select a layer; expanded spacing never changes these values.")
         self.layer_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.layer_table.setMaximumHeight(155)
+        self.layer_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.layer_table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.layer_table.setAccessibleName("Physical thermal stack layers")
         self.layer_table.horizontalHeader().setStretchLastSection(True)
-        layout.addWidget(self.layer_table)
+        self.layer_table.itemSelectionChanged.connect(self._table_layer_selected)
+        self.details.addTab(self.layer_table, "Layers on cut")
+        self.connection_table = QTableWidget(0, 5)
+        self.connection_table.setHorizontalHeaderLabels(["Connection", "Layer pair", "Electrical", "Thermal", "Support on cut (µm)"])
+        for column, help_text in enumerate((
+            "Enabled interface whose prepared footprint intersects this cut. Double-click to review its normal editor.",
+            "Endpoint A ↔ endpoint B. Positive reported normal current flows A to B; the solved fields determine its sign.",
+            "Declared electrical transfer law; none carries no electrical current. Thermal transfer is configured independently.",
+            "Declared thermal transfer law; none carries no interlayer heat. Stack includes endpoint half-sheet resistances plus declared gap/interface terms.",
+            "Total length of this interface's actual intersection with the cut, in micrometres; this is not its two-dimensional contact area.",
+        )):
+            self.connection_table.horizontalHeaderItem(column).setToolTip(help_text)
+        self.connection_table.setAccessibleDescription("Actual enabled paths crossing the cut, with independent electrical and thermal laws. Missing rows alone do not imply a modeling error.")
+        self.connection_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.connection_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.connection_table.setAccessibleName("Declared connections crossing the cut")
+        self.connection_table.horizontalHeader().setStretchLastSection(True)
+        self.connection_table.cellDoubleClicked.connect(lambda row, _col: self.interface_selected.emit(
+            self.connection_table.item(row, 0).data(Qt.ItemDataRole.UserRole)))
+        self.details.addTab(self.connection_table, "Connections on cut")
+        self.details.setMaximumHeight(175)
+        layout.addWidget(self.details)
+
+    def clear(self):
+        """Forget context as well as pixels when a document/result is replaced."""
+        self._cut = None
+        self._layer_rectangles = []
+        self.intervals = {}
+        self.plot.clear()
+        self.layer_table.setRowCount(0)
+        self.connection_table.setRowCount(0)
+        self.description.setText("Draw a cross-section line through the layout to inspect actual lateral occupancy.")
+        self.stack_summary.setText("No cut selected. Layout overlap alone creates no electrical or thermal connection.")
+
+    def refresh_cut(self, *_):
+        if self._cut is not None:
+            self.show_cut(*self._cut)
+
+    def fit_cut(self):
+        if self._cut is not None:
+            _project, _geometry, start, end = self._cut
+            self.plot.setXRange(0, float(np.linalg.norm(np.asarray(end) - np.asarray(start))) * 1e6, padding=.03)
+            self.plot.enableAutoRange(axis="y", enable=True)
+
+    def _table_layer_selected(self):
+        row = self.layer_table.currentRow()
+        if row >= 0 and self.layer_table.item(row, 0):
+            self.select_layer(self.layer_table.item(row, 0).data(Qt.ItemDataRole.UserRole), emit=True)
+
+    def select_layer(self, identifier, *, emit=False):
+        self._selected_layer = identifier
+        self.layer_table.blockSignals(True)
+        found = False
+        for row in range(self.layer_table.rowCount()):
+            if self.layer_table.item(row, 0).data(Qt.ItemDataRole.UserRole) == identifier:
+                self.layer_table.selectRow(row)
+                found = True
+                break
+        if not found:
+            self.layer_table.clearSelection()
+            self.layer_table.setCurrentCell(-1, -1)
+        self.layer_table.blockSignals(False)
+        for rectangle, layer in self._layer_rectangles:
+            # A zero-width cosmetic pen is one screen pixel. Nonzero cosmetic
+            # widths still enlarge QGraphicsRectItem's local hit shape in data
+            # units, which can make an expanded thin film swallow its neighbors.
+            rectangle.setPen(pg.mkPen("#006bff" if layer.id == identifier else layer.color, width=0))
+            rectangle.setZValue(2 if layer.id == identifier else 0)
+        if emit:
+            self.layer_selected.emit(identifier)
 
     def show_cut(self, project, geometry, start, end):
+        self._cut = (project, geometry, tuple(start), tuple(end))
         self.plot.clear()
+        self._layer_rectangles = []
         self.intervals = {}
+        self.layer_table.blockSignals(True)
         self.layer_table.setRowCount(0)
+        self.connection_table.setRowCount(0)
+        if not project.layers:
+            self.layer_table.blockSignals(False)
+            self.description.setText("Add physical layers before inspecting a cross-section.")
+            self.stack_summary.setText("No physical sheets in this project.")
+            return
+        expanded = self.vertical_mode.currentData() == "expanded"
+        elevation = StackElevation.from_project(project, expanded)
+        self.plot.setLabel("left", "Elevation z (µm; expanded spacing)" if expanded else "Elevation z", units=None if expanded else "µm")
+        self.plot.getAxis("left").setTicks([elevation.ticks] if expanded else None)
         span_z = max(layer.z + layer.thickness for layer in project.layers) - min(layer.z for layer in project.layers)
-        length = np.linalg.norm(np.asarray(end) - np.asarray(start))
-        for layer in project.layers:
-            if not layer.visible or layer.id not in geometry.layers:
+        for layer in ordered_layers(project):
+            if (not layer.visible and not self.include_hidden.isChecked()) or layer.id not in geometry.layers:
                 continue
             intervals = cross_section_intervals(geometry.layers[layer.id], start, end)
             self.intervals[layer.id] = intervals
-            material = project.materials[layer.material_id]
-            role = {"conductor": "conductor", "thermal": "thermal-only", "insulator": "insulator (thermal-only)"}[layer.role]
+            material = project.materials.get(layer.material_id)
+            role = {"conductor": "conductor", "thermal": "thermal-only", "insulator": "insulator (thermal-only)"}.get(layer.role, layer.role)
             color = QColor(layer.color)
             color.setAlphaF(min(layer.opacity, .25) if layer.role == "insulator" else layer.opacity)
             for a, b in intervals:
-                rect = QGraphicsRectItem(QRectF(a * 1e6, layer.z * 1e6, (b - a) * 1e6, layer.thickness * 1e6))
+                rect = _LayerRectangle(QRectF(a * 1e6, elevation(layer.z), (b - a) * 1e6,
+                                             elevation(layer.z + layer.thickness) - elevation(layer.z)),
+                                       layer.id, lambda identifier: self.select_layer(identifier, emit=True))
                 rect.setBrush(color)
-                rect.setPen(pg.mkPen(layer.color, width=1))
-                kz = material.thermal_conductivity_z
                 rect.setToolTip(f"{layer.name} · {layer.material_id} · {role}\n"
-                                f"z={layer.z * 1e6:.5g} µm, t={layer.thickness * 1e6:.5g} µm\n"
-                                f"Lateral k multipliers x,y: {material.thermal_anisotropy}; "
-                                f"k_z: {kz if kz is not None else 'same material law as lateral k'} W/(m K)\n"
-                                f"{material.notes}\nSource: {material.source}")
+                                f"Bottom {layer.z * 1e6:.5g} µm; top {(layer.z + layer.thickness) * 1e6:.5g} µm; thickness {layer.thickness * 1e6:.5g} µm\n"
+                                + (f"Lateral k multipliers x,y: {material.thermal_anisotropy}; k_z: {material.thermal_conductivity_z if material.thermal_conductivity_z is not None else 'same material law as lateral k'} W/(m K)\n"
+                                   f"{material.notes}\nSource: {material.source}" if material else "Choose a material in Layers & materials."))
                 self.plot.addItem(rect)
+                self._layer_rectangles.append((rect, layer))
             if intervals:
                 row = self.layer_table.rowCount()
                 self.layer_table.insertRow(row)
-                base_k = float(evaluate_property(material.thermal_conductivity, material.thermal_conductivity.reference_temperature))
-                k_label = (f"{base_k * material.thermal_anisotropy[0]:.4g} / "
-                           f"{base_k * material.thermal_anisotropy[1]:.4g} / "
-                           f"{material.thermal_conductivity_z if material.thermal_conductivity_z is not None else base_k:.4g}")
-                for column, text in enumerate((layer.name, role, material.name, f"{layer.thickness * 1e6:.5g}",
-                                               f"{layer.z * 1e6:.5g}", k_label)):
+                if material:
+                    base_k = float(evaluate_property(material.thermal_conductivity, material.thermal_conductivity.reference_temperature))
+                    k_label = (f"{base_k * material.thermal_anisotropy[0]:.4g} / "
+                               f"{base_k * material.thermal_anisotropy[1]:.4g} / "
+                               f"{material.thermal_conductivity_z if material.thermal_conductivity_z is not None else base_k:.4g}")
+                else:
+                    k_label = "Unassigned"
+                for column, text in enumerate((layer.name, role, material.name if material else "Unassigned", f"{layer.thickness * 1e6:.5g}",
+                                               f"{layer.z * 1e6:.5g}", k_label, f"{(layer.z + layer.thickness) * 1e6:.5g}")):
                     item = QTableWidgetItem(text)
-                    item.setToolTip("Nominal property value at its declared reference temperature; process calibration is required. " + material.notes)
+                    item.setData(Qt.ItemDataRole.UserRole, layer.id)
+                    item.setToolTip("Actual physical dimensions. Nominal conductivity at its declared reference temperature; process calibration is required. " + (material.notes if material else ""))
                     self.layer_table.setItem(row, column, item)
-            if intervals and layer.thickness > span_z * .04:
+            if intervals and (expanded or layer.thickness > span_z * .04):
                 widest = max(intervals, key=lambda ab: ab[1] - ab[0])
                 label = pg.TextItem(f"{layer.name} · {layer.thickness * 1e6:.3g} µm", color="#171717", anchor=(.5, .5))
-                label.setPos(sum(widest) * .5e6, (layer.z + layer.thickness / 2) * 1e6)
+                label.setPos(sum(widest) * .5e6, (elevation(layer.z) + elevation(layer.z + layer.thickness)) / 2)
                 self.plot.addItem(label)
+        on_cut = set()
         for interface in project.interfaces:
-            if not interface.enabled or interface.id not in geometry.interfaces:
+            if (not interface.enabled or interface.id not in geometry.interfaces
+                    or not self.intervals.get(interface.layer_a) or not self.intervals.get(interface.layer_b)):
+                continue
+            intervals = cross_section_intervals(geometry.interfaces[interface.id], start, end)
+            if not intervals:
+                continue
+            on_cut.add(interface.id)
+            row = self.connection_table.rowCount()
+            self.connection_table.insertRow(row)
+            for column, text in enumerate((interface.id, f"{interface.layer_a} ↔ {interface.layer_b}",
+                                           interface.electrical_kind, interface.thermal_kind,
+                                           f"{sum(right-left for left, right in intervals) * 1e6:.5g}")):
+                item = QTableWidgetItem(text)
+                item.setData(Qt.ItemDataRole.UserRole, interface.id)
+                item.setToolTip("Declared transfer on the actual cut. Double-click to review the normal connection editor.")
+                self.connection_table.setItem(row, column, item)
+            if interface.electrical_kind == "none" and interface.thermal_kind == "none":
                 continue
             a, b = project.layer(interface.layer_a), project.layer(interface.layer_b)
-            lower, upper = (a, b) if a.z <= b.z else (b, a)
-            low, high = lower.z + lower.thickness, upper.z
-            for left, right in cross_section_intervals(geometry.interfaces[interface.id], start, end):
-                if interface.electrical_kind == "none":
-                    # A thermal resistance is a declared transfer path, not invented solid material.
-                    center = (left + right) * .5e6
-                    link = pg.PlotDataItem([center, center], [low * 1e6, high * 1e6],
-                                          pen=pg.mkPen("#7E8982", width=1, style=Qt.PenStyle.DashLine))
-                    gap = (f"gap {interface.height * 1e6:.5g} µm / {interface.material_id}" if interface.material_id else "no implicit gap material")
-                    path = "includes both half-sheet resistances" if interface.thermal_kind == "stack" else "declared effective sheet-to-sheet link"
-                    link.setToolTip(f"{interface.id}: thermal {interface.thermal_kind}; {path}; {gap}\n"
-                                    f"Extra interface area resistance: {interface.thermal_resistance_area:.5g} m² K/W")
-                    self.plot.addItem(link)
-                elif high > low:
-                    rect = QGraphicsRectItem(QRectF(left * 1e6, low * 1e6, (right - left) * 1e6, (high - low) * 1e6))
+            # Transfer laws act between sheet midplanes. Only a physical via is
+            # drawn across a material-filled gap; effective links stay dashed.
+            for left, right in intervals:
+                center = (left + right) * .5e6
+                y_a, y_b = elevation(a.z + a.thickness / 2), elevation(b.z + b.thickness / 2)
+                color = "#7E8982" if interface.electrical_kind == "none" else "#986B43"
+                link = pg.PlotDataItem([center, center], [y_a, y_b], pen=pg.mkPen(color, width=2, style=Qt.PenStyle.DashLine))
+                gap = (f"gap {interface.height * 1e6:.5g} µm / {interface.material_id}" if interface.material_id else "no implicit gap material")
+                path = "includes both half-sheet resistances" if interface.thermal_kind == "stack" else "declared effective sheet-to-sheet link"
+                link.setToolTip(f"{interface.id}: electrical {interface.electrical_kind}; thermal {interface.thermal_kind}\n"
+                                f"{path}; {gap}\nExtra interface area resistance: {interface.thermal_resistance_area:.5g} m² K/W")
+                self.plot.addItem(link)
+                lower, upper = (a, b) if a.z <= b.z else (b, a)
+                low, high = lower.z + lower.thickness, upper.z
+                if interface.model_kind == "physical_via" and high > low:
+                    rect = QGraphicsRectItem(QRectF(left * 1e6, elevation(low), (right - left) * 1e6, elevation(high) - elevation(low)))
                     rect.setBrush(QColor(153, 108, 68, 90))
                     rect.setPen(pg.mkPen("#986B43", width=1, style=Qt.PenStyle.DashLine))
-                    rect.setToolTip(f"{interface.id}\nElectrical: {interface.electrical_kind}\nThermal: {interface.thermal_kind}")
+                    rect.setToolTip(f"{interface.id}: declared physical via; material {interface.material_id or 'unassigned'}")
                     self.plot.addItem(rect)
-                else:
-                    self.plot.plot([left * 1e6, right * 1e6], [high * 1e6, high * 1e6],
-                                   pen=pg.mkPen("#986B43", width=2))
+        self.layer_table.blockSignals(False)
+        self.select_layer(self._selected_layer)
         self.layer_table.resizeColumnsToContents()
+        self.connection_table.resizeColumnsToContents()
+        self.details.setTabText(0, f"Layers on cut ({self.layer_table.rowCount()})")
+        self.details.setTabText(1, f"Connections on cut ({self.connection_table.rowCount()})")
         boundaries = []
         for boundary in project.thermal_boundaries:
             support = geometry.thermal_boundaries.get(boundary.id)
-            if support is not None and cross_section_intervals(support, start, end):
+            if (boundary.kind != "insulated" and self.intervals.get(boundary.layer_id)
+                    and support is not None and cross_section_intervals(support, start, end)):
                 temperature = boundary.value if boundary.kind == "temperature" else boundary.ambient
                 boundaries.append(f"{boundary.id} on {boundary.layer_id}: {boundary.kind}, reservoir {temperature:.5g} K")
         deposition = []
         for interface in project.interfaces:
-            if not interface.enabled or interface.electrical_kind in {"none", "ideal"}:
+            if interface.id not in on_cut or interface.electrical_kind in {"none", "ideal"}:
                 continue
             model = (f"all to {interface.heat_layer_id}" if interface.heat_layer_id else
                      f"{interface.heat_to_layer_a_fraction:.0%} to {interface.layer_a}, "
                      f"{1-interface.heat_to_layer_a_fraction:.0%} to {interface.layer_b}")
             deposition.append(f"{interface.id}: {model}")
-        self.stack_summary.setText("Thermal-only sheets carry no DC current. Dashed links are effective transfer paths; "
-            "gaps without declared material have no automatic heat path. "
-            + ("Boundaries on cut: " + "; ".join(boundaries) + ". " if boundaries else "No reservoir boundary on this cut. ")
-            + ("Interface/device heat: " + "; ".join(deposition) + ". " if deposition else "")
-            + "Thickness-averaged 2.5D model; independent lateral/z scales; no resolved 3D internal heat profile.")
-        self.plot.setXRange(0, length * 1e6, padding=.03)
-        self.plot.enableAutoRange(axis="y", enable=True)
-        self.description.setText(f"Cut ({start[0] * 1e6:.4g}, {start[1] * 1e6:.4g}) → ({end[0] * 1e6:.4g}, {end[1] * 1e6:.4g}) µm · separate x/z scales")
+        detail = ("Thermal-only sheets carry no DC current. Dashed links are declared transfer paths; "
+                  "gaps without declared material have no automatic heat path. "
+                  + ("Boundaries on cut: " + "; ".join(boundaries) + ". " if boundaries else "No reservoir boundary on this cut. ")
+                  + ("Interface/device heat: " + "; ".join(deposition) + ". " if deposition else "")
+                  + "Thickness-averaged 2.5D model; independent lateral/z scales; no resolved 3D internal heat profile.")
+        self.stack_summary.setText(detail)
+        self.stack_summary.setToolTip(detail)
+        self.fit_cut()
+        mode = "expanded vertical spacing; dimensions remain physical" if expanded else "physical elevations; independent x/z scales"
+        self.description.setText(f"Cut ({start[0] * 1e6:.4g}, {start[1] * 1e6:.4g}) → ({end[0] * 1e6:.4g}, {end[1] * 1e6:.4g}) µm · {mode}")
 
 
 class StudyPanel(QWidget):

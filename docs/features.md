@@ -95,7 +95,13 @@ switching-parasitic model. See [transient operation](handbook/transient.md).
 | Revisit a run | **History**, **Results → Inspect saved runs** | Historical context is read-only. **Return to working setup** restores editing; retained runs keep their original configuration identity. |
 | Check a change | **Studies → Mesh convergence…**, **Time-step convergence…**, **Compare project designs…** | Compare integral quantities and regularized hotspots as well as solver convergence. |
 
-**Results → Check mesh sensitivity…** and **Check time-step sensitivity…** open the\nexisting verification studies directly. The selected run must match the applied\nphysical setup; historical inspection keeps these actions disabled until you\nreturn to the working setup. A global study does not automatically verify an\narbitrary selected map region or pixel.\n\nMaps and human-readable tables use engineering units. Volumetric current density
+**Results → Check mesh sensitivity…** and **Check time-step sensitivity…** open the
+existing verification studies directly. The selected run must match the applied
+physical setup; historical inspection keeps these actions disabled until you
+return to the working setup. A global study does not automatically verify an
+arbitrary selected map region or pixel.
+
+Maps and human-readable tables use engineering units. Volumetric current density
 is **mA/µm²**, sheet current is **mA/µm**, and electric field is **V/µm**. Absolute
 temperature and rise are reported in K; scalar voltage/current/power/time use
 appropriate prefixes. Manual ranges use their printed unit. Raw numerical

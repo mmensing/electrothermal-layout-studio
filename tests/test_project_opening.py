@@ -359,3 +359,39 @@ def test_close_during_eager_read_retains_window_until_owned_thread_stops(
     finally:
         release.set()
         finished(window, qtbot)
+
+
+@pytest.mark.parametrize("lazy", [False, True], ids=["eager", "on-demand"])
+def test_declined_external_resource_review_keeps_document_camera_and_history(
+        guided_window, qtbot, tmp_path, solved_e1, lazy):
+    window = guided_window
+    window.history_lazy_enabled = lazy
+    project, result = deepcopy(solved_e1)
+    source = tmp_path / "outside-root" / "requires-consent.etlayout"
+    save_project(project, source, result, embed_layout=False, archive_format=3)
+    before = (window.project, window.result, window.mesh, window.path, window.document_epoch,
+              list(window.run_history), window.capture_view_state())
+    rejected = []
+    timer = QTimer(window)
+    timer.setInterval(5)
+
+    def reject_review():
+        dialog = QApplication.activeModalWidget()
+        if isinstance(dialog, ResourceReviewDialog):
+            rejected.append(dialog.inspection)
+            timer.stop()
+            dialog.reject()
+
+    timer.timeout.connect(reject_review)
+    timer.start()
+    try:
+        window.open_project(source)
+        finished(window, qtbot)
+        assert len(rejected) == 1
+        assert (window.project, window.result, window.mesh, window.path, window.document_epoch,
+                list(window.run_history), window.capture_view_state()) == before
+        assert not window.inspection_context and not window.guided.last_error
+        assert window.project_opening.pending is None
+    finally:
+        timer.stop()
+        timer.deleteLater()

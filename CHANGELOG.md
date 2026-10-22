@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+- Guide physical stack setup, thin-film cross-sections and explicit interlayer
+  electrical/thermal connections through the existing shared draft workflow.
+- Add physical-port selection, reference guidance and the exact validated SPICE
+  preview; retire stale networks after selection or physical input changes.
+- Put result headlines first, distinguish selected-run/setup/job context, preserve
+  separate setup/result cameras and keep compact drawers resizable. Add useful
+  field/label hover help and display headline temperatures to 0.1 K only.
+- Reuse the converged electrical state between coupled thermal iterations while
+  retaining SciPy, cancellation, input identity and scientific acceptance checks.
+- Bound history-reader shutdown by one deadline, consolidate immutable GUI
+  fixture calculations and report measured CI test/journey durations.
+
 ## 0.4.2 — Qt lifetime stability and stable CPU kernel limits
 
 - Fix Shiboken retained-reference clearing/removal/replacement before Python

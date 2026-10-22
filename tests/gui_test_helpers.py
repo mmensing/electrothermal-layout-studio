@@ -12,7 +12,6 @@ from PySide6.QtWidgets import QApplication, QComboBox, QLineEdit, QMessageBox
 
 from etlayout.examples import make_example
 from etlayout.gui.main_window import MainWindow
-from etlayout.simulation.runner import run_project
 
 
 def isolate_window_settings(monkeypatch, tmp_path):
@@ -34,12 +33,12 @@ def isolate_window_settings(monkeypatch, tmp_path):
     return filename
 
 
-@pytest.fixture(scope='module')
-def solved_e1(tmp_path_factory):
-    project = make_example('E1', tmp_path_factory.mktemp('immutable-e1'))
-    result = run_project(project)
-    assert result.converged
-    return project, result
+@pytest.fixture
+def solved_e1(e1_reference_solution):
+    """Each caller owns its document and arrays; the session template stays private."""
+    from copy import deepcopy
+
+    return deepcopy(e1_reference_solution)
 
 
 @pytest.fixture

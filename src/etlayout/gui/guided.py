@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QFormLayout,
     QFrame,
     QGridLayout,
+    QGroupBox,
     QHBoxLayout,
     QHeaderView,
     QLabel,
@@ -134,7 +135,8 @@ class GuidedWorkspace(QObject):
         self.check_batch = None
         self.mesh_identity = _mesh_key(window.project) if window.mesh else ""
         self.initial_state_evidence = None
-        self.execution_state = "Not started"
+        self.execution_state = "No job in this session"
+        self._canvas_cameras = {}
         self.last_error = ""
         self.last_error_stage = "run"
         self.last_error_detail = ""
@@ -148,6 +150,8 @@ class GuidedWorkspace(QObject):
         self.actions = {}
         QApplication.instance().installEventFilter(self)
         self._make_canvas_controls()
+        window.cross_section.layer_selected.connect(self.select_stack_layer)
+        window.cross_section.interface_selected.connect(self.edit_stack_interface)
         self._build_shell()
         self.panels = WorkspacePanels(self)
         self._build_menus()
@@ -382,6 +386,8 @@ class GuidedWorkspace(QObject):
         self.drawer = QTabWidget()
         self.drawer.setAccessibleName("Issues jobs logs and history")
         self.drawer.setDocumentMode(True)
+        self.drawer.setMinimumHeight(135)
+        self.drawer.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
         self.issues_page = QWidget()
         issues_layout = QVBoxLayout(self.issues_page)
         issues_layout.setContentsMargins(6, 4, 6, 4)
@@ -653,6 +659,7 @@ class GuidedWorkspace(QObject):
     def project_replaced(self):
         """Retire presentation evidence belonging to the previous document."""
         self.check_batch = None
+        self._canvas_cameras.clear()
         self.mesh_identity = _mesh_key(self.window.project) if self.window.mesh else ""
         self.initial_state_evidence = None
         self.execution_state = "Recorded result loaded" if self.window.result else "Not started"
@@ -660,6 +667,9 @@ class GuidedWorkspace(QObject):
         self.last_error_stage = "run"
         self.probes.clear()
         self._condition_group = ""
+        if self.power is not None:
+            self.power.refresh_document()
+            self.power.bind_result(self.window.result)
 
     def example_opened(self):
         """Guide a successfully replaced unsolved document to its review stage."""
@@ -842,7 +852,7 @@ class GuidedWorkspace(QObject):
         self.selection.purpose = purpose
         self.selection.explicit = True
 
-    def navigate(self, stage, force=False):
+    def navigate(self, stage, force=False, *, camera_transition=True):
         if not force and stage == self.stage:
             if stage in self.stage_buttons:
                 self.stage_buttons[stage].setChecked(True)
@@ -851,6 +861,14 @@ class GuidedWorkspace(QObject):
             if self.stage in self.stage_buttons:
                 self.stage_buttons[self.stage].setChecked(True)
             return False
+        result_identity = self.window.result.configuration_hash if self.window.result is not None else "none"
+        camera_key = ("results", result_identity) if self.stage == "results" else ("setup",)
+        next_camera = ("results", result_identity) if stage == "results" else ("setup",)
+        # Historical views are owned by MainWindow's exact run-view snapshots.
+        # Their replacement/return transitions must not overwrite working cameras.
+        if camera_key != next_camera and camera_transition and not self.window.inspection_context:
+            view = self.window.view
+            self._canvas_cameras[camera_key] = (view.transform(), view.mapToScene(view.viewport().rect().center()))
         if stage != "results":
             self.window.history_workflow.loader.cancel()
         if self.pending_purpose == "editor" and self.selection_banner.isVisible():
@@ -872,6 +890,14 @@ class GuidedWorkspace(QObject):
         self.refresh()
         self.window.update_overlay()
         self.apply_canvas_context()
+        if camera_key != next_camera and camera_transition and not self.window.inspection_context:
+            if next_camera in self._canvas_cameras:
+                transform, center = self._canvas_cameras[next_camera]
+                self.window.view.setTransform(transform)
+                self.window.view.centerOn(center)
+            elif next_camera[0] == "results":
+                if not self.window.view.fit_field():
+                    self.window.view.fit_all()
         return True
 
     def _clear_page(self):
@@ -984,9 +1010,15 @@ class GuidedWorkspace(QObject):
         for layer in w.project.layers:
             mapped.update(layer.geometry.sources)
             rows.append((layer.id, layer.name, layer.role, layer.material_id, f"{layer.z * 1e6:g} / {layer.thickness * 1e6:g}"))
+        connection_masks = {source: interface for interface in w.project.interfaces
+                            for source in interface.geometry.sources}
         for key in w.mask_keys():
             if key not in mapped:
-                rows.append(("mask:" + key, key, "Display only", "Unassigned", "—"))
+                interface = connection_masks.get(key)
+                if interface is not None:
+                    rows.append(("interface-mask:" + interface.id, key, "Connection footprint", interface.id, "—"))
+                else:
+                    rows.append(("mask:" + key, key, "Display only", "Unassigned", "—"))
         table.setRowCount(len(rows))
         for row, (key, *values) in enumerate(rows):
             for col, value in enumerate(values):
@@ -996,7 +1028,26 @@ class GuidedWorkspace(QObject):
         table.cellClicked.connect(lambda row, col: self.select_mapping(table.item(row, 0).data(Qt.ItemDataRole.UserRole)))
         table.horizontalHeader().setStretchLastSection(True)
         table.resizeColumnsToContents()
-        self.page_layout.addWidget(table)
+        for row_index in range(table.rowCount()):
+            for column in range(table.columnCount()):
+                table.item(row_index, column).setToolTip(table.item(row_index, column).text())
+        unassigned = sum(key.startswith("mask:") for key, *_ in rows)
+        mappings = QGroupBox(f"Source mask mapping · {unassigned} unmapped")
+        mappings.setCheckable(True)
+        mappings.setChecked(bool(unassigned))
+        QVBoxLayout(mappings).addWidget(table)
+        table.setVisible(bool(unassigned))
+        mappings.toggled.connect(table.setVisible)
+        self.page_layout.addWidget(mappings)
+        from etlayout.gui.stack_workflow import StackOverview
+        self.stack_overview = StackOverview(compact=True)
+        self.stack_overview.set_project(w.project, w.geometry, self.selected_layer)
+        self.stack_overview.layer_selected.connect(self.select_stack_layer)
+        self.stack_overview.edit_layer_requested.connect(self.select_mapping)
+        self.stack_overview.edit_interface_requested.connect(self.edit_stack_interface)
+        self.stack_overview.connection_requested.connect(self.connect_stack_layers)
+        self.stack_overview.cut_requested.connect(self.show_stack)
+        self.page_layout.addWidget(self.stack_overview)
         row = QHBoxLayout()
         row.addWidget(button("Add physical layer", self.add_layer))
         row.addWidget(button("Mesh / solver preset…", w.load_preset))
@@ -1027,12 +1078,58 @@ class GuidedWorkspace(QObject):
             self.selected_layer = layer.id
             self.edit_model("layers", layer.id, resolve=False)
 
+    def open_stack_connections(self):
+        if not self.resolve_draft() or self.window.model_locked():
+            return
+        self.navigate("layers", force=True)
+        self.stack_overview.inventory.setCurrentIndex(1)
+        self.stack_overview.new_connection.setChecked(True)
+        self.page_scroll.ensureWidgetVisible(self.stack_overview.new_connection)
+
+    def select_stack_layer(self, key):
+        self.selected_layer = key
+        index = self.active_layer.findData(key)
+        if index >= 0:
+            self.active_layer.setCurrentIndex(index)
+        self.window.cross_section.select_layer(key)
+
+    def edit_stack_interface(self, key):
+        if self.window.model_locked():
+            return
+        if self.resolve_draft():
+            self.navigate("connections", force=True)
+            self.edit_model("interfaces", key, resolve=False)
+
+    def connect_stack_layers(self, first, second, purpose):
+        if self.window.model_locked() or not self.resolve_draft():
+            return
+        from etlayout.gui.stack_workflow import connection_draft
+        try:
+            model = connection_draft(self.window.project, first, second, purpose,
+                self.window.unique_id("link", self.window.project.interfaces), self.window.geometry)
+        except ValueError as error:
+            self.next_reason.setText(str(error))
+            return
+        self.navigate("connections", force=True)
+        self.open_editor("interfaces", model, is_new=True)
+        if model.geometry.polygons:
+            self.preview_region("stack_connection", model.geometry, purpose="editor")
+            self.next_reason.setText("Initial shared overlap is a draft. Narrow it to the actual contact/via footprint before Apply.")
+
     def select_mapping(self, key):
-        if key.startswith("mask:"):
+        if self.window.model_locked() or not self.resolve_draft():
+            if hasattr(self, "stack_overview"):
+                self.stack_overview.select_layer(self.selected_layer)
+            return
+        if key.startswith("interface-mask:"):
+            self.edit_stack_interface(key.split(":", 1)[1])
+        elif key.startswith("mask:"):
             self.add_layer(key[5:])
         else:
-            self.selected_layer = key
-            self.edit_model("layers", key)
+            self.select_stack_layer(key)
+            if hasattr(self, "stack_overview"):
+                self.stack_overview.select_layer(key)
+            self.edit_model("layers", key, resolve=False)
             self.locate_object("layers", key, frame=False)
 
     def add_layer(self, mask=""):
@@ -1046,6 +1143,8 @@ class GuidedWorkspace(QObject):
     def connections_page(self):
         self.heading.setText("Add connection or probe")
         self.description.setText("Choose purpose, physical layer and footprint. XY overlap alone does not create a connection.")
+        self.page_layout.addWidget(button("Review stack & connect two layers…", self.open_stack_connections))
+        self.page_layout.addWidget(button("Extract passive network / SPICE…", lambda: self.open_studies("multiport")))
         grid = QGridLayout()
         for i, (label, key) in enumerate((("External port", "port"), ("Interlayer via/contact", "interface"),
                                          ("Passive voltage probe", "probe"), ("Floating electrode", "floating"),
@@ -1210,17 +1309,41 @@ class GuidedWorkspace(QObject):
         w = self.window
         self.heading.setText("Results & analysis")
         self.description.setText("One selected run drives fields, probes, metrics and export.")
+        from etlayout.gui.result_summary import result_headlines
+        self.result_metrics = text_label(result_headlines(w.result), "section")
+        self.result_metrics.setObjectName("selected_result_headlines")
+        self.result_metrics.setToolTip("Headline temperatures are rounded to 0.1 K for readability. Stored fields, exports, explicit limits and acceptance use unrounded values. Resistance follows the configured voltage/current measurement pair and can be unavailable for a zero current at its selected sense terminal. Open Metrics & loss budget for numerical detail.")
+        self.result_metrics.setAccessibleDescription(self.result_metrics.toolTip())
+        self.page_layout.addWidget(self.result_metrics)
+        self.result_scope = text_label("", "hint")
+        self.page_layout.addWidget(self.result_scope)
+        self.verification_toggle = QToolButton()
+        self.verification_toggle.setText("Evidence and verification")
+        self.verification_toggle.setObjectName("evidence_verification_disclosure")
+        self.verification_toggle.setCheckable(True)
+        self.verification_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        self.verification_toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.verification_toggle.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.verification_toggle.setToolTip("Show evidence and mesh/time verification actions. Expanding this section changes the display only, not verification readiness or the physical setup.")
+        self.page_layout.addWidget(self.verification_toggle)
+        quality_body = QWidget()
+        quality_layout = QVBoxLayout(quality_body)
+        quality_body.hide()
+        self.verification_toggle.toggled.connect(quality_body.setVisible)
+        self.verification_toggle.toggled.connect(lambda expanded: self.verification_toggle.setArrowType(
+            Qt.ArrowType.DownArrow if expanded else Qt.ArrowType.RightArrow))
+        self.page_layout.addWidget(quality_body)
         self.result_evidence = text_label("", "hint")
-        self.page_layout.addWidget(self.result_evidence)
+        quality_layout.addWidget(self.result_evidence)
         self.verify_mesh = button("Check mesh sensitivity…", lambda: self.verify_result("mesh"))
         self.verify_mesh.setObjectName("verify_result_mesh")
         self.verify_time = button("Check time-step sensitivity…", lambda: self.verify_result("time"))
         self.verify_time.setObjectName("verify_result_time")
         self.verification_context = text_label("", "hint")
         self.verification_context.setObjectName("verification_context")
-        self.page_layout.addWidget(self.verify_mesh)
-        self.page_layout.addWidget(self.verify_time)
-        self.page_layout.addWidget(self.verification_context)
+        quality_layout.addWidget(self.verify_mesh)
+        quality_layout.addWidget(self.verify_time)
+        quality_layout.addWidget(self.verification_context)
         # Compact the existing bound controls into a single column for the inspector.
         if not getattr(self, "_result_form_compact", False):
             old = w.result_controls.layout()
@@ -1247,9 +1370,11 @@ class GuidedWorkspace(QObject):
             form.addRow(w.field_hint)
             self._result_form_compact = True
         self.page_layout.addWidget(w.result_controls)
+        w.field_combo.setToolTip("Sheet current (mA/µm) is current per width; metal/contact current density (mA/µm²) is current per area. 1 mA/µm² = 1e9 A/m² = 1000 A/mm². Absolute temperature and temperature rise use K. Raw numerical exports retain SI units.")
+        w.field_region.setToolTip("Filter this recorded field to an exact physical support. This changes the view and statistics only; it does not remesh or edit the simulation domain.")
         w.result_controls.show()
         self.page_layout.addWidget(w.display_tabs)
-        w.display_tabs.setMinimumHeight(220)
+        w.display_tabs.setMinimumHeight(175)
         w.display_tabs.show()
         for entry in (w.legend_scale.minimum, w.legend_scale.maximum):
             entry.setMinimumWidth(60)
@@ -1260,8 +1385,6 @@ class GuidedWorkspace(QObject):
         self.probe_table.horizontalHeader().setStretchLastSection(True)
         self.page_layout.addWidget(text_label("Probe readout", "section"))
         self.page_layout.addWidget(self.probe_table)
-        self.result_metrics = text_label("", "hint")
-        self.page_layout.addWidget(self.result_metrics)
         for title, callback in (("Place result probe", lambda: w.set_tool("probe")),
                                 ("Metrics & loss budget", lambda: self.show_page(w.results_page, "Quantitative results")),
                                 ("Compare saved runs…", w.compare_maps_dialog),
@@ -1280,7 +1403,7 @@ class GuidedWorkspace(QObject):
         for title, fn in (("Parameter sweep…", self.window.run_sweep_dialog), ("Mesh convergence…", self.window.run_convergence_dialog),
                            ("Time-step convergence…", self.window.run_time_convergence_dialog), ("Compare project designs…", self.window.compare_dialog),
                            ("Routing alternatives", lambda: self.open_studies("routing")), ("Constrained optimization", self.open_studies),
-                           ("Passive multiport / power analysis", lambda: self.open_studies("analysis")),
+                           ("Passive network / SPICE extraction", lambda: self.open_studies("multiport")),
                            ("Saved study results", lambda: self.show_page(self.window.study_panel, "Study results"))):
             self.page_layout.addWidget(button(title, fn))
         self.page_layout.addStretch()
@@ -1492,7 +1615,7 @@ class GuidedWorkspace(QObject):
 
     def restore_context(self, state):
         self.selected_layer = state.get("layer", "")
-        self.navigate(state.get("stage", "results"), force=True)
+        self.navigate(state.get("stage", "results"), force=True, camera_transition=False)
         for index in range(self.canvas_tabs.count()):
             if self.canvas_tabs.tabText(index) == state.get("canvas"):
                 self.canvas_tabs.setCurrentIndex(index)
@@ -1788,10 +1911,24 @@ class GuidedWorkspace(QObject):
     def show_stack(self):
         w = self.window
         if not w.geometry:
+            self.next_reason.setText("Geometry is preparing. Inspect the section after preparation completes.")
             return
-        shape = w.geometry.layers.get(self.selected_layer, w.geometry.domain)
-        x0, y0, x1, y1 = shape.bounds
-        line = ((x0, (y0 + y1) / 2), (x1, (y0 + y1) / 2))
+        line = w.last_cut
+        if line is None:
+            candidates = [interface for interface in w.project.interfaces if interface.enabled
+                          and self.selected_layer in {interface.layer_a, interface.layer_b}
+                          and (interface.electrical_kind != "none" or interface.thermal_kind != "none")]
+            candidates.sort(key=lambda interface: interface.electrical_kind == "none")
+            connection = next((w.geometry.interfaces.get(interface.id) for interface in candidates
+                               if interface.id in w.geometry.interfaces and not w.geometry.interfaces[interface.id].is_empty), None)
+            if connection is not None:
+                point = connection.representative_point()
+                _, y0, _, y1 = w.geometry.domain.bounds
+                line = ((point.x, y0), (point.x, y1))
+            else:
+                shape = w.geometry.layers.get(self.selected_layer, w.geometry.domain)
+                x0, y0, x1, y1 = shape.bounds
+                line = ((x0, (y0 + y1) / 2), (x1, (y0 + y1) / 2))
         w.last_cut = line
         w.cross_section.show_cut(w.project, w.geometry, *line)
         self.canvas_tabs.setCurrentWidget(w.cross_section)
@@ -1808,7 +1945,10 @@ class GuidedWorkspace(QObject):
             self.project_name.setText(w.project.name)
             self.project_name.setToolTip(w.project.name)
             self.save_state.setText("Unsaved changes" if w.dirty else "Saved" if w.path else "Not saved")
-            self.setup_context.setText("Inspecting run" if w.inspection_context else "Working setup")
+            self.setup_context.setText("Historical run · read-only" if w.inspection_context else "Working setup")
+            self.setup_context.setToolTip(
+                "The editable setup is preserved while inspecting a saved run." if w.inspection_context
+                else "Edits apply to this setup. Selected results and the last job retain their own identity.")
             self.analysis.setCurrentIndex(self.analysis.findData(analysis_key(w.project)))
             self.analysis.setEnabled(not w.job and not w.inspection_context and not (self.power and self.power.job))
             previous_layer = self.active_layer.currentData() or self.selected_layer
@@ -1875,7 +2015,12 @@ class GuidedWorkspace(QObject):
                         self.result_evidence.setProperty("error", concern)
                         self.result_evidence.style().unpolish(self.result_evidence)
                         self.result_evidence.style().polish(self.result_evidence)
-                    self.result_metrics.setText(w.key_metrics.text())
+                    self.refresh_result_headlines()
+                    self.result_scope.setText(
+                        f"Selected run {result.configuration_hash[:12]} · {result_state}\n"
+                        + ("Engineering attention · open Evidence and verification. " if concern else "")
+                        + ("Solver converged. " if result.converged else "Solver did not converge. ")
+                        + "Mesh/time sensitivity is reported separately below.")
                     self.stage_buttons["results"].setToolTip(result_state + ". Fields and metrics retain this run's recorded configuration.")
                 else:
                     self.result_evidence.setText("No selected result. Run the current setup or inspect History.")
@@ -2147,6 +2292,12 @@ class GuidedWorkspace(QObject):
                             "field": field, "run": w.result.configuration_hash, "time": w.view_source_result().metrics.get("time_s")})
         self.refresh_probes()
 
+    def refresh_result_headlines(self):
+        if self.stage == "results" and hasattr(self, "result_metrics"):
+            from etlayout.gui.result_summary import result_headlines
+            prefix = "Original run metrics · not map differences\n" if self.window.view_mode.currentData() == "difference" else ""
+            self.result_metrics.setText(prefix + result_headlines(self.window.view_source_result()))
+
     def refresh_probes(self):
         if self.stage != "results" or not hasattr(self, "probe_table"):
             return
@@ -2196,7 +2347,7 @@ class GuidedWorkspace(QObject):
             self.power.tabs.setCurrentIndex(0)
             self.power.setup_kind.setCurrentIndex(self.power.setup_kind.findData(section))
         else:
-            self.power.tabs.setCurrentIndex({"setup": 0, "analysis": 1, "routing": 2, "experiments": 3}.get(section, 3))
+            self.power.tabs.setCurrentIndex({"setup": 0, "analysis": 1, "routing": 2, "experiments": 3, "multiport": 4}.get(section, 3))
         self.show_page(self.power, "Power & routing studies")
 
     def power_busy(self, busy):

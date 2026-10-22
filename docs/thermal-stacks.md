@@ -33,6 +33,10 @@ capacity; process-specific measurements are needed for quantitative film claims.
 
 ## Build the stack in the GUI
 
+For a guided introduction to physical elevations, source-mask mapping,
+connection purposes and the two cross-section scales, start with
+[Set up a physical stack and its connections](layer-stack-workflow.md).
+
 1. In **Layers & materials**, add a physical layer with **Insulator** or
    **Thermal** role, its actual footprint/openings, thickness and bottom z.
 2. In **Contacts & connections**, set its electrical interface kind to **None**

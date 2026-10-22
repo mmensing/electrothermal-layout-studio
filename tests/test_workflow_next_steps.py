@@ -24,6 +24,14 @@ def _current(window, source):
     return result
 
 
+def _open_verification(window):
+    toggle = window.guided.verification_toggle
+    assert toggle.isVisible() and toggle.isEnabled()
+    if not toggle.isChecked():
+        _click(window, toggle)
+    assert toggle.isChecked() and window.guided.verify_mesh.isVisible()
+
+
 def test_successful_example_open_retires_empty_results_for_actionable_review(guided_window, qtbot):
     window = guided_window
     window.guided.navigate("results")
@@ -40,6 +48,7 @@ def test_mesh_action_opens_existing_dialog_with_same_result_support(guided_windo
     window = guided_window
     result = _current(window, solved_e1)
     _idle(window, qtbot)
+    _open_verification(window)
     window.field_combo.setCurrentIndex(window.field_combo.findData("temperature"))
     before = window.capture_view_state()
     physics = configuration_hash(window.project)
@@ -65,6 +74,7 @@ def test_history_and_stale_physics_cannot_start_verification(guided_window, qtbo
     window = guided_window
     result = _current(window, solved_e1)
     _idle(window, qtbot)
+    _open_verification(window)
     window.project.layers[0].thickness *= 2
     window.guided.refresh()
     assert not window.guided.verify_mesh.isEnabled()
@@ -74,6 +84,7 @@ def test_history_and_stale_physics_cannot_start_verification(guided_window, qtbo
     working = window.project
     window.inspect_result(result)
     _idle(window, qtbot)
+    _open_verification(window)
     assert window.inspection_context and window.inspection_context["project"] is working
     assert not window.guided.verify_mesh.isEnabled()
     assert "historical runs are read-only" in window.guided.verify_mesh.toolTip()
@@ -92,6 +103,7 @@ def test_transient_time_action_uses_real_transient_configuration(guided_window, 
     assert result.converged and result.transient is not None
     _current(window, (project, result))
     _idle(window, qtbot)
+    _open_verification(window)
     assert window.guided.verify_time.isVisible() and window.guided.verify_time.isEnabled()
     observed = []
 

@@ -191,3 +191,72 @@ budget using repeated measurements on the actual workload; independent study
 points can benefit from processes when memory permits. These are source tests on
 the Windows build host, not clean-machine or packaged-build performance evidence.
 Same-mesh equality is not mesh convergence; slender-triangle warnings remain.
+
+
+## Reusing the converged coupled state
+
+Steady coupled calculations retain the converged electrical state evaluated at
+one damped temperature iterate when thermal evaluation preserves that exact
+temperature. Its heat is then used directly for the next thermal step. Previously,
+the next iteration assembled and solved that identical electrical state again.
+With no temperature projection, `n` successful coupled iterations require `n + 1`
+electrical state evaluations instead of `2n`. Fixed-temperature boundaries can
+replace damped boundary values during thermal evaluation; that retires the carried
+state, preserves its nonlinear seed, and forces a fresh electrical solve before the
+next thermal step. Every updated
+temperature still receives a complete electrical solve, including local HEMT bias,
+finite contacts, temperature-dependent loads, field recovery and conservation.
+Electrical and thermal residuals and the existing coupled convergence and
+conservation checks are still evaluated on every iteration. Thermal boundary
+projection retains the existing convergence behavior; it prevents reuse when the
+temperature differs. No physics, convergence criterion or sparse backend changes.
+
+The retained state belongs to one calculation and is discarded when that call
+returns. This change adds no cross-project result or factorization cache. Existing exact
+physics and mesh identities guard iteration and final progress callbacks; changing
+physical inputs, mesh supports or solver settings during a calculation produces an
+actionable restart error. Display names, colors, visibility, notes and engineering thresholds
+do not invalidate that physical state. Measurement definitions retain the existing
+calculation-identity rules. Cancellation remains checked at iteration
+and PDE preparation checkpoints; an unsuccessful electrical state is not accepted
+as a reusable converged solution.
+
+A native Windows 11 comparison used two fresh processes per source and CPU budget
+in interleaved, reversed order. Baseline commit `c99578a` and the revised solver
+used the same exact nominal E21 configuration, 143,324 triangles, 301,091 estimated
+DOFs and requested 5 A. The host had 8 physical / 16 logical AMD cores and 31.18 GiB
+RAM, CPython 3.12.14, SciPy 1.18.1 and NumPy 2.5.4. The existing one-thread native
+kernel cap and requested 1/4 outer-worker budgets were unchanged.
+
+| Source and CPU budget | Median calculation wall | Observed wall range | Median process CPU | Peak process-tree RSS |
+| --- | ---: | ---: | ---: | ---: |
+| Baseline, 1 CPU | 87.588 s | 87.520–87.657 s | 83.727 s | 1,598.5 MiB |
+| Revised, 1 CPU | 71.281 s | 70.940–71.621 s | 68.508 s | 1,469.1 MiB |
+| Baseline, 4 CPUs | 82.496 s | 81.298–83.694 s | 84.164 s | 1,610.7 MiB |
+| Revised, 4 CPUs | 64.576 s | 59.144–70.008 s | 65.391 s | 1,499.8 MiB |
+
+All eight calculations converged in 16 coupled iterations and met the unchanged
+configured current, electrical-power and thermal-balance criteria at 5 A. Four-CPU
+runs used four actual assembly workers. Electrical state evaluations fell from
+32 to 17, sparse factorizations from 36 to 21, and total linear solves from 51 to
+36. The medians measured 18.6% less complete-run wall time at one CPU and 21.7%
+less at four CPUs, including the input-identity guards. This removes repeated work
+within SciPy; SuperLU factorization remains serial.
+
+All 72 field arrays preserved their shapes, types and nonfinite support. Removing
+the repeated nonlinear restart changes the accepted Newton path: strict relative
+`1e-10` cross-revision field identity does not hold. The largest temperature
+difference was `9.30e-7 K`; the largest complete-field relative infinity-norm
+difference was `2.77e-7`, in the channel thermal gradient. Those directly measured
+differences accompany unchanged residual and conservation acceptance; no tolerance
+was relaxed. Temperatures of this magnitude are far below practical display and
+engineering resolution.
+
+Use the same-mesh `scripts/benchmark_cpu.py` command above within each source tree
+and compare physics/mesh fingerprints, complete fields, service and conservation.
+Keep raw arrays and detailed phase receipts outside the source tree. RSS here
+includes the Windows virtual-environment launcher and its calculation child,
+excluding the preparation process. Two repetitions on one host, with uncontrolled
+background load and CPU temperature, establish this measured case only. These are
+source measurements; mesh convergence, clean-machine and packaged performance
+require separate validation.

@@ -66,7 +66,10 @@ def test_workbench_real_worker_analysis_and_multiport(qtbot, tmp_path):
     window = PowerWorkbench(project, execution=ExecutionSettings(cpu_threads=1, study_workers=1))
     qtbot.addWidget(window)
     window.show()
-    assert [window.tabs.tabText(index) for index in range(window.tabs.count())] == ["Setup", "Analysis", "Routing", "Experiments"]
+    window.open_multiport()
+    assert window.multiport_workflow.isVisible()
+    assert window.multiport_workflow.selected_ports() == ["positive", "negative"]
+    assert window.multiport_workflow.reference.currentData() == "negative"
     window.start("power", {})
     assert window.job is not None and window.cancel.isEnabled()
     qtbot.waitUntil(lambda: window.job is None, timeout=90000)
@@ -78,10 +81,16 @@ def test_workbench_real_worker_analysis_and_multiport(qtbot, tmp_path):
     assert window.multiport_report is not None, window.status.text()
     assert window.matrix.rowCount() == 2
     assert window.multiport_report["resistance_matrix"][0][0] == pytest.approx(.084)
+    assert "fidelity verified per port" in window.multiport_workflow.preview_status.text()
+    from etlayout.power.multiport import export_multiport
+    exported = export_multiport(window.multiport_report, tmp_path / "reviewed.cir", "spice")
+    assert window.multiport_workflow.preview.toPlainText() == exported.read_text(encoding="utf-8")
+    assert "p1 = positive" in window.multiport_workflow.preview.toPlainText()
     window.analysis_map.show_field(window.result, "metal", "potential")
     assert window.analysis_map.overlay_item is not None
     window.invalidate_result()
     assert window.analysis_map.overlay_item is None and window.matrix.rowCount() == 0
+    assert not window.multiport_workflow.preview.toPlainText()
     window.reference_temperature.setText("310")
     window.accept()
     assert window.project.power.thermal_reference_temperature == 310

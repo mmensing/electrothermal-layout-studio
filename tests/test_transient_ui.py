@@ -43,6 +43,8 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     assert window.active_view_result() is frame
     assert window.view.result is frame
     assert window.display_result is None  # a time slice is a physical result
+    assert "Selected time: 0 s" in window.guided.result_metrics.text()
+    assert f"Selected-time peak temperature: {frame.metrics['temperature_max']:.1f} K" in window.guided.result_metrics.text()
     layer = window.field_layer.currentData()
     point = run.mesh.centroids[0]
     assert window.get_sampler().sample(layer, "temperature", np.asarray([point]))[0] == pytest.approx(300)
@@ -69,15 +71,19 @@ def test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating
     selected = window.active_view_result()
     assert selected is run.transient.snapshots[5]
     assert selected.metrics["time_s"] == pytest.approx(250e-6)
+    assert "Selected time: 250 µs" in window.guided.result_metrics.text()
+    assert f"Selected-time peak temperature: {selected.metrics['temperature_max']:.1f} K" in window.guided.result_metrics.text()
     selected_time = "t = 250 µs · "
     assert window.field_hint.text().startswith(selected_time)
     assert window.field_hint.toolTip().startswith(selected_time)
     assert window.get_sampler().sample(layer, "temperature", np.asarray([point]))[0] > 300
     provenance = window.displayed_provenance()
-    area = view.viewport().width() * view.viewport().height()
+    viewport_width, viewport_height = view.viewport().width(), view.viewport().height()
     panels = window.guided.panels
     panels.maximize_action.trigger()
-    qtbot.waitUntil(lambda: view.viewport().width() * view.viewport().height() > area * 1.7)
+    qtbot.waitUntil(lambda: view.viewport().width() > viewport_width
+                    and view.viewport().height() >= viewport_height)
+    assert not any(panels.visible(name) for name in panels.widgets)
     assert window.active_view_result() is selected and view.result is selected and window.result is run
     assert window.displayed_provenance() == provenance
     panels.maximize_action.trigger()

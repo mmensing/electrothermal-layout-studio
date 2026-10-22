@@ -65,7 +65,7 @@ jobs:
       - name: Run fast contracts and package policy
         run: python -m pytest -m "fast or packaging" --basetemp=.pytest_fast --junitxml=artifacts/pytest-fast.xml
       - name: Guard compact maps, results and example browser workflows
-        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_resource_trust_gui.py::test_review_authorizes_current_edits_against_held_archive tests/test_example_library_browser.py tests/test_workflow_next_steps.py tests/test_capability_catalog.py tests/test_reader_error_ownership.py tests/test_acceptance_project_readiness.py tests/test_acceptance_save_lifecycle.py tests/test_qt_reference_lifetime.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
+        run: python -m pytest tests/test_transient_ui.py::test_time_selection_updates_map_sampler_metrics_and_exports_without_mutating_run tests/test_resource_trust_gui.py::test_review_authorizes_current_edits_against_held_archive tests/test_example_library_browser.py tests/test_workflow_next_steps.py tests/test_capability_catalog.py tests/test_reader_error_ownership.py tests/test_acceptance_project_readiness.py tests/test_acceptance_save_lifecycle.py tests/test_gui_stack_workflow.py tests/test_workflow_clarity.py tests/test_history_loading.py tests/test_gui_fixture_isolation.py tests/test_history_opening.py tests/test_project_opening.py::test_declined_external_resource_review_keeps_document_camera_and_history tests/test_release_workflow_smoke.py tests/test_shared_power_workbench.py tests/test_typed_scenario_editor.py tests/test_qt_reference_lifetime.py --basetemp=.pytest_compact --junitxml=artifacts/pytest-compact.xml
       - name: Exercise public CLI
         run: |
           python -m etlayout --version
@@ -94,6 +94,9 @@ jobs:
           path: build/shiboken-runtime/command-*.log
           if-no-files-found: warn
           retention-days: 7
+      - name: Summarize test costs without changing selection or results
+        if: always()
+        run: python scripts/summarize_test_timings.py --report fast=artifacts/pytest-fast.xml --report compact=artifacts/pytest-compact.xml --output artifacts/test-timings-source-quality.json --github-summary
       - name: Retain bounded fast-test evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -107,7 +110,9 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: compact-transient-workflow
-          path: artifacts/pytest-compact.xml
+          path: |
+            artifacts/pytest-compact.xml
+            artifacts/test-timings-source-quality.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -149,6 +154,9 @@ jobs:
       - name: Document lightweight scope or downstream complete validation
         if: steps.scope.outputs.required != 'true' || github.event_name != 'pull_request'
         run: Write-Output 'Documentation-only PRs retain the stable check; scientific main/owner runs use the dependent complete source and desktop jobs.'
+      - name: Summarize numerical test costs
+        if: always() && steps.scope.outputs.required == 'true' && github.event_name == 'pull_request'
+        run: python scripts/summarize_test_timings.py --report numerical=artifacts/pytest-scientific.xml --output artifacts/test-timings-scientific.json --github-summary
       - name: Retain explicit scientific scope and test evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -157,6 +165,7 @@ jobs:
           path: |
             artifacts/scientific-scope.json
             artifacts/pytest-scientific.xml
+            artifacts/test-timings-scientific.json
           if-no-files-found: warn
           retention-days: 7
 
@@ -185,6 +194,9 @@ jobs:
         run: python scripts/prepare_qt_runtime.py
       - name: Run complete source collection including spawned-worker coverage
         run: python -m coverage run -m pytest --basetemp=.pytest_full --junitxml=artifacts/pytest-full.xml
+      - name: Summarize complete collection costs
+        if: always()
+        run: python scripts/summarize_test_timings.py --report complete=artifacts/pytest-full.xml --output artifacts/test-timings-full.json --github-summary
       - name: Report separate statement and branch coverage
         if: always()
         run: |
@@ -208,6 +220,7 @@ jobs:
           name: windows-source-validation
           path: |
             artifacts/pytest-full.xml
+            artifacts/test-timings-full.json
             artifacts/coverage.json
             artifacts/coverage.xml
             artifacts/extended-examples/receipt.json
@@ -243,14 +256,26 @@ jobs:
           $journeys = @('gui_acceptance', 'visualization_workbench_acceptance', 'workflow_ui_acceptance', 'reporting_performance_acceptance', 'transient_acceptance', 'transient_workflow_acceptance', 'power_workflow_acceptance', 'guided_workflow_acceptance', 'local_refinement_acceptance', 'power_examples_desktop_acceptance', 'layout_editor_acceptance', 'readability_acceptance')
           $journeys += 'workspace_panels_acceptance', 'workflow_guidance_acceptance'
           $failedJourneys = @()
+          $journeyTimings = @()
           $journeys += 'export_acceptance', 'archive_history_acceptance', 'scientific_lifecycle_acceptance'
           foreach ($journey in $journeys) {
+            $journeyClock = [Diagnostics.Stopwatch]::StartNew()
             python "scripts/$journey.py" --offscreen --output "artifacts/desktop-$journey"
-            if ($LASTEXITCODE -ne 0) { $failedJourneys += $journey }
+            $journeyExit = $LASTEXITCODE
+            $journeyClock.Stop()
+            $journeyTimings += @{ journey = $journey; seconds = $journeyClock.Elapsed.TotalSeconds; exit_code = $journeyExit }
+            $journeyTimings | ConvertTo-Json | Set-Content -LiteralPath artifacts/desktop-journey-timings.json -Encoding utf8
+            if ($journeyExit -ne 0) { $failedJourneys += $journey }
           }
           if ($failedJourneys.Count -gt 0) { throw "Failed desktop journeys: $($failedJourneys -join ', ')" }
       - name: Exercise the expanded catalog and representative complete workflows
-        run: python scripts/power_examples_desktop_acceptance.py --offscreen --catalog --solve --workflow E25 E33 E36 E39 --output artifacts/desktop-extended-examples
+        run: |
+          $catalogClock = [Diagnostics.Stopwatch]::StartNew()
+          python scripts/power_examples_desktop_acceptance.py --offscreen --catalog --solve --workflow E25 E33 E36 E39 --output artifacts/desktop-extended-examples
+          $catalogExit = $LASTEXITCODE
+          $catalogClock.Stop()
+          @{ journey = 'extended-example-workflows'; seconds = $catalogClock.Elapsed.TotalSeconds; exit_code = $catalogExit } | ConvertTo-Json | Set-Content -LiteralPath artifacts/desktop-catalog-timing.json -Encoding utf8
+          exit $catalogExit
       - name: Retain readable desktop evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -258,6 +283,8 @@ jobs:
           name: windows-desktop-validation
           path: |
             artifacts/desktop-*/*.json
+            artifacts/desktop-journey-timings.json
+            artifacts/desktop-catalog-timing.json
             artifacts/desktop-*/**/receipt.json
             artifacts/desktop-*/**/font-verification.json
             artifacts/desktop-*/**/*.png

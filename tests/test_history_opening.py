@@ -8,30 +8,14 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from PySide6.QtCore import QTimer
+from history_test_helpers import archive
+from PySide6.QtCore import QCoreApplication, QEvent, QTimer
+from shiboken6 import isValid
 
 from etlayout.gui import history_opening
 from etlayout.gui.history_opening import HistoryOpener
 from etlayout.io import project as project_io
 from etlayout.io.resources import ExternalResourcePolicy
-from etlayout.models import PlanarMesh, Project, SimulationResult
-
-
-def archive(tmp_path, name, *, external=False, version=3):
-    folder = tmp_path / name
-    folder.mkdir()
-    project = Project(name=name)
-    if external:
-        layout = tmp_path / "external.gds"
-        layout.write_bytes((Path(__file__).parents[1] / "examples" / "E1_straight.gds").read_bytes())
-        project.layout.path, project.layout.sha256 = str(layout), project_io.file_hash(layout)
-    mesh = PlanarMesh(np.array([[0., 0.], [1., 0.], [0., 1.]]), np.array([[0, 1, 2]]), {"layer:a": np.array([0])})
-    result = SimulationResult(mesh, fields={"a": {"temperature": np.array([300., 301., 302.])}},
-        configuration=project.to_dict(), configuration_hash=project_io.configuration_hash(project),
-        physics_hash=project_io.physics_hash(project), converged=True)
-    target = folder / "project.etl"
-    project_io.save_project(project, target, result, archive_format=version, embed_layout=not external)
-    return target
 
 
 def _make_opener(qtbot):
@@ -202,3 +186,55 @@ def test_metadata_only_review_can_resume_eager_without_granting_another_generati
     assert "generation differs" in str(failures[0][1]) and not received
     assert control.shutdown()
     qtbot.waitUntil(lambda: not control.jobs)
+
+
+@pytest.mark.parametrize("supersede", [False, True], ids=["cancel", "replace"])
+def test_queued_open_releases_transferred_private_snapshot_when_no_longer_current(
+        qtbot, tmp_path, monkeypatch, opening, supersede):
+    first = archive(tmp_path, "queued-first")
+    second = archive(tmp_path, "queued-latest")
+    stores = []
+    create = history_opening.open_history_catalog
+
+    def observed(*args, **options):
+        store = create(*args, **options)
+        stores.append(store)
+        return store
+
+    monkeypatch.setattr(history_opening, "open_history_catalog", observed)
+    control, received, reviews, failures = opening()
+    control.submit(first, "document-epoch")
+    job = control.jobs[0]
+    assert job.wait(30000)  # The success is queued, not yet dispatched on the GUI thread.
+    assert len(stores) == 1 and stores[0]._snapshot_path.is_file() and not received
+    if supersede:
+        latest = control.submit(second, "document-epoch")
+    else:
+        control.cancel()
+    jobs = tuple(control.jobs)
+    qtbot.waitUntil(lambda: not control.jobs, timeout=30000)
+    assert stores[0].stats.closed and not stores[0]._snapshot_path.exists()
+    assert not reviews and not failures and len(received) == int(supersede)
+    if supersede:
+        assert received[0][0] == latest and received[0][1].name == "queued-latest"
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    assert all(not isValid(job) for job in jobs)
+
+
+@pytest.mark.parametrize("reply", ["failure", "resource-review"])
+def test_obsolete_open_cannot_report_failure_or_request_resource_consent(
+        qtbot, tmp_path, opening, reply):
+    if reply == "resource-review":
+        target = archive(tmp_path, "outside-root", external=True)
+    else:
+        target = tmp_path / "broken.etl"
+        target.write_bytes(b"not a ZIP archive")
+    control, received, reviews, failures = opening()
+    control.submit(target, "document-epoch")
+    job = control.jobs[0]
+    assert job.wait(30000)
+    control.cancel()  # Cancel after the native worker emits, before queued delivery.
+    qtbot.waitUntil(lambda: not control.jobs, timeout=30000)
+    assert not received and not reviews and not failures
+    QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+    assert not isValid(job)

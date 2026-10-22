@@ -312,6 +312,7 @@ class PowerWorkbench(QDialog):
         self.build_analysis()
         self.build_routing()
         self.build_experiments()
+        self.build_multiport()
         status_row = QHBoxLayout()
         self.status = QLabel("Configure physical intent, then solve or run a saved experiment.")
         self.status.setWordWrap(True)
@@ -365,6 +366,9 @@ class PowerWorkbench(QDialog):
     def refresh_document(self):
         """Refresh after a shared-document edit or undo without discarding a draft."""
         self.refresh_setup()
+        self.multiport_workflow.set_project(self.project)
+        if self.multiport_report is not None and self.multiport_report["physics_hash"] != physics_hash(self.project):
+            self.clear_multiport()
         if not self.has_pending_reference():
             self.reload_reference()
         if self.result is not None and physics_hash(self.result.configuration) != physics_hash(self.project):
@@ -376,8 +380,8 @@ class PowerWorkbench(QDialog):
         self.show_analysis(result.analysis if result is not None else {})
         self.analysis_map.set_geometries({})
         self.analysis_map.show_field(None, "", "")
-        self.multiport_report = None
-        self.matrix.set_records([])
+        if self.multiport_report is None or self.multiport_report["physics_hash"] != physics_hash(self.project):
+            self.clear_multiport()
         if result is None:
             self.status.setText("No run selected. Configure or evaluate the working setup.")
         elif physics_hash(result.configuration) != physics_hash(self.project):
@@ -464,6 +468,8 @@ class PowerWorkbench(QDialog):
         self.reference_temperature = QLineEdit("" if self.project.power.thermal_reference_temperature is None
             else str(self.project.power.thermal_reference_temperature))
         self.reference_temperature.setPlaceholderText("Optional explicit Kelvin reference")
+        self.reference.setToolTip("Named reservoir used to report temperature rise. This reporting choice does not create a heat sink or change its boundary temperature.")
+        self.reference_temperature.setToolTip("Optional absolute reporting reference in kelvin: 300 K = 26.85 °C. This changes reported rise, not physical cooling or the solved temperature. Leave empty for the named or unambiguous reservoir.")
         self.reference.currentIndexChanged.connect(self.reference_edited)
         self.reference_temperature.textEdited.connect(self.reference_edited)
         reference.addRow("Named thermal reference", self.reference)
@@ -624,6 +630,8 @@ class PowerWorkbench(QDialog):
             self.status.setText(str(error))
 
     def invalidate_result(self, *_):
+        if hasattr(self, "multiport_workflow"):
+            self.clear_multiport()
         if self.document is not None:
             self.multiport_report = None
             if hasattr(self, "matrix"):
@@ -647,21 +655,8 @@ class PowerWorkbench(QDialog):
         self.button(row, "Solve & analyze", lambda: self.start("power", {}))
         self.button(row, "Reanalyze retained fields", lambda: self.start("reanalyze", {"result": self.result}))
         self.button(row, "Export analysis…", self.export_analysis)
-        self.button(row, "Extract passive multiport", self.extract_multiport)
-        self.button(row, "Export multiport…", self.export_multiport)
+        self.button(row, "Passive network / SPICE…", self.open_multiport)
         layout.addLayout(row)
-        port_row = QFormLayout()
-        self.port_ids = QLineEdit()
-        self.port_ids.setPlaceholderText("All physical ports; or comma-separated IDs")
-        self.port_reference = QLineEdit()
-        self.port_reference.setPlaceholderText("Reference port ID; empty uses backend default")
-        port_row.addRow("Multiport selection", self.port_ids)
-        port_row.addRow("Matrix reference", self.port_reference)
-        layout.addLayout(port_row)
-        layout.addWidget(self.limitation(
-            "Passive resistor export fidelity",
-            "Every finite physical coupling is retained. SPICE export checks individual port responses and rejects "
-            "unestablished fidelity; JSON/CSV preserve the full operator."))
         split = QSplitter(Qt.Orientation.Vertical)
         map_panel = QWidget()
         map_layout = QHBoxLayout(map_panel)
@@ -753,9 +748,59 @@ class PowerWorkbench(QDialog):
             self.analysis_map.show_region(from_wkt(record["geometry_wkt"]), record.get("id", "Contact"))
         self.status.setText("Selected contact: signed positive current flows from layer A to layer B. Map shows element mean normal density; raw peaks are mesh sensitive.")
 
+    def build_multiport(self):
+        from etlayout.gui.multiport_workflow import MultiportWorkflow
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        self.multiport_workflow = MultiportWorkflow()
+        layout.addWidget(self.multiport_workflow)
+        row = self.action_row()
+        self.button(row, "Edit physical ports & landings", self.edit_multiport_ports)
+        host = getattr(self.document, "window", None)
+        guided = getattr(host, "guided", None)
+        if guided is not None:
+            self.button(row, "Edit interlayer connections", guided.open_stack_connections)
+        self.button(row, "Extract passive network", self.extract_multiport)
+        self.network_export = self.button(row, "Export reviewed network…", self.export_multiport)
+        self.network_export.setEnabled(False)
+        self.button(row, "View full port matrix", self.open_multiport_matrix)
+        layout.addLayout(row)
+        layout.addStretch()
+        self.multiport_workflow.set_project(self.project)
+        self.multiport_workflow.selection_changed.connect(self.clear_multiport)
+        self.add_page(page, "Passive network")
+
+    def edit_multiport_ports(self):
+        self.setup_kind.setCurrentIndex(self.setup_kind.findData("ports"))
+        self.tabs.setCurrentIndex(0)
+
+    def open_multiport_matrix(self):
+        if self.multiport_report is None:
+            self.status.setText("Extract a passive network before inspecting its port matrix.")
+            return
+        self.analysis_views.setCurrentWidget(self.matrix)
+        self.tabs.setCurrentIndex(1)
+
+    def open_multiport(self):
+        self.multiport_workflow.set_project(self.project)
+        self.tabs.setCurrentIndex(4)
+
+    def clear_multiport(self):
+        self.multiport_report = None
+        self.network_export.setEnabled(False)
+        self.matrix.set_records([])
+        self.multiport_workflow.clear_report()
+
     def extract_multiport(self):
-        ids = [key.strip() for key in self.port_ids.text().split(",") if key.strip()]
-        self.start("multiport", {"port_ids": ids or None, "reference": self.port_reference.text().strip() or None})
+        from etlayout.gui.multiport_workflow import extraction_prerequisites
+        self.multiport_workflow.set_project(self.project)
+        reasons = extraction_prerequisites(self.project)
+        ids = self.multiport_workflow.selected_ports()
+        if reasons or len(ids) < 2:
+            self.status.setText(" ".join(reasons) if reasons else "Select at least two physical ports for extraction.")
+            self.open_multiport()
+            return
+        self.start("multiport", {"port_ids": ids, "reference": self.multiport_workflow.reference.currentData()})
 
     def export_analysis(self):
         if self.result is None:
@@ -768,6 +813,10 @@ class PowerWorkbench(QDialog):
     def export_multiport(self):
         if self.multiport_report is None:
             self.status.setText("Extract a passive multiport before exporting.")
+            return
+        if self.multiport_report["physics_hash"] != physics_hash(self.project):
+            self.clear_multiport()
+            self.status.setText("The working setup changed. Extract its passive network again before export.")
             return
         path, selected = QFileDialog.getSaveFileName(self, "Export passive multiport", "multiport.json",
             "JSON (*.json);;CSV (*.csv);;SPICE (*.cir)")
@@ -1171,9 +1220,11 @@ class PowerWorkbench(QDialog):
 
     def set_running(self, running):
         self.tabs.widget(0).setEnabled(not running)
+        self.multiport_workflow.setEnabled(not running)
         self.buttons.setEnabled(not running)
         for button in self.actions:
             button.setEnabled(not running)
+        self.network_export.setEnabled(not running and self.multiport_report is not None)
         self.cancel.setEnabled(running)
         self.progress.setVisible(running)
         if running:
@@ -1202,6 +1253,8 @@ class PowerWorkbench(QDialog):
                 self.result_ready.emit(self.result)
         elif self.operation == "multiport":
             self.multiport_report = report
+            self.multiport_workflow.show_report(report)
+            self.network_export.setEnabled(True)
             ports = report["port_ids"]
             self.matrix.columns = [("port", "Port"), *[(key, key + " (S)") for key in ports]]
             self.matrix.setColumnCount(len(ports) + 1)
@@ -1213,7 +1266,7 @@ class PowerWorkbench(QDialog):
                 f"KCL error {checks['kcl_absolute_error_S']:.3g} S · reciprocity error "
                 f"{checks['reciprocity_absolute_error_S']:.3g} S · {report['temperature']}")
             self.analysis_views.setCurrentWidget(self.matrix)
-            self.tabs.setCurrentIndex(1)
+            self.tabs.setCurrentIndex(4)
         elif self.operation.startswith("routing_"):
             rows = list(report.get("violations", []))
             for layer, change in report.get("geometry_changes", {}).items():
