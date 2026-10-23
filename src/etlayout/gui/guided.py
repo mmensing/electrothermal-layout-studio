@@ -1145,6 +1145,7 @@ class GuidedWorkspace(QObject):
         self.description.setText("Choose purpose, physical layer and footprint. XY overlap alone does not create a connection.")
         self.page_layout.addWidget(button("Review stack & connect two layers…", self.open_stack_connections))
         self.page_layout.addWidget(button("Extract passive network / SPICE…", lambda: self.open_studies("multiport")))
+        self.page_layout.addWidget(button("Capacitance & loop inductance…", lambda: self.open_studies("parasitic")))
         grid = QGridLayout()
         for i, (label, key) in enumerate((("External port", "port"), ("Interlayer via/contact", "interface"),
                                          ("Passive voltage probe", "probe"), ("Floating electrode", "floating"),
@@ -1404,6 +1405,7 @@ class GuidedWorkspace(QObject):
                            ("Time-step convergence…", self.window.run_time_convergence_dialog), ("Compare project designs…", self.window.compare_dialog),
                            ("Routing alternatives", lambda: self.open_studies("routing")), ("Constrained optimization", self.open_studies),
                            ("Passive network / SPICE extraction", lambda: self.open_studies("multiport")),
+                           ("Capacitance & loop inductance", lambda: self.open_studies("parasitic")),
                            ("Saved study results", lambda: self.show_page(self.window.study_panel, "Study results"))):
             self.page_layout.addWidget(button(title, fn))
         self.page_layout.addStretch()
@@ -2347,7 +2349,7 @@ class GuidedWorkspace(QObject):
             self.power.tabs.setCurrentIndex(0)
             self.power.setup_kind.setCurrentIndex(self.power.setup_kind.findData(section))
         else:
-            self.power.tabs.setCurrentIndex({"setup": 0, "analysis": 1, "routing": 2, "experiments": 3, "multiport": 4}.get(section, 3))
+            self.power.tabs.setCurrentIndex({"setup": 0, "analysis": 1, "routing": 2, "experiments": 3, "multiport": 4, "parasitic": 5}.get(section, 3))
         self.show_page(self.power, "Power & routing studies")
 
     def power_busy(self, busy):

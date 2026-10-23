@@ -1013,8 +1013,10 @@ class MainWindow(QMainWindow):
             self.mesh = old_mesh
         self.refresh_project(preserve_view=True, refresh_geometry=geometry and physical_change and geometry_changed)
         power = getattr(getattr(self, "guided", None), "power", None)
-        if physical_change and power is not None:
-            power.refresh_document()
+        if power is not None:
+            power.parasitic_workflow.set_project(self.project)
+            if physical_change:
+                power.refresh_document()
         if not physical_change:
             self.refresh_view(True)
             self.update_overlay()

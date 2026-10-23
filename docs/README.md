@@ -26,7 +26,7 @@ archives keep their original identity. Published older binaries retain their own
   [contact extraction and E27 TLM](contact-extraction.md).
 - **Set up a stack or extract a circuit:** [physical layers and cross-sections](layer-stack-workflow.md),
   [guided passive network / SPICE extraction](passive-network-workflow.md),
-  [capacitance/inductance expansion plan](parasitic-extraction.md).
+  [experimental capacitance and closed-loop RL workflow](parasitic-extraction.md).
 - **Multilayer and power layouts:** [E20–E24 families](power-examples.md),
   [routing/optimization reference](POWER_ROUTING.md),
   [companion routing experiments](../examples/README.md#companion-routing-experiments).

@@ -94,6 +94,8 @@ UNITS = {
 }
 
 HELP = {
+    "permittivity": "Optional absolute permittivity in F/m (ε = εr × 8.8541878128e-12). Required only for dielectric volumes in field capacitance extraction; independent of thermal conductivity.",
+    "permeability": "Optional absolute permeability in H/m (μ = μr × 4πe-7 for the nonmagnetic external-engine convention). First loop-RL scope requires explicit μr=1 and a field source/assumption.",
     "thickness": "Physical sheet thickness toward +z. Unqualified numbers use µm: 2, 2000 nm and 2e-6 m describe the same thickness. Used by sheet electrical and thermal models, not just drawing.",
     "layer_a": "First physical endpoint. Positive reported interface current flows from layer A to layer B. Choose an explicit footprint common to the endpoints.",
     "layer_b": "Second physical endpoint. Geometric overlap alone does not create electrical or thermal transfer; choose each transfer model separately.",
@@ -577,10 +579,12 @@ class ModelDialog(QDialog):
         if value is None:
             annotation, _ = field_type(self.types[key])
             value = annotation()
+            if key in {"permittivity", "permeability"}:
+                value.value = {"permittivity": 8.8541878128e-12, "permeability": 1.2566370614359173e-6}[key]
         if isinstance(value, RegionSpec):
             dialog = RegionDialog(value, self.mask_keys, self)
         else:
-            unit = {"resistivity": "Ω m", "thermal_conductivity": "W/(m K)", "sheet_resistance": "Ω/square"}.get(key, "")
+            unit = {"resistivity": "Ω m", "thermal_conductivity": "W/(m K)", "sheet_resistance": "Ω/square", "permittivity": "F/m", "permeability": "H/m"}.get(key, "")
             dialog = ModelDialog(value, key.replace("_", " ").capitalize(), self,
                                  self.choices, self.mask_keys, property_unit=unit)
         if dialog.exec():

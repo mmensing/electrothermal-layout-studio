@@ -19,6 +19,9 @@ def execute_operation(project, operation, options=None, *, progress=None, cancel
     """Return a report plus optional real result/geometry for desktop display."""
     options = dict(options or {})
     progress = progress or (lambda *_: None)
+    if operation == "parasitic":
+        from etlayout.power.field_workflows import run_field_operation
+        return run_field_operation(project, options, progress=progress, cancel=cancel, execution=execution)
     if operation in {"power", "reanalyze"}:
         from etlayout.geometry.prepare import prepare_geometry
         from etlayout.io.export import export_results

@@ -207,6 +207,7 @@ def prepare_geometry(project: Project, progress=None, cancel=None, *,
         raise SimulationError("Add at least one physical layer to the process stack")
     from etlayout.technology.stack import validate_physical_stack
     physical_footprints = validate_physical_stack(project, geometry, masks)
+    geometry.physical_connections = physical_footprints
     for first, second in combinations(project.layers, 2):
         overlap_z = min(first.z + first.thickness, second.z + second.thickness) - max(first.z, second.z)
         if overlap_z > min(first.thickness, second.thickness) * 1e-9:
