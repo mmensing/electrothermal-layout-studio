@@ -239,3 +239,23 @@ modified source, recipe, license and build-proof file from the complete CI sourc
 archive and records the separately supplied original tar's exact hash. Both are
 required for the complete source set; the original CI artifact remains unchanged.
 Microsoft runtime DLLs are excluded; use the documented system prerequisite.
+
+## Optional user-supplied field engines (not distributed)
+
+The experimental source field workflow can invoke an explicitly selected local
+FastCap2 or FastHenry executable. Neither engine nor its native dependencies are
+bundled, automatically downloaded, or added to the runtime dependency manifest.
+The reviewed WRCad source distributions are FastCap2 2.0wr-010524 and FastHenry
+3.0wr-031424 from [WRCad xictools](https://github.com/wrcad/xictools), revision
+`c1244c23a99118843db48cee9860218befe98753`. Their corrected 2003 MIT grants
+permit use/copy/modification/distribution with retained notices; FastHenry's
+Sparse components retain separate Kenneth Kundert / University of California
+notices. Older mirrors can contain materially different noncommercial terms.
+
+The original output-only adapter `tools/fastcap_raw_output.c` is MPL-2.0 source.
+It exposes native coefficients without changing the field solver and does not
+replace or remove upstream notices. See [field-engine build instructions](docs/field-engine-build.md)
+for pinned source hashes, exact tested provenance and license checks. Anyone
+redistributing a locally built engine must independently satisfy that engine's,
+compiler runtime's and any linked native library's obligations; this repository
+does not claim clearance for a new combined binary distribution.

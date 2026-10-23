@@ -1,13 +1,14 @@
 # SPDX-License-Identifier: MPL-2.0
-include README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md DEPENDENCIES.json REUSE.toml pyproject.toml requirements*.lock .gitignore
+include .gitattributes README.md CHANGELOG.md CONTRIBUTING.md SECURITY.md LICENSE THIRD_PARTY_NOTICES.md DEPENDENCIES.json REUSE.toml pyproject.toml requirements*.lock .gitignore
 recursive-include src *
 recursive-include tests *.py
 recursive-include tests/fixtures *.etl *.md
 recursive-include docs *
 recursive-include examples *
 recursive-include scripts *.py *.ps1
+recursive-include tools *.c
 recursive-include packaging *
-recursive-include benchmarks *.py *.json *.md
+recursive-include benchmarks *.py *.json *.md *.csv
 recursive-include LICENSES *
 recursive-include .github *.md *.yml *.yaml CODEOWNERS
 prune .git

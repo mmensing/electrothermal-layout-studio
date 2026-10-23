@@ -76,6 +76,10 @@ class Material:
     source: str = "User supplied"
     version: str = "1"
     reference: bool = False
+    # Absolute SI electrical properties; None means unspecified, never inferred
+    # from thermal properties. Required only by the relevant field workflow.
+    permittivity: PropertyModel | None = None  # F/m
+    permeability: PropertyModel | None = None  # H/m
 
 
 @dataclass
@@ -498,12 +502,19 @@ class Project:
     notes: str = ""
     power: PowerSettings = field(default_factory=PowerSettings)
     temperature_limits: list[TemperatureLimit] = field(default_factory=list)
+    parasitics: dict[str, Any] = field(default_factory=dict)  # versioned explicit field-model inputs
 
     def layer(self, layer_id: str) -> PhysicalLayer:
         return next(x for x in self.layers if x.id == layer_id)
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
+        if not data["parasitics"]:
+            data.pop("parasitics")
+        for material in data["materials"].values():
+            for key in ("permittivity", "permeability"):
+                if material[key] is None:
+                    material.pop(key)
         # Unused additive contracts preserve legacy full configuration identity
         # and limit-free/default-deposition archives for strict older readers.
         if not data["temperature_limits"]:
@@ -529,6 +540,7 @@ class PreparedGeometry:
     heat_sources: dict[str, Any] = field(default_factory=dict)
     refinements: dict[str, Any] = field(default_factory=dict)
     diagnostics: list[Diagnostic] = field(default_factory=list)
+    physical_connections: dict[str, Any] = field(default_factory=dict)  # validated runtime solids
 
 
 @dataclass

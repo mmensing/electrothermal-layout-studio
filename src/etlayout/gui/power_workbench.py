@@ -313,6 +313,7 @@ class PowerWorkbench(QDialog):
         self.build_routing()
         self.build_experiments()
         self.build_multiport()
+        self.build_parasitics()
         status_row = QHBoxLayout()
         self.status = QLabel("Configure physical intent, then solve or run a saved experiment.")
         self.status.setWordWrap(True)
@@ -367,6 +368,7 @@ class PowerWorkbench(QDialog):
         """Refresh after a shared-document edit or undo without discarding a draft."""
         self.refresh_setup()
         self.multiport_workflow.set_project(self.project)
+        self.parasitic_workflow.set_project(self.project)
         if self.multiport_report is not None and self.multiport_report.get("source_physics_hash", self.multiport_report["physics_hash"]) != physics_hash(self.project):
             self.clear_multiport()
         if not self.has_pending_reference():
@@ -748,6 +750,68 @@ class PowerWorkbench(QDialog):
         if record.get("geometry_wkt"):
             self.analysis_map.show_region(from_wkt(record["geometry_wkt"]), record.get("id", "Contact"))
         self.status.setText("Selected contact: signed positive current flows from layer A to layer B. Map shows element mean normal density; raw peaks are mesh sensitive.")
+
+    def build_parasitics(self):
+        from etlayout.gui.parasitic_workflow import ParasiticWorkflow
+        self.parasitic_workflow = ParasiticWorkflow()
+        self.parasitic_workflow.set_project(self.project)
+        self.parasitic_workflow.configure_requested.connect(self.configure_parasitics)
+        self.parasitic_workflow.run_requested.connect(self.run_parasitics)
+        self.parasitic_workflow.reference_requested.connect(self.create_field_reference)
+        self.add_page(self.parasitic_workflow, "Parasitics")
+
+    def configure_parasitics(self):
+        from etlayout.gui.parasitic_workflow import FieldSetupDialog
+        if self.job or not self.resolve_pending():
+            return
+        window = getattr(self.document, "window", None)
+        if window is not None and window.model_locked():
+            self.status.setText("Return to the working setup and finish active jobs before editing field inputs.")
+            return
+        dialog = FieldSetupDialog(self.project, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        candidate = dialog.candidate
+        def apply(project):
+            project.parasitics = deepcopy(candidate.parasitics)
+            for identifier in project.materials:
+                for name in ("permittivity", "permeability"):
+                    setattr(project.materials[identifier], name, deepcopy(getattr(candidate.materials[identifier], name)))
+        try:
+            self._transact("Configure explicit field inputs", apply)
+        except (ValueError, SimulationError) as error:
+            self.status.setText(str(error))
+            return
+        self.parasitic_workflow.set_project(self.project)
+        self.parasitic_workflow.clear_report()
+        self.status.setText("Field inputs applied. DC/thermal drives and calculated fields are preserved.")
+
+    def create_field_reference(self):
+        if self.job or not self.resolve_pending():
+            return
+        directory = QFileDialog.getExistingDirectory(self, "Choose a new or empty reference folder")
+        if not directory:
+            return
+        try:
+            from etlayout.parasitic_examples import make_field_reference
+            project = make_field_reference(self.parasitic_workflow.kind.currentData(), directory)
+            self.status.setText(f"Created {project.name}.etl in {directory}. Use File → Open to inspect it, then Studies → Parasitics. Generation did not run a solver.")
+        except (ValueError, OSError, SimulationError) as error:
+            self.status.setText(str(error))
+
+    def run_parasitics(self, prepare_only=False):
+        if self.job or not self.resolve_pending():
+            return
+        try:
+            options = self.parasitic_workflow.options(prepare_only)
+            if not prepare_only and not options["executable"]:
+                raise SimulationError("Choose a trusted external field executable first, or prepare inputs only.")
+            directory = QFileDialog.getExistingDirectory(self, "Choose a new or empty field-output folder")
+            if directory:
+                options["output"] = directory
+                self.start("parasitic", options)
+        except (ValueError, OSError, SimulationError) as error:
+            self.status.setText(str(error))
 
     def build_multiport(self):
         from etlayout.gui.multiport_workflow import MultiportWorkflow
@@ -1245,6 +1309,8 @@ class PowerWorkbench(QDialog):
             self._job_project = project
             self._job_configuration = configuration_hash(project)
             self.operation = operation
+            if operation == "parasitic":
+                self.parasitic_workflow.clear_report()
             job = ComputeJob(project, "power:" + operation, options, self, execution=self.execution)
             self.job = job
             job.progress.connect(self.on_progress)
@@ -1264,6 +1330,7 @@ class PowerWorkbench(QDialog):
     def set_running(self, running):
         self.tabs.widget(0).setEnabled(not running)
         self.multiport_workflow.setEnabled(not running)
+        self.parasitic_workflow.setEnabled(not running)
         self.buttons.setEnabled(not running)
         for button in self.actions:
             button.setEnabled(not running)
@@ -1295,6 +1362,14 @@ class PowerWorkbench(QDialog):
             self.tabs.setCurrentIndex(1)
             if self.operation == "power":
                 self.result_ready.emit(self.result)
+        elif self.operation == "parasitic":
+            self.parasitic_workflow.set_snapshot(output.get("field_snapshot"))
+            self.parasitic_workflow.show_report(report)
+            self.tabs.setCurrentIndex(5)
+            scroll = self.tabs.widget(5)
+            if isinstance(scroll, QScrollArea):
+                from PySide6.QtCore import QTimer
+                QTimer.singleShot(0, lambda: scroll.ensureWidgetVisible(self.parasitic_workflow.summary, 0, 0))
         elif self.operation in {"multiport", "multiport_mesh"}:
             study = report if self.operation == "multiport_mesh" else None
             if study is not None:
@@ -1356,7 +1431,9 @@ class PowerWorkbench(QDialog):
             self.show_history()
             self.tabs.setCurrentIndex(3)
         self.status.setText("Completed " + self.operation.replace("_", " ") + ("; candidate is invalid—inspect diagnostics." if report.get("valid") is False else "."))
-        if self.operation == "multiport_mesh":
+        if self.operation == "parasitic":
+            self.status.setText("Field extraction: " + report["status"] + ". " + report.get("diagnostic", "Inspect Results & evidence and the saved field bundle."))
+        elif self.operation == "multiport_mesh":
             self.status.setText("Extraction mesh evidence: " + output["report"]["status"] + ". " + output["report"].get("reason", ""))
         elif self.operation in {"multiport_validate", "multiport_bundle"}:
             self.status.setText("Circuit validation: " + report["status"] + ". " + report.get("reason", "Inspect the Simulator evidence and saved bundle."))
@@ -1368,6 +1445,11 @@ class PowerWorkbench(QDialog):
         self.set_running(False)
         self.status.setText(message)
         self.status.setToolTip(detail)
+        if self.operation == "parasitic":
+            self.parasitic_workflow.clear_report()
+            guided = getattr(getattr(self.document, "window", None), "guided", None)
+            if guided is not None:
+                guided.job_failed("Field extraction: " + message, stage="studies", detail=detail)
 
     def cancel_job(self):
         if self.job:

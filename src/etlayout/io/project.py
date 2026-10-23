@@ -134,8 +134,18 @@ def file_hash(path: str | Path) -> str:
     return digest.hexdigest()
 
 
+def _omit_unused_field_inputs(data):
+    if not data.get("parasitics"):
+        data.pop("parasitics", None)
+    for material in data.get("materials", {}).values():
+        for key in ("permittivity", "permeability"):
+            if material.get(key) is None:
+                material.pop(key, None)
+
+
 def configuration_hash(project: Project | dict) -> str:
     data = deepcopy(project.to_dict() if isinstance(project, Project) else project)
+    _omit_unused_field_inputs(data)
     # File content, not its machine-specific location, identifies the layout.
     if data.get("layout", {}).get("sha256"):
         data["layout"]["path"] = ""
@@ -152,6 +162,12 @@ def physics_hash(project: Project | dict, *, resolve_layout: bool = True) -> str
     """
     snapshot = project if isinstance(project, Project) else project_from_dict(project)
     data = snapshot.to_dict()
+    # Field-model inputs have a separate snapshot identity. They do not change
+    # any supported DC/thermal constitutive calculation or retained field.
+    data.pop("parasitics", None)
+    for material in data.get("materials", {}).values():
+        material.pop("permittivity", None)
+        material.pop("permeability", None)
     data["schema_version"] = 1  # preserve the identity of supported old archives
     def omit_empty_exclusions(value):
         # Empty source exclusions preserve every pre-0.3.1 region expression.

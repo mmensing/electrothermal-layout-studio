@@ -12,7 +12,16 @@
   console ngspice with bounded, cancellable owned execution and per-port checks.
 - Begin experimental static C/L result validation/interchange with explicit SI
   electrical boundaries, closed return loops, energy/passivity and provenance.
-  This is not a capacitance/inductance field extractor; document its gated plan.
+  Keep this supplied-data contract separate from the actual field calculations below.
+- Add experimental source-only 3D capacitance and explicit closed-return RL
+  extraction through user-selected, separately installed field engines. Preserve
+  raw coefficients, actual frequencies, complete conductor geometry, material
+  assumptions, source identities, process limits and per-entry refinement evidence.
+- Add atomic electromagnetic setup and return-path forms, ready-to-open field
+  references, CLI preparation/calculation and pF/nH/mΩ readouts. Existing
+  conduction results remain compatible with purely electromagnetic edits.
+- No new frozen binary, bundled engine, mixed-dielectric solver or broadband RLC
+  circuit is published by this source change.
 
 - Keep port/reference names on single SPICE comment lines, including names with
   control characters; preserve exact preview/export agreement and port responses.

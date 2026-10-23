@@ -75,7 +75,7 @@ def reference_materials() -> dict[str, Material]:
 
 def material_from_dict(data: dict) -> Material:
     copy = dict(data)
-    for key in ("resistivity", "thermal_conductivity"):
+    for key in ("resistivity", "thermal_conductivity", "permittivity", "permeability"):
         if isinstance(copy.get(key), dict):
             copy[key] = PropertyModel(**copy[key])
     return Material(**copy)
@@ -86,6 +86,10 @@ def validate_material(material: Material) -> None:
         raise SimulationError("Material ID and name must be nonempty")
     validate_property(material.resistivity)
     validate_property(material.thermal_conductivity)
+    for property_name in ("permittivity", "permeability"):
+        property_model = getattr(material, property_name)
+        if property_model is not None:
+            validate_property(property_model)
     if material.density <= 0 or material.specific_heat <= 0:
         raise SimulationError("Density and specific heat must be positive")
     for a in (material.electrical_anisotropy, material.thermal_anisotropy):

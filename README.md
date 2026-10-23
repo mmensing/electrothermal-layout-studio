@@ -57,6 +57,7 @@ do not change your physical setup.
 
 Workflow guides: start with the [physical stack and cross-section guide](docs/layer-stack-workflow.md).
 For a circuit model, follow [physical ports to a reviewed passive SPICE network](docs/passive-network-workflow.md).
+The **unreleased source** also includes [experimental 3D capacitance and closed-return inductance](docs/parasitic-extraction.md), with ready-to-open field references, explicit assumptions and optional separately installed engines. This is not part of the published 0.4.3 Windows binary.
 
 [The full feature catalog](docs/features.md) explains where to find each tool,
 what it produces and what its result does—and does not—establish.
@@ -215,8 +216,10 @@ thermal conduction and thermal storage. Coupled transient operation uses
 quasi-static electrical states as temperature evolves.
 
 It does not establish full 3D spreading, drift diffusion, high-field velocity
-saturation, breakdown, trapping, electrical capacitance/inductance or switching
-overshoot. GaN examples use a local-gate-bias sheet law; SiC examples are
+saturation, breakdown, trapping or switching overshoot. Electrical charge storage
+and RLC dynamics are absent from the conduction solver. The separate experimental
+field workflow calculates homogeneous PEC capacitance and finite-bar closed-loop
+impedance under its own explicitly narrower assumptions. GaN examples use a local-gate-bias sheet law; SiC examples are
 **fixed-on-state interconnect models** with area-specific resistance. Synthetic
 materials and examples require calibration before use as process predictions.
 
