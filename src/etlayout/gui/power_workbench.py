@@ -367,7 +367,7 @@ class PowerWorkbench(QDialog):
         """Refresh after a shared-document edit or undo without discarding a draft."""
         self.refresh_setup()
         self.multiport_workflow.set_project(self.project)
-        if self.multiport_report is not None and self.multiport_report["physics_hash"] != physics_hash(self.project):
+        if self.multiport_report is not None and self.multiport_report.get("source_physics_hash", self.multiport_report["physics_hash"]) != physics_hash(self.project):
             self.clear_multiport()
         if not self.has_pending_reference():
             self.reload_reference()
@@ -377,10 +377,11 @@ class PowerWorkbench(QDialog):
     def bind_result(self, result):
         """Inspect the explicitly selected immutable run, including historical runs."""
         self.result = result
+        self.multiport_workflow.set_result(result)
         self.show_analysis(result.analysis if result is not None else {})
         self.analysis_map.set_geometries({})
         self.analysis_map.show_field(None, "", "")
-        if self.multiport_report is None or self.multiport_report["physics_hash"] != physics_hash(self.project):
+        if self.multiport_report is None or self.multiport_report.get("source_physics_hash", self.multiport_report["physics_hash"]) != physics_hash(self.project):
             self.clear_multiport()
         if result is None:
             self.status.setText("No run selected. Configure or evaluate the working setup.")
@@ -767,7 +768,11 @@ class PowerWorkbench(QDialog):
         layout.addLayout(row)
         layout.addStretch()
         self.multiport_workflow.set_project(self.project)
+        self.multiport_workflow.set_result(self.result)
         self.multiport_workflow.selection_changed.connect(self.clear_multiport)
+        self.multiport_workflow.mesh_requested.connect(self.run_multiport_mesh)
+        self.multiport_workflow.bundle_requested.connect(lambda: self.validate_multiport(False))
+        self.multiport_workflow.validation_requested.connect(lambda: self.validate_multiport(True))
         self.add_page(page, "Passive network")
 
     def edit_multiport_ports(self):
@@ -791,7 +796,7 @@ class PowerWorkbench(QDialog):
         self.matrix.set_records([])
         self.multiport_workflow.clear_report()
 
-    def extract_multiport(self):
+    def network_options(self):
         from etlayout.gui.multiport_workflow import extraction_prerequisites
         self.multiport_workflow.set_project(self.project)
         reasons = extraction_prerequisites(self.project)
@@ -799,8 +804,46 @@ class PowerWorkbench(QDialog):
         if reasons or len(ids) < 2:
             self.status.setText(" ".join(reasons) if reasons else "Select at least two physical ports for extraction.")
             self.open_multiport()
+            return None
+        try:
+            return self.multiport_workflow.extraction_options()
+        except (ValueError, SimulationError) as error:
+            self.status.setText(str(error))
+            return None
+
+    def extract_multiport(self):
+        options = self.network_options()
+        if options is not None:
+            self.start("multiport", options)
+
+    def run_multiport_mesh(self):
+        options = self.network_options()
+        if options is None:
             return
-        self.start("multiport", {"port_ids": ids, "reference": self.multiport_workflow.reference.currentData()})
+        try:
+            options.update(self.multiport_workflow.mesh_options())
+            self.start("multiport_mesh", options)
+        except (ValueError, SimulationError) as error:
+            self.status.setText(str(error))
+
+    def validate_multiport(self, execute=False):
+        options = self.network_options()
+        if options is None:
+            return
+        if self.multiport_report is None:
+            self.status.setText("Extract a current network before exporting or running its validation bundle.")
+            return
+        if execute and not self.multiport_workflow.simulator.text().strip():
+            self.status.setText("Choose the full path of a trusted console/batch ngspice executable first (Windows: ngspice_con.exe).")
+            return
+        directory = QFileDialog.getExistingDirectory(self, "Choose a new or empty validation bundle folder")
+        if not directory:
+            return
+        options.update(network=self.multiport_report, validation_directory=directory,
+                       simulator_timeout=self.multiport_workflow.simulator_timeout.value())
+        if execute:
+            options["ngspice_executable"] = self.multiport_workflow.simulator.text().strip()
+        self.start("multiport_validate" if execute else "multiport_bundle", options)
 
     def export_analysis(self):
         if self.result is None:
@@ -814,7 +857,7 @@ class PowerWorkbench(QDialog):
         if self.multiport_report is None:
             self.status.setText("Extract a passive multiport before exporting.")
             return
-        if self.multiport_report["physics_hash"] != physics_hash(self.project):
+        if self.multiport_report.get("source_physics_hash", self.multiport_report["physics_hash"]) != physics_hash(self.project):
             self.clear_multiport()
             self.status.setText("The working setup changed. Extract its passive network again before export.")
             return
@@ -1243,6 +1286,7 @@ class PowerWorkbench(QDialog):
         report = output["report"]
         if self.operation in {"power", "reanalyze"}:
             self.result = output["result"]
+            self.multiport_workflow.set_result(self.result)
             self.show_analysis(report)
             geometry = output.get("geometry")
             if geometry:
@@ -1251,9 +1295,23 @@ class PowerWorkbench(QDialog):
             self.tabs.setCurrentIndex(1)
             if self.operation == "power":
                 self.result_ready.emit(self.result)
-        elif self.operation == "multiport":
+        elif self.operation in {"multiport", "multiport_mesh"}:
+            study = report if self.operation == "multiport_mesh" else None
+            if study is not None:
+                network = study.get("network")
+                if network is None:
+                    self.clear_multiport()
+                    self.multiport_workflow.show_mesh_report(study)
+                    self.status.setText("Mesh evidence not established: " + study.get("reason", "Inspect failures."))
+                    return
+                network["extraction_context"] = study["extraction_context"]
+                network["mesh_verification"] = {key: value for key, value in study.items() if key != "network"}
+                report = network
+            self.multiport_workflow.clear_report()
             self.multiport_report = report
             self.multiport_workflow.show_report(report)
+            if output.get("geometry") is not None:
+                self.multiport_workflow.set_geometry(output["geometry"], self._job_project.layers)
             self.network_export.setEnabled(True)
             ports = report["port_ids"]
             self.matrix.columns = [("port", "Port"), *[(key, key + " (S)") for key in ports]]
@@ -1266,6 +1324,15 @@ class PowerWorkbench(QDialog):
                 f"KCL error {checks['kcl_absolute_error_S']:.3g} S · reciprocity error "
                 f"{checks['reciprocity_absolute_error_S']:.3g} S · {report['temperature']}")
             self.analysis_views.setCurrentWidget(self.matrix)
+            self.tabs.setCurrentIndex(4)
+            if study is not None:
+                self.multiport_workflow.show_mesh_report(study)
+            if report.get("circuit_validation"):
+                self.multiport_workflow.show_simulator_report(report["circuit_validation"])
+        elif self.operation in {"multiport_validate", "multiport_bundle"}:
+            self.multiport_workflow.show_simulator_report(report)
+            if self.multiport_report is not None:
+                self.multiport_report["circuit_validation"] = report
             self.tabs.setCurrentIndex(4)
         elif self.operation.startswith("routing_"):
             rows = list(report.get("violations", []))
@@ -1289,6 +1356,10 @@ class PowerWorkbench(QDialog):
             self.show_history()
             self.tabs.setCurrentIndex(3)
         self.status.setText("Completed " + self.operation.replace("_", " ") + ("; candidate is invalid—inspect diagnostics." if report.get("valid") is False else "."))
+        if self.operation == "multiport_mesh":
+            self.status.setText("Extraction mesh evidence: " + output["report"]["status"] + ". " + output["report"].get("reason", ""))
+        elif self.operation in {"multiport_validate", "multiport_bundle"}:
+            self.status.setText("Circuit validation: " + report["status"] + ". " + report.get("reason", "Inspect the Simulator evidence and saved bundle."))
         if self.document is not None and self._job_configuration != configuration_hash(self.project):
             self.status.setText(self.status.text() + " This output belongs to an earlier setup; the working setup has changed.")
 

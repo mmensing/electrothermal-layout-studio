@@ -50,15 +50,55 @@ def execute_operation(project, operation, options=None, *, progress=None, cancel
             export_power_report(result, destination)
         return {"result": result, "report": report, "geometry": prepare_geometry(project),
                 "exit_code": 0 if result.converged else 2}
-    if operation == "multiport":
+    if operation in {"multiport", "multiport_mesh", "multiport_validate", "multiport_bundle"}:
         from etlayout.power.multiport import export_multiport, extract_multiport
+        from etlayout.power.multiport_context import temperature_inputs
         from etlayout.simulation.runner import prepare_mesh
-        _, mesh = prepare_mesh(project, progress, cancel=cancel)
-        report = extract_multiport(project, mesh, port_ids=options.get("port_ids"),
-            reference=options.get("reference"), cancel=cancel)
+        # All options are job-local. They never change project temperature or drives.
+        temperature, context = temperature_inputs(project, mode=options.get("temperature_mode", "initial"),
+            temperature_K=options.get("temperature_K"), result=options.get("result"))
+        if operation == "multiport_mesh":
+            from etlayout.power.multiport_study import run_multiport_mesh_study
+            report = run_multiport_mesh_study(project, mesh_sizes=options.get("mesh_sizes"),
+                port_ids=options.get("port_ids"), reference=options.get("reference"), temperatures=temperature,
+                relative_tolerance=options.get("relative_tolerance", .02), progress=progress, cancel=cancel)
+            report["extraction_context"] = context
+            if options.get("output"):
+                _write_json(options["output"], report)
+            from etlayout.geometry.prepare import prepare_geometry
+            return {"report": report, "geometry": prepare_geometry(project) if report.get("network") else None,
+                    "exit_code": 0 if report.get("mesh_verified") else 2}
+        if operation in {"multiport_validate", "multiport_bundle"}:
+            from etlayout.io.project import physics_hash
+            report = options.get("network")
+            if report is None or report.get("source_physics_hash", report.get("physics_hash")) != physics_hash(project):
+                raise SimulationError("Extract a compatible network before circuit validation")
+            if report.get("extraction_context") != context:
+                raise SimulationError("Temperature context changed; extract this network again before validation")
+        else:
+            retained = options.get("result") if context["mode"] == "retained" else None
+            geometry, mesh = prepare_mesh(project, progress, cancel=cancel,
+                initial_state_supplied=retained is not None, initial_result=retained)
+            report = extract_multiport(project, mesh, port_ids=options.get("port_ids"),
+                reference=options.get("reference"), temperatures=temperature, cancel=cancel)
+            report["extraction_context"] = context
+        if operation in {"multiport_validate", "multiport_bundle"} or options.get("validation_directory"):
+            from etlayout.power.circuit_validation import prepare_circuit_validation, validate_circuit_network
+            directory = options.get("validation_directory") or options.get("output")
+            if not directory:
+                raise SimulationError("Choose a new validation bundle directory")
+            if options.get("ngspice_executable"):
+                validation = validate_circuit_network(report, directory, executable=options["ngspice_executable"],
+                    timeout=options.get("simulator_timeout", 30.), progress=progress, cancel=cancel, execution=execution)
+            else:
+                validation = prepare_circuit_validation(report, directory, cancel=cancel)
+            if operation in {"multiport_validate", "multiport_bundle"}:
+                return {"report": validation, "exit_code": 2 if validation.get("status") not in {"passed", "prepared"} else 0}
+            report["circuit_validation"] = validation
         if options.get("output"):
             export_multiport(report, options["output"], format=options.get("format", "json"))
-        return {"report": report}
+        return {"report": report, "geometry": geometry,
+                "exit_code": 2 if report.get("circuit_validation", {}).get("status") not in {None, "passed", "prepared"} else 0}
     if operation.startswith("routing_"):
         from etlayout.geometry.prepare import prepare_geometry
         from etlayout.routing import export_candidate, generate_candidate, validate_rules

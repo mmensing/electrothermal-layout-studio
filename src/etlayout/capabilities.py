@@ -74,7 +74,7 @@ CAPABILITIES = (
                "Steady operation only; compare delivered service and verified finalists.", "0.4.0", ("tests/test_power_routing.py",)),
     Capability("power.multiport", "Passive multiport export", "Power",
                "Contacts & Connections → Extract passive network / SPICE", ("electrical",),
-               "Supported passive linear networks only; per-port fidelity is required.", "0.4.0", ("tests/test_power_solver_multiport.py",)),
+               "Fixed-temperature passive DC only; temperature, landing map, per-entry mesh evidence and optional external simulator checks remain separate.", "0.4.0", ("tests/test_power_solver_multiport.py", "tests/test_multiport_study.py", "tests/test_circuit_validation.py", "tests/test_multiport_gui.py")),
     Capability("results.maps", "Layer, region, quantity and time maps", "Results",
                "Results → Layer / Quantity / Region", ANALYSES,
                "Display scales preserve saved fields; raw extrema need physical qualification.", "0.4.0", ("tests/test_result_layer_selection.py",)),
