@@ -8,6 +8,7 @@ a large-signal/small-signal reduction of a nonlinear transistor.
 from __future__ import annotations
 
 import hashlib
+import json
 from copy import deepcopy
 from dataclasses import asdict
 from pathlib import Path
@@ -139,6 +140,16 @@ def extract_multiport(project, mesh, port_ids=None, reference=None, temperatures
                 'eliminated_dofs': len(interior), 'sparse_operator_shape': list(matrix.shape)}}
 
 
+def _spice_comment(value):
+    """Keep metadata on one ASCII comment line with reversible JSON escapes.
+
+    Physical port IDs are labels, never circuit statements or node names. JSON
+    string escapes preserve arbitrary Unicode/control characters without letting
+    a line break terminate a comment in an external SPICE reader.
+    """
+    return json.dumps(str(value), ensure_ascii=True)[1:-1]
+
+
 def _spice_lines(report):
     """Keep every finite coupling and establish fidelity per port before writing.
 
@@ -152,8 +163,8 @@ def _spice_lines(report):
         raise SimulationError('SPICE export needs a finite square passive port operator')
     names = [f'p{index + 1}' for index in range(count)]
     lines = ['* ETLayout fixed-temperature passive DC extraction; no switching/EM claim',
-             '* reference port: ' + report['reference']]
-    lines += [f'* {name} = {key}' for name, key in zip(names, report['port_ids'])]
+             '* reference port: ' + _spice_comment(report['reference'])]
+    lines += [f'* {name} = {_spice_comment(key)}' for name, key in zip(names, report['port_ids'])]
     lines += ['.subckt ETLAYOUT ' + ' '.join(names)]
     for first in range(count):
         for second in range(first + 1, count):
@@ -171,9 +182,14 @@ def _spice_lines(report):
     # the reduction. Basis excitations check each transfer current, not a single
     # global absolute norm dominated by strong branches.
     reconstructed = np.zeros_like(matrix)
-    for line in lines:
-        if not line.startswith('R'):
+    # Inspect serialized physical lines, including every statement type. A
+    # future metadata change must not hide extra commands from this check.
+    allowed_statements = {'.subckt ETLAYOUT ' + ' '.join(names), '.ends ETLAYOUT'}
+    for line in '\n'.join(lines).splitlines():
+        if line.startswith('*') or line in allowed_statements:
             continue
+        if not line.startswith('R'):
+            raise SimulationError('SPICE export contains an unexpected circuit statement')
         _, node_a, node_b, value = line.split()
         a, b = int(node_a[1:]) - 1, int(node_b[1:]) - 1
         conductance = 1 / float(value)

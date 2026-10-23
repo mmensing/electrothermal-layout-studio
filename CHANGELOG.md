@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Keep port/reference names on single SPICE comment lines, including names with
+  control characters; preserve exact preview/export agreement and port responses.
+- Explain how to instantiate the exported resistor subcircuit in a separate
+  simulator testbench, including pin order, current sign and fixed-temperature scope.
+- Point the feature catalog to the dedicated passive-network workflow.
+
 ## 0.4.3 — guided physical setup and SciPy state reuse
 
 - Guide physical stack setup, thin-film cross-sections and explicit interlayer

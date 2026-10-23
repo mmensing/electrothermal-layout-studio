@@ -48,3 +48,46 @@ separate from this fixed-temperature network.
 For multilayer connectivity, first follow [the layer-stack workflow](layer-stack-workflow.md).
 A visual overlap is not an electrical short; declare interfaces and their support.
 See [the power reference](POWER_ROUTING.md) for model and CLI details.
+
+
+## Use the exported subcircuit
+
+The SPICE file contains a reusable `.subckt ETLAYOUT p1 ... pN`, rather than
+an excitation or a complete simulation. Read its port-mapping comments before
+connecting it: pin order follows the checked ports, not the matrix reference.
+Port names remain descriptive metadata; generated pin names are always `p1`,
+`p2`, and so on. Control characters and non-ASCII names use reversible JSON
+string escapes in current source exports so each mapping stays on one ASCII
+comment line; the JSON report retains the original names.
+
+For a **two-port** export saved as `network.cir`, put this separate testbench
+beside it. It applies 1 V to the first pin and connects the second pin to the
+circuit reference. For more ports, connect every pin according to the intended
+external circuit; do not infer connections from the matrix reference selector.
+
+```spice
+Two-port fixed-temperature DC check
+.include network.cir
+Vtest driven 0 DC 1
+Xdut driven 0 ETLAYOUT
+.control
+set numdgt=17
+op
+print i(Vtest)
+quit
+.endc
+.end
+```
+
+With an independently installed [ngspice](https://ngspice.sourceforge.io/), run
+`ngspice -b testbench.cir`. Its voltage-source current is positive into the
+source, so **`-i(Vtest)`** is the current entering the first network port.
+For a 1 V excitation it equals the corresponding diagonal entry of the full
+conductance matrix. Use the JSON/CSV operator to check all port responses.
+ETLayout does not install or automatically run a circuit simulator.
+
+This is a DC resistance reduction at the reported fixed temperature. It has no
+capacitance, inductance, frequency-dependent conductor loss or thermal RC
+feedback, and does not turn a HEMT into a transistor SPICE model. Changing a
+simulator's temperature cannot reconstruct the original material laws from
+these constant resistors; extract again at the intended temperature.

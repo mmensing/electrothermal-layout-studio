@@ -73,7 +73,7 @@ CAPABILITIES = (
                "Studies → Routing & optimization", ("electrical", "thermal", "electrothermal"),
                "Steady operation only; compare delivered service and verified finalists.", "0.4.0", ("tests/test_power_routing.py",)),
     Capability("power.multiport", "Passive multiport export", "Power",
-               "Studies → Routing & optimization → Analysis", ("electrical",),
+               "Contacts & Connections → Extract passive network / SPICE", ("electrical",),
                "Supported passive linear networks only; per-port fidelity is required.", "0.4.0", ("tests/test_power_solver_multiport.py",)),
     Capability("results.maps", "Layer, region, quantity and time maps", "Results",
                "Results → Layer / Quantity / Region", ANALYSES,
