@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
 """Independent resistor-network checks of sparse passive port extraction."""
+import json
 from copy import deepcopy
 
 import numpy as np
@@ -7,7 +8,7 @@ import pytest
 from solver_helpers import rectangle
 
 from etlayout.models import ElectricalModel, PhysicalPort, PortLanding, SimulationError, Terminal
-from etlayout.power.multiport import export_multiport, extract_multiport
+from etlayout.power.multiport import export_multiport, extract_multiport, spice_netlist
 from etlayout.solvers import solve_electrical
 
 
@@ -195,3 +196,39 @@ def test_unconnected_ports_and_invalid_reference_fail_explicitly():
     report = extract_multiport(project, mesh)
     with pytest.raises(SimulationError, match='export format'):
         export_multiport(report, 'unused.output', format='binary')
+
+
+@pytest.mark.parametrize("identifier", [
+    "supply",
+    "supply\nVUNWANTED p1 p2 99",
+    "supply\r.include restricted.cir",
+    "supply\r\n.control\nquit\n.endc",
+    "supply\vVUNWANTED p1 p2 99",
+    "supply\fVUNWANTED p1 p2 99",
+    "supply\x85VUNWANTED p1 p2 99",
+    "supply\u2028VUNWANTED p1 p2 99",
+    "supply\u2029VUNWANTED p1 p2 99",
+    'Kelvin \u03a9 / \u00b5m \u6e90 "quoted" \\backslash',
+])
+def test_spice_port_and_reference_labels_cannot_create_circuit_statements(tmp_path, identifier):
+    project, mesh = two_ports()
+    project.power.ports[0].id = identifier
+    report = extract_multiport(project, mesh, reference=identifier)
+    netlist = spice_netlist(report)
+    # Validate what the external reader receives, rather than just the list of
+    # lines used internally to assemble the netlist. Only the resistor model's
+    # declared subcircuit, one resistor and its terminator may be executable.
+    statements = [line for line in netlist.splitlines() if line and not line.startswith("*")]
+    assert statements[0] == ".subckt ETLAYOUT p1 p2"
+    assert len(statements) == 3
+    assert statements[1].split()[:3] == ["R1_2", "p1", "p2"]
+    assert float(statements[1].split()[3]) == pytest.approx(.6, rel=1e-12)
+    assert statements[2] == ".ends ETLAYOUT"
+    assert netlist.isascii()
+    for prefix in ("* reference port: ", "* p1 = "):
+        encoded = next(line.removeprefix(prefix) for line in netlist.splitlines() if line.startswith(prefix))
+        assert json.loads('"' + encoded + '"') == identifier
+    if identifier == "supply":
+        assert "* p1 = supply\n" in netlist
+    exported = export_multiport(report, tmp_path / "reviewed.cir", "spice")
+    assert exported.read_text(encoding="utf-8") == netlist

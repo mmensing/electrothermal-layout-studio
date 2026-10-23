@@ -342,3 +342,8 @@ library caps and process isolation do not guarantee a speedup for one sparse
 solve. The implementation has no mandatory CUDA/GPU dependency. Test results,
 coverage methodology and native/frozen verification status are recorded in the
 [validation guide](validation.md), not inferred from a prior release.
+
+For current temperature choices, physical cross-probing, extraction-specific mesh
+evidence and optional external circuit checks, use the [GUI-led passive-network
+guide](passive-network-workflow.md). The [C/L expansion plan](parasitic-extraction.md)
+distinguishes experimental result interchange from future field extraction.

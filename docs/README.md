@@ -25,7 +25,8 @@ archives keep their original identity. Published older binaries retain their own
 - **Electrical paths and sensing:** [current crowding](current-crowding.md),
   [contact extraction and E27 TLM](contact-extraction.md).
 - **Set up a stack or extract a circuit:** [physical layers and cross-sections](layer-stack-workflow.md),
-  [guided passive network / SPICE extraction](passive-network-workflow.md).
+  [guided passive network / SPICE extraction](passive-network-workflow.md),
+  [capacitance/inductance expansion plan](parasitic-extraction.md).
 - **Multilayer and power layouts:** [E20–E24 families](power-examples.md),
   [routing/optimization reference](POWER_ROUTING.md),
   [companion routing experiments](../examples/README.md#companion-routing-experiments).

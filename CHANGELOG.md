@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased
+
+- Extract at initial, explicit uniform or compatible retained final temperature;
+  preserve exact saved mesh/component-local fields and source provenance.
+- Locate physical ports and equivalent-link endpoints on the verified layout.
+  Group extraction controls into Network, Layout, Mesh evidence and Simulator tabs.
+- Check every conductance/driving/transfer resistance entry across successive
+  refinements; retain weak links, zero/sign changes and resource failures.
+- Export deterministic port-basis circuit bundles and optionally run a selected
+  console ngspice with bounded, cancellable owned execution and per-port checks.
+- Begin experimental static C/L result validation/interchange with explicit SI
+  electrical boundaries, closed return loops, energy/passivity and provenance.
+  This is not a capacitance/inductance field extractor; document its gated plan.
+
+- Keep port/reference names on single SPICE comment lines, including names with
+  control characters; preserve exact preview/export agreement and port responses.
+- Explain how to instantiate the exported resistor subcircuit in a separate
+  simulator testbench, including pin order, current sign and fixed-temperature scope.
+- Point the feature catalog to the dedicated passive-network workflow.
+
 ## 0.4.3 — guided physical setup and SciPy state reuse
 
 - Guide physical stack setup, thin-film cross-sections and explicit interlayer

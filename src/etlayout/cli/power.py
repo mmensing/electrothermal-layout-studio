@@ -29,6 +29,15 @@ def add_arguments(subparsers, execution_arguments):
             parser.add_argument("--ports", help="Comma-separated physical port IDs")
             parser.add_argument("--reference", help="Reference port ID")
             parser.add_argument("--format", choices=["json", "csv", "spice"], default="json")
+            parser.add_argument("--temperature-source", choices=["initial", "uniform", "retained"],
+                                help="Freeze the initial, explicit uniform or saved run's final temperature")
+            parser.add_argument("--temperature-k", type=float, help="Explicit fixed absolute temperature in K (implies uniform)")
+            parser.add_argument("--mesh-study", action="store_true", help="Run three to five extraction-specific mesh levels; output JSON evidence")
+            parser.add_argument("--mesh-sizes-um", type=float, nargs="+", help="Coarse-to-fine global sizes in micrometers; implies --mesh-study")
+            parser.add_argument("--mesh-tolerance", type=float, help="Per-entry relative change limit, dimensionless; default 0.02")
+            parser.add_argument("--validation-directory", help="New/empty self-contained circuit validation bundle folder")
+            parser.add_argument("--ngspice-executable", help="Explicit trusted console executable; runs generated decks only (Windows: ngspice_con.exe)")
+            parser.add_argument("--simulator-timeout", type=float, help="Total simulator time budget in seconds")
         elif command == "routing":
             parser.add_argument("--action", choices=["validate", "generate", "export"], default="validate")
             parser.add_argument("--parameters", default="{}", help="JSON object or path to a JSON file")
@@ -58,14 +67,32 @@ def run_command(args, *, progress=None):
     execution = ExecutionSettings(cpu_threads=args.cpu_threads,
         study_workers=args.study_workers if args.study_workers is not None else args.cpu_threads)
     validate_execution(execution)
-    project, _ = load_project(args.project, external_policy=policy_from_args(args))
+    project, retained = load_project(args.project, external_policy=policy_from_args(args))
     options = {"output": args.output}
     operation = args.command
     if operation == "power":
         options["plots"] = not args.no_plots
     elif operation == "multiport":
         options.update(port_ids=[key.strip() for key in args.ports.split(",")] if args.ports else None,
-                       reference=args.reference, format=args.format)
+                       reference=args.reference, format=args.format,
+                       temperature_mode=args.temperature_source or ("uniform" if args.temperature_k is not None else "initial"),
+                       temperature_K=args.temperature_k, validation_directory=args.validation_directory,
+                       ngspice_executable=args.ngspice_executable,
+                       simulator_timeout=args.simulator_timeout if args.simulator_timeout is not None else 30.)
+        if options["temperature_mode"] == "retained":
+            options["result"] = retained
+        if args.mesh_tolerance is not None and not (args.mesh_study or args.mesh_sizes_um is not None):
+            raise SimulationError("--mesh-tolerance requires --mesh-study or --mesh-sizes-um")
+        if args.simulator_timeout is not None and not args.ngspice_executable:
+            raise SimulationError("--simulator-timeout requires --ngspice-executable")
+        if args.ngspice_executable and not args.validation_directory:
+            raise SimulationError("--ngspice-executable requires a new/empty --validation-directory")
+        if args.mesh_study or args.mesh_sizes_um is not None:
+            if args.format != "json" or args.validation_directory or args.ngspice_executable:
+                raise SimulationError("Mesh studies output JSON evidence; extract/export or validate a circuit in a separate command")
+            operation = "multiport_mesh"
+            options.update(mesh_sizes=[value * 1e-6 for value in args.mesh_sizes_um] if args.mesh_sizes_um else None,
+                           relative_tolerance=args.mesh_tolerance if args.mesh_tolerance is not None else .02)
     elif operation == "routing":
         operation = "routing_" + args.action
         options["parameters"] = read_object(args.parameters)
