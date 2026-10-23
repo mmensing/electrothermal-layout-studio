@@ -153,7 +153,7 @@ def test_shared_em_edits_and_undo_retire_evidence_without_discarding_mesh_or_ret
         qtbot,tmp_path,monkeypatch,e1_reference_solution):
     project,result = deepcopy(e1_reference_solution)
     window = MainWindow(project,result,database_path=tmp_path / "materials.sqlite3",recover=False)
-    qtbot.addWidget(window)
+    # The finally block owns disposal; pytest-qt must not close a deleted wrapper.
     try:
         window.autosave_timer.stop()
         window.show()
